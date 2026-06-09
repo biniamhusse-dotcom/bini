@@ -1,0 +1,537 @@
+{
+    "id": "bahmni.registration",
+        "instanceOf":"bahmni.template.registration",
+    "description": "Bahmni Patient Registration App",
+    "extensionPoints": [
+        {
+            "id": "org.bahmni.registration.patient.search.result.action",
+            "description": "Bahmni Patient Search Result Action"
+        },
+        {
+            "id": "org.bahmni.registration.patient.next",
+            "description": "After Bahmni Patient Registration, forward url configuration"
+        },
+        {
+            "id": "org.bahmni.registration.navigation",
+            "description": "Navigation within regsitration first and second page"
+        },
+        {
+            "id": "org.bahmni.registration.conceptSetGroup.observations",
+            "description": "Registration Second Page Forms"
+        },
+        {
+            "id": "org.bahmni.patient.searchPrograms",
+            "description": "Search for program patients"
+        },
+        {
+            "id": "org.bahmni.registration.triage.dashboard",
+            "description": "Triage Dashboard"
+        }
+    ],
+    "contextModel": [
+        "patientUuid",
+        "activeVisitUuid"
+    ],
+    "config": {
+        "femaleOnlyVisitType": [
+            "ANC",
+            "Cervical screening OPD 1",
+            "Cervical screening OPD 2",
+            "ANC OPD 1",
+            "ANC OPD 2",
+            "ANC OPD 3",
+            "ANC OPD 4",
+            "OPD 1",
+            "OPD 2",
+            "OPD 3",
+            "OPD 4",
+            "Female 1",
+            "Gynecology ward",
+            "GyniObs OPD 1",
+            "GyniObs OPD 2",
+            "GyniObs OPD 3",
+            "Maternity 2",
+            "Maternity 3",
+            "Michu Clinic OPD",
+            "MCH OPD",
+            "Labour Ward",
+            "Gynecology Emergency",
+            "Ward C(female only)"
+        ],
+        "erTriageVisitTypes": {
+            "Male": [
+                "Adult ER",
+                "Pediatrics ER"
+            ],
+            "adultMale": [
+                "Adult ER"
+            ],
+            "pediatricsMale": [
+                "Pediatrics ER"
+            ],
+            "Other": [
+                "Gynecology Emergency",
+                "Adult ER",
+                "Labour Ward",
+                "Pediatrics ER"
+            ],
+            "adultFemale": [
+                "Gynecology Emergency",
+                "Adult ER",
+                "Labour Ward"
+            ],
+            "pediatricsFemale": [
+                "Pediatrics ER"
+            ]
+        },
+        "paymentConfig": {
+            "disable billing": false,
+            "payment window": 30
+        },
+        "erTriageFormLookup": {
+            "Gynecology Emergency": [
+                "edconfig",
+                "edforms"
+            ],
+            "Adult ER": [
+                "erconfig",
+                "erforms"
+            ],
+            "Labour Ward": [
+                "obconfig",
+                "obforms"
+            ],
+            "Pediatrics ER": [
+                "pdconfig",
+                "pdforms"
+            ]
+        },
+        "patientInformation": {
+            "freeInformation": {
+                "title": "Free",
+                "translationKey": "Free",
+                "attributes": [
+                    "Free"
+                ]
+            },
+            "additionalPatientInformation": {
+                "title": "Additional Patient Information",
+                "attributes": [
+                    "Name",
+                    "Phone",
+                    "Address",
+                    "IDNumber",
+                    "IDType"
+                ]
+            },
+            "hidden": {
+                "attributes": [
+                    "cluster",
+                    "landHolding",
+                    "secondaryContact",
+                    "distanceFromCenter",
+                    "class",
+                    "cluster",
+                    "familyIncome",
+                    "RationCard",
+                    "debt",
+                    "isUrban",
+                    "secondaryIdentifier",
+                    "caste",
+                    "Insurance",
+                    "Credit Company"
+                ]
+            },
+            "defaults": {
+                "class": "General",
+                "landHolding": 2,
+                "CreditType": "None"
+            }
+        },
+        "addressHierarchy": {
+            "showAddressFieldsTopDown": true,
+            "strictAutocompleteFromLevel": ""
+        },
+        "relationshipTypeMap": {
+            "Doctor": "provider",
+            "Parent": "patient"
+        },
+        "filterPersonAttributes": {
+            "logics": [
+                {
+                    "trigger": "PaymentMethod",
+                    "values": [ "Credit"],
+                    "action": "show",
+                    "dependent": "CreditType",
+                    "defaultTriggerValue": ["Cash", "Free"],
+                    "defaultValue": {
+                        "conceptUuid": "fd08aa37-e18d-415d-be41-f8bbbc81bea3",
+                        "value": "N/A"
+                    }
+                },
+                {
+                    "trigger": "PaymentMethod",
+                    "values": [ "Free" ],
+                    "action": "show",
+                    "dependent": "FreePaymentDetails",
+                    "defaultTriggerValue": ["Cash", "Credit"],
+                    "defaultValue": {
+                        "conceptUuid": "fd08aa37-e18d-415d-be41-f8bbbc81bea3",
+                        "value": "N/A"
+                    }
+                },
+                {
+                    "trigger": "PaymentMethod",
+                    "values": ["Credit"],
+                    "action": "show",
+                    "dependent": "Reference Number",
+                    "defaultTriggerValue": ["Free", "Cash"],
+                    "defaultValue": {
+                        "conceptUuid": "fd08aa37-e18d-415d-be41-f8bbbc81bea3",
+                        "value": "N/A"
+                    }
+                },
+                {
+                    "trigger": "CreditType",
+                    "values": ["Agreement", "Social Health Insurance", "Staff", "Student" ],
+                    "action": "show",
+                    "dependent": "CreditCompany",
+                    "defaultTriggerValue": ["CBHI", "N/A"],
+                    "defaultValue": {
+                        "conceptUuid": "fd08aa37-e18d-415d-be41-f8bbbc81bea3",
+                        "value": "N/A"
+                    }
+                },
+                {
+                    "trigger": "CreditType",
+                    "values": [ "CBHI"],
+                    "action": "show",
+                    "dependent": "CBHIAgreedWoreda",
+                    "defaultTriggerValue": ["Agreement", "Fee Waiver", "Social Health Insurance", "Staff", "Student", "N/A"],
+                    "defaultValue": {
+                        "conceptUuid": "fd08aa37-e18d-415d-be41-f8bbbc81bea3",
+                        "value": "N/A"
+                    }
+                }
+            ]
+        },
+        "filterPersonAttributesInputOptions": {
+            "otherCompanies": {
+                "trigger": "CreditType",
+                "values": [
+                    "Agreement",
+                    "Fee Waiver",
+                    "Social Health Insurance",
+                    "Staff",
+                    "Student"
+                ],
+                "action": "show",
+                "dependent": "CBHIAgreedWoreda",
+                "dependentId": 7213
+            },
+            "cbhiWoredas": {
+                "trigger": "CreditType",
+                "values": [
+                    "CBHI"
+                ],
+                "action": "show",
+                "dependent": "CBHIAgreedWoreda",
+                "dependentId": 9832
+            }
+        },
+        "ancSpecificAttributes": [
+            "primaryRelative",
+            "Woman wants to receive reminders during pregnancy",
+            "primaryRelativePhoneNumber",
+            "Co-habitants"
+        ],
+        "fpSpecificAttributes": [
+            "email",
+            "Alternative contact's address",
+            "Communication consent",
+            "Reminder messages",
+            "Communication preference(s)",
+            "Referral"
+        ],
+        "attributesNotForAgeBetween10And5": [
+            "Marital Status",
+            "primaryRelativePhoneNumber",
+            "Woman wants to receive reminders during pregnancy"
+        ],
+        "attributesNotForAgeBelow5": [
+            "education",
+            "occupation",
+            "Marital Status"
+        ],
+        "autoCompleteFields": [
+            "familyName",
+            "caste",
+            "middleName",
+            "givenName",
+            "CBHIAgreedWoreda"
+        ],
+        "mandatoryPersonAttributes": [
+            "PaymentMethod"
+        ],
+        "ConditionallyMandatoryPersonAttributes": [
+            "CreditType",
+            "FreePaymentDetails",
+            "CBHIAgreedWoreda",
+            "CreditCompany"
+        ],
+        "defaultVisitType": "OPD",
+        "searchByIdForwardUrl": "/patient/{{patientUuid}}",
+        "showMiddleName": true,
+        "showLastName": true,
+        "isLastNameMandatory": true,
+        "patientNameDisplayOrder": [
+            "firstName",
+            "middleName",
+            "lastName"
+        ],
+        "showSaveConfirmDialog": false,
+        "showBirthTime": true,
+        "showCasteSameAsLastNameCheckbox": false,
+        "prescription_config": {
+            "drug_code_concept": "96d6c097-b66f-4f64-9f1f-d5cc5434aefd",
+            "drug_price_concept": "a5649925-c963-4253-8e21-a7f806b340e3",
+            "dtp_concept": "99516581-a4a3-439c-a16c-e451e9e25783",
+            "prescription_state_concept": "97a9b0ad-ca27-44bb-96c8-fc0502ce09e6",
+            "prescription_state_options": [
+                {
+                    "label": "Dispense",
+                    "privilege": "prescription:dispense"
+                },
+                {
+                    "label": "Discard",
+                    "privilege": "prescription:discard"
+                },
+                {
+                    "label": "Stocked-out",
+                    "privilege": "prescription:stock-out"
+                },
+                {
+                    "label": "Evaluated",
+                    "privilege": "prescription:evaluate"
+                },
+                {
+                    "label": "Billed",
+                    "privilege": "prescription:bill"
+                },
+                {
+                    "label": "Paid",
+                    "privilege": "prescription:payment"
+                }
+            ],
+            "answer_yes_concept": "78763e68-104e-465d-8ce3-35f9edfb083d",
+            "answer_no_concept": "f9f633a5-1544-4c44-9394-a7f746a12dff",
+            "rx_evaluated_concept": "45090a5e-5eaf-4a4e-b601-a5d42073c4a2",
+            "rx_counseled_concept": "1622f131-5eaf-4ba8-9907-ce51f319255d",
+            "rx_paid_concept": "626c1ac2-ce7e-4e00-80a5-b189d261b8cc",
+            "rx_receipt_concept": "323aa642-9257-4948-ba8c-1874623fb3d9",
+            "enable_rx_payment_check": true,
+            "enforce_odoo_payment_confirmation": false,
+            "hx_available": [
+                {
+                    "concept_name": "Coded Diagnosis",
+                    "lable": "diagnosis"
+                },
+                {
+                    "concept_name": "Pulse",
+                    "lable": "pulse"
+                },
+                {
+                    "concept_name": "Temperature",
+                    "lable": "temperature"
+                },
+                {
+                    "concept_name": "Respiratory Rate Numeric",
+                    "lable": "bp_systolic"
+                },
+                {
+                    "concept_name": "Systolic",
+                    "lable": "bp_systolic"
+                },
+                {
+                    "concept_name": "Diastolic",
+                    "lable": "bp_diastolic"
+                },
+                {
+                    "concept_name": "Coded",
+                    "lable": "Diagnosis"
+                },
+                {
+                    "concept_name": "Weight",
+                    "lable": "weight"
+                },
+                {
+                    "concept_name": "HEIGHT",
+                    "lable": "height"
+                }
+            ]
+        },
+        "printOptions": [
+            {
+                "translationKey": "REGISTRATION_PRINT_REG_CARD_LOCAL_KEY",
+                "templateUrl": "/bahmni_config/openmrs/apps/registration/registrationCardLayout/print_main.html",
+                "shortcutKey": "c"
+            },
+            {
+                "translationKey": "REGISTRATION_PRINT_REG_CARD_KEY",
+                "templateUrl": "/bahmni_config/openmrs/apps/registration/registrationCardLayout/print_index.html",
+                "shortcutKey": "z"
+            },
+            {
+                "label": "P<u>r</u>int ER Triage Form",
+                "templateUrl": "/bahmni_config/openmrs/apps/registration/registrationCardLayout/print_ErTriage.html",
+                "shortcutKey": "r"
+            },
+            {
+                "label": "P<u>r</u>int ED Triage Form",
+                "templateUrl": "/bahmni_config/openmrs/apps/registration/registrationCardLayout/print_ed_triage.html",
+                "shortcutKey": "s"
+            },
+            {
+                "label": "P<u>r</u>int Obstetrics Triage Form",
+                "templateUrl": "/bahmni_config/openmrs/apps/registration/registrationCardLayout/print_obstetrics.html",
+                "shortcutKey": "t"
+            },
+            {
+                "label": "P<u>r</u>int Pediatrics Triage Form",
+                "templateUrl": "/bahmni_config/openmrs/apps/registration/registrationCardLayout/print_pediatrics.html",
+                "shortcutKey": "p"
+            },
+            {
+                "label": "P<u>r</u>int CR Triage Form",
+                "templateUrl": "/bahmni_config/openmrs/apps/registration/registrationCardLayout/print_CrTriage.html",
+                "shortcutKey": "r"
+            },
+            {
+                "label": "P<u>r</u>int Patient MRN",
+                "templateUrl": "/bahmni_config/openmrs/apps/registration/registrationCardLayout/print_mrn_only.html",
+                "shortcutKey": "r"
+            }
+        ],
+        "conceptSetUI": {
+            "Chief Complaint Data": {
+                "autocomplete": true,
+                "codedConceptName": "Chief Complaint",
+                "nonCodedConceptName": "Non-Coded Chief Complaint",
+                "durationRequired": false,
+                "allowAddMore": true,
+                "required": true
+            },
+            "REGISTRATION FEES": {
+                "required": true,
+                "label": "Fee"
+            },
+            "FHS": {
+                "buttonSelect": true
+            },
+            "defaults": {
+                "FHS": "Present",
+                "Trige Date and time of Arrival": "now",
+                "Trige Date and Time of Triage": "now"
+            },
+            "Trige Date and time of Arrival": {
+                "required": true
+            },
+            "Trige Date and Time of Triage": {
+                "required": true
+            },
+            "Triage Red": {
+                "multiSelect": true
+            },
+            "Triage Orange": {
+                "multiSelect": true
+            },
+            "Triage Yellow": {
+                "multiSelect": true
+            },
+            "Triage Chief Complaint": {
+                "multiSelect": true,
+                "required": true
+            },
+            "Triage Mobility": {
+                "required": true
+            },
+            "Triage AVPU": {
+                "required": true
+            },
+            "Triage Trauma": {
+                "required": true
+            }
+        },
+        "fieldValidation": {
+            "registrationNumber": {
+                "pattern": "[0-9]{6,9}",
+                "errorMessage": "Should between 6 and 9 characters"
+            },
+            "primaryContact": {
+                "pattern": "[0-9]{8,10}",
+                "errorMessage": "Should be 12 characters starting with 91 (country code)"
+            },
+            "PhoneNumber": {
+                "pattern": "[0-9]{10,10}",
+                "errorMessage": "Should be 10 characters starting with 0"
+            },
+            "Primary Contact Phone Number": {
+                "pattern": "[0-9]{10,10}",
+                "errorMessage": "Should be 10 characters starting with 0"
+            },
+            "Alternative Phone Number": {
+                "pattern": "[0-9]{10,10}",
+                "errorMessage": "Should be 10 characters starting with 0"
+            },
+            "landHolding": {
+                "pattern": "[0-9]{0,3}",
+                "errorMessage": "Should be between 1 to 999 acres"
+            },
+            "familyName": {
+                "pattern": "[a-zA-Z]{0,}",
+                "errorMessage": "Should contain characters"
+            },
+            "givenName": {
+                "pattern": "[a-zA-Z]{0,}",
+                "errorMessage": "Should contain characters"
+            },
+            "middleName": {
+                "pattern": "[a-zA-Z]{0,}",
+                "errorMessage": "Should contain characters"
+            },
+            "address1": {
+                "pattern": "[a-zA-Z0-9\\s]{2,}",
+                "errorMessage": "Should contain at least 2 characters"
+            }
+        },
+        "patientSearch": {
+            "address": {
+                "label": "Woreda/Subcity",
+                "placeholder": "ወረዳ/ክፍለ ከተማ ",
+                "field": "City_Village"
+            },
+            "customAttributes": {
+                "label": "Phone Number",
+                "placeholder": "ስልክ ቁጥር",
+                "fields": [
+                    "PhoneNumber"
+                ]
+            },
+            "programAttributes": {},
+            "searchByPatientIdentifier": true
+        },
+        "patientSearchResults": {
+            "address": {
+                "fields": [
+                    "City_Village",
+                    "address2"
+                ]
+            },
+            "personAttributes": {
+                "fields": [
+                    "PhoneNumber"
+                ]
+            }
+        }
+    }
+}

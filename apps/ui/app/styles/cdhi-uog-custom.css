@@ -1,0 +1,11 @@
+.icon-rx:before {
+    content: "℞";
+    font-size: 22px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+.icon-pill:before {
+    content: "💊";
+    font-size: 22px;
+    color: #e74c3c;
+}

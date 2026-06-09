@@ -1,0 +1,46 @@
+<div class="reg-header-wrapper header-wrapper">
+    <header class="reg-header" ng-controller="NavigationController">
+        <ul class="top-nav fl">
+            <a class="back-btn" accesskey="h" href="../home/index.html" ng-click="onHomeNavigate($event)"><i
+                    class="fa fa-home"></i></a>
+        </ul>
+        <div class="reg-header-right fr">
+            <div ui-view="headerExtension" class="print-action-items fl"></div>
+            <span class="btn-user-info change-location  fl">{{ currentUser.username}}</span>
+            <button class="btn-user-info fr">
+                <i class="fa fa-user-md fa-white small"></i>
+                <i class="fa fa-caret-down fa-white mini"></i>
+            </button>
+            <ul>
+                <li>
+                    <a><i class="fa fa-user fa-white small"></i><span>{{:: currentUser.username}}</span></a>
+                </li>
+                <li>
+                    <i class="fa fa-map-marker fa-white small"></i><span>{{:: currentUser.currentLocation |
+                        translate}}</span>
+                </li>
+                <li>
+                    <a log-out><i class="fa fa-power-off fa-white small"></i><span
+                            class="nav-link">{{::'REGISTRATION_LABEL_LOGOUT' | translate}}</span></a>
+                </li>
+            </ul>
+        </div>
+    </header>
+</div>
+<div>
+    <body>
+        <div>
+            <select style="width: 350px; margin: 20px;" size="6" ng-model="selectedpat" ng-options="res as res.display for res in results.data">
+                <option ng-if="!(results.data.length > 0)" value="">- empty -</option>
+            </select>
+            <select style="width: 350px; margin: 20px" size="6" ng-model="selectedLocation" ng-options="loc.uuid as loc.display for loc in locs.data">
+                <option ng-if="!(locs.data.length > 0)" value="">- empty -</option>
+            </select>
+        </div>
+        <div class="submit-btn-container" style="margin-top: 250px; margin-right: 25px;"> 
+            <div class="right">
+                <button ng-click="startVisits()" class="start-visit-button right">Assign OPD and Start Visit</button>        
+           </div>
+    </div>
+    </body>
+</div>

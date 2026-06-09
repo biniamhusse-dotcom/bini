@@ -1,0 +1,13 @@
+
+<div class="appointment-container">
+    <div class="appointment-btn-container" ng-class="{'list-view': getCurrentTabName() === 'list'}">
+        <p class="view-toggle-wrapper">
+            <a show-if-privilege="{{manageLiaisonSchedulePrivilege}}" class="add-app-btn" ng-click="navigateTo(getCurrentTabName() + '.newSchedule')">
+                {{::'ADD_NEW_LIAISON_APPOINTMENT' | translate }}
+            </a>
+        </p>
+    </div>
+    <br>
+    <p style="font-weight: bolder; font-family: 'Times New Roman', Times, serif; padding: 5px; text-align: center;"> <span><i class="fa fa-info-circle"></i></span>Click a Schedule you are looking for to mark it as Checked-in, Completed, Cancelled, or Missed and to edit it. Scroll down to find the corresponding buttons.</p>
+    <div ui-view="content@viewAppointments" class="appointment-content-container"></div>
+</div>

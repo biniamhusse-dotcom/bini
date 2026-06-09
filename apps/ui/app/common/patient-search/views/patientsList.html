@@ -1,0 +1,197 @@
+<style>
+    .notification {
+  background-color: #00796d;
+  height: fit-content;
+  width: auto;
+  overflow-y:auto;
+  padding-top: 5px;
+  line-height: 15px;
+  position: fixed;
+  margin-left: 68.5%;
+  font: size 14px; 
+  color:white;
+}
+p:hover{
+    background-color: darkslategray;
+}
+.notif{
+    cursor: pointer;   
+}
+p{
+    padding: 5px;   
+}
+</style>
+<div class="notification">
+    <ul ng-if="linkedExists" ng-hide="listVisible" class="notif">
+        <li data-ng-init="start(patient)" ng-repeat="patient in linkageNotifications" ng-click="forwardPatient(patient)" style="padding: 5px;">
+            <div><p><i class="fa fa-info-circle"></i> {{::patient.date_started}} Patient <b>{{::patient.name}}</b> has been transferred to {{::ptLocation.name}}</p></div>
+        </li>
+    </ul>
+    <ul ng-if="labResultExists" ng-hide="listVisible" class="notif">
+        <li data-ng-init="start(patient)" ng-repeat="patient in labResultNotifications" ng-click="forwardPatient(patient)" style="padding: 5px;">
+            <div><p><i class="fa fa-info-circle"></i> {{::patient.date_started}} Lab results for <b>{{::patient.name}}</b> are now available.</p></div>
+        </li>
+    </ul>
+    <ul ng-if="radResultExists" ng-hide="listVisible" class="notif">
+        <li data-ng-init="start(patient)" ng-repeat="patient in radResultNotifications" ng-click="forwardPatient(patient)" style="padding: 5px;">
+            <div><p><i class="fa fa-info-circle"></i> {{::patient.date_started}} Radiology results for <b>{{::patient.name}}</b>  are now available.</p></div>
+        </li>
+    </ul>
+    <ul ng-if="patResultExists" ng-hide="listVisible" class="notif">
+        <li data-ng-init="start(patient)" ng-repeat="patient in patResultNotifications" ng-click="forwardPatient(patient)" style="padding: 5px;">
+            <div><p><i class="fa fa-info-circle"></i> {{::patient.date_started}} Pathology results for <b>{{::patient.name}}</b>  are now available.</p></div>
+        </li>
+    </ul>
+    <ul ng-if="procResultExists" ng-hide="listVisible" class="notif">
+        <li data-ng-init="start(patient)" ng-repeat="patient in pocResultNotifications" ng-click="forwardPatient(patient)" style="padding: 5px;">
+            <div><p><i class="fa fa-info-circle"></i> {{::patient.date_started}} Procedure results for <b>{{::patient.name}}</b>  are now available.</p></div>
+        </li>
+    </ul>
+    <ul ng-if="dtpCaseExists" ng-hide="listVisible" class="notif">
+        <li data-ng-init="start(patient)" ng-repeat="patient in dtpCaseNotifications" ng-click="forwardPatient(patient)" style="padding: 5px;">
+            <div><p><i class="fa fa-info-circle"></i> {{::patient.date_started}} There is a DTP case(s) on <b>{{::patient.name}}</b>'s prescription.</p></div>
+        </li>
+    </ul>
+</div>
+<div class="patient-search-wrapper">
+    <div class="tabs">
+        <scrollable-tabs>
+        <ul>
+            <li class="tab-item" ng-repeat="searchType in search.searchTypes"
+                ng-class="{'tab-selected': search.isSelectedSearch(searchType)}">
+                <a href="" ng-click="search.switchSearchType(searchType)">
+                    <span>{{::searchType | titleTranslate}} </span>
+                    <span ng-if="search.showPatientCountOnSearchParameter(searchType)">({{search.searchResults.length}})</span>
+                    <span ng-if="(searchType.handler && !search.showPatientCountOnSearchParameter(searchType))" scheduler
+                          watch-on="search.searchParameter" refresh-time="searchType.refreshTime"><span ng-if="searchType.patientCount>0">(<span style="color: red; font-weight: bolder; font-size: 15px;">{{searchType.patientCount}}</span>)</span></span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="clinical-header mobile-menu tabs">
+        <!-- <a id="MobileDashboardButton" class="mobile-menu-icon" ng-click="toggleDashboardMenu()">
+            <i class="fa fa-bars fa-white fa-small"></i>
+            <span>Menu : {{search.searchType | titleTranslate}}</span>
+        </a> -->
+        <ul class="header-tabs consultation-tabs" ng-show="showDashboardMenu">
+            <li class="tab-item" ng-repeat="searchType in search.searchTypes"
+                ng-class="{'tab-selected': search.isSelectedSearch(searchType)}">
+                <a href="" ng-click="switchSearchType(searchType)">
+                    <span>{{::searchType | titleTranslate}} </span>
+                    <span ng-if="search.showPatientCountOnSearchParameter(searchType)">({{search.searchResults.length}})</span>
+                    <span ng-if="(searchType.handler && !search.showPatientCountOnSearchParameter(searchType))" scheduler
+                          watch-on="search.searchParameter" refresh-time="searchType.refreshTime">({{searchType.patientCount}})</span>
+                </a>
+            </li>
+        </ul>
+        </scrollable-tabs>
+        <button ng-if="search.searchType.showPrint" class="dialog-button-group" ng-click="printPage()"
+                accesskey="{{'CLINICAL_PRINT_ACCESS_KEY'| translate}}" ng-bind-html="'CLINICAL_PRINT_TRANSLATION_KEY'|translate">
+            <i class="fa fa-print"></i>
+        </button>
+    </div>
+    <div class="tab-content" ng-if="::search.searchTypes.length">
+        <div class="patient-list-spinner"></div>
+        <span ng-if="search.isCurrentSearchLookUp() && !search.isCustomView()">
+            <form name="filterPatients" ng-submit="filterPatientsAndSubmit()">
+                <div class="search-wrapper">
+                    <input type="text" id="patientIdentifier" ng-model="::search.searchParameter"
+                           focus-on="search.startPatientSearch"
+                           ng-change="search.filterPatients()"/>
+                    <span ng-if="search.searchResults.length > 0 && search.shouldShowQueueAction()">Current Token: <b>{{ search.searchResults[0].currentToken }}</b></span>
+                    <button class="right confirm" type="button" ng-if="search.searchResults.length > 0 && search.shouldShowQueueAction()" ng-click="handleCallNext(search.searchResults[0])">
+                        {{'PATIENT_QUEUE_CALL_NEXT' | translate }}
+                    </button>
+                </div>
+            </form>
+        </span>
+        <span ng-if="search.searchType && !search.isCurrentSearchLookUp() && !search.isCustomView()">
+            <form name="searchPatientForm" ng-submit="searchPatients()" class="overflow-hidden">
+                <div class="search-patient-id left">
+                    <input type="text" id="patientIdentifier" ng-model="::search.searchParameter"
+                           focus-on="search.startPatientSearch" placeholder="{{'SEARCH_NAME_PLACEHOLDER_KEY' | translate: {primaryIdentifier : primaryIdentifier} }}"/>
+                </div>
+                <div class="reg-srch-btn left">
+                    <button type="submit" ng-disabled="!search.searchParameter">
+                        <i class="fa fa-search"></i>
+                        {{'SEARCH_KEY' | translate }}
+                    </button>
+                </div>
+            </form>
+        </span>
+        <resize ng-if="search.isTabularView()" search-results="search.searchResults"
+                visible-results="search.visiblePatients" class="active-visits">
+            <div class="ward-details-container">
+                <table class="table patient-list-table">
+                    <thead>
+                    <tr>
+                        <!-- <th><strong>Sl.No</strong></th> -->
+                        <th ng-repeat="heading in activeHeaders" ng-click="heading.sortInfo && sortVisiblePatientsBy(heading.sortInfo)">
+                            <strong>{{ ::heading.name | translate }}</strong>
+                            <span class="sortIcons" ng-if="sortColumn == heading.sortInfo">
+                                <i class="fa fa-caret-up" ng-show="reverseSort"></i>
+                                <i class="fa fa-caret-down" ng-show="!reverseSort"></i>
+                            </span>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="row in search.visiblePatients">
+                        <!-- <td>
+                            {{$index + 1}}
+                        </td> -->
+                        <td ng-repeat="heading in activeHeaders"  style="height: 50px;">
+                            <a ng-if="::isHeadingOfLinkColumn(heading.name)"
+                               ng-click="forwardPatient(row, heading)">{{::row[heading.name]}}</a>
+                            <div ng-if="::isHeadingOfName(heading.name)" style="min-width: 150px" ng-click="forwardPatient(row)">
+                                <div style="width: 80%;">
+                                    {{::(isHeadingOfDateColumn(heading.name) ? (row[heading.name] | bahmniDate) : row[heading.name])}}
+                                </div>
+                                <span class="icons-container">
+                                <i class="ipd-indication fa fa-bed" ng-if="::(row.hasBeenAdmitted===true||row.hasBeenAdmitted==='true')"></i>
+                                    <i ng-if="::iconAttributeConfig.attrName && (row[iconAttributeConfig.attrName] === iconAttributeConfig.attrValue || (row.customAttribute ? row.customAttribute[iconAttributeConfig.attrName] === iconAttributeConfig.attrValue : false))" class="ipd-indication list-icon-style" ng-class="iconAttributeConfig.icon" ng-style="{{iconAttributeConfig.iconStyle}}"></i>
+                            </span>
+                            </div>
+                            <span ng-if="::(!isHeadingOfLinkColumn(heading.name) && !isHeadingOfName(heading.name))">
+                                {{::(isHeadingOfDateColumn(heading.name) ? (row[heading.name] | bahmniDate) : row[heading.name])}}
+                            </span>
+                        </td>
+                        <td ng-if="search.shouldShowQueueAction()">
+                            <button class="confirm" ng-if="row.tokenStatus !== 'COMPLETED'" ng-click="handleCall(row)">Call</button>
+                        </td>
+                        <td ng-if="search.shouldShowQueueAssignAction() && canSeeAssignQueueAction">
+                            <button class="confirm" style="font-size:0.9em; padding:8px;" ng-if="row.tokenStatus !== 'COMPLETED'" ng-click="assignQueueAction(row)">
+                                <span ng-if="row.queue != ''">Change Doctor</span>
+                                <span ng-if="row.queue == ''">Assign Doctor</span>
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </resize>
+        <resize ng-if="search.isTileView()" search-results="search.searchResults"
+                visible-results="search.visiblePatients" class="active-visits">
+            <ul>
+                <li data-ng-init="start(patient)" ng-repeat="patient in search.visiblePatients" class="active-patient" ng-click="forwardPatient(patient)">
+                    <img class="smallImages" ng-src="{{::patient.image}}" fallback-src='../images/blank-user.png'>
+                    <div class="patient-name">{{::patient.name}}</div>
+                    <div class="patient-id">{{::patient.identifier}}</div>
+                    <i class="ipd-indication fa fa-bed" ng-style ="style(patient)" ng-if="::(patient.hasBeenAdmitted===true||patient.hasBeenAdmitted==='true')"></i>
+                    <i class="ipd-indication fa fa-ambulance" ng-style ="{'background-color': patient.triageColor}" 
+                    ng-if="patient.triageColor !== undefined && patient.triageColor !=='notAssigned'"></i>
+                </li>
+            </ul>
+        </resize>
+        <div ng-if="search.isCustomView()">
+            <div ng-include="search.searchType.templateUrl"></div>
+        </div>
+        <div class="note-container" ng-if="search.noResultsMessage">
+            <div class="note warning">
+                <div class="text">
+                    <p class="ng-binding">{{::search.noResultsMessage | translate}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,37 @@
+<div class="opd-header-wrapper">
+    <div class="opd-header-top">
+        <header>
+            <bm-back-links></bm-back-links>
+            <div class="fr">
+                <div class="retro-date-widget-wrapper"
+                     show-if-privilege="{{retrospectivePrivilege}},{{onBehalfOfPrivilege}},{{locationPickerPrivilege}}"
+                     ng-if="getTitle()">
+                    <div class="retro-date-widget-header fr">
+                        <div style="position: absolute; margin-left: 180px; height: 20px; width:20px;text-align:center; background-color: red; border-radius: 50%; color: white;" ng-if="(linkNotCount || labResultExists || radResultExists || patResultExists || procResultExists || dtpCaseExists)"><b>{{linkNotCount + labNotCount + radNotCount + patNotCount + procNotCount + dtpNotCount}}</b></div>
+                        <button ng-click="popUpHandler()">{{ getTitle() | translate }}</button>
+                        <button ng-click="toggleList()" ng-if="linkedExists || labResultExists || radResultExists || patResultExists || procResultExists || dtpCaseExists" style="border-radius: 50%; margin-left: 20px; width: 40px; height: 40px">
+                            <i class='fa fa-bell fa-white' style="font-size: 20px; margin-left: -6px;"></i>
+                        </button>
+                        <button ng-if="!linkedExists && !labResultExists && !radResultExists && !patResultExists && !procResultExists && !dtpCaseExists" style="border-radius: 50%; margin-left: 20px; width: 40px; height: 40px">
+                            <i class='fa fa-bell-slash fa-white' style="font-size: 20px; margin-left: -8px;"></i>
+                        </button>
+                        
+                    </div>
+                    <button class="btn-user-info">
+                        <i class="fa fa-user-md fa-white small"></i>
+                        <i class="fa fa-caret-down fa-white mini"></i>
+                    </button>
+                    <ul>
+                        <li>
+                            <a log-out>
+                                <i class="fa fa-power-off fa-white small"></i>
+                                <span class="nav-link">{{::'LOGOUT_TRANSLATION_KEY' | translate}}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="additional-header" ui-view="additional-header"></div>
+        </header>
+    </div>
+</div>

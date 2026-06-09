@@ -1,0 +1,20 @@
+<div class="revise-refill-modal-wrapper" aria-labelledby="dialog-label">
+    <!--Added to override the z-index property of the top navigation bar. It is done to prevent any user action
+    when the popup is shown-->
+    <style type="text/css">
+        .opd-header-wrapper {
+            z-index: 10000 !important;
+        }
+    </style>
+    <div class="dialog-button-group">
+        <a ng-href="../clinical/index.html#/default/patient/{{patient.uuid}}/dashboard/orders"
+        title="By clicking on this button or the 'Orders' tab above, you can view the test that needs to be sent. Then, click the save button to confirm and send the request."
+        target="_self"
+        class="button"
+        style="padding: 10px; color: forestgreen; font-style: oblique;">
+        <i class="fa fa-pencil-square-o"></i>Click here or <strong>Orders</strong> tab to send requests
+        </a>
+    </div>
+
+    <span class="ngdialog-end"></span>
+</div>

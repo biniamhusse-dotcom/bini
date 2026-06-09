@@ -1,0 +1,21 @@
+[
+    {
+        "resultConcept": "BMI",
+        "operands": ["Weight", "Height"],
+        "formula": "(Weight / (Height * Height)) * 10000"
+    },
+    {
+        "resultConcept": "Triage Score",
+        "operands": ["RR Data", "Pulse Data", "Systolic Data", "SPO2 Data", "Temperature Data", "Mobility", "AVPU", "Trauma"],
+        "formula": "RR Data + Pulse Data + Systolic Data + SPO2 Data + Temperature Data + Mobility + AVPU + Trauma",
+        "scoreBased": true
+    },
+    {
+        "resultConcept": "Estimated Date of Delivery",
+        "operands": ["Last Menstrual Period"],
+        "formula": 282,
+        "conditioner": {"key": "Source of Gestational Age", "value": "LNMP"},
+        "resultType": "Date",
+        "operator": "+"
+    }
+]

@@ -1,0 +1,21 @@
+<div class="form-field" ng-repeat="attributeType in programAttributeTypes | orderBy: 'attributeType.sortWeight'" ng-show="!patientProgram.editing" ng-if="isIncluded(attributeType)">
+    <br>
+    <div class="field-attribute">
+        <span ng-hide="attributeType.format != 'N/A'" style="background-color: #ccc; padding-left: 5px; padding-right: 5px; font-weight: lighter;" class="section-title">{{'PROGRAM_HEADER_LINE_KEY' | translate}}<span style="font-weight: bold;">{{attributeType.description}}</span>{{attributeType.headerLine}}</span>
+        <label ng-hide="attributeType.format == 'N/A'">{{attributeType.description}} : </label>
+    </div>
+    <div class="field-value">
+        <span ng-hide="attributeType.format == 'N/A'">
+            {{getValueForAttributeType(attributeType)}}
+        </span>
+    </div>
+    <br>
+</div>
+<div  ng-show="patientProgram.editing" class="programEditing">
+    <article class="form-field" ng-repeat="attributeType in programAttributeTypes" ng-if="isIncluded(attributeType)">
+        <br>
+        <span ng-hide="attributeType.format != 'N/A'" style="background-color: #ccc; padding-left: 5px; padding-right: 5px; font-weight: lighter;" class="section-title">{{'PROGRAM_HEADER_LINE_KEY' | translate}}<span style="font-weight: bold;">{{attributeType.description}}</span>{{attributeType.headerLine}}</span>
+        <attribute-types target-model="patientProgram.patientProgramAttributes" attribute="attributeType"
+                         ng-hide="attributeType.format == 'N/A' || getValueForAttributeType(attributeType);" ng-disabled="getValueForAttributeType(attributeType);"></attribute-types>
+    </article>
+</div>

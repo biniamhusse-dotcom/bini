@@ -1,0 +1,5 @@
+Correction: Previous commit (e960b34) message was incorrect  
+
+- The commit (e960b34) was pushed unintentionally with an incorrect message.  
+- The actual change in that commit was merging inpatient modules from BORU MEDA GENERAL HOSPITAL (release-0.93) and Bahmni-1.0.0.  
+- No unintended changes were introduced; only the message was inaccurate.

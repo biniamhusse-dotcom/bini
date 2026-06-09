@@ -1,0 +1,193 @@
+{
+    "emergency_triage": {
+        "id": "bahmni.registration.erTriage",
+        "extensionPointId": "org.bahmni.registration.triage.dashboard",
+        "type": "link",
+        "label": "Emergency Triage",
+        "url": "#/erSearch",
+        "icon": "fa-wheelchair",
+        "order":6,
+        "requiredPrivilege": "app:registration"
+      },
+      "central_triage": {
+        "id": "bahmni.registration.crTriage",
+        "extensionPointId": "org.bahmni.registration.triage.dashboard",
+        "type": "link",
+        "label": "Central Triage",
+        "url": "#/crSearch",
+        "icon": "fa fa-user-plus",
+        "order":2,
+        "requiredPrivilege": "app:registration"
+      },
+     
+    "search":{
+        "id": "bahmni.registration.navigation.patient.search",
+        "extensionPointId": "org.bahmni.registration.navigation",
+        "type": "link",
+        "translationKey":"REGISTRATION_SEARCH_CONFIG_KEY",
+        "url": "/search",
+        "shortcutKey": "REGISTRATION_SEARCH_CONFIG_ACCESS_KEY",
+        "icon": "fa-search",
+        "order": 1,
+        "requiredPrivilege": "View Patients"
+    },
+    "createNew":{
+        "id": "bahmni.registration.navigation.patient.create",
+        "extensionPointId": "org.bahmni.registration.navigation",
+        "type": "link",
+        "translationKey": "REGISTRATION_CREATE_NEW_CONFIG_KEY",
+        "url": "/patient/new",
+        "icon": "fa-plus",
+        "shortcutKey": "REGISTRATION_CREATE_NEW_CONFIG_ACCESS_KEY",
+        "order": 2,
+        "requiredPrivilege": "Add Patients"
+    },
+    "view":{
+        "id": "bahmni.patient.search.result.action.edit",
+        "extensionPointId": "org.bahmni.registration.patient.search.result.action",
+        "type": "link",
+        "translationKey": "REGISTRATION_VIEW_CONFIG_KEY",
+        "url": "/patient/{{patientUuid}}",
+        "icon": "fa-patient-edit",
+        "order": 1,
+        "requiredPrivilege": "View Patients"
+    },
+    "edTriageValues":{
+        "id": "bahmni.registration.conceptSetGroup.edTriageValues",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "edconfig",
+        "extensionParams": {
+            "conceptName": "ED Triage Form - GYN",
+            "translationKey": "ED Triage Form - GYN",
+            "conceptNames": ["ED Triage Form - GYN"],
+            "required":true,
+            "showLatest": true
+        },
+        "order": 1,
+        "requiredPrivilege": "Edit Visits"
+    },
+    "edTriageValue":{
+        "id": "bahmni.registration.conceptSetGroup.edTriageValue",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "edforms",
+        "extensionParams": {
+            "formName": "ED Triage Form - GYN",
+            "conceptNames": ["ED Triage Form - GYN"],
+            "required":true,
+            "showLatest": true
+        },
+        "order": 3,
+        "requiredPrivilege": "Edit Visits"
+    },
+
+    "erTriageValues":{
+        "id": "bahmni.registration.conceptSetGroup.erTriageValues",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "erconfig",
+        "extensionParams": {
+            "conceptName": "Emergency Department Triage Form",
+            "translationKey": "EMERGENCY_DEPARTMENT_TRIAGE_FORM",
+            "conceptNames": ["Time of illness/accident", "Time at arrival to ED", "Time of Triage", "Triage Mode of arrival", "Origin of referral", "Was pre-Hospital Care Given", "Triage Chief Complaint", "Other", "Trauma", "Trauma Happened", "Non Trauma Complaints", "Triage Past Medical Illnesses", "Triage Allergies", "Vitals", "Mobility", "AVPU", "Triage Score", "Triage Code", "Clinical Presentation", "Treatment and investigation done on triage"],
+            "required":true,
+            "showLatest": true
+        },
+        "order": 1,
+        "requiredPrivilege": "Edit Visits"
+    },
+    "erTriageValue":{
+        "id": "bahmni.registration.conceptSetGroup.erTriageValue",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "erforms",
+        "extensionParams": {
+            "formName": "Emergency Department Triage Form",
+            "conceptNames": ["Time of illness/accident", "Time at arrival to ED", "Time of Triage", "Triage Mode of arrival", "Origin of referral", "Was pre-Hospital Care Given", "Triage Chief Complaint", "Other", "Trauma", "Trauma Happened", "Non Trauma Complaints", "Triage Past Medical Illnesses", "Triage Allergies", "Vitals", "Mobility", "AVPU", "Triage Score", "Triage Code", "Clinical Presentation", "Treatment and investigation done on triage"],
+           "required":true,
+            "showLatest": true
+        },
+        "order": 3,
+        "requiredPrivilege": "Edit Visits"
+    },
+    "crTriageValues":{
+        "id": "bahmni.registration.conceptSetGroup.crTriageValues",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "crconfig",
+        "extensionParams": {
+            "conceptName": "Central Triage Form",
+            "conceptNames": ["Systolic Data", "Diastolic Data", "Posture", "Temperature Data", "RR Data", "SPO2 Data","RBS", "FBS", "Triage category","HEIGHT", "WEIGHT", "BMI Data", "BMI Status Data", "Triage Score", "Triage Code"],
+            "translationKey": "Cental Triage Form",
+           
+            "required":true,
+            "showLatest": true
+        },
+        "order": 1,
+        "requiredPrivilege": "Edit Visits"
+    },
+    "crTriageValue":{
+        "id": "bahmni.registration.conceptSetGroup.crTriageValue",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "crforms",
+        "extensionParams": {
+            "formName": "Central Triage Form",
+            "conceptNames": ["Systolic Data", "Diastolic Data", "Posture", "Temperature Data", "RR Data", "SPO2 Data","RBS", "FBS", "Triage category","HEIGHT", "WEIGHT", "BMI Data", "BMI Status Data", "Triage Score", "Triage Code"],
+            "required":true,
+            "showLatest": true
+        },
+        "order": 3,
+        "requiredPrivilege": "Edit Visits"
+    },
+    "obTriageValues":{
+        "id": "bahmni.registration.conceptSetGroup.obTriageValues",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "obconfig",
+        "extensionParams": {
+            "conceptName": "Obstetrics",
+            "conceptNames": ["Fundal Height (Weeks)", "Cephalic", "Breech", "Transverse", "LMP"],
+            "translationKey": "Obstetrics Form",
+            "required":true,
+            "showLatest": true
+        },
+        "order": 1,
+        "requiredPrivilege": "Edit Visits"
+    },
+    "obTriageValue":{
+        "id": "bahmni.registration.conceptSetGroup.obTriageValue",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "obforms",
+        "extensionParams": {
+            "formName": "Pediatrics Triage Form",
+            "conceptNames": ["Pediatrics Triage Form"],
+            "required":true,
+            "showLatest": true
+        },
+        "order": 3,
+        "requiredPrivilege": "Edit Visits"
+    },   
+     "pdTriageValues":{
+        "id": "bahmni.registration.conceptSetGroup.pdTriageValues",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "pdconfig",
+        "extensionParams": {
+            "conceptName": "Pediatrics Triage Form",
+            "conceptNames": ["Pediatrics Triage Form"],
+            "translationKey": "Pediatrics Triage Form",
+            "required":true,
+            "showLatest": true
+        },
+        "order": 1,
+        "requiredPrivilege": "Edit Visits"
+    },
+    "pdTriageValue":{
+        "id": "bahmni.registration.conceptSetGroup.pdTriageValue",
+        "extensionPointId": "org.bahmni.registration.conceptSetGroup.observations",
+        "type": "pdforms",
+        "extensionParams": {
+            "formName": "Obstetrics",
+            "conceptNames": ["Fundal Height (Weeks)", "Cephalic", "Breech", "Transverse", "FHS", "LMP"],
+            "required":true,
+            "showLatest": true
+        },
+        "order": 3,
+        "requiredPrivilege": "Edit Visits"
+    }
+
+}

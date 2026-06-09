@@ -1,0 +1,77 @@
+<style>
+    #conceptSetTitle {
+        cursor: pointer; /* Change the cursor to a pointer */
+        transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+    }
+
+    /* On hover, change background and text color */
+    #conceptSetTitle:hover {
+        background-color: #f1f5f6; /* Slightly lighter shade for hover */
+        color: green; /* Change text color */
+    }
+</style>
+<div>
+    <div>
+        <span style="color: rgb(92, 2, 2); font-weight: bolder; margin-left: 25%; font-family: 'Times New Roman', Times, serif; font-style: italic;"><i class="fa fa-info-circle"> <strong>Click on the order you are looking for to enter the result!</strong></i></span>
+        <br> <br>
+        <table border="1" style="width:100%; border-collapse: collapse; background: #557A7B;">
+            <tr style="color: black;">
+                <th>Orders</th>
+                <th>Accession N<u>o</u></th>
+                <th>Lab <u>I</u>D</th>
+                <th>Provider</th>
+                <th>Date</th>
+                <th>Notes</th>
+                <th>Result Status</th>
+                <th>Payment Status</th>
+            </tr>
+            <!-- Iterate over the orders -->
+            <tr ng-repeat-start="order in orders" style="color: black;">
+                <td>
+                    <div id="{{order.orderUuid}}" style="position: relative">
+                        <div class="concept-set-title" ng-click="toggleShowOrderForm(order)" id="conceptSetTitle">
+                            <i class="fa fa-caret-right" ng-hide="order.showForm"></i>
+                            <i class="fa fa-caret-down" ng-show="order.showForm"></i>
+                            <span>{{order.concept.shortName || order.concept.name}}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>{{order.orderNumber}}</td>
+                <td>{{order.serialNumber}}</td>
+                <td>
+                    {{order.provider}}
+                </td>
+                <td>{{order.orderDate | bahmniDateTime}}</td>
+                <td>
+                    <div>
+                        <i ng-if="::order.commentToFulfiller" class="fa fa-comments"></i>
+                        <span>{{order.commentToFulfiller}}</span>
+                    </div>
+                </td>
+                <td>
+                    <span ng-if="order.commentToFulfiller" class="fa fa-file-text-o"></span>
+                </td>
+                <td>
+                    <span ng-if="!order.paymentStatus">
+                        <i style="color: red;">Not Paid</i>
+                    </span>
+                    <span ng-if="order.paymentStatus">
+                        <i style="color: green;">Paid</i>
+                    </span>
+                </td>
+            </tr>
+            <!-- This row will only show when the order.showForm is true -->
+            <tr ng-repeat-end ng-if="order.showForm && order.paymentStatus" style="color: black;">
+                <td colspan="8">
+                    <orders-control patient="patient" order-uuid="order.orderUuid" config="config" message="message" show-title="false"></orders-control>
+                    <concept-set patient="patient" ng-if="order.showForm" concept-set-name="formName" observations="order.bahmniObservations" show-title="false" section-id="order.orderUuid">
+                    </concept-set>
+                </td>
+            </tr>
+        </table>        
+
+    </div>
+    <div ng-show="orders && orders.length == 0">
+        <div class="placeholder-text">{{getEmptyMessage()}}</div>
+    </div>
+</div>

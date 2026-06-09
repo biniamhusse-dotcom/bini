@@ -1,0 +1,13 @@
+<section class="add-app-wrapper">
+    <header>
+        <nav>
+            <a show-if-privilege="{{manageLiaisonSchedulePrivilege}}" ng-class="{'active': getCurrentTabName() === 'waitingList'}" ng-click="navigateTo('appointments.waitingList')">{{ ::'APPOINTMENT_WAITING_LIST' | translate}}</a>
+            <a show-if-privilege="{{manageLiaisonSchedulePrivilege}}" ng-class="{'active': getCurrentTabName() === 'backlogList'}" ng-click="navigateTo('appointments.backlogList')">{{ ::'APPOINTMENT_BACKLOG_LIST' | translate}}</a>
+        </nav>
+    <br/><br/><br/>
+    </header>
+    <div>
+    <div class="common-filter-wrapper" ui-view="filter"></div>
+    <div ui-view="content@manage"></div>
+    </div>
+</section>

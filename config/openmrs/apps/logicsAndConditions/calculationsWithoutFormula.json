@@ -1,0 +1,65 @@
+[
+    {
+        "logics": [
+            {
+                "trigger": "Triage Score",
+                "value": 7,
+                "operator": ">="
+            }
+        ],
+        "dependentValue": "Triage Code, Red",
+        "dependent": "Triage Code",
+        "logic_key": 1
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Score",
+                "minValue": 5,
+                "maxValue": 6,
+                "operator": "between, <=, <="
+            }
+        ],
+        "dependentValue": "Triage Code, Orange",
+        "dependent": "Triage Code",
+        "logic_key": 2
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Score",
+                "minValue": 3,
+                "maxValue": 4,
+                "operator": "between, <=, <="
+            }
+        ],
+        "dependentValue": "Triage Code, Yellow",
+        "dependent": "Triage Code",
+        "logic_key": 3
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Score",
+                "minValue": 0,
+                "maxValue": 2,
+                "operator": "between, <, <="
+            }
+        ],
+        "dependentValue": "Triage Code, Green",
+        "dependent": "Triage Code",
+        "logic_key": 4
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Score",
+                "value": 0,
+                "operator": "<="
+            }
+        ],
+        "dependentValue": "Triage Code, Black",
+        "dependent": "Triage Code",
+        "logic_key": 5
+    }
+]

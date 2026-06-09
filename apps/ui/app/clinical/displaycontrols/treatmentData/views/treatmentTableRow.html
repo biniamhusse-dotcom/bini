@@ -1,0 +1,64 @@
+
+<tr ng-style="drugOrder.dtpCases ? {'background-color': '#f8d7da'} : {}" 
+    ng-class="::{ 
+        active: drugOrder.isActive(), 
+        'test-notes-parent': (drugOrder.additionalInstructions || ''), 
+        'notes-open': (drugOrder.showDetails == true) 
+    }">
+    
+    <td class="drug" ng-class="::{'strike-text':drugOrder.isDiscontinuedOrStopped(), 'active-drug': drugOrder.isActive(), 'scheduled-drug': drugOrder.isScheduled()}">
+        <span >{{::drugOrder.getDrugOrderName((params.showDrugForm == true))}}</span>
+        <span ng-repeat="orderAttribute in drugOrder.orderAttributes" ng-if="::orderAttribute.value == 'true'" ng-class="'drug-attr-highlight'">
+            {{::orderAttribute.name.substring(0,1)}}
+        </span>
+        <span ng-if="drugOrder.dtpCases">
+            <i ng-if="!drugOrder.showDtpCases" class="fa fa-exclamation-circle" 
+               title="{{drugOrder.dtpCases}}" 
+               ng-click="drugOrder.showDtpCases = true" 
+               style="cursor: pointer; color: red;"></i>
+
+               <div ng-if="drugOrder.showDtpCases" style="position: relative;">
+                <div style="position: absolute; top: 10px; z-index: 9999; background-color: #ddeeff; color: #721c24; padding: 15px; border: 1px solid #a9d8e4; border-radius: 10px; width: 300px; white-space: pre-wrap; line-height: 20px; font-family: 'Times New Roman', Times, serif; font-style: italic; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                    <i class="fa fa-times" style="position: absolute; top: 5px; right: 10px; cursor: pointer;" ng-click="drugOrder.showDtpCases = false"></i>
+                    <strong>DTP Case Details:</strong>
+                    <p>{{drugOrder.dtpCases}}</p>
+                </div>
+            </div>            
+        </span>
+    </td>
+    <td class="dosage" >
+        <span ng-if="::(params.showRoute == true)" ng-class="::{'strike-text':drugOrder.isDiscontinuedOrStopped()}">{{::drugOrder.getDescriptionWithoutDuration()}}</span>
+        <span ng-if="::!(params.showRoute == true)" ng-class="::{'strike-text':drugOrder.isDiscontinuedOrStopped()}">{{::drugOrder.getDescriptionWithoutRouteAndDuration()}}</span>
+        <span>{{::drugOrder.getSpanDetails()}}</span>
+        <span ng-if="::drugOrder.isDiscontinuedOrStopped()" ng-class="::{'discontinued-text':drugOrder.isDiscontinuedOrStopped()}">{{'MEDICATION_STOPPED_ON'|translate}} {{::drugOrder.effectiveStopDate | bahmniDate}}</span>
+    </td>
+    <td class="days" ng-if="::(!params.hideVisitDate)">
+        <span class="fr">{{::drugOrder.effectiveStartDate | bahmniDate}}</span>
+    </td>
+    <td class="toggle-btn" toggle="drugOrder.showDetails" ng-if="::((params.showDetailsButton == true) && !drugOrder.additionalInstructions)">
+        <button class="toggle fr">
+            <i class="fa fa-angle-down"></i>
+            <i class="fa fa-angle-up"></i>
+        </button>
+    </td>
+</tr>
+<tr ng-if="::drugOrder.additionalInstructions" ng-class="::{'has-test-notes': drugOrder.additionalInstructions}">
+    <td colspan="5" class="notes test-notes">
+        <i class="fa fa-comments left"></i>
+        <pre class="left">{{::drugOrder.additionalInstructions}}</pre>
+        <div class="footer-note right">
+            <span class="provider" ng-if="::params.showProvider">
+                <provider-directive creator-name="{{::drugOrder.creatorName}}" provider-name="{{::drugOrder.provider.name}}" provider-date="::drugOrder.effectiveStartDate"></provider-directive>
+            </span>
+        </div>
+    </td>
+</tr>
+<tr bm-show="drugOrder.showDetails" ng-if="::(!drugOrder.additionalInstructions && !params.hideVisitDate)">
+    <td colspan="5" class="notes inline-notes">
+        <div class="footer-note right">
+            <span class="provider" ng-if="::params.showProvider">
+                <provider-directive creator-name="{{::drugOrder.creatorName}}" provider-name="{{::drugOrder.provider.name}}" provider-date="::drugOrder.effectiveStartDate"></provider-directive>
+            </span>
+        </div>
+    </td>
+</tr>

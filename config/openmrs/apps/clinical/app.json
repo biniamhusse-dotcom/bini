@@ -1,0 +1,379 @@
+{
+    "id": "bahmni.clinical",
+    "extensionPoints": [
+        {
+            "id": "org.bahmni.clinical.consultation.board",
+            "description": "Bahmni Clinical Consultation Page"
+        },
+        {
+            "id": "org.bahmni.clinical.conceptSetGroup.*",
+            "description": "Define conceptsets part of a conceptset group"
+        },
+        {
+            "id": "org.bahmni.clinical.orders",
+            "description": "Bahmni Orders Page"
+        },
+        {
+            "id": "org.bahmni.patient.search",
+            "description": "Bahmni Patient search, lookups Page"
+        }
+    ],
+    "contextModel": [
+        "patientUuid",
+        "visitUuid"
+    ],
+    "config": {
+        "paymentConfig": {
+            "disable checking": false
+        },
+        "showSaveConfirmDialog": false,
+        "hideConditions": false,
+        "enableRadiologyOrderOptions":["Urgent","NeedsPrint"],
+        "enableLabOrderOptions": [ "Urgent", "NeedsPrint" ],
+        "allMedicinesInPrescriptionAvailableForIPD": true,
+        "enableIPDFeature": true,
+        "allergyControlConceptIdMap": {
+            "medicationAllergenUuid": "162552AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "foodAllergenUuid": "162553AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "environmentalAllergenUuid": "162554AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "allergyReactionUuid": "162555AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "allergySeverityUuid": "160223AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        },
+        "showTextAsAbnormal": false,
+        "quickPrints":false,
+        "allowAdhocTeleConsultation": false,
+        "teleConsultationDomain": "meet.jit.si",
+        "networkConnectivity" : {
+            "showNetworkStatusMessage": false,
+            "networkStatusCheckInterval": 20000,
+            "locales" : [
+                { "locale" : "fr", "css" : "offline-language-french"},
+                { "locale" : "es", "css": "offline-language-spanish"},
+                { "locale" : "pt", "css": "offline-language-portuguese-brazil"}
+            ]
+        },
+        "diagnosisStatus": "Inactive",
+        "program": {
+            "patientInformation": {
+                "ageLimit": 100
+            },
+            "ID_Number": {
+                "required": true
+            },
+            "MDRTB registration number": {
+                "required": true
+            },
+            "MDRTB Treatment Started Date": {
+                "required": true
+            },
+            "Co-morbidites": {
+                "excludeFrom": [
+                    "HIV Program"
+                ]
+            },
+            "Doctor": {
+                "excludeFrom": [
+                    "TB Program"
+                ]
+            }
+        },
+        "patientContext": {
+            "programAttributes": [
+                "Id_Number",
+                "Doctor",
+                "Stage"
+            ],
+            "personAttributes": [
+                "class",
+                "caste"
+            ],
+            "additionalPatientIdentifiers": [
+                "National ID"
+            ],
+            "preferredIdentifier": "Id_Number"
+        },
+        "obsIgnoreList": [
+            "REGISTRATION FEES",
+            "COMMENTS",
+            "Patient file"
+        ],
+        "orderTypeClassMap" :{
+            "Lab Samples": ["Test","LabSet","LabTest"],
+            "Radiology Orders": ["Radiology","Radiology/Imaging Procedure"],
+            "Procedure Orders": ["Procedure"]
+        },
+        "otherInvestigationsMap": {
+            "Radiology": "Radiology Order",
+            "Endoscopy": "Endoscopy Order"
+        },
+        "formsAndPrivileges": [
+            {
+                "privileges": ["app:pathologyOrders"],
+                "formsForEdit": ["OB-Bone Marrow Aspiration Cytology", "OB-Body Fluid Cytology", "OB-Fine Needle Aspiration Cytology", "OB-Biopsy", "OB-GYN Cytology"],
+                "formsForView": ["ALL"]
+            },
+            {
+                "privileges": ["app:onlyRadiologyOrders"],
+                "formsForEdit": ["Summary", "Obstetric Ultrasound Result Report Form"],
+                "formsForView": ["ALL"]
+            }
+        ],
+        "allowLongDurationObservationEdit": ["OB-Bone Marrow Aspiration Cytology", "OB-Body Fluid Cytology", "OB-Fine Needle Aspiration Cytology", "OB-Biopsy", "OB-GYN Cytology", "Summary", "Obstetric Ultrasound Result Report Form"],
+        "EMR_eAPTS_endPoint": "https://10.139.8.28:443/stockStatus",
+        "enableDrugStockStatusCheck": false,
+        "allowPrescriptionWithOutICD11": true,
+        "allowConsultationWhenNoOpenVisit": false,
+        "defaultVisitType": "OPD",
+        "visitTypeForRetrospectiveEntries": "Special OPD",
+        "maxConceptSetLevels": 3,
+        "allowOnlyCodedDiagnosis": false,
+        "ignoredTabularViewHeadings": ["uuid","activeVisitUuid","hasBeenAdmitted","display","image","$$hashKey","birthDate","extraIdentifiers","personId","deathDate","addressFieldValue","dateCreated","customAttribute","patientProgramAttributeValue"],
+        "identifierHeadings": ["identifier"],
+        "conceptSetUI": {
+            "Intrapartum Care and follow-up; Monitoring Progress Of labor Using Partograph": {
+                "type": "partograph",
+                "labels": {
+                    "Cervical Dilation Graph": "Cervix (cm)",
+                    "New Fetal Heart Beat": "Fetal Heart Beat",
+                    "Contraction per 10 minutes": "Contractions / 10 min"
+                }
+            },
+            "Chief Complaint Data": {
+                "autocomplete": true,
+                "codedConceptName": "Chief Complaint",
+                "nonCodedConceptName": "Non-Coded Chief Complaint",
+                "durationRequired": false,
+                "allowAddMore": true,
+                "required": true
+            },
+            "Tuberculosis, Adverse Effects": {
+                "multiSelect": true,
+                "autocomplete": true
+            },
+            "Posture": {
+                "buttonSelect": true,
+                "disableAddNotes": true
+            },
+            "P/A Presenting Part": {
+                "multiSelect": true
+            },
+            "FHS": {
+                "buttonSelect": true
+            },
+            "P/S (Per Speculum) - Cervix": {
+                "grid": true
+            },
+            "Acute Respiratory Illness, Symptoms": {
+                "multiSelect": true
+            },
+            "Anaemia, Stopped Since When": {
+                "conciseText": true
+            },
+            "Examination Notes": {
+                "conciseText": true
+            },
+            "Set1": {
+                "allowAddMore": true
+            },
+            "Vitals": {
+                "allowAddMore": true
+            },
+            "PICU Medication Administration Sheet": {
+                "allowAddMore": true
+            },
+            "Mgso4 use for Eclamptic and pre-Eclamptic Women follow up Sheet": {
+                "allowAddMore": true
+            },
+            "Preeclampisia and Eclampisia Format": {
+                "allowAddMore": true
+            },
+            "Induction/Augmentation Form": {
+                "allowAddMore": true
+            },
+            "Labor Follow-up Sheet": {
+                "allowAddMore": true
+            },
+            "PICU Medication Administration": {
+                "allowAddMore": true
+            },
+            "Medication Administration Record": {
+                "allowAddMore": true
+            },
+            "Set2": {
+                "allowAddMore": true
+            },
+            "Coded3": {
+                "multiSelect": true
+            },
+            "Image": {
+                "allowAddMore": true
+            },
+            "Gynaecology, Gravida": {
+                "stepper": true
+            },
+            "Accepted Family Planning methods": {
+                "multiSelect": true
+            },
+            "DN Brief Medical History": {
+                "required": true
+            },
+            "Pelvic Assessment (as indicated/ required)": {
+                "required": true
+            },
+            "DN Date and time of death": {
+                "required": true
+            },
+            "DN Important physical examination finding": {
+                "required": true
+            },
+            "DN Immediate cause of death": {
+                "required": true
+            },
+            "DS Final diagnosis": {
+                "required": true
+            },
+            "Doctor who confirm death": {
+                "required": true
+            },
+            "DS Date of Discharge": {
+                "required": true
+            },
+            "Brief History of illness": {
+                "required": true
+            },
+            "DS Patient physical examination": {
+                "required": true
+            },
+            "Condition on discharge": {
+                "required": true
+            },
+            "History Notes": {
+                "required": true
+            },
+            "Estimated Date of Delivery": {
+                "allowFutureDates": true
+            },
+            "Appintment date": {
+                "allowFutureDates": true
+            },
+            "DAK, Expected date of delivery (EDD)": {
+                "allowFutureDates": true,
+                "customMinDate": 1
+            },
+            "Last Menstrual Period": {
+                "customMinDate": 280,
+                "customMaxDate": 14
+            },
+            "DAK, Ultrasound date": {
+                "customMinDate": 270
+            },
+            "DAK, Date of miscarriage or abortion": {
+                "customMinDate": 60,
+                "customMaxDate": 14
+            },
+            "Initial evaluation, Appointment for next follow-up": {
+                "allowFutureDates": true
+            },
+            "Pattern of food intake": {
+                "multiSelect": true
+            },
+            "HP History and Physical Examination": {
+                "allowAddMore": true
+            },
+            "Order sheet": {
+                "allowAddMore": true
+            },
+            "PPH PPH-Follow Up Sheet": {
+                "allowAddMore": true
+            },
+            "Preclampsia and eclampsia chart": {
+                "allowAddMore": true
+            },
+            "PS Progress/Follow-up Sheet": {
+                "allowAddMore": true
+            },
+            "BMH ICU Vital sign": {
+                "allowAddMore": true
+            },
+            "BMH Other general services": {
+                "allowAddMore": true
+            },
+            "BMH Nurse set": {
+                "allowAddMore": true
+            },
+             "BMH Senior Set": {
+                "allowAddMore": true
+            },
+             "BMH Blood Transfussion Follows up Forms set": {
+                "allowAddMore": true
+            }, 
+             
+            "Vital Sign for Infants": {
+                "allowAddMore": true
+            },
+ 
+            "BMH Neonatal Vital Sign": {
+                "allowAddMore": true
+            },
+              "DKA Follow up Sheet": {
+                "allowAddMore": true
+            },                    
+            "Nursing and midwifery hourly round sheet for critical patient": {
+                "allowAddMore": true
+            },
+            "Reason for follow-up": {
+                "dropdown": true
+            },
+            "Reason for stopping contraception or method": {
+                "dropdown": true
+            },
+            "Type of breastfeeding": {
+                "dropdown": true
+            },
+            "Miscarriage or abortion stage of pregnancy": {
+                "dropdown": true
+            },
+            "Method at intake": {
+                "multiSelect": true,
+                "autocomplete": true
+            },
+            "Reason for no contraceptive method": {
+                "multiSelect": true,
+                "autocomplete": true
+            },
+            "Contraceptive Methods previously used": {
+                "multiSelect": true,
+                "autocomplete": true
+            },
+            "Calculated Date": {
+                "allowFutureDates": true
+            },
+            "defaults": {
+                "Number of living children": 1,
+                "Accepted Family Planning methods": [
+                    "Condoms",
+                    "Pills"
+                ],
+                "Pain management given": true,
+                "Safe Abortion, Remarks": "Remarks",
+                "Malaria, Death Date": "2015-12-01"
+            },
+            "Follow up Date" : {
+                "allowFutureDates": true
+            },
+            "Date of Operation" : {
+                "allowFutureDates": true
+            }
+        },
+        "visitPage": {
+            "observationDisplay": {
+                "conceptNames": []
+            }
+        },
+        "patientSearch": {
+            "debounceSearch": false,
+            "fetchDelay": 2000,
+            "serializeSearch": false
+        }
+    }
+}

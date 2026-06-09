@@ -1,0 +1,12 @@
+[
+    {
+        "case": "DAK, Pregnancy confirmed",
+        "value": true,
+        "orderables": ["WBC", "RBC"]
+    },
+    {
+        "case": "DAK, Ultrasound required",
+        "value": true,
+        "orderables": ["Abdomen u/s"]
+    }
+]

@@ -1,0 +1,14 @@
+[
+	{
+		"conditions": [
+			{
+				"key": "Result Stage",
+				"value": "Pending (In Progress)",
+				"operator": "="
+			}
+		],
+		"action": "Click on the patient's name and MRN above to go to the patient dashboard. Then, scroll down to the 'Forms' section. Locate the form you need, and click the pencil icon in front of it to open and save your progress.",
+		"annotation": "No more detail available",
+		"action_key": 1
+	}
+]

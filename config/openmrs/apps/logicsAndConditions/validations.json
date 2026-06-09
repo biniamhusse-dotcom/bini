@@ -1,0 +1,10 @@
+[
+    {
+        "conceptName": "DAK, Fetal heart rate",
+        "operator": "beyond, <=, <=",
+        "minValue": 80,
+        "maxValue": 200,
+        "type": "restrict",
+        "message": "Fetal Heart rate should be between 80 bpm and 200 bpm"
+    }
+]    

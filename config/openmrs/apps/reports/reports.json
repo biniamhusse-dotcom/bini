@@ -1,0 +1,871 @@
+{
+  "MRU Report With Visit": {
+    "name": "MRU Report With Visit",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRU.sql"
+    }
+  },
+    "MRU Report With based on Gender Visit": {
+    "name": "MRU Report With based on Gender and Visit",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRU_visit_sex.sql"
+    }
+  },
+  "MRU Report Based on Gender": {
+    "name": "MRU Report By Sex and Age",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRUBySexAndAge.sql"
+    }
+  },
+  "MRU Report newly registered pt": {
+    "name": "MRU Report newly registered pt",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRUnewlyRegisteredPt.sql"
+    }
+  },
+  "MRU Report Based on Payment Type": {
+    "name": "MRU Report Based on Payment Type",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRUBasedOnPaymentType.sql"
+    }
+  },
+    "MRU Report Based on Payment Type Deteil": {
+    "name": "MRU Report Based on Payment Type Deteil",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRUBasedOnPaymentTypeDeteil.sql"
+    }
+  },
+  "MRU Report Based on Service Unit": {
+    "name": "MRU Report Based on Service Unit",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRUBasedOnServiceUnit.sql"
+    }
+  },
+  "MRU Report Based on Status": {
+    "name": "MRU Report Based on Status",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRUBasedOnStatus.sql"
+    }
+  },
+  "MRU Report Based on Medico Legal Cases": {
+    "name": "MRU Report Based on Medico Legal Cases",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRUBasedOnMedicoLegalCases.sql"
+    }
+  },
+  "app:reports": {
+    "name": "app:reports",
+    "type": "MRSGeneric",
+    "dataSet": "MRU",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MRN.sql"
+    }
+  },
+  "ICD-11 Primary Disease Report - New Cases": {
+    "name": "ICD-11 Disease Report Disaggregated by Age and Gender R (Includes only Primary Cases)",
+    "type": "MRSGeneric",
+    "dataSet": "Disease",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ICD11/ICD-11PrimaryDiseaseDisaggregatedByAgeAndGender-newCases.sql"
+    }
+  },
+  "ICD-11 Primary Disease Report - Repeat Cases": {
+    "name": "ICD-11 Disease Report Disaggregated by Age and Gender and visit Location (Includes only Primary Cases)",
+    "type": "MRSGeneric",
+    "dataSet": "Disease",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ICD11/ICD-11PrimaryDiseaseDisaggregatedByAgeAndGender-newcaseByvisitLocation.sql"
+    }
+  },
+  "ICD-11 Primary Disease Report Based on Age, Gender, New and Repeat": {
+    "name": "ICD-11 Disease Report Disaggregated by Age and Gender plus New and Repeat (Includes only Primary New and Repeat Cases)",
+    "type": "MRSGeneric",
+    "dataSet": "Disease",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ICD-11PrimaryDiseaseDisaggregatedByAgeAndGenderPlusNewRepeat.sql"
+    }
+  },
+  "ICD-11 All Disease Report - Primary Cases": {
+    "name": "ICD-11 All Disease Report Disaggregated by Age and Gender (Includes only all Primary Cases)",
+    "type": "MRSGeneric",
+    "dataSet": "Disease",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ICD11/ICD-11AllDiseaseDisaggregatedByAgeAndGender-PrimaryCases.sql"
+    }
+  },
+  "ICD-11 All Disease Report - Repeat Cases": {
+    "name": "ICD-11 All Disease Report Disaggregated by Age and Gender (Includes only all Repeat Cases)",
+    "type": "MRSGeneric",
+    "dataSet": "Disease",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ICD-11AllDiseaseDisaggregatedByAgeAndGender-repeatCases.sql"
+    }
+  },
+  "ICD-11 All Disease Report Based on Age, Gender, New and Repeat": {
+    "name": "ICD-11 All Disease Report Disaggregated by Age and Gender plus New and Repeat (Includes all Primary and Secondary Cases)",
+    "type": "MRSGeneric",
+    "dataSet": "Disease",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ICD-11AllDiseaseDisaggregatedByAgeAndGenderPlusNewRepeat.sql"
+    }
+  },
+  "Non-ICD-11 Disease Report": {
+    "name": "Non-ICD-11 Disease Report Disaggregated by Age and Gender (Includes only New Primary Cases)",
+    "type": "MRSGeneric",
+    "dataSet": "Disease",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/Non-ICD-11DiseaseDisaggregatedByAgeAndGender.sql"
+    }
+  },
+  "hypertensionReport": {
+    "name": "Hypertension Report",
+    "type": "MRSGeneric",
+    "dataSet": "Hypertension",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/hypertensionReport.sql"
+    }
+  },
+  "ANC_Merged": {
+    "name": "ANC Service Reports",
+    "type": "MRSGeneric",
+    "dataSet": "ANC",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ANCmergedReports.sql"
+    }
+  },
+  "HIVandVDRLReport": {
+    "name": "HIV and VDRL Report",
+    "type": "MRSGeneric",
+    "dataSet": "ANC",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/HIVandVDRL.sql"
+    }
+  },
+  "MCH_ContraceptiveNewAcceptorsByAge": {
+    "name": "Contraceptive New Acceptors by Age",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MCH_ContraceptiveNewAcceptorsByAge.sql"
+    }
+  },
+  "MCH_ContraceptiveRepeatAcceptorsByAge": {
+    "name": "Contraceptive Repeat Acceptors by Age",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MCH_ContraceptiveRepeatAcceptorsByAge.sql"
+    }
+  },
+  "MCH_ContraceptiveNewAcceptorsByMethod": {
+    "name": "Contraceptive New Acceptors by Method",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MCH_ContraceptiveNewAcceptorsByMethod.sql"
+    }
+  },
+  "MCH_ContraceptiveRepeatAcceptorsByMethod": {
+    "name": "Contraceptive Repeat Acceptors by Method",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MCH_ContraceptiveRepeatAcceptorsByMethod.sql"
+    }
+  },
+  "MCH_TotalPPFPacceptorsDisaggregatedByAge": {
+    "name": "Total PPFP acceptors, disaggregated by age",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MCH_TotalPPFPacceptorsDisaggregatedByAge.sql"
+    }
+  },
+  "MCH_TotalPPFPacceptorsDisaggregatedByMethod": {
+    "name": "Total PPFP acceptors, disaggregated by method",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MCH_TotalPPFPacceptorsDisaggregatedByMethod.sql"
+    }
+  },
+  "womenReceivedUterotonicsAfterDelivery": {
+    "name": "Total number of women who received uterotonics in the first one minute after delivery",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/womenReceivedUterotonicsAfterDelivery.sql"
+    }
+  },
+  "postnatalVisitsWithin_7_daysOfDelivery": {
+    "name": "Number of postnatal visits within 7 days of delivery",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/postnatalVisitsWithin_7_daysOfDelivery.sql"
+    }
+  },
+  "NumberOfSafeAbortionsPerformed": {
+    "name": "Number of safe abortions performed",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/NumberOfSafeAbortionsPerformed.sql"
+    }
+  },
+  "NumberOfPostAbortions_emergencyCare": {
+    "name": "Number of post abortion/emergency care",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/NumberOfPostAbortions_emergencyCare.sql"
+    }
+  },
+  "abortionCareDisaggregatedByTrimester": {
+    "name": "Number of women receiving comprehensive abortion care disaggregated by trimester",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/abortionCareDisaggregatedByTrimester.sql"
+    }
+  },
+  "WomenPostAbortionCareFP_DissaggByMethods": {
+    "name": "Number of women receiving post abortion care family planning methods disaggregated by Methods",
+    "type": "MRSGeneric",
+    "dataSet": "MCH",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/WomenPostAbortionCareFP_DissaggByMethods.sql"
+    }
+  },
+  "All_Leishmaniasis_Reports": {
+    "name": "All Leishmaniasis Reports",
+    "type": "MRSGeneric",
+    "dataSet": "Leishmaniasis",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/All_Leishmaniasis_Reports.sql"
+    }
+  },
+  "VLbyAgeAndeGender": {
+    "name": "Number of visceral leishmaniasis patients treated by age and sex",
+    "type": "MRSGeneric",
+    "dataSet": "Leishmaniasis",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/VLbyAgeAndeGender.sql"
+    }
+  },
+  "VLbyTrearmentType": {
+    "name": "Number of visceral leishmaniasis patients treated by treatment type",
+    "type": "MRSGeneric",
+    "dataSet": "Leishmaniasis",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/VLbyTrearmentType.sql"
+    }
+  },
+  "VLbyTrearmentOutcome": {
+    "name": "Number of visceral leishmaniasis patients treated by treatment outcome",
+    "type": "MRSGeneric",
+    "dataSet": "Leishmaniasis",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/VLbyTrearmentOutcome.sql"
+    }
+  },
+  "VLbyHIVtestResultStatus": {
+    "name": "Number of visceral leishmaniasis patients treated by HIV test result status",
+    "type": "MRSGeneric",
+    "dataSet": "Leishmaniasis",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/VLbyHIVtestResultStatus.sql"
+    }
+  },
+  "CLbyAgeAndeGender": {
+    "name": "Number of cutaneous leishmaniasis treated by age and sex",
+    "type": "MRSGeneric",
+    "dataSet": "Leishmaniasis",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/CLbyAgeAndeGender.sql"
+    }
+  },
+  "CLbyTrearmentType": {
+    "name": "Number of cutaneous leishmaniasis patients treated by type",
+    "type": "MRSGeneric",
+    "dataSet": "Leishmaniasis",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/CLbyTrearmentType.sql"
+    }
+  },
+  "CLbyTrearmentOutcome": {
+    "name": "Number of cutaneous leishmaniasis patients treated by treatment outcome",
+    "type": "MRSGeneric",
+    "dataSet": "Leishmaniasis",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/CLbyTrearmentOutcome.sql"
+    }
+  },
+  "ANCOPD_diseaseReport": {
+    "name": "ANC OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ANCOPD_diseaseReport.sql"
+    }
+  },
+  "ARTOPD_diseaseReport": {
+    "name": "ART OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ARTOPD_diseaseReport.sql"
+    }
+  },
+  "ChronicOPD_diseaseReport": {
+    "name": "Chronic OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ChronicOPD_diseaseReport.sql"
+    }
+  },
+  "DermatologyOPD_diseaseReport": {
+    "name": "Dermatology OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/DermatologyOPD_diseaseReport.sql"
+    }
+  },
+  "ENTOPD_diseaseReport": {
+    "name": "ENT OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ENTOPD_diseaseReport.sql"
+    }
+  },
+  "GyniObsOPD_diseaseReport": {
+    "name": "GyniObs OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/GyniObsOPD_diseaseReport.sql"
+    }
+  },
+  "MedicalOPD_diseaseReport": {
+    "name": "Medical OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MedicalOPD_diseaseReport.sql"
+    }
+  },
+  "OrthopedicsOPD_diseaseReport": {
+    "name": "Orthopedics OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/OrthopedicsOPD_diseaseReport.sql"
+    }
+  },
+  "OphthalmologyOPD_diseaseReport": {
+    "name": "Ophthalmology and Optometry OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/OphthalmologyOPD_diseaseReport.sql"
+    }
+  },
+  "PediatricOPD_diseaseReport": {
+    "name": "Pediatric OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/PediatricOPD_diseaseReport.sql"
+    }
+  },
+  "SurgicalOPD_diseaseReport": {
+    "name": "Surgical OPD ICD_11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/SurgicalOPD_diseaseReport.sql"
+    }
+  },
+  "ANCOPD_Non-ICD11diseaseReport": {
+    "name": "ANC OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ANCOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "ARTOPD_Non-ICD11diseaseReport": {
+    "name": "ART OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ARTOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "ChronicOPD_Non-ICD11diseaseReport": {
+    "name": "Chronic OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ChronicOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "DermatologyOPD_Non-ICD11diseaseReport": {
+    "name": "Dermatology OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/DermatologyOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "ENTOPD_Non-ICD11diseaseReport": {
+    "name": "ENT OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ENTOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "GyniObsOPD_Non-ICD11diseaseReport": {
+    "name": "GyniObs OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/GyniObsOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "MedicalOPD_Non-ICD11diseaseReport": {
+    "name": "Medical OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/MedicalOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "OrthopedicsOPD_Non-ICD11diseaseReport": {
+    "name": "Orthopedics OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/OrthopedicsOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "OphthalmologyOPD_Non-ICD11diseaseReport": {
+    "name": "Ophthalmology and Optometry OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/OphthalmologyOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "PediatricOPD_Non-ICD11diseaseReport": {
+    "name": "Pediatric OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/PediatricOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "SurgicalOPD_Non-ICD11diseaseReport": {
+    "name": "Surgical OPD Non-ICD11 Disease Report",
+    "type": "MRSGeneric",
+    "dataSet": "Non-ICD11 Disease By OPD (Includes only New Primary Cases)",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/SurgicalOPD_Non-ICD11diseaseReport.sql"
+    }
+  },
+  "EPIserviceReport": {
+    "name": "EPI Service Report",
+    "type": "MRSGeneric",
+    "dataSet": "EPI",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/EPI_service_report.sql"
+    }
+  },
+  "TTReport": {
+    "name": "TT Report",
+    "type": "MRSGeneric",
+    "dataSet": "EPI",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/TT.sql"
+    }
+  },
+  "visitReport10": {
+    "name": "Visit Report",
+    "type": "visits",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "forDataAnalysis": true,
+      "patientAttributes": [
+        "phoneNumber"
+      ],
+      "visitAttributes": [
+        "Visit Status",
+        "Admission Status"
+      ],
+      "patientAddresses": [
+        "county_district",
+        "city_village",
+        "state_province"
+      ],
+      "applyDateRangeFor": "visitStopDate",
+      "visitTypesToFilter": [
+        "PHARMACY VISIT",
+        "OPD",
+        "IPD",
+        "EMERGENCY"
+      ]
+    }
+  },
+  "formBuilderReport": {
+    "name": "Form builder form Report",
+    "type": "formBuilder",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "patientAttributes": [
+        "caste",
+        "class",
+        "education",
+        "occupation"
+      ],
+      "patientAddresses": [
+        "address3",
+        "city_village"
+      ],
+      "visitAttributes": [
+        "Visit Status"
+      ],
+      "showVisitInfo": true,
+      "showProvider": true,
+      "formNamesToFilter": [
+        "Second Vitals"
+      ],
+      "conceptNameDisplayFormat": "shortNamePreferred",
+      "locationTagsToFilter": [],
+      "programsToFilter": [],
+      "applyDateRangeFor": "obsDate",
+      "visitTypesToFilter": []
+    }
+  },
+  "DiagnosisCountReport": {
+    "name": "Diagnosis Count Report",
+    "type": "MRSGeneric",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/diagnosisCount.sql"
+    }
+  },
+  "diabetes": {
+    "name": "Diabetes",
+    "type": "obsCount",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "ageGroupName": "All Ages",
+      "conceptNames": [
+        "Diabetes, Intake"
+      ],
+      "visitTypes": [
+        "OPD",
+        "IPD"
+      ],
+      "countOnlyClosedVisits": "false",
+      "countOncePerPatient": "false"
+    }
+  },
+  "OPD/IPDVisitCount": {
+    "name": "OPD/IPD Visit Count",
+    "type": "IpdOpdVisitCount",
+    "requiredPrivilege": "app:reports"
+  },
+  "OPD_Register_Report": {
+    "name": "OPD Register (Ethiopia FMOH)",
+    "type": "MRSGeneric",
+    "dataSet": "OPD",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/ICD11/OPD_Register.sql"
+    }
+  },
+  "radiology(X-Ray)Count": {
+    "name": "Radiology(X-Ray) Count",
+    "type": "ObsCountByConceptClass",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "conceptClassNames": [
+        "Radiology",
+        "Radiology/Imaging Procedure"
+      ]
+    }
+  },
+  "IPDPatientsReport": {
+    "name": "IPD Patients Report",
+    "type": "ipdPatients",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "addressAttributes": [
+        "address1",
+        "city_village",
+        "county_district",
+        "state_province"
+      ],
+      "patientAttributes": [
+        "phoneNumber"
+      ],
+      "conceptNames": [
+        "Height (cm)",
+        "Weight (kg)"
+      ],
+      "filterBy": "Date of Discharge"
+    }
+  },
+  "OrderFulfillmentReport": {
+    "name": "Order Fulfillment Report",
+    "type": "OrderFulfillmentReport",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "type": "OrderFulfillmentReport",
+      "orderTypes": [
+        "Order",
+        "Drug Order"
+      ]
+    }
+  },
+  "SampleGenericProgramReport": {
+    "name": "Generic program sample report",
+    "type": "programs",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "patientAttributes": [
+        "education",
+        "primaryContact",
+        "secondaryContact",
+        "class",
+        "cluster"
+      ],
+      "patientAddresses": [
+        "city_village",
+        "address3"
+      ],
+      "programAttributes": [],
+      "forDataAnalysis": true,
+      "showAllStates": true,
+      "programNamesToFilter": [
+        "HIV Program",
+        "TB Program"
+      ]
+    }
+  },
+  "pivotReportOfVisits": {
+    "name": "Aggregation report for visits",
+    "type": "aggregation",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "report": {
+        "type": "visits",
+        "config": {
+          "forDataAnalysis": true,
+          "patientAttributes": [
+            "caste",
+            "class",
+            "education",
+            "occupation",
+            "primaryContact"
+          ],
+          "visitAttributes": [
+            "Visit Status",
+            "Admission Status"
+          ],
+          "patientAddresses": [
+            "address3",
+            "city_village"
+          ],
+          "applyDateRangeFor": "visitStopDate",
+          "visitTypesToFilter": [
+            "PHARMACY VISIT",
+            "OPD"
+          ]
+        }
+      },
+      "rowGroups": [
+        "Gender"
+      ],
+      "columnGroups": [
+        "Visit Status"
+      ],
+      "distinctGroups": [
+        "Patient Identifier"
+      ]
+    }
+  },
+  "pivotReportForPrograms": {
+    "name": "HIV Program Pivot Report",
+    "type": "aggregation",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "report": {
+        "type": "programs",
+        "config": {
+          "patientAttributes": [
+          ],
+          "patientAddresses": [
+            "city_village",
+            "address3"
+          ],
+          "programAttributes": [],
+          "forDataAnalysis": true,
+          "showAllStates": true,
+          "programNamesToFilter": [
+            "TB Program",
+            "HIV Program"
+          ]
+        }
+      },
+      "columnGroups": [
+        "Program name"
+      ],
+      "rowGroups": [
+        "Gender"
+      ],
+      "distinctGroups": [
+        "Patient Identifier"
+      ],
+      "showTotalRow": true,
+      "showTotalColumn": true
+    }
+  },
+  "OpenELISTestCount": {
+    "name": "OpenELIS Test Count",
+    "type": "ElisGeneric",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/testCount.sql"
+    }
+  },
+    "OpenELISTestTAT": {
+    "name": "OpenELIS Test TAT",
+    "type": "ElisGeneric",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/lab/testTAT.sql"
+    }
+  },
+  "OpenELISDetailedResultReport": {
+    "name": "Lab Results - Detailed User Audit",
+    "type": "ElisGeneric",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/lab/labDetailedAudit.sql"
+    }
+  },
+  "OpenELISDetailedResult": {
+    "name": "Lab Results - Detailed",
+    "type": "ElisGeneric",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/lab/labDetailed.sql"
+    }
+  },
+    "OpenELISSummery": {
+    "name": "Lab Summery",
+    "type": "ElisGeneric",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/lab/LabSummery.sql"
+    }
+  },
+  "OdooInvoiceSummary": {
+    "name": "Odoo Invoicing Summary",
+    "type": "ERPGeneric",
+    "requiredPrivilege": "app:reports",
+    "config": {
+      "sqlPath": "/etc/bahmni_config/openmrs/apps/reports/sql/odooInvoiceSummary.sql"
+    }
+  }
+}
+
+

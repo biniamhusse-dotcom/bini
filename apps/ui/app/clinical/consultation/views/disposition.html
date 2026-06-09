@@ -1,0 +1,147 @@
+<style> #btn:hover { background-color: #eee; } .round { position: relative; } .round label { background-color: #fff; border: 2px solid #ccc; border-radius: 50%; cursor: pointer; height: 17px; left: 0; position: absolute; width: 17px; } .round label:after { border: 2px solid #fff; border-top: none; border-right: none; content: ""; height: 3px; left: 4px; opacity: 0; position: absolute; top: 4px; transform: rotate(-45deg); width: 7px; } .round input[type="checkbox"] { visibility: hidden; } .round input[type="checkbox"]:checked+label { background-color: #66bb6a; border-color: #66bb6a; } .round input[type="checkbox"]:checked+label:after { opacity: 1; } .label { font-weight: bold; font-family: 'Times New Roman', Times, serif; } @keyframes glowing { 0% { box-shadow: 0 0 5px #2ba805; } 50% { box-shadow: 0 0 20px #49e819; } 100% { box-shadow: 0 0 5px #2ba805; } } .blink { animation: glowing 1300ms infinite; margin-left: 20px; } </style>
+<div class="disposition-wrapper">
+    <div class="infoMsgRetrospectiveModeEnabled" ng-if="isRetrospectiveMode()">
+        <i class="fa fa-info-circle"></i>
+        <span ng-bind-html="'DISPOSITION_NOT_ALLOWED_IN_RETROSPECTIVE_MESSAGE'|translate"></span>
+    </div>
+    <div class="box disposition-tab">
+        <form ng-submit="submit()">
+            <div ng-show="dispositionTypeInfo" style="z-index: -100%; background-color: antiquewhite; padding: 10px; padding-top: 0px; text-align: left;font-family: 'Times New Roman', Times, serif;">
+                <span style="margin-left: 98.8%;"><button style="border-radius: 50%; height: 25px; width: 25px; padding: 0%;" ng-click="showDispositionTypeInfo()"><i class="fa fa-remove"></i></button></span><br>
+                <span style="font-weight: bolder;">Admit Patient: </span> Inform the liaison officer to admit the patient to the ward you selected. <br> <br>
+                <span style="font-weight: bolder;">Refer Patient: </span> Inform the liaison officer to refer the patient out of UoG Hospital. <br> <br> 
+                <span style="font-weight: bolder;">Link Patient: </span> Send the patient to other OPD (start visit for the patient at the OPD) you selected or send the patient to other health care providers available at UoG Hospital . <br> <br>
+                <span style="font-weight: bolder;">Transfer Patient: </span> Inform the liaison officer or ward Nurse to transfer the patient to other ward available at UoG Hospital. <br><br>
+                <span style="font-weight: bolder;">Discharge Patient: </span> Inform the liaison officer or ward Nurse to discharge the patient out of the ward. <br><br>
+                <span style="font-weight: bolder;">Keep Patient: </span> Select this option if the patient needs other investigation before he/she goes to home. <br><br>
+                <span style="font-weight: bolder;">Leaving Against Medical Advice and Service: </span> Select this option if the patient against any service or advice.
+            </div>
+            <span ng-if="dispositionTypeInfo"><br><br> <br></span>
+            <label for="dispositionAction" class="label">{{ 'DISPOSITION_TYPE_LABEL'|translate }}: <button style="border-radius: 50%; height: 25px; width: 25px; padding: 0%;" ng-click="showDispositionTypeInfo()"><i class="fa fa-info-circle"></i></button>  </label>
+            <select id="dispositionAction" ng-model="dispositionCode"
+                ng-options="d.code as ::getTranslatedDisposition(d.name) for d in dispositionActions"
+                ng-change="clearDispositionNote();" ng-disabled="isRetrospectiveMode()">
+                <option value=""></option>
+            </select>
+
+            <label for="wards" ng-if="dispositionCode==='ADMIT' || dispositionCode==='TRANSFER'"
+                style="margin-left: 6%;">{{ 'To'|translate }}: </label>
+            <div style="margin-left: 30%;" ng-if="dispositionCode==='ADMIT' || dispositionCode==='TRANSFER'">
+                <select id="wards" ng-model="admissionWard.value" ng-options="ward for ward in wards | orderBy:'ward'">
+                    <option value="" class="label">Select ward</option>
+                </select>
+            </div>
+            <label for="referralHospital" ng-if="dispositionCode==='REFER' || dispositionCode==='REFER'" class="label"
+                style="margin-left: 6%;">{{ 'TO'|translate }}: </label>
+            <div ng-if="dispositionCode==='REFER'" style="margin-left: 30%;">
+                <input type="text" id="referralHospital" ng-model="refers.value" placeholder="Enter Facility Name">
+            </div>
+
+            <label for="Duration" ng-if="dispositionCode==='KEEP'" class="label" style="margin-left: 6%;">{{
+                'For'|translate }}: </label>
+            <div ng-if="dispositionCode==='KEEP'">
+                <input id="Duration" type="text" ng-model="durationOfStay.value" placeholder="Enter duration of stay" />
+            </div>
+            <div for="durationUnits" style="margin-left: 50%; margin-top: -3%;" ng-if="dispositionCode==='KEEP'">
+                <select id="durationUnits" ng-model="durationOfStayUnite.value"
+                    ng-options="du for du in durationUniteConcepts">
+                    <option value="" class="label" style="opacity: 1;">Duration Measurment</option>
+                </select>
+            </div>
+
+            <div style="margin-left: 30%;" ng-if="dispositionCode==='LEAVING_AGAINST'">
+                <a id="clinicalHomeBackLink" ng-href="../clinical/index.html#/default/patient/{{patient.uuid}}/dashboard/fingerprint?currentTab"
+                   title="Go to Fingerprint or Video upload page"><button ng-click="saveAndContinue();">Add Fingerprint or Video</button> 
+                </a>
+            </div>
+            <label ng-show="dispositionCode==='LINK'" style="margin-left: 6%;" class="label">{{ 'To'|translate }}:
+            </label>
+            <div ng-show="dispositionCode==='LINK'" class="round" style="margin-left: 37%;">
+                <input type="checkbox" id="opds" ng-model="opds" ng-change="opdLinkage(opds)" />
+                <label for="opds"> <span style="margin-left: 27px; font-family: 'Times New Roman', Times, serif;">
+                    <span><abbr id="myAbbr" title="OPD at UoG Hospital">{{'OPD'|translate }}</abbr></span> </label>
+            </div>
+
+            <div ng-show="dispositionCode==='LINK'" class="round" style="margin-left: 47%;">
+                <input type="checkbox" id="physicians" ng-model="physicians" ng-change="providerLinkage(physicians)" />
+                <label for="physicians"> <span
+                        style="margin-left: 27px; font-family: 'Times New Roman', Times, serif;">
+                            <span><abbr id="myAbbr" title="Doctor or any other health care providers at UoG Hospital">{{'Provider'|translate }}</abbr></span> </label>
+            </div>
+            <div>
+                <button ng-if="dispositionCode==='CLOSE_VISIT'" class="blink" type="submit" id="selected"
+                    ng-click="closeVisit()">Confirm Closing</button>
+            </div>
+            <br> <br> <br> <br>
+            <label for="selected" ng-if="dispositionCode==='LINK' && opds" style="margin-left: 0%;" class="label">{{
+                'Select Destination'|translate }}: </label>
+            <div style="margin-left: 5%;" ng-if="dispositionCode==='LINK' && opds">
+                <select id="selected" ng-model="linkageVisitType.value"
+                    ng-change="selectedVisitType=linkageVisitType.value;">
+                    <option ng-repeat="location in visitType | orderBy:'display'" id="{{location.uuid}}"
+                        ng-value="{{location}}">{{location.display}}</option>
+                        <option value="">Select Destination OPD</option>
+                </select>
+                <div>
+                    <button ng-if="selectedVisitType" class="blink" type="submit" id="selected"
+                        ng-click="link(selectedVisitType)">Confirm Linkage</button>
+                </div>
+            </div>
+
+            <div ng-show="dispositionCode==='LINK' && physicians">
+
+
+                <label style="margin-left: 0%;" class="label">{{ 'Provider Level'|translate }}: </label>
+                <div class="round" style="margin-left: 8.7%;">
+                    <input type="checkbox" id="specialists" ng-model="specialist"
+                        ng-change="uncheckExceptSpecialist(specialist); specialty.value = ''; suggestedProvider.value = ''" />
+                    <label for="specialists"> <span
+                            style="margin-left: 27px; font-family: 'Times New Roman', Times, serif;">{{
+                            'Specialist'|translate }}</span> </label>
+                </div>
+
+                <div class="round" style="margin-left: 24%;">
+                    <input type="checkbox" id="residents" ng-model="resident"
+                        ng-change="uncheckExceptResident(resident); specialty.value = ''; suggestedProvider.value = ''" />
+                    <label for="residents"> <span
+                            style="margin-left: 27px; font-family: 'Times New Roman', Times, serif;">{{
+                            'Resident'|translate }} </span></label>
+                </div>
+                <br> <br> <br>
+
+                <label for="specialities" ng-if="dispositionCode==='LINK'" class="label" style="margin-left: 0%;">{{
+                    'Suggested Speciality'|translate }}: </label>
+                <div ng-if="dispositionCode==='LINK'" style="margin-left: 5%;">
+                    <select id="specialities" ng-model="specialty.value" ng-change="selectedProvider(specialty.value)"
+                        ng-options="speciality for speciality in specialities | orderBy:'name'"
+                        ng-disabled="!specialist && !resident">
+                        <option value="">Select Specialty</option>
+                    </select>
+                </div>
+
+                <label for="providers" ng-if="dispositionCode==='LINK' && physicians" class="label"
+                    style="margin-left: 6%;">
+                    {{ 'Suggested Provider'|translate }}: </label>
+                <div style="margin-left: 30%;" ng-if="dispositionCode==='LINK'">
+                    <div><select id="providers" ng-model="suggestedProvider.value"
+                            ng-options="provider.FullName for provider in currentDoctors | orderBy:'FullName'"
+                            ng-disabled="!specialist && !resident">
+                            <option value="">Select Provider</option>
+                        </select></div>
+                </div>
+            </div>
+            <br><br><br><br>
+            <div class="dispositionNotesWrap">
+                <label class="disposition-notes" for="dispositionNotes"><span class="label">{{
+                        'DISPOSITION_NOTE_LABEL'|translate }}: </span></label>
+                <p ng-if="showWarningForEarlierDispositionNote()" class="caution">
+                    <i class="fa fa-exclamation-sign small"></i>
+                    <span>{{ 'DISPOSITION_NOTE_WILL_BE_REMOVED_WARNING_MESSAGE'|translate }}</span>
+                </p>
+                <textarea id="dispositionNotes" ng-model="dispositionNote.value" ng-disabled="isRetrospectiveMode()"
+                    msd-elastic></textarea>
+            </div>
+        </form>
+    </div>
+
+</div>

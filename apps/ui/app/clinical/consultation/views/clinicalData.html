@@ -1,0 +1,15 @@
+<div class="selectedOrderNoteContainer">
+   <span>{{ 'ENTER_CLINICAL_DATA_LABEL' | translate }} - {{ngDialogData.concept.displayName || ngDialogData.concept.shortName || ngDialogData.concept.name}}</span>
+
+
+   <textarea ng-model="$parent.orderClinicalDataText" focus-on="true" rows="4" ng-disabled="ngDialogData.uuid">{{ngDialogData.previousClinicalData}}</textarea>
+   <button ng-click="appendClinicalData(ngDialogData)" class="fl btn-group" ng-show="isPrintShown(ngDialogData.uuid)">{{ 'CLINICAL_ORDER_ADD_CLINICAL_DATA' | translate}}</button>
+   <div class="btn-group fr">
+       <span ng-if="ngDialogData.uuid">
+           {{ 'ORDER_CAN_NOT_EDIT_CLINICAL_DATA_AFTER_SAVE_MESSAGE'|translate }}
+       </span>
+       <button ng-click="setEditedClinicalData(ngDialogData, orderClinicalDataText)" ng-if="!ngDialogData.uuid">{{ 'OKAY_LABEL' | translate}}</button>
+   </div>
+</div>
+
+

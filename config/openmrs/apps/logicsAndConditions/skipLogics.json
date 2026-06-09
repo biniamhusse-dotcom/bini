@@ -1,0 +1,688 @@
+[
+    {
+        "logics": [
+          {
+            "hiddenFields": [
+              "The name of the concept that should be hidded during first page load"
+            ]
+          }
+        ],
+        "action": "none",
+        "dependent": "none",
+        "logic_key": 0
+      },
+      {
+        "logics": [
+            {
+                "trigger": "Triage Red",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Orange",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Yellow",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Green",
+                "value": null,
+                "operator": "!="
+            }
+        ],
+        "action": "hide",
+        "conditionType": "either",
+        "dependent": "Triage Black",
+        "logic_key": 1
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Red",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Black",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Yellow",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Green",
+                "value": null,
+                "operator": "!="
+            }
+        ],
+        "action": "hide",
+        "conditionType": "either",
+        "dependent": "Triage Orange",
+        "logic_key": 2
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Orange",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Black",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Yellow",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Green",
+                "value": null,
+                "operator": "!="
+            }
+        ],
+        "action": "hide",
+        "conditionType": "either",
+        "dependent": "Triage Red",
+        "logic_key": 3
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Orange",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Black",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Red",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Green",
+                "value": null,
+                "operator": "!="
+            }
+        ],
+        "action": "hide",
+        "conditionType": "either",
+        "dependent": "Triage Yellow",
+        "logic_key": 4
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Orange",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Black",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Red",
+                "value": null,
+                "operator": "!="
+            },
+            {
+                "trigger": "Triage Yellow",
+                "value": null,
+                "operator": "!="
+            }
+        ],
+        "action": "hide",
+        "conditionType": "either",
+        "dependent": "Triage Green",
+        "logic_key": 5
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Chief Complaint",
+                "value": "Other",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Other",
+        "logic_key": 6
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Trauma",
+                "value": true,
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Trauma Happened",
+        "logic_key": 7
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Trauma",
+                "value": false,
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Non Trauma Complaints",
+        "logic_key": 8
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Pathology Diagnostic Type",
+                "value": "GC-GYN Cytology",
+                "operator": "="
+            },
+            {
+                "trigger": "Result Stage",
+                "orValues": ["Pending (In Progress)", "Preliminary Result", "Final (Amended) Result"],
+                "operator": "OR"
+            }
+        ],
+        "action": "show",
+        "dependent": "OB-GYN Cytology",
+        "logic_key": 9
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Pathology Diagnostic Type",
+                "value": "SP-Surgicalpathology",
+                "operator": "="
+            },
+            {
+                "trigger": "Result Stage",
+                "orValues": ["Pending (In Progress)", "Preliminary Result", "Final (Amended) Result"],
+                "operator": "OR"
+            }
+        ],
+        "formType": "result",
+        "action": "show",
+        "dependent": "OB-Biopsy",
+        "logic_key": 10
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Pathology Diagnostic Type",
+                "value": "NG-Non-GYN Cytology",
+                "operator": "="
+            },
+            {
+                "trigger": "Result Stage",
+                "orValues": ["Pending (In Progress)", "Preliminary Result", "Final (Amended) Result"],
+                "operator": "OR"
+            }
+        ],
+        "action": "show",
+        "dependent": "OB-Fine Needle Aspiration Cytology",
+        "logic_key": 11
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Pathology Diagnostic Type",
+                "value": "BF-Non-GYN Cytology",
+                "operator": "="
+            },
+            {
+                "trigger": "Result Stage",
+                "orValues": ["Pending (In Progress)", "Preliminary Result", "Final (Amended) Result"],
+                "operator": "OR"
+            }
+        ],
+        "action": "show",
+        "dependent": "OB-Body Fluid Cytology",
+        "logic_key": 12
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Pathology Diagnostic Type",
+                "value": "HP-Hematopathology",
+                "operator": "="
+            },
+            {
+                "trigger": "Result Stage",
+                "orValues": ["Pending (In Progress)", "Preliminary Result", "Final (Amended) Result"],
+                "operator": "OR"
+            }
+        ],
+        "action": "show",
+        "dependent": "OB-Bone Marrow Aspiration Cytology",
+        "logic_key": 13
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Result Stage",
+                "value": "Preliminary Result",
+                "operator": "="
+            },
+            {
+                "trigger": "Form type indicator",
+                "value": "Start observation",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "conditionType": "either",
+        "dependent": "Pathology Preliminary Diagnosis",
+        "logic_key": 14
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Result Stage",
+                "value": "Final (Amended) Result",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Pathology Final Diagnosis",
+        "logic_key": 15
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Result Stage",
+                "orValues": ["Preliminary Result", "Final (Amended) Result"],
+                "operator": "OR"
+            },
+            {
+                "trigger": "Form type indicator",
+                "value": "Start observation",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "conditionType": "either",
+        "dependent": "Micro Description",
+        "logic_key": 16
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Result Stage",
+                "orValues": ["Preliminary Result", "Final (Amended) Result"],
+                "operator": "OR"
+            },
+            {
+                "trigger": "Form type indicator",
+                "value": "Start observation",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "conditionType": "either",
+        "dependent": "Gross Description",
+        "logic_key": 17
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Result Stage",
+                "orValues": ["Pending (In Progress)", "Preliminary Result", "Final (Amended) Result"],
+                "operator": "OR"
+            }
+        ],
+        "action": "hide",
+        "dependent": "Form type indicator",
+        "logic_key": 18
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Result Stage",
+                "value": "Final (Amended) Result",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Orders result status marker",
+        "logic_key": 19
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Result Stage",
+                "value": "Final (Amended) Result",
+                "operator": "="
+            },
+            {
+                "trigger": "Orders result status marker",
+                "value": "Signed out",
+                "operator": "="
+            },
+            {
+                "trigger": "Modality",
+                "value": null,
+                "operator": "!="
+            }
+        ],
+        "action": "show",
+        "conditionType": "either",
+        "dependent": "Approved by",
+        "logic_key": 20
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Modality",
+                "value": "US (Obstetric)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Obstetric Ultrasound Result Report Form",
+        "logic_key": 21
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Modality",
+                "orValues": ["X-ray", "CT", "MRI", "US"],
+                "operator": "OR"
+            }
+        ],
+        "action": "show",
+        "dependent": "Summary",
+        "logic_key": 22
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Modality",
+                "value": "US (Gyn)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Genecology US form",
+        "logic_key": 23
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Number of Fetus(es)",
+                "value": 2,
+                "operator": ">="
+            }
+        ],
+        "action": "show",
+        "dependent": "Fetal Heart Rate (Fetus 2)",
+        "logic_key": 24
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Number of Fetus(es)",
+                "value": 2,
+                "operator": ">="
+            }
+        ],
+        "action": "show",
+        "dependent": "Estimated Fetal Weight (Fetus 2)",
+        "logic_key": 25
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Number of Fetus(es)",
+                "value": 2,
+                "operator": ">="
+            }
+        ],
+        "action": "show",
+        "dependent": "Presentation (Fetus 2)",
+        "logic_key": 26
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Triage Type",
+                "value": "Ophthalmic triage",
+                "operator": "="
+            },
+            {
+                "trigger": "Select Ophthalmology Form",
+                "value": "OphthalmicVitals",
+                "operator": "="
+            }
+        ],
+        "conditionType":"either",
+        "dependent": "Ophthalmic Vitals",
+        "logic_key": 27
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Ophthalmic Investigation",
+                "value": "Biometry report form",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Biometry report form",
+        "logic_key": 29
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Ophthalmic Investigation",
+                "value": "Pachymetry/CCT",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Pachymetry/CCT",
+        "logic_key": 30
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Ophthalmic Investigation",
+                "value": "OCT Result",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "OCT Result",
+        "logic_key": 31
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Ophthalmic Investigation",
+                "value": "Ocular ultrasound result",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Ocular ultrasound result",
+        "logic_key": 32
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Ophthalmic Investigation",
+                "value": "Keratometry result",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Keratometry result",
+        "logic_key": 33
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Ophthalmic Investigation",
+                "value": "Refraction Form",
+                "operator": "="
+            },
+            {
+                "trigger": "Select Ophthalmology Form",
+                "value": "RefractionForm",
+                "operator": "="
+            }
+        ],
+        "conditionType":"either",
+        "action": "show",
+        "dependent": "Refraction Form",
+        "logic_key": 34
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Ophthalmic Investigation",
+                "value": "Low Vision Assessment",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Low Vision Assessment",
+        "logic_key": 35
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "HEENT",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "HEENT",
+        "logic_key": 36
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "Lymphoglandular Systems (LGS)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Lymphoglandular Systems (LGS)",
+        "logic_key": 37
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "Respiratory System (RS)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Respiratory System (RS)",
+        "logic_key": 38
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "Cardiovascular System (CVS)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Cardiovascular System (CVS)",
+        "logic_key": 39
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "The Abdomen and Pelvis",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "The Abdomen and Pelvis",
+        "logic_key": 40
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "Genitourinary System (GUS)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Genitourinary System (GUS)",
+        "logic_key": 41
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "Musculoskeletal System (MSS)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Musculoskeletal System (MSS)",
+        "logic_key": 42
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "Integumentary System (IS)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Integumentary System (IS)",
+        "logic_key": 43
+    },
+    {
+        "logics": [
+            {
+                "trigger": "Observed Abnormalities",
+                "value": "Nervous System (NS)",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "Nervous System (NS)",
+        "logic_key": 44
+    },
+    {
+        "logics": [
+            {
+                "trigger": "EPI schedule",
+                "value": "EPI 0",
+                "operator": "="
+            }
+        ],
+        "action": "show",
+        "dependent": "EPI 0",
+        "logic_key": 45
+    }
+]    

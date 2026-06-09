@@ -1,0 +1,20 @@
+{
+  "id": "bahmni.ot.scheduling",
+  "extensionPoints": [
+  ],
+  "config": {
+    "patientDashboardUrl": {
+      "link": "/bahmni/clinical/#/default/patient/{{patientUuid}}/dashboard",
+      "errorMessage": "The patient is not enrolled to the program"
+    },
+    "surgeryAttributes": ["procedure","appointmentType", "estTimeHours", "estTimeMinutes", "cleaningTime", "otherSurgeon", "otherSurgeon2", "surgicalAssistant", "surgicalAssistant2", "surgicalAssistant3", "anaesthetist", "anaesthetist2", "scrubNurse", "scrubNurse2", "circulatingNurse", "circulatingNurse2", "notes"],
+    "primarySurgeonsForOT" : [],
+    "printListViewTemplateUrl" : "/bahmni_config/openmrs/apps/ot/printListView.html",
+    "calendarView": {
+      "dayViewStart": "08:00",
+      "dayViewEnd": "18:00",
+      "dayViewSplit": "60"
+    },
+    "startOfWeek": "Monday"
+  }
+}

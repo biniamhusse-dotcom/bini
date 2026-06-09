@@ -1,0 +1,21 @@
+Bahmni.Registration.StateNameEvenTypeMap = {
+    "search": "VIEWED_REGISTRATION_PATIENT_SEARCH",
+    "newpatient": "VIEWED_NEW_PATIENT_PAGE",
+    "newpatient.save": "REGISTER_NEW_PATIENT",
+    "patient.edit": "EDIT_PATIENT_DETAILS",
+    "patient.editPhoneNumber": "EDIT_PATIENT_DETAILS",
+    "patient.visit": "ACCESSED_REGISTRATION_SECOND_PAGE",
+    "patient.view": "VIEWED_PATIENT_DETAILS",
+    "patient.printSticker": "PRINT_PATIENT_STICKER",
+    "erSearch": "VIEWED_REGISTRATION_ERPATIENT_SEARCH",
+    "crSearch": "VIEWED_REGISTRATION_CRPATIENT_SEARCH",
+    "prescriptionSearch": "VIEWED_PRESCRIPTION_PAGE",
+    "triagePatientDashboard": "VIEWED_TRIAGE_PATIENT_PAGE",
+    "newERTriagePatient": "VIEWED_ER_TRIAGE_PATIENT_PAGE",
+    "newCRTriagePatient": "VIEWED_CR_TRIAGE_PATIENT_PAGE",
+    "patient.erTriageVisit": "ER_TRIAGE_FORM_ACCESSED",
+    "patient.crTriageVisit": "CR_TRIAGE_FORM_ACCESSED",
+    "patient.prescription": "PRESCRIPTION_FORM_ACCESSED",
+    "assignExamRoom": "ASSIGN_EXAM_ROOM_ACCESSED",
+    "medicoLegal": "MEDICO_LEGAL_ACCESSED"
+};

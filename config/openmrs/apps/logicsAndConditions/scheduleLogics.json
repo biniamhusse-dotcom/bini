@@ -1,0 +1,9 @@
+[
+    {
+        "triggerEvent": "DAK, ANC Contact Number",
+        "value": 1,
+        "conditioner": "DAK, Gestational age",
+        "service": "ANC Contact 2",
+        "type": "contact schedule"
+    }
+]    

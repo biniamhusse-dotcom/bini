@@ -1,0 +1,22 @@
+# Large backup files
+backups/
+
+# Docker image tarballs
+backups/bahmni/images/
+
+# Git internals from subdirectories
+bahmni-docker/.git/
+
+# Node modules
+**/node_modules/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Build artifacts
+**/dist/
+**/build/
+**/.cache/
+**/.parcel-cache/
