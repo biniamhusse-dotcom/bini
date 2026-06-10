@@ -55,7 +55,7 @@ sudo sh -c 'echo "127.0.0.1 erp-localhost" >> /etc/hosts'
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/biniamhusse-dotcom/biniam_.git emr
+git clone https://github.com/biniamhusse-dotcom/bini.git emr
 cd emr
 ```
 
