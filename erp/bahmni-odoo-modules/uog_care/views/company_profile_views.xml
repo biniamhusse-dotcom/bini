@@ -1,0 +1,20 @@
+<odoo>
+  <data>
+
+	<record id="sale.menu_sale_quotations" model="ir.ui.menu">
+        <field name="name">Charges</field>
+    </record>
+
+    <record id="sale.res_partner_menu" model="ir.ui.menu">
+        <field name="name">Patients/Clients</field>
+    </record>
+
+    <record id="sale.product_menu_catalog" model="ir.ui.menu">
+        <field name="name">Services</field>
+    </record>
+
+    <record id="sale.menu_sale_order" model="ir.ui.menu">
+        <field name="name">Charges Performed</field>
+    </record>
+  </data>
+</odoo>

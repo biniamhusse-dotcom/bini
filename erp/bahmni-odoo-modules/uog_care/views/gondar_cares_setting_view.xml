@@ -1,0 +1,279 @@
+<odoo>
+    <!-- Tree and Form Views for payment.method -->
+    <record model="ir.ui.view" id="uog_care.payment_method_tree">
+        <field name="name">uog_care.payment_method.tree</field>
+        <field name="model">payment.method</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="uog_care.payment_method_form">
+        <field name="name">uog_care.payment_method.form</field>
+        <field name="model">payment.method</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree and Form Views for cbhi.woreda -->
+    <record model="ir.ui.view" id="uog_care.cbhi_woreda_tree">
+        <field name="name">uog_care.cbhi_woreda.tree</field>
+        <field name="model">cbhi.woreda</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="uog_care.cbhi_woreda_form">
+        <field name="name">uog_care.cbhi_woreda.form</field>
+        <field name="model">cbhi.woreda</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree and Form Views for credit.company -->
+    <record model="ir.ui.view" id="uog_care.credit_company_tree">
+        <field name="name">uog_care.credit_company.tree</field>
+        <field name="model">credit.company</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="uog_care.credit_company_form">
+        <field name="name">uog_care.credit_company.form</field>
+        <field name="model">credit.company</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree and Form Views for ethiopia.brigade -->
+    <record model="ir.ui.view" id="uog_care.ethiopia_brigade_tree">
+        <field name="name">uog_care.ethiopia_brigade.tree</field>
+        <field name="model">ethiopia.brigade</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="uog_care.ethiopia_brigade_form">
+        <field name="name">uog_care.ethiopia_brigade.form</field>
+        <field name="model">ethiopia.brigade</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree and Form Views for uog.campus -->
+    <record model="ir.ui.view" id="uog_care.uog_campus_tree">
+        <field name="name">uog_care.uog_campus.tree</field>
+        <field name="model">uog.campus</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="uog_care.uog_campus_form">
+        <field name="name">uog_care.uog_campus.form</field>
+        <field name="model">uog.campus</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree and Form Views for working.place -->
+    <record model="ir.ui.view" id="uog_care.working_place_tree">
+        <field name="name">uog_care.working_place.tree</field>
+        <field name="model">working.place</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="uog_care.working_place_form">
+        <field name="name">uog_care.working_place.form</field>
+        <field name="model">working.place</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree and Form Views for credit.type -->
+    <record model="ir.ui.view" id="uog_care.credit_type_tree">
+        <field name="name">uog_care.credit_type.tree</field>
+        <field name="model">credit.type</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="uog_care.credit_type_form">
+        <field name="name">uog_care.credit_type.form</field>
+        <field name="model">credit.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree and Form Views for free.service -->
+    <record model="ir.ui.view" id="uog_care.free_service_tree">
+        <field name="name">uog_care.free_service.tree</field>
+        <field name="model">free.service</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="uog_care.free_service_form">
+        <field name="name">uog_care.free_service.form</field>
+        <field name="model">free.service</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions for Each Model -->
+
+    <record model="ir.actions.act_window" id="uog_care.payment_method_action_window">
+        <field name="name">Payment Method</field>
+        <field name="res_model">payment.method</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="uog_care.cbhi_woreda_action_window">
+        <field name="name">CBHI Woreda</field>
+        <field name="res_model">cbhi.woreda</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="uog_care.credit_company_action_window">
+        <field name="name">Credit Company</field>
+        <field name="res_model">credit.company</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="uog_care.ethiopia_brigade_action_window">
+        <field name="name">Ethiopia Brigade</field>
+        <field name="res_model">ethiopia.brigade</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="uog_care.uog_campus_action_window">
+        <field name="name">UOG Campus</field>
+        <field name="res_model">uog.campus</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="uog_care.working_place_action_window">
+        <field name="name">Working Place</field>
+        <field name="res_model">working.place</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="uog_care.credit_type_action_window">
+        <field name="name">Credit Type</field>
+        <field name="res_model">credit.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.actions.act_window" id="uog_care.free_service_action_window">
+        <field name="name">Free Service</field>
+        <field name="res_model">free.service</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Parent Menu: GondarCares Setting -->
+    <menuitem name="GondarCares Setting" id="uog_care.gondarcares" parent="base.menu_administration" sequence="10"/>
+
+    <!-- Sub-Menus -->
+    <menuitem name="Payment Method" id="uog_care.gondarcares_payment_method_setting" parent="uog_care.gondarcares"
+              action="uog_care.payment_method_action_window" sequence="10"/>  
+
+    <menuitem name="CBHI Woreda" id="uog_care.gondarcares_cbhi_woreda_setting" parent="uog_care.gondarcares"
+              action="uog_care.cbhi_woreda_action_window" sequence="10"/>        
+
+    <menuitem name="Credit Company" id="uog_care.gondarcares_credit_company_setting" parent="uog_care.gondarcares"
+              action="uog_care.credit_company_action_window" sequence="20"/>
+
+    <menuitem name="Ethiopia Brigade" id="uog_care.gondarcares_ethiopia_brigade_setting" parent="uog_care.gondarcares"
+              action="uog_care.ethiopia_brigade_action_window" sequence="30"/>
+
+    <menuitem name="UOG Campus" id="uog_care.gondarcares_uog_campus_setting" parent="uog_care.gondarcares"
+              action="uog_care.uog_campus_action_window" sequence="40"/>
+
+    <menuitem name="Working Place" id="uog_care.gondarcares_working_place_setting" parent="uog_care.gondarcares"
+              action="uog_care.working_place_action_window" sequence="50"/>
+
+    <menuitem name="Credit Type" id="uog_care.gondarcares_credit_type_setting" parent="uog_care.gondarcares"
+              action="uog_care.credit_type_action_window" sequence="60"/>
+
+    <menuitem name="Free Service" id="uog_care.gondarcares_free_service_setting" parent="uog_care.gondarcares"
+              action="uog_care.free_service_action_window" sequence="70"/>
+</odoo>
