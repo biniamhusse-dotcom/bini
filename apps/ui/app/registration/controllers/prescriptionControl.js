@@ -240,7 +240,7 @@ angular.module('bahmni.registration')
                     await Promise.all($scope.allPrescriptions.map(async (prescription) => {
                         if (paymentCheckEnabled && enforceOdooCheck) {
                             const statusResponse = await paymentStatusService.getPaymentStatus(prescription.uuid);
-                            prescription.paymentStatus = statusResponse.data;
+                            prescription.paymentStatus = statusResponse.data === "INVOICED";
                         } else {
                             prescription.paymentStatus = paymentCheckEnabled ? prescription.paymentStatus : false;
                         }
