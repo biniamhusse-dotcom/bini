@@ -2,7 +2,7 @@
 
 angular.module('bahmni.common.orders')
     .factory('orderObservationService', ['encounterService', function (encounterService) {
-        var save = function (orders, patient, locationUuid) {
+        var save = function (orders, patient, locationUuid, visitUuid) {
             var observationFilter = new Bahmni.Common.Domain.ObservationFilter();
             var observations = [];
 
@@ -24,6 +24,10 @@ angular.module('bahmni.common.orders')
                 orders: [],
                 drugOrders: []
             };
+
+            if (visitUuid) {
+                encounterData.visitUuid = visitUuid;
+            }
 
             return encounterService.create(encounterData);
         };

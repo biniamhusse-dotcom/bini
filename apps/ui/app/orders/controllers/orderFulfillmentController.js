@@ -180,12 +180,28 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
             return $translate.instant('NO_ORDERS_PRESENT', {orderType: $scope.orderType});
         };
 
+        var getActiveVisitUuid = function () {
+            return $http.get('/openmrs/ws/rest/v1/visit', {
+                params: {
+                    patient: $scope.patient.uuid,
+                    includeInactive: false,
+                    v: "custom:(uuid)"
+                },
+                withCredentials: true
+            }).then(function (response) {
+                var visits = response.data.results;
+                return visits.length > 0 ? visits[0].uuid : null;
+            });
+        };
+
         $scope.$on("event:saveOrderObservations", function () {
             if (!$scope.isFormValid()) {
                 $scope.$parent.$broadcast("event:errorsOnForm");
                 return $q.when({});
             }
-            var savePromise = orderObservationService.save($scope.orders, $scope.patient, sessionService.getLoginLocationUuid());
+            var savePromise = getActiveVisitUuid().then(function (visitUuid) {
+                return orderObservationService.save($scope.orders, $scope.patient, sessionService.getLoginLocationUuid(), visitUuid);
+            });
             spinner.forPromise(savePromise.then(function () {
                 $state.transitionTo($state.current, $state.params, {
                     reload: true,
