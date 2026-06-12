@@ -109,6 +109,9 @@ angular.module('consultation')
                         controller: function ($scope, visitHistory, consultationContext, followUpConditionConcept) {
                             $scope.visitHistory = visitHistory;
                             $scope.consultation = consultationContext;
+                            if ($scope.consultation && !$scope.consultation.visitUuid && visitHistory.activeVisit) {
+                                $scope.consultation.visitUuid = visitHistory.activeVisit.uuid;
+                            }
                             $scope.followUpConditionConcept = followUpConditionConcept;
                             $scope.lastConsultationTabUrl = {url: undefined};
                         }

@@ -16,6 +16,7 @@ angular.module('bahmni.registration')
             defaultVisitType = defaultVisitType || appService.getAppDescriptor().getConfigValue('defaultVisitType');
 
             var selectedProvider = $rootScope.currentProvider;
+            $scope.currentProvider = $rootScope.currentProvider || {};
             var regEncounterTypeUuid = $rootScope.regEncounterConfiguration.encounterTypes[Bahmni.Registration.Constants.registrationEncounterType];
             var visitLocationUuid = $rootScope.visitLocation;
             $scope.noOfPatients = 0;
@@ -241,7 +242,7 @@ angular.module('bahmni.registration')
                             const statusResponse = await paymentStatusService.getPaymentStatus(prescription.uuid);
                             prescription.paymentStatus = statusResponse.data;
                         } else {
-                            prescription.paymentStatus = paymentCheckEnabled ? prescription.paymentStatus : true;
+                            prescription.paymentStatus = paymentCheckEnabled ? prescription.paymentStatus : false;
                         }
                         prescription.status = computePrescriptionStatus(prescription);
                         prescription.evaluated = !!prescription.evaluated;

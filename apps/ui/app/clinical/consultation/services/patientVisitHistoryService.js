@@ -9,7 +9,7 @@ angular.module('bahmni.clinical')
                         return new Bahmni.Clinical.VisitHistoryEntry(visitData);
                     });
                     var activeVisit = visits.filter(function (visit) {
-                        return visit.isActive() && visit.isFromCurrentLocation(currentVisitLocation);
+                        return visit.isActive();
                     })[0];
 
                     return {"visits": visits, "activeVisit": activeVisit};

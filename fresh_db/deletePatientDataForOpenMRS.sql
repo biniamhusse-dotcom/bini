@@ -1,54 +1,133 @@
-set foreign_key_checks=0;
+SET FOREIGN_KEY_CHECKS = 0;
 
-truncate table test_order;
-truncate table drug_order;
-truncate table note;   
-truncate table obs_relationship;  
-truncate table concept_proposal;  	
-truncate table concept_proposal_tag_map;
-truncate table obs;
-truncate table orders;
-truncate table drug_order; 
-truncate table test_order; 
-truncate table relationship;
-truncate table visit_attribute;
-truncate table bed_patient_assignment_map;
-truncate table encounter_provider;
-truncate table episode_encounter;
-truncate table order_group;
-truncate table encounter;  
-truncate table patient_appointment;
-truncate table patient_appointment_audit;
-truncate table patient_appointment_fulfilling_encounter_map;
-truncate table patient_appointment_occurrence;
-truncate table patient_appointment_provider;
-truncate table patient_appointment_recurring_time;
-truncate table visit_attribute;
-truncate table visit; 
-truncate table patient_identifier;
-truncate table conditions;
-truncate table cohort_member;
-truncate table patient_program;
-truncate table episode_patient_program;
-truncate table patient_program_attribute;
-truncate table patient_state;
-truncate table patient; 
-truncate table episode;
-truncate table audit_log;
-delete from person_address where person_id <> 1;
-delete from person_attribute where person_id <> 1;
-delete from person_name where not exists
-	(select u.person_id from users u where person_name.person_id = u.person_id or person_name.person_id = 1)
-	and not exists (select p.person_id from provider p where person_name.person_id = p.person_id or person_name.person_id = 1);
-delete from person where not exists
-	(select u.person_id from users u where person.person_id = u.person_id or person.person_id = 1)
-	and not exists (select p.person_id from provider p where person.person_id = p.person_id or person.person_id = 1);
+-- =========================================================
+-- 1. Create Temporary Helper Procedures
+-- =========================================================
 
-delete from event_records where category = 'patient' OR category = 'Encounter';
-delete from markers where feed_uri like '%feed/patient/recent%' ;	
+DELIMITER $$
 
-truncate table event_records_offset_marker;
+DROP PROCEDURE IF EXISTS truncate_if_exists$$
+CREATE PROCEDURE truncate_if_exists(IN tbl VARCHAR(255))
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.tables 
+        WHERE table_schema = DATABASE() 
+          AND table_name = tbl
+    ) THEN
+        SET @s = CONCAT('TRUNCATE TABLE `', tbl, '`');
+        PREPARE stmt FROM @s;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
 
-update bed set status="AVAILABLE";
+DROP PROCEDURE IF EXISTS run_conditional_deletes$$
+CREATE PROCEDURE run_conditional_deletes()
+BEGIN
+    -- Clean person_address
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'person_address') THEN
+        DELETE FROM person_address WHERE person_id <> 1;
+    END IF;
 
-set foreign_key_checks=1;
+    -- Clean person_attribute
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'person_attribute') THEN
+        DELETE FROM person_attribute WHERE person_id <> 1;
+    END IF;
+
+    -- Clean person_name safely avoiding user/provider deletions
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'person_name') 
+       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'users') 
+       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'provider') THEN
+        DELETE FROM person_name 
+        WHERE NOT EXISTS (
+            SELECT 1 FROM users u WHERE person_name.person_id = u.person_id OR person_name.person_id = 1
+        )
+        AND NOT EXISTS (
+            SELECT 1 FROM provider p WHERE person_name.person_id = p.person_id OR person_name.person_id = 1
+        );
+    END IF;
+
+    -- Clean person safely avoiding user/provider deletions
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'person') 
+       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'users') 
+       AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'provider') THEN
+        DELETE FROM person 
+        WHERE NOT EXISTS (
+            SELECT 1 FROM users u WHERE person.person_id = u.person_id OR person.person_id = 1
+        )
+        AND NOT EXISTS (
+            SELECT 1 FROM provider p WHERE person.person_id = p.person_id OR person.person_id = 1
+        );
+    END IF;
+
+    -- Clean event_records
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'event_records') THEN
+        DELETE FROM event_records WHERE category = 'patient' OR category = 'Encounter';
+    END IF;
+
+    -- Clean markers
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'markers') THEN
+        DELETE FROM markers WHERE feed_uri LIKE '%feed/patient/recent%';
+    END IF;
+
+    -- Reset bed status to available
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'bed') THEN
+        UPDATE bed SET status = 'AVAILABLE';
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- =========================================================
+-- 2. Execute Dynamic Truncations
+-- =========================================================
+
+CALL truncate_if_exists('test_order');
+CALL truncate_if_exists('drug_order');
+CALL truncate_if_exists('note');   
+CALL truncate_if_exists('obs_relationship');  
+CALL truncate_if_exists('concept_proposal');  	
+CALL truncate_if_exists('concept_proposal_tag_map');
+CALL truncate_if_exists('obs');
+CALL truncate_if_exists('orders');
+CALL truncate_if_exists('relationship');
+CALL truncate_if_exists('visit_attribute');
+CALL truncate_if_exists('bed_patient_assignment_map');
+CALL truncate_if_exists('encounter_provider');
+CALL truncate_if_exists('episode_encounter');
+CALL truncate_if_exists('order_group');
+CALL truncate_if_exists('encounter');  
+CALL truncate_if_exists('patient_appointment');
+CALL truncate_if_exists('patient_appointment_audit');
+CALL truncate_if_exists('patient_appointment_fulfilling_encounter_map');
+CALL truncate_if_exists('patient_appointment_occurrence');
+CALL truncate_if_exists('patient_appointment_provider');
+CALL truncate_if_exists('patient_appointment_recurring_time');
+CALL truncate_if_exists('visit'); 
+CALL truncate_if_exists('patient_identifier');
+CALL truncate_if_exists('conditions');
+CALL truncate_if_exists('cohort_member');
+CALL truncate_if_exists('patient_program');
+CALL truncate_if_exists('episode_patient_program');
+CALL truncate_if_exists('patient_program_attribute');
+CALL truncate_if_exists('patient_state');
+CALL truncate_if_exists('patient'); 
+CALL truncate_if_exists('episode');
+CALL truncate_if_exists('audit_log');
+CALL truncate_if_exists('event_records_offset_marker');
+
+-- =========================================================
+-- 3. Execute Conditional Deletes & Updates
+-- =========================================================
+
+CALL run_conditional_deletes();
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- =========================================================
+-- 4. Clean Up Stored Procedures
+-- =========================================================
+
+DROP PROCEDURE IF EXISTS truncate_if_exists;
+DROP PROCEDURE IF EXISTS run_conditional_deletes;

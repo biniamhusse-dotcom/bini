@@ -11,6 +11,7 @@ angular.module('bahmni.registration')
             var locationUuid = sessionService.getLoginLocationUuid();
             var payment_config = appService.getAppDescriptor().getConfigValue("paymentConfig")
             var selectedProvider = $rootScope.currentProvider;
+            $scope.currentProvider = $rootScope.currentProvider || {};
             var regEncounterTypeUuid = $rootScope.regEncounterConfiguration.encounterTypes[Bahmni.Registration.Constants.registrationEncounterType];
             var visitLocationUuid = $rootScope.visitLocation;
             var redirectToDashboard = false;

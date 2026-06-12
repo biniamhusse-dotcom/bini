@@ -2,9 +2,9 @@
 
 angular.module('bahmni.registration')
     .controller('ERTriageVisitController', ['$window', '$scope', '$rootScope', '$state', '$bahmniCookieStore', 'patientService', 'encounterService', '$stateParams', 'spinner', '$timeout', '$q', 'appService', 'openmrsPatientMapper', 'contextChangeHandler', 'messagingService', 'sessionService', 'visitService', '$location', '$translate',
-        'auditLogService', 'formService', 'observationsService',
+        'auditLogService', 'formService', 'observationsService', '$http',
         function ($window, $scope, $rootScope, $state, $bahmniCookieStore, patientService, encounterService, $stateParams, spinner, $timeout, $q, appService, openmrsPatientMapper, contextChangeHandler, messagingService, sessionService, visitService, $location, $translate, auditLogService,
-                  formService, observationsService) {
+                  formService, observationsService, $http) {
             var vm = this;
             var patientUuid = $stateParams.patientUuid;
             var triageType = $stateParams.triageType;
@@ -14,6 +14,7 @@ angular.module('bahmni.registration')
 
             var locationUuid = sessionService.getLoginLocationUuid();
             var selectedProvider = $rootScope.currentProvider;
+            $scope.currentProvider = $rootScope.currentProvider || {};
             var regEncounterTypeUuid = $rootScope.regEncounterConfiguration.encounterTypes[Bahmni.Registration.Constants.registrationEncounterType];
             var visitLocationUuid = $rootScope.visitLocation;
             var getPatient = function () {
@@ -70,39 +71,63 @@ angular.module('bahmni.registration')
                 return updateImagePromise;
             };
 
-            var save = function () {
-                $scope.encounter = {
-                    patientUuid: $scope.patient.uuid,
-                    locationUuid: locationUuid,
-                    encounterTypeUuid: regEncounterTypeUuid,
-                    orders: [],
-                    drugOrders: [],
-                    extensions: {}
+            var getFee = function (fee_type) {                
+                var params = {
+                    name: fee_type
                 };
-
-                $bahmniCookieStore.put(Bahmni.Common.Constants.grantProviderAccessDataCookieName, selectedProvider, {
-                    path: '/',
-                    expires: 1
+                return $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl, {
+                    method: "GET",
+                    params: params,
+                    withCredentials: true
                 });
+            };
 
-                $scope.encounter.observations = $scope.observations;
-                $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
+            var save = function () {
+                return getFee("Emergency Registration Fee").then(function (r) {
+                    $scope.encounter = {
+                        patientUuid: $scope.patient.uuid,
+                        locationUuid: locationUuid,
+                        encounterTypeUuid: regEncounterTypeUuid,
+                        orders: [],
+                        drugOrders: [],
+                        extensions: {}
+                    };
 
-        
-                addFormObservations($scope.encounter.observations);
+                    if (r.data.results && r.data.results[0]) {
+                        $scope.encounter.orders.push({
+                            concept: {
+                                name: r.data.results[0].display,
+                                uuid: r.data.results[0].uuid
+                            },
+                            commentToFulfiller: "",
+                            urgency: "ROUTINE"
+                        });
+                    }
 
-                var createPromise = encounterService.create($scope.encounter);
-                spinner.forPromise(createPromise);
-                return createPromise.then(function (response) {
-                    var messageParams = {encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType};
-                    auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
-                    var visitType, visitTypeUuid;
-                    visitTypeUuid = response.data.visitTypeUuid;
-                    visitService.getVisitType().then(function (response) {
-                        visitType = _.find(response.data.results, function (type) {
-                            if (type.uuid === visitTypeUuid) {
-                                return type;
-                            }
+                    $bahmniCookieStore.put(Bahmni.Common.Constants.grantProviderAccessDataCookieName, selectedProvider, {
+                        path: '/',
+                        expires: 1
+                    });
+
+                    $scope.encounter.observations = $scope.observations;
+                    $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
+
+            
+                    addFormObservations($scope.encounter.observations);
+
+                    var createPromise = encounterService.create($scope.encounter);
+                    spinner.forPromise(createPromise);
+                    return createPromise.then(function (response) {
+                        var messageParams = {encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType};
+                        auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
+                        var visitType, visitTypeUuid;
+                        visitTypeUuid = response.data.visitTypeUuid;
+                        visitService.getVisitType().then(function (response) {
+                            visitType = _.find(response.data.results, function (type) {
+                                if (type.uuid === visitTypeUuid) {
+                                    return type;
+                                }
+                            });
                         });
                     });
                 });

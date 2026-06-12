@@ -22,6 +22,9 @@ angular.module('bahmni.common.domain')
                         encounter.providers.push({"uuid": providerData.uuid});
                     } else if ($rootScope.currentProvider && $rootScope.currentProvider.uuid) {
                         encounter.providers.push({"uuid": $rootScope.currentProvider.uuid});
+                    } else {
+                        // Safe fallback to UNKNOWN provider if none is active
+                        encounter.providers.push({"uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66"});
                     }
                 }
                 return encounter;

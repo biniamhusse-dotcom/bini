@@ -6,6 +6,7 @@ angular.module('bahmni.clinical')
         function ($scope, clinicalAppConfigService, clinicalDashboardConfig, printer,
                   $state, spinner, visitSummary, appService, $stateParams, diseaseTemplateService, patientContext, $location, $filter) {
             $scope.patient = patientContext.patient;
+            $scope.patient.paymentStatus = false;
             $scope.activeVisit = $scope.visitHistory.activeVisit;
             $scope.activeVisitData = {};
             $scope.obsIgnoreList = clinicalAppConfigService.getObsIgnoreList();

@@ -15,6 +15,7 @@ angular.module('bahmni.registration')
             defaultVisitType = defaultVisitType || appService.getAppDescriptor().getConfigValue('defaultVisitType');
 
             var selectedProvider = $rootScope.currentProvider;
+            $scope.currentProvider = $rootScope.currentProvider || {};
             var regEncounterTypeUuid = $rootScope.regEncounterConfiguration.encounterTypes[Bahmni.Registration.Constants.registrationEncounterType];
             var visitLocationUuid = $rootScope.visitLocation;
             $scope.noOfPatients = 0;
@@ -119,46 +120,92 @@ angular.module('bahmni.registration')
                 spinner.forPromise(updateImagePromise);
                 return updateImagePromise;
             };
-            var save = function () {
-                $rootScope.newCRPat = false;
-                $scope.encounter = {
-                    patientUuid: $scope.patient.uuid,
-                    locationUuid: locationUuid,
-                    encounterTypeUuid: regEncounterTypeUuid,
-                    orders: [],
-                    drugOrders: [],
-                    extensions: {}
+            var getFee = function (fee_type) {
+                var params = {
+                    name: fee_type
                 };
-
-                $bahmniCookieStore.put(Bahmni.Common.Constants.grantProviderAccessDataCookieName, selectedProvider, {
-                    path: '/',
-                    expires: 1
+                return $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl, {
+                    method: "GET",
+                    params: params,
+                    withCredentials: true
                 });
+            };
 
-                $scope.encounter.observations = $scope.observations;
-                $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
+            var findObservationValue = function (observations, conceptName) {
+                if (!observations) return null;
+                for (var i = 0; i < observations.length; i++) {
+                    var obs = observations[i];
+                    if (obs.concept && obs.concept.name === conceptName) {
+                        return obs.value;
+                    }
+                    if (obs.groupMembers && obs.groupMembers.length > 0) {
+                        var val = findObservationValue(obs.groupMembers, conceptName);
+                        if (val) return val;
+                    }
+                }
+                return null;
+            };
+
+            var save = function () {
+                var triageTypeObs = findObservationValue($scope.observations, "Triage Type");
+                var isOphthalmic = false;
+                if (triageTypeObs) {
+                    var display = typeof triageTypeObs === 'object' ? (triageTypeObs.display || triageTypeObs.name || '') : triageTypeObs;
+                    isOphthalmic = display.toLowerCase().indexOf('ophthalmic') !== -1;
+                }
+                var feeType = isOphthalmic ? "Ophta Registration Fee" : "Regular Registration Fee";
+
+                return getFee(feeType).then(function (r) {
+                    $rootScope.newCRPat = false;
+                    $scope.encounter = {
+                        patientUuid: $scope.patient.uuid,
+                        locationUuid: locationUuid,
+                        encounterTypeUuid: regEncounterTypeUuid,
+                        orders: [],
+                        drugOrders: [],
+                        extensions: {}
+                    };
+
+                    if (r.data.results && r.data.results[0]) {
+                        $scope.encounter.orders.push({
+                            concept: {
+                                name: r.data.results[0].display,
+                                uuid: r.data.results[0].uuid
+                            },
+                            commentToFulfiller: "",
+                            urgency: "ROUTINE"
+                        });
+                    }
+
+                    $bahmniCookieStore.put(Bahmni.Common.Constants.grantProviderAccessDataCookieName, selectedProvider, {
+                        path: '/',
+                        expires: 1
+                    });
+
+                    $scope.encounter.observations = $scope.observations;
+                    $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
 
 
-                addFormObservations($scope.encounter.observations);
-                var createPromise = encounterService.create($scope.encounter);
-                spinner.forPromise(createPromise);
-                return createPromise.then(function (response) {
-                    var messageParams = { encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType };
-                    auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
-                    var visitType, visitTypeUuid;
-                    visitTypeUuid = $scope.selectedVisitType.uuid;
-                    visitService.getVisitType().then(function (response) {
-                        visitType = _.find(response.data.results, function (type) {
-                            if (type.uuid === visitTypeUuid) {
-                                return type;
-                            }
-                            else {
-                                return $scope.selectedVisitType;
-                            }
+                    addFormObservations($scope.encounter.observations);
+                    var createPromise = encounterService.create($scope.encounter);
+                    spinner.forPromise(createPromise);
+                    return createPromise.then(function (response) {
+                        var messageParams = { encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType };
+                        auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
+                        var visitType, visitTypeUuid;
+                        visitTypeUuid = $scope.selectedVisitType.uuid;
+                        visitService.getVisitType().then(function (response) {
+                            visitType = _.find(response.data.results, function (type) {
+                                if (type.uuid === visitTypeUuid) {
+                                    return type;
+                                }
+                                else {
+                                    return $scope.selectedVisitType;
+                                }
+                            });
                         });
                     });
                 });
-
             };
 
             var isUserPrivilegedToCloseVisit = function () {

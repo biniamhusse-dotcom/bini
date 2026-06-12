@@ -19,6 +19,7 @@ angular.module('bahmni.clinical').controller('ConsultationController',
             var enableDrugStockStatusCheck = appService.getAppDescriptor().getConfigValue("enableDrugStockStatusCheck")
             $scope.togglePrintList = false;
             $scope.patient = patientContext.patient;
+            $scope.patient.paymentStatus = false;
             async function fetchPatientHistory() {
                 $scope.hasActiveVisit = false;
                 const { url, queryParams } = {
@@ -145,12 +146,12 @@ angular.module('bahmni.clinical').controller('ConsultationController',
                     getOrderUuid().then(resp => {
                                     if (resp.data[0]) {
                                         paymentStatusService.getPaymentStatus(resp.data[0].uuid).then(function (response) {
-                                $scope.buttonShow = response.data;
-                                $scope.patient.paymentStatus = response.data;
+                                $scope.buttonShow = response.data === "INVOICED";
+                                $scope.patient.paymentStatus = response.data === "INVOICED";
                             })
                         }
                         else {
-                            $scope.patient.paymentStatus = true;
+                            $scope.patient.paymentStatus = false;
                         }
 
                     })

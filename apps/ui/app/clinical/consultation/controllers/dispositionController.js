@@ -49,15 +49,15 @@ angular.module('bahmni.clinical')
         var loadAllWards = function () {
             return wards.success(function (wardList) {
                 const exist = $scope.patient.person;
-                if (exist && $scope.patient.person.age <= 10 && $scope.patient.person.gender === 'M') {
+                if (exist && $scope.patient.person.age <= 18 && $scope.patient.person.gender === 'M') {
                     $scope.wards = wardList.results
                         .filter(e => !$scope.femaleVisitTypeNames.includes(e.ward.name))
                         .map(e => e.ward.name);
-                } else if (exist && $scope.patient.person.age > 10 && $scope.patient.person.gender === 'M') {
+                } else if (exist && $scope.patient.person.age > 18 && $scope.patient.person.gender === 'M') {
                     $scope.wards = wardList.results
                         .filter(e => !$scope.femaleVisitTypeNames.includes(e.ward.name) && !$scope.pediVisitTypeNames.includes(e.ward.name))
                         .map(e => e.ward.name);
-                } else if (exist && $scope.patient.person.age > 10 && $scope.patient.person.gender === 'F') {
+                } else if (exist && $scope.patient.person.age > 18 && $scope.patient.person.gender === 'F') {
                     $scope.wards = wardList.results
                         .filter(e => !$scope.pediVisitTypeNames.includes(e.ward.name))
                         .map(e => e.ward.name);
@@ -373,13 +373,13 @@ angular.module('bahmni.clinical')
 
         visitType.then(function (data) {
             const exist= $scope.patient.person;
-            if (exist && $scope.patient.person.age <= 10 && $scope.patient.person.gender === 'M') {
+            if (exist && $scope.patient.person.age <= 18 && $scope.patient.person.gender === 'M') {
                 $scope.visitType = data.data.results
                     .filter(e => !$scope.femaleVisitTypeNames.includes(e.display));
-            } else if (exist && $scope.patient.person.age > 10 && $scope.patient.person.gender === 'M') {
+            } else if (exist && $scope.patient.person.age > 18 && $scope.patient.person.gender === 'M') {
                 $scope.visitType = data.data.results
                     .filter(e => !$scope.femaleVisitTypeNames.includes(e.display) && !$scope.pediVisitTypeNames.includes(e.display));
-            } else if (exist && $scope.patient.person.age > 10 && $scope.patient.person.gender === 'F') {
+            } else if (exist && $scope.patient.person.age > 18 && $scope.patient.person.gender === 'F') {
                 $scope.visitType = data.data.results
                     .filter(e => !$scope.pediVisitTypeNames.includes(e.display));
             } else {

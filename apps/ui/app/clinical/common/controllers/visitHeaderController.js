@@ -51,7 +51,7 @@ angular.module('bahmni.clinical')
                     getOrderUuid().then(resp => {
                         if (resp.data[0]) {
                             paymentStatusService.getPaymentStatus(resp.data[0].uuid).then(function (response) {
-                                $scope.buttonShow = response.data;
+                                $scope.buttonShow = response.data === "INVOICED";
                             })
                         }
                     })
