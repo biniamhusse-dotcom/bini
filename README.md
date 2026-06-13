@@ -273,6 +273,64 @@ docker run --rm -v bahmni-standard_odooappdata:/data busybox chown -R 101:101 /d
 
 ---
 
+## Payment Status Toggle
+
+Force all patients to show "Paid" without Odoo billing integration, or restore the original behavior.
+
+### Enable Always Paid
+
+```bash
+# Ubuntu
+bash enable_always_paid.sh
+
+# Windows (Git Bash or WSL)
+bash enable_always_paid.sh
+```
+
+This sets `"disable checking": true` in `config/openmrs/apps/clinical/app.json` and `config/openmrs/apps/orders/app.json`. All patients will show green "Paid" status on the clinical dashboard and order fulfillment pages.
+
+### Restore Payment Checking
+
+```bash
+bash restore_payment_check.sh
+```
+
+This reverts to `"disable checking": false`. Payment status will query the Odoo billing system.
+
+### After running either script
+
+- **Ubuntu:** Restart Bahmni: `cd bahmni-docker/bahmni-standard && docker compose --env-file .env up -d`
+- **Windows:** Restart Docker Desktop or run: `cd bahmni-docker\bahmni-standard; docker compose --env-file .env up -d`
+- **Both:** Hard refresh browser with **Ctrl+Shift+R**
+
+---
+
+## Radiology Orders Fix
+
+The Bahmni default `PatientsWithRadiologyOrders` SQL query had a bug: it filtered by `order_type_id = 4` (Lab Order) instead of Radiology Order. This caused patients with Radiology Orders to not appear in the Orders app.
+
+### Apply fix on existing database
+
+**Ubuntu:**
+```bash
+docker exec bahmni-standard-openmrsdb-1 mysql -uopenmrs-user -ppassword openmrs -e \
+  "UPDATE global_property SET property_value = 'select distinct concat(pn.given_name,\" \", ifnull(pn.family_name,\"\")) as name, pi.identifier as identifier, concat(\"\",p.uuid) as uuid, concat(\"\",v.uuid) as activeVisitUuid, IF(va.value_reference = \"Admitted\", \"true\", \"false\") as hasBeenAdmitted from visit v join person_name pn on v.patient_id = pn.person_id and pn.voided = 0 join patient_identifier pi on v.patient_id = pi.patient_id join patient_identifier_type pit on pi.identifier_type = pit.patient_identifier_type_id join global_property gp on gp.property=\"bahmni.primaryIdentifierType\" and gp.property_value=pit.uuid join person p on p.person_id = v.patient_id join orders o on o.patient_id = v.patient_id join order_type on o.order_type_id = order_type.order_type_id and order_type.name = \"Radiology Order\" left outer join visit_attribute va on va.visit_id = v.visit_id and va.voided = 0 and va.attribute_type_id = (select visit_attribute_type_id from visit_attribute_type where name=\"Admission Status\") where v.date_stopped is null AND v.voided = 0' WHERE property = 'emrapi.sqlSearch.PatientsWithRadiologyOrders';"
+```
+
+**Windows (PowerShell):**
+```powershell
+docker exec bahmni-standard-openmrsdb-1 mysql -uopenmrs-user -ppassword openmrs -e "UPDATE global_property SET property_value = 'select distinct concat(pn.given_name,'' '', ifnull(pn.family_name,'''')) as name, pi.identifier as identifier, concat('''',p.uuid) as uuid, concat('''',v.uuid) as activeVisitUuid, IF(va.value_reference = ""Admitted"", ""true"", ""false"") as hasBeenAdmitted from visit v join person_name pn on v.patient_id = pn.person_id and pn.voided = 0 join patient_identifier pi on v.patient_id = pi.patient_id join patient_identifier_type pit on pi.identifier_type = pit.patient_identifier_type_id join global_property gp on gp.property=""bahmni.primaryIdentifierType"" and gp.property_value=pit.uuid join person p on p.person_id = v.patient_id join orders o on o.patient_id = v.patient_id join order_type on o.order_type_id = order_type.order_type_id and order_type.name = ""Radiology Order"" left outer join visit_attribute va on va.visit_id = v.visit_id and va.voided = 0 and va.attribute_type_id = (select visit_attribute_type_id from visit_attribute_type where name=""Admission Status"") where v.date_stopped is null AND v.voided = 0' WHERE property = 'emrapi.sqlSearch.PatientsWithRadiologyOrders';"
+```
+
+After applying, restart OpenMRS:
+```bash
+docker restart bahmni-standard-openmrs-1
+```
+
+The corrected SQL is also saved in `config/masterdata/configuration/globalproperties/gp_orders.xml` for fresh installs.
+
+---
+
 ## Troubleshooting
 
 ### Docker not responding
