@@ -141,82 +141,204 @@ Backups are saved to `backups/bahmni/`:
 
 ## Restore
 
-### Ubuntu (automated)
+The `restores/` directory contains individual restore scripts for each database, volume, and Docker image. Every script works the same way: it auto-detects the latest backup file, or you can pass a specific date stamp to restore a particular backup.
+
+### How the scripts work
+
+All restore scripts follow the same pattern:
+
+1. **Find the backup file** — If no date is given, the script picks the most recent file. If you pass a date (e.g., `20260605_125336`), it looks for that exact backup.
+2. **Start the container** — Each script starts the relevant Docker container if it is not already running.
+3. **Wait for the database to be ready** — The script polls the database until it accepts connections, so you don't have to worry about timing.
+4. **Drop and recreate the database** — The old database is deleted and a fresh one is created before restoring. This ensures a clean state.
+5. **Restore from the backup** — The compressed backup is streamed directly into the database or extracted into the volume.
+
+### Restore everything at once
+
+If you want to restore all databases, volumes, and images in one go, use the full restore script:
 
 ```bash
-# Restore latest backup
+# Restore everything from the latest backup
 sudo bash bahmni_restore.sh
 
-# Restore specific date
+# Restore everything from a specific date
 sudo bash bahmni_restore.sh 20260605_125336
 ```
 
-### Ubuntu (manual)
+### Restore individual databases
+
+Each database has its own script. Run it from the `restores/` directory. The script will automatically find the latest backup file for that database.
 
 ```bash
-cd bahmni-docker/bahmni-standard
+cd restores
 
-# 1. Stop app containers
-docker stop bahmni-standard-openmrs-1 bahmni-standard-openelis-1 bahmni-standard-odoo-1
+# Restore only the OpenMRS database (latest backup)
+bash restore_openmrs.sh
 
-# 2. Drop and recreate databases
-docker exec bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' \
-  -e "DROP DATABASE IF EXISTS openmrs; CREATE DATABASE openmrs;"
-docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
-  -e "DROP DATABASE IF EXISTS bahmni_reports; CREATE DATABASE bahmni_reports;"
-docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres -c "DROP DATABASE IF EXISTS odoo;"
-docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres -c "CREATE DATABASE odoo OWNER odoo;"
-docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres -c "DROP DATABASE IF EXISTS clinlims;"
-docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres -c "CREATE DATABASE clinlims OWNER clinlims;"
-docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS pacs_db;"
-docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres -c "CREATE DATABASE pacs_db OWNER pacs_user;"
-
-# 3. Restore databases
-zcat /path/to/openmrs_*.sql.gz | docker exec -i bahmni-standard-openmrsdb-1 \
-  mysql -uroot -p'adminAdmin!123' openmrs
-zcat /path/to/bahmni_reports_*.sql.gz | docker exec -i bahmni-standard-reportsdb-1 \
-  mysql -uroot -p'adminAdmin!123' bahmni_reports
-zcat /path/to/odoo_*.pgsql.gz | docker exec -i bahmni-standard-odoodb-1 \
-  psql -U odoo -d odoo
-zcat /path/to/clinlims_*.pgsql.gz | docker exec -i bahmni-standard-openelisdb-1 \
-  psql -U clinlims -d clinlims
-zcat /path/to/pacsdb_*.pgsql.gz | docker exec -i bahmni-standard-pacsdb-1 \
-  psql -U postgres -d pacs_db
-
-# 4. Restore volumes
-for vol in bahmni-document-images bahmni-patient-images bahmni-clinical-forms \
-           bahmni-lab-results bahmni-uploaded-files bahmni-queued-reports \
-           dcm4chee-archive dcm4chee-config odoofilestore odooappdata odooconfig sms-token; do
-  FILE=$(ls -t /path/to/backups/bahmni/volumes/bahmni-standard_${vol}_*.tar.gz 2>/dev/null | head -1)
-  [ -f "$FILE" ] && docker run --rm -v bahmni-standard_${vol}:/data -v "$FILE":/backup.tar.gz:ro \
-    busybox sh -c "rm -rf /data/* /data/..?* /data/.[!.]*; tar -xzf /backup.tar.gz -C /data"
-done
-
-# 5. Fix Odoo filestore permissions
-docker run --rm -v bahmni-standard_odoofilestore:/data busybox chown -R 101:101 /data
-docker run --rm -v bahmni-standard_odooappdata:/data busybox chown -R 101:101 /data
-
-# 6. Restart all containers
-docker compose --env-file .env up -d
+# Restore only the OpenMRS database from a specific date
+bash restore_openmrs.sh 20260605_125336
 ```
 
-### Windows
+**Available database scripts:**
 
-On Windows, PowerShell does not support `<` redirects for `docker exec -i`. Use `cmd /c`:
+| Script | Database | Engine | What it does |
+|--------|----------|--------|--------------|
+| `restore_openmrs.sh` | openmrs | MySQL | Main EMR data — patients, encounters, observations, orders |
+| `restore_reports.sh` | bahmni_reports | MySQL | Bahmni reporting data |
+| `restore_odoo.sh` | odoo | PostgreSQL | Odoo ERP — billing, inventory, users |
+| `restore_clinlims.sh` | clinlims | PostgreSQL | OpenELIS — lab results, tests, panels |
+| `restore_pacsdb.sh` | pacs_db | PostgreSQL | dcm4chee PACS — imaging studies metadata |
 
-```cmd
+**What happens during a database restore:**
+
+1. The script starts the database container (e.g., `bahmni-standard-openmrsdb-1`)
+2. Waits until the database engine is ready to accept connections
+3. Drops the existing database and creates a new empty one
+4. Streams the compressed SQL dump into the fresh database
+5. Reports success or failure
+
+> **Warning:** Database restores are destructive — the existing data is permanently deleted before restoring. Make sure you have a current backup before running a restore.
+
+### Restore individual volumes
+
+Docker volumes store uploaded files, clinical forms, PACS archives, and other persistent data. Each volume has its own restore script.
+
+```bash
+cd restores
+
+# Restore only document images (X-rays, scans uploaded to Bahmni)
+bash restore_bahmni-document-images.sh
+
+# Restore only clinical forms
+bash restore_bahmni-clinical-forms.sh
+
+# Restore only Odoo filestore (invoices, reports)
+bash restore_odoofilestore.sh
+```
+
+**Available volume scripts:**
+
+| Script | Volume | What it stores |
+|--------|--------|----------------|
+| `restore_bahmni-document-images.sh` | bahmni-document-images | Radiology images, uploaded documents |
+| `restore_bahmni-patient-images.sh` | bahmni-patient-images | Patient profile photos |
+| `restore_bahmni-clinical-forms.sh` | bahmni-clinical-forms | Saved clinical form templates |
+| `restore_bahmni-lab-results.sh` | bahmni-lab-results | Lab result files and attachments |
+| `restore_bahmni-uploaded-files.sh` | bahmni-uploaded-files | General uploaded files |
+| `restore_bahmni-queued-reports.sh` | bahmni-queued-reports | Reports waiting to be generated |
+| `restore_dcm4chee-archive.sh` | dcm4chee-archive | DICOM imaging archive (large) |
+| `restore_dcm4chee-config.sh` | dcm4chee-config | PACS configuration files |
+| `restore_odoofilestore.sh` | odoofilestore | Odoo documents (auto-fixes permissions) |
+| `restore_odooappdata.sh` | odooappdata | Odoo application data (auto-fixes permissions) |
+| `restore_odooconfig.sh` | odooconfig | Odoo configuration |
+| `restore_sms-token.sh` | sms-token | SMS gateway tokens |
+
+**What happens during a volume restore:**
+
+1. Finds the backup `.tar.gz` file for that volume
+2. Creates the volume data directory if it does not exist
+3. Clears the existing volume contents
+4. Extracts the backup into the volume
+5. For Odoo volumes (`odoofilestore`, `odooappdata`), automatically fixes file ownership to `101:101` so Odoo can read its files
+
+> **Note:** Volumes are not destructive to other data — restoring a volume only affects that specific volume. You can safely restore individual volumes without touching databases.
+
+### Restore Docker images
+
+Docker images are the application binaries. You would only need to restore images if you are rebuilding the stack on a new machine or if images were removed.
+
+```bash
+cd restores
+
+# Restore the OpenMRS database image
+bash restore_bahmni_openmrs-db.sh
+
+# Restore the Bahmni web application image
+bash restore_selamsew_bahmni-web.sh
+
+# Restore MySQL base image
+bash restore_mysql.sh
+```
+
+**Available image scripts:**
+
+| Script | Image | Description |
+|--------|-------|-------------|
+| `restore_bahmni_appointments.sh` | bahmni_appointments:1.1.1 | Appointments module |
+| `restore_bahmni_atomfeed-console.sh` | bahmni_atomfeed-console:1.0.0 | Atomfeed console |
+| `restore_bahmni_dcm4chee.sh` | bahmni_dcm4chee:1.0.0 | PACS server |
+| `restore_bahmni_implementer-interface.sh` | bahmni_implementer-interface:1.1.1 | Config management UI |
+| `restore_bahmni_microfrontend-ipd.sh` | bahmni_microfrontend-ipd:1.0.0 | IPD microfrontend |
+| `restore_bahmni_odoo-16-db.sh` | bahmni_odoo-16-db:1.0.0-standard | Odoo database image |
+| `restore_bahmni_odoo-connect.sh` | bahmni_odoo-connect:1.0.0 | Odoo connector |
+| `restore_bahmni_openelis-db.sh` | bahmni_openelis-db:1.0.0-standard | OpenELIS database image |
+| `restore_bahmni_openmrs-db.sh` | bahmni_openmrs-db:1.0.0-standard | OpenMRS database image |
+| `restore_bahmni_pacs-integration.sh` | bahmni_pacs-integration:1.0.0 | PACS integration |
+| `restore_bahmni_patient-documents.sh` | bahmni_patient-documents:1.1.1 | Patient documents |
+| `restore_bahmni_proxy.sh` | bahmni_proxy:1.1.0 | Apache reverse proxy |
+| `restore_bahmni_reports.sh` | bahmni_reports:1.1.0 | Reporting module |
+| `restore_mysql.sh` | mysql:8.0 | MySQL base image |
+| `restore_postgres.sh` | postgres:9.6 | PostgreSQL base image |
+| `restore_selamsew_bahmni-web.sh` | selamsew_bahmni-web:1.1.0-uog-1.0.0 | Custom Bahmni web |
+| `restore_selamsew_global_property.sh` | selamsew_global_property:uog-1.0.2 | Custom global properties |
+| `restore_selamsew_lab-result-sync.sh` | selamsew_lab-result-sync:1.0.2 | Custom lab result sync |
+| `restore_selamsew_odoo-16.sh` | selamsew_odoo-16:1.0.0-uog-1.0.3 | Custom Odoo |
+| `restore_selamsew_openelis.sh` | selamsew_openelis:1.0.0-uog-1.0.5 | Custom OpenELIS |
+| `restore_selamsew_openmrs.sh` | selamsew_openmrs:1.1.1-uog-1.0.2 | Custom OpenMRS |
+
+**What happens during an image restore:**
+
+1. Locates the `.tar.gz` image file in `backups/bahmni/images/`
+2. Runs `docker load -i` to import the image into Docker's local image registry
+3. The image is now available for `docker compose up -d` to use
+
+> **Note:** Image restores do not affect running containers or data. They only make the image available locally. You still need to run `docker compose up -d` to start containers with the restored image.
+
+### Typical restore workflow
+
+Here is a common scenario — you have a fresh Docker install and want to restore from a backup:
+
+```bash
+# Step 1: Clone the repo
+git clone -b main https://github.com/biniamhusse-dotcom/bini.git emr
+cd emr
+
+# Step 2: Start the database containers first (so they are ready to receive data)
+cd bahmni-docker/bahmni-standard
+docker compose --env-file .env up -d
+cd ../..
+
+# Step 3: Restore databases (one at a time, or all at once)
+cd restores
+bash restore_openmrs.sh 20260605_125336
+bash restore_odoo.sh 20260605_125336
+bash restore_clinlims.sh 20260605_125336
+bash restore_reports.sh 20260605_125336
+bash restore_pacsdb.sh 20260605_125336
+
+# Step 4: Restore volumes (only the ones you need)
+bash restore_bahmni-document-images.sh 20260605_125336
+bash restore_odoofilestore.sh 20260605_125336
+
+# Step 5: Restart everything
+cd ../bahmni-docker/bahmni-standard
+docker compose --env-file .env up -d
+
+# Step 6: Hard refresh browser (Ctrl+Shift+R)
+```
+
+### Windows notes
+
+On Windows, use Git Bash or WSL to run the `.sh` scripts. If using PowerShell, the scripts will not work directly — use `cmd /c` as a workaround:
+
+```powershell
 cmd /c "docker exec -i bahmni-standard-openmrsdb-1 mysql -uroot -padminAdmin!123 openmrs < C:\path\to\openmrs.sql.gz"
 ```
 
-Or copy the file into the container first:
+Or copy files into the container first:
 ```powershell
 docker cp openmrs.sql.gz bahmni-standard-openmrsdb-1:/tmp/openmrs.sql.gz
 docker exec bahmni-standard-openmrsdb-1 sh -c "zcat /tmp/openmrs.sql.gz | mysql -uroot -p'adminAdmin!123' openmrs"
-```
-
-For volume restore on Windows:
-```powershell
-docker run --rm -v bahmni-standard_bahmni-document-images:/data -v "C:\path\to\volumes\bahmni-standard_bahmni-document-images_*.tar.gz:/backup.tar.gz:ro" busybox sh -c "rm -rf /data/*; tar -xzf /backup.tar.gz -C /data"
 ```
 
 ---
