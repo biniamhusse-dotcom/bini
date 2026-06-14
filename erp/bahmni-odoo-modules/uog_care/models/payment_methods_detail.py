@@ -105,7 +105,7 @@ class SaleOrderInherited(models.Model):
                 order.write(vals)
 
     def _fetch_openmrs_person_attributes(self, patient_uuid):
-        url = f"{OPENMRS_URL}/ws/rest/v1/person/{patient_uuid}?v=custom"
+        url = f"{OPENMRS_URL}/ws/rest/v1/person/{patient_uuid}?v=full"
         try:
             auth_string = base64.b64encode(f"{OPENMRS_USER}:{OPENMRS_PASS}".encode()).decode()
             req = urllib.request.Request(url)
