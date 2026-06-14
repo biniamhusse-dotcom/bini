@@ -1,0 +1,103 @@
+=== Bahmni Backup Started: 20260614_154106 ===
+Free disk space before backup:
+Filesystem      Size  Used Avail Use% Mounted on
+C:              477G  236G  242G  50% /c
+
+
+  ✓ OpenMRS — 41M
+
+  ✓ Odoo — 6.0M
+
+  ✓ OpenELIS — 56M
+
+  ✓ Reports — 4.0K
+
+  ✓ PACS — 1.4M
+
+--- VOLUME BACKUPS ---
+
+  SKIP: Volume not found: bahmni-standard_bahmni-document-images
+
+  SKIP: Volume not found: bahmni-standard_bahmni-patient-images
+
+  SKIP: Volume not found: bahmni-standard_bahmni-clinical-forms
+
+  SKIP: Volume not found: bahmni-standard_bahmni-lab-results
+
+  SKIP: Volume not found: bahmni-standard_bahmni-uploaded-files
+
+  SKIP: Volume not found: bahmni-standard_bahmni-queued-reports
+
+  SKIP: Volume not found: bahmni-standard_dcm4chee-archive
+
+  SKIP: Volume not found: bahmni-standard_dcm4chee-config
+
+  SKIP: Volume not found: bahmni-standard_odoofilestore
+
+  SKIP: Volume not found: bahmni-standard_odooappdata
+
+  SKIP: Volume not found: bahmni-standard_odooconfig
+
+  SKIP: Volume not found: bahmni-standard_sms-token
+
+--- DOCKER IMAGE BACKUPS ---
+
+  ✓  — 1.0K
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+  ✓  (already exists)
+
+
+
+=== Backup Complete: Sun Jun 14 15:41:57 PDT 2026 ===
+
+--- Database backups ---
+-rw-r--r-- 1 COMPUTER 197121 3.2K Jun 14 15:41 /c/Users/COMPUTER/Documents/emr/backups/bahmni/bahmni_reports_20260614_154106.sql.gz
+-rw-r--r-- 1 COMPUTER 197121  56M Jun 14 15:41 /c/Users/COMPUTER/Documents/emr/backups/bahmni/clinlims_20260614_154106.pgsql.gz
+-rw-r--r-- 1 COMPUTER 197121 6.0M Jun 14 15:41 /c/Users/COMPUTER/Documents/emr/backups/bahmni/odoo_20260614_154106.pgsql.gz
+-rw-r--r-- 1 COMPUTER 197121  41M Jun 14 15:41 /c/Users/COMPUTER/Documents/emr/backups/bahmni/openmrs_20260614_154106.sql.gz
+-rw-r--r-- 1 COMPUTER 197121 1.4M Jun 14 15:41 /c/Users/COMPUTER/Documents/emr/backups/bahmni/pacsdb_20260614_154106.pgsql.gz
+--- Volume backups ---
+total 0
+--- Total backup size ---
+105M	/c/Users/COMPUTER/Documents/emr/backups/bahmni
+--- Free disk space after backup ---
+Filesystem      Size  Used Avail Use% Mounted on
+C:              477G  236G  242G  50% /c
