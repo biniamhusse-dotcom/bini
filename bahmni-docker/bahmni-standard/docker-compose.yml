@@ -463,6 +463,7 @@ services:
     image: 'bahmni/patient-documents:${PATIENT_DOCUMENTS_TAG:?}'
     profiles: ["emr","bahmni-standard"]
     volumes:
+      - '../../bahmni-docker/bahmni-standard/patient-documents-nginx.conf:/etc/nginx/templates/default.conf.template'
       - 'bahmni-document-images:/usr/share/nginx/html/document_images'
       - 'bahmni-lab-results:/usr/share/nginx/html/uploaded_results'
       - "bahmni-uploaded-files:/usr/share/nginx/html/uploaded-files"
