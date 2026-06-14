@@ -52,7 +52,7 @@ fi
 
 # Step 4 — Verify
 echo -e "${CYAN}Step 4: Verifying...${NOCOLOR}"
-FOUND=$(docker exec "$CONTAINER" grep -n "hasPaid\|Not Paid" "$JS_FILE")
+FOUND=$(MSYS_NO_PATHCONV=1 docker exec "$CONTAINER" grep -n "hasPaid\|Not Paid" "$JS_FILE")
 if [ -n "$FOUND" ]; then
   echo -e "${GREEN}SUCCESS: Payment check restored. Refresh OpenELIS in browser.${NOCOLOR}"
   echo "$FOUND"
