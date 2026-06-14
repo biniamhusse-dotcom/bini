@@ -53,7 +53,7 @@ post_to_odoo() {
   result=$(curl.exe -s -b "$COOKIE_FILE" -X POST "$ODOO_URL$endpoint" \
     -H "Content-Type: application/json" \
     -d "$payload" 2>/dev/null)
-  if echo "$result" | grep -q '"status":200'; then
+  if echo "$result" | grep -qE '"status":[ ]*200'; then
     return 0
   else
     echo -e "\n  ${RED}API response: $result${NOCOLOR}" >&2
