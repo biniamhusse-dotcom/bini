@@ -66,14 +66,16 @@ After cloning, `.sh` files may not have execute permission. Run this once to fix
 **Ubuntu:**
 ```bash
 chmod +x *.sh
-chmod +x restores/*.sh
+chmod +x restores/databases/*.sh
+chmod +x restores/volumes/*.sh
+chmod +x restores/images/*.sh
 chmod +x fresh_db/*.sh
 chmod +x payment_check/*.sh
 ```
 
 **Windows (Git Bash or WSL):**
 ```bash
-chmod +x *.sh restores/*.sh fresh_db/*.sh payment_check/*.sh
+chmod +x *.sh restores/databases/*.sh restores/volumes/*.sh restores/images/*.sh fresh_db/*.sh payment_check/*.sh
 ```
 
 **Windows (PowerShell):** Scripts run with `bash script.sh` directly, so `chmod` is not needed. Git Bash handles this automatically.
@@ -160,7 +162,16 @@ Backups are saved to `backups/bahmni/`:
 
 ## Restore
 
-The `restores/` directory contains individual restore scripts for each database, volume, and Docker image. Every script works the same way: it auto-detects the latest backup file, or you can pass a specific date stamp to restore a particular backup.
+The `restores/` directory contains individual restore scripts organized into subdirectories:
+
+```
+restores/
+  databases/    # MySQL and PostgreSQL database restore scripts
+  volumes/      # Docker volume restore scripts
+  images/       # Docker image restore scripts
+```
+
+Every script works the same way: it auto-detects the latest backup file, or you can pass a specific date stamp to restore a particular backup.
 
 ### How the scripts work
 
@@ -186,10 +197,10 @@ sudo bash bahmni_restore.sh 20260605_125336
 
 ### Restore individual databases
 
-Each database has its own script. Run it from the `restores/` directory. The script will automatically find the latest backup file for that database.
+Each database has its own script in `restores/databases/`. The script will automatically find the latest backup file.
 
 ```bash
-cd restores
+cd restores/databases
 
 # Restore only the OpenMRS database (latest backup)
 bash restore_openmrs.sh
@@ -220,10 +231,10 @@ bash restore_openmrs.sh 20260605_125336
 
 ### Restore individual volumes
 
-Docker volumes store uploaded files, clinical forms, PACS archives, and other persistent data. Each volume has its own restore script.
+Docker volumes store uploaded files, clinical forms, PACS archives, and other persistent data. Each volume has its own restore script in `restores/volumes/`.
 
 ```bash
-cd restores
+cd restores/volumes
 
 # Restore only document images (X-rays, scans uploaded to Bahmni)
 bash restore_bahmni-document-images.sh
@@ -264,10 +275,10 @@ bash restore_odoofilestore.sh
 
 ### Restore Docker images
 
-Docker images are the application binaries. You would only need to restore images if you are rebuilding the stack on a new machine or if images were removed.
+Docker images are the application binaries. You would only need to restore images if you are rebuilding the stack on a new machine or if images were removed. Scripts are in `restores/images/`.
 
 ```bash
-cd restores
+cd restores/images
 
 # Restore the OpenMRS database image
 bash restore_bahmni_openmrs-db.sh
@@ -328,7 +339,7 @@ docker compose --env-file .env up -d
 cd ../..
 
 # Step 3: Restore databases (one at a time, or all at once)
-cd restores
+cd restores/databases
 bash restore_openmrs.sh 20260605_125336
 bash restore_odoo.sh 20260605_125336
 bash restore_clinlims.sh 20260605_125336
@@ -336,11 +347,12 @@ bash restore_reports.sh 20260605_125336
 bash restore_pacsdb.sh 20260605_125336
 
 # Step 4: Restore volumes (only the ones you need)
+cd ../volumes
 bash restore_bahmni-document-images.sh 20260605_125336
 bash restore_odoofilestore.sh 20260605_125336
 
 # Step 5: Restart everything
-cd ../bahmni-docker/bahmni-standard
+cd ../../bahmni-docker/bahmni-standard
 docker compose --env-file .env up -d
 
 # Step 6: Hard refresh browser (Ctrl+Shift+R)
