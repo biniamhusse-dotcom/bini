@@ -56,6 +56,7 @@ post_to_odoo() {
   if echo "$result" | grep -q '"status":200'; then
     return 0
   else
+    echo -e "\n  ${RED}API response: $result${NOCOLOR}" >&2
     return 1
   fi
 }
@@ -77,7 +78,7 @@ for PID in $PATIENT_IDS; do
       p.uuid,
       CONCAT(COALESCE(pn.given_name,''), ' ', COALESCE(pn.middle_name,''), ' ', COALESCE(pn.family_name,'')) AS name,
       COALESCE(pi.identifier, '') AS identifier,
-      COALESCE(pa.city, '') AS phone
+      COALESCE(pa.city_village, '') AS phone
     FROM person p
     JOIN person_name pn ON p.person_id = pn.person_id AND pn.voided = 0
     LEFT JOIN patient_identifier pi ON p.person_id = pi.patient_id AND pi.voided = 0

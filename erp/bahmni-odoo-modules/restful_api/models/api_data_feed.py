@@ -20,7 +20,7 @@ def default(o):
         return o.isoformat()
 
 class RestFullService(http.Controller):
-    @http.route('/api/bahmni-saleorder', type="json", auth="user", methods=["POST","OPTIONS"], csrf=True, cors='*')
+    @http.route('/api/bahmni-saleorder', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
     def bahmni_saleorder_creation(self, **kw):
         """  API Sale order creation from bahmin to Odoo """
         json_data = json.loads(request.httprequest.data)
@@ -33,7 +33,7 @@ class RestFullService(http.Controller):
                      'error': 'Expectation Failed: ' + str(e)
                    }
 
-    @http.route('/api/bahmni-customer', type="json", auth="user", methods=["POST","OPTIONS"], csrf=True, cors='*')
+    @http.route('/api/bahmni-customer', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
     def bahmni_customer_feed(self, **kw):
         """  API customer feed from bahmin to Odoo """
         json_data = json.loads(request.httprequest.data)
@@ -46,7 +46,7 @@ class RestFullService(http.Controller):
                      'error': 'Expectation Failed: ' + str(e)
                    }
 
-    @http.route('/api/bahmni-drug', type="json", auth="user", methods=["POST","OPTIONS"], csrf=True, cors='*')
+    @http.route('/api/bahmni-drug', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
     def bahmni_drug_feed(self, **kw):
         """  API Drug feed from bahmin to Odoo """
         json_data = json.loads(request.httprequest.data)
@@ -59,7 +59,7 @@ class RestFullService(http.Controller):
                      'error': 'Expectation Failed: ' + str(e)
                    }
 
-    @http.route('/api/bahmni-radiology-test', type="json", auth="user", methods=["POST","OPTIONS"], csrf=True, cors='*')
+    @http.route('/api/bahmni-radiology-test', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
     def bahmni_rediology_test(self, **kw):
         """  Rediology test API """
         json_data = json.loads(request.httprequest.data)
@@ -72,7 +72,7 @@ class RestFullService(http.Controller):
                      'error': 'Expectation Failed: ' + str(e)
                    }
 
-    @http.route('/api/bahmni-lab-test', type="json", auth="user", methods=["POST","OPTIONS"], csrf=True, cors='*')
+    @http.route('/api/bahmni-lab-test', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
     def bahmni_lab_test(self, **kw):
         """  Lab test API """
         json_data = json.loads(request.httprequest.data)
@@ -85,7 +85,7 @@ class RestFullService(http.Controller):
                      'error': 'Expectation Failed: ' + str(e)
                    }
 
-    @http.route('/api/bahmni-lab-panel', type="json", auth="user", methods=["POST","OPTIONS"], csrf=True, cors='*')
+    @http.route('/api/bahmni-lab-panel', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
     def bahmni_lab_panel(self, **kw):
         """  Lab Panel API """
         json_data = json.loads(request.httprequest.data)
@@ -98,7 +98,7 @@ class RestFullService(http.Controller):
                      'error': 'Expectation Failed: ' + str(e)
                    }
 
-    @http.route('/api/bahmni-service-sale', type="json", auth="user", methods=["POST","OPTIONS"], csrf=True, cors='*')
+    @http.route('/api/bahmni-service-sale', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
     def bahmni_service_sale(self, **kw):
         """  Service Sale API """
         json_data = json.loads(request.httprequest.data)

@@ -48,7 +48,7 @@ class ApiEventWorker(models.Model):
         customer_vals = self._get_customer_vals(vals)
         # removing null values, as while updating null values in write method will remove old values
 
-        for rec in customer_vals.keys():
+        for rec in list(customer_vals.keys()):
             if not customer_vals[rec]:
                 del customer_vals[rec]
         address_data = vals.get('preferredAddress')
