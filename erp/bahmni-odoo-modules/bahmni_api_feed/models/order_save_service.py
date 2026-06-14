@@ -400,10 +400,13 @@ class OrderSaveService(models.Model):
             _logger.info(f"default_quantity_total: {default_quantity_total}")
             _logger.info("DEFAULT QUANTITY TOTAL")
             _logger.info(default_quantity_total)
-            default_quantity_value = 0
+            default_quantity_value = 1
             order['quantity'] = self._get_order_quantity(order, default_quantity_value, prod_obj.uom_id)
             order_line_uom = self._get_order_line_uom(order, prod_obj.uom_id)
             product_uom_qty = order['quantity']
+            if not product_uom_qty or product_uom_qty < 1:
+                product_uom_qty = 1
+                order['quantity'] = 1
             description = " ".join([prod_obj.name, "-", str(actual_quantity), str(order.get('quantityUnits', None))])
             order_line_dispensed = True if order.get('dispensed') == 'true' or (order.get('dispensed') and order.get('dispensed') != 'false') else False
             allocate_quantity_from_multiple_batches = self.env['ir.config_parameter'].sudo().get_param('bahmni_sale.allocate_quantity_from_multiple_batches')
@@ -473,7 +476,6 @@ class OrderSaveService(models.Model):
         }
 
         sale_line = sale_order_line_obj.create(sale_order_line)
-        sale_line._compute_tax_id()
         sale_obj = self.env['sale.order'].browse(sale_order)
         if sale_obj.pricelist_id:
             line_product = prod_obj.with_context(
