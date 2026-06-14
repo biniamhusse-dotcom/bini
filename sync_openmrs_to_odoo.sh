@@ -133,7 +133,6 @@ for DID in $DRUG_IDS; do
     SELECT
       d.uuid,
       d.name,
-      COALESCE(d.short_name, d.name) AS short_name,
       COALESCE(c.name, 'General') AS dosage_form
     FROM drug d
     LEFT JOIN concept_name c ON d.dosage_form = c.concept_id AND c.concept_name_type = 'FULLY_SPECIFIED' AND c.voided = 0
@@ -148,15 +147,14 @@ for DID in $DRUG_IDS; do
 
   UUID=$(echo "$DRUG_DATA" | cut -f1)
   NAME=$(echo "$DRUG_DATA" | cut -f2 | sed 's/"/\\"/g')
-  SHORT_NAME=$(echo "$DRUG_DATA" | cut -f3 | sed 's/"/\\"/g')
-  DOSAGE_FORM=$(echo "$DRUG_DATA" | cut -f4 | sed 's/"/\\"/g')
+  DOSAGE_FORM=$(echo "$DRUG_DATA" | cut -f3 | sed 's/"/\\"/g')
 
   if [ -z "$UUID" ] || [ -z "$NAME" ]; then
     FAILED=$((FAILED + 1))
     continue
   fi
 
-  PAYLOAD="{\"category\":\"create.drug\",\"uuid\":\"$UUID\",\"name\":\"$NAME\",\"shortName\":\"$SHORT_NAME\",\"genericName\":\"$NAME\",\"dosageForm\":\"$DOSAGE_FORM\"}"
+  PAYLOAD="{\"category\":\"create.drug\",\"uuid\":\"$UUID\",\"name\":\"$NAME\",\"shortName\":\"$NAME\",\"genericName\":\"$NAME\",\"dosageForm\":\"$DOSAGE_FORM\"}"
 
   if post_to_odoo "/api/bahmni-drug" "$PAYLOAD"; then
     SUCCESS=$((SUCCESS + 1))
