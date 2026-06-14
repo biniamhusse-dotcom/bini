@@ -68,7 +68,7 @@ BEGIN
 
     -- Clean markers
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'markers') THEN
-        DELETE FROM markers WHERE feed_uri LIKE '%feed/patient/recent%';
+        DELETE FROM markers WHERE feed_uri LIKE '%feed/patient/recent%' OR feed_uri LIKE '%feed/encounter/recent%';
     END IF;
 
     -- Reset bed status to available
