@@ -445,6 +445,39 @@ This reverts to `"disable checking": false`. Payment status will query the Odoo 
 
 ---
 
+## Lab Payment Check Toggle (OpenELIS)
+
+The OpenELIS lab orders page has a payment check that shows "Not Paid Yet" instead of the sample entry link for unpaid patients. These scripts toggle that behavior inside the running container — no restart needed.
+
+### Disable Lab Payment Check
+
+Removes the "Not Paid Yet" check so all orders show the clickable sample entry link regardless of payment status.
+
+```bash
+cd restores
+bash disable_lab_payment_check.sh
+```
+
+### Restore Lab Payment Check
+
+Restores the "Not Paid Yet" check so unpaid patients see the warning instead of the link.
+
+```bash
+cd restores
+bash restore_lab_payment_check.sh
+```
+
+### How it works
+
+1. Backs up the original `orders.js` file inside the container
+2. Modifies the JavaScript to remove or restore the `hasPaid` conditional
+3. Verifies the change by searching for `hasPaid` in the file
+4. **No restart required** — just hard refresh the browser with **Ctrl+Shift+R**
+
+The backup is saved at `/run/bahmni-lab/bahmni-lab/scripts/dashBoard/orders.js.backup` inside the container.
+
+---
+
 ## Radiology Orders Fix
 
 The Bahmni default `PatientsWithRadiologyOrders` SQL query had a bug: it filtered by `order_type_id = 4` (Lab Order) instead of Radiology Order. This caused patients with Radiology Orders to not appear in the Orders app.
