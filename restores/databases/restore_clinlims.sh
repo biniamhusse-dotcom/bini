@@ -8,6 +8,19 @@ BACKUP_DIR="$(dirname "$0")/../../backups/bahmni"
 DATE_ARG="$1"
 LOG="$BACKUP_DIR/restore_clinlims_$(date +%Y%m%d_%H%M%S).log"
 
+TOTAL_STEPS=6
+CURRENT_STEP=0
+
+progress() {
+  local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+  local filled=$((pct / 5))
+  local empty=$((20 - filled))
+  local bar=""
+  for ((i=0; i<filled; i++)); do bar="${bar}█"; done
+  for ((i=0; i<empty; i++)); do bar="${bar}░"; done
+  printf "\r  [%s] %3d%% — %s" "$bar" "$pct" "$1"
+}
+
 echo "=== OpenELIS (clinlims) Restore Started: $(date) ===" | tee "$LOG"
 
 if [ -z "$DATE_ARG" ]; then
@@ -23,32 +36,39 @@ fi
 
 echo "File: $FILE" | tee -a "$LOG"
 
-echo "Starting openelisdb..." | tee -a "$LOG"
-docker start bahmni-standard-openelisdb-1
+CURRENT_STEP=1
+progress "Starting openelisdb..."
+docker start bahmni-standard-openelisdb-1 >/dev/null 2>&1
 
-echo "Waiting for PostgreSQL..." | tee -a "$LOG"
 until docker exec bahmni-standard-openelisdb-1 pg_isready -U clinlims &>/dev/null; do
-  echo "  not ready..."; sleep 3
+  sleep 3
 done
-echo "PostgreSQL ready." | tee -a "$LOG"
 
-echo "Stopping OpenELIS app to prevent reconnections..." | tee -a "$LOG"
+CURRENT_STEP=2
+progress "Stopping OpenELIS app..."
 docker stop bahmni-standard-openelis-1 2>/dev/null || true
 sleep 2
 
-echo "Terminating connections and recreating database..." | tee -a "$LOG"
+CURRENT_STEP=3
+progress "Terminating connections..."
 docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
   -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='clinlims';" >/dev/null 2>&1 || true
+
+CURRENT_STEP=4
+progress "Dropping and recreating database..."
 docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
   -c "DROP DATABASE IF EXISTS clinlims;" >/dev/null 2>&1 || true
 docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
-  -c "CREATE DATABASE clinlims OWNER clinlims;"
+  -c "CREATE DATABASE clinlims OWNER clinlims;" 2>/dev/null
 
-echo "Restoring..." | tee -a "$LOG"
-docker cp "$FILE" bahmni-standard-openelisdb-1:/tmp/restore.sql.gz
-docker exec bahmni-standard-openelisdb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U clinlims -d clinlims"
+CURRENT_STEP=5
+progress "Restoring from backup..."
+docker cp "$FILE" bahmni-standard-openelisdb-1:/tmp/restore.sql.gz 2>/dev/null
+docker exec bahmni-standard-openelisdb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U clinlims -d clinlims" 2>/dev/null
 
-echo "Restarting OpenELIS app..." | tee -a "$LOG"
+CURRENT_STEP=6
+progress "Restarting OpenELIS app..."
 docker start bahmni-standard-openelis-1 2>/dev/null || true
 
-echo "OpenELIS restore complete. Exit: $?" | tee -a "$LOG"
+printf "\r  [████████████████████] 100%% — Done!\n" | tee -a "$LOG"
+echo "OpenELIS restore complete." | tee -a "$LOG"

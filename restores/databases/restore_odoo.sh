@@ -8,6 +8,19 @@ BACKUP_DIR="$(dirname "$0")/../../backups/bahmni"
 DATE_ARG="$1"
 LOG="$BACKUP_DIR/restore_odoo_$(date +%Y%m%d_%H%M%S).log"
 
+TOTAL_STEPS=6
+CURRENT_STEP=0
+
+progress() {
+  local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+  local filled=$((pct / 5))
+  local empty=$((20 - filled))
+  local bar=""
+  for ((i=0; i<filled; i++)); do bar="${bar}█"; done
+  for ((i=0; i<empty; i++)); do bar="${bar}░"; done
+  printf "\r  [%s] %3d%% — %s" "$bar" "$pct" "$1"
+}
+
 echo "=== Odoo Restore Started: $(date) ===" | tee "$LOG"
 
 if [ -z "$DATE_ARG" ]; then
@@ -23,32 +36,39 @@ fi
 
 echo "File: $FILE" | tee -a "$LOG"
 
-echo "Starting odoodb..." | tee -a "$LOG"
-docker start bahmni-standard-odoodb-1
+CURRENT_STEP=1
+progress "Starting odoodb..."
+docker start bahmni-standard-odoodb-1 >/dev/null 2>&1
 
-echo "Waiting for PostgreSQL..." | tee -a "$LOG"
 until docker exec bahmni-standard-odoodb-1 pg_isready -U odoo &>/dev/null; do
-  echo "  not ready..."; sleep 3
+  sleep 3
 done
-echo "PostgreSQL ready." | tee -a "$LOG"
 
-echo "Stopping Odoo app to prevent reconnections..." | tee -a "$LOG"
+CURRENT_STEP=2
+progress "Stopping Odoo app..."
 docker stop bahmni-standard-odoo-1 bahmni-standard-odoo-connect-1 2>/dev/null || true
 sleep 2
 
-echo "Terminating connections and recreating database..." | tee -a "$LOG"
+CURRENT_STEP=3
+progress "Terminating connections..."
 docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
   -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='odoo';" >/dev/null 2>&1 || true
+
+CURRENT_STEP=4
+progress "Dropping and recreating database..."
 docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
   -c "DROP DATABASE IF EXISTS odoo;" >/dev/null 2>&1 || true
 docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
-  -c "CREATE DATABASE odoo OWNER odoo;"
+  -c "CREATE DATABASE odoo OWNER odoo;" 2>/dev/null
 
-echo "Restoring..." | tee -a "$LOG"
-docker cp "$FILE" bahmni-standard-odoodb-1:/tmp/restore.sql.gz
-docker exec bahmni-standard-odoodb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U odoo -d odoo"
+CURRENT_STEP=5
+progress "Restoring from backup..."
+docker cp "$FILE" bahmni-standard-odoodb-1:/tmp/restore.sql.gz 2>/dev/null
+docker exec bahmni-standard-odoodb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U odoo -d odoo" 2>/dev/null
 
-echo "Restarting Odoo app..." | tee -a "$LOG"
+CURRENT_STEP=6
+progress "Restarting Odoo app..."
 docker start bahmni-standard-odoo-1 bahmni-standard-odoo-connect-1 2>/dev/null || true
 
-echo "Odoo restore complete. Exit: $?" | tee -a "$LOG"
+printf "\r  [████████████████████] 100%% — Done!\n" | tee -a "$LOG"
+echo "Odoo restore complete." | tee -a "$LOG"

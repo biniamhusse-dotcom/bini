@@ -8,6 +8,19 @@ BACKUP_DIR="$(dirname "$0")/../../backups/bahmni"
 DATE_ARG="$1"
 LOG="$BACKUP_DIR/restore_reports_$(date +%Y%m%d_%H%M%S).log"
 
+TOTAL_STEPS=4
+CURRENT_STEP=0
+
+progress() {
+  local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+  local filled=$((pct / 5))
+  local empty=$((20 - filled))
+  local bar=""
+  for ((i=0; i<filled; i++)); do bar="${bar}█"; done
+  for ((i=0; i<empty; i++)); do bar="${bar}░"; done
+  printf "\r  [%s] %3d%% — %s" "$bar" "$pct" "$1"
+}
+
 echo "=== Bahmni Reports Restore Started: $(date) ===" | tee "$LOG"
 
 if [ -z "$DATE_ARG" ]; then
@@ -23,23 +36,28 @@ fi
 
 echo "File: $FILE" | tee -a "$LOG"
 
-echo "Starting reportsdb..." | tee -a "$LOG"
-docker start bahmni-standard-reportsdb-1
+CURRENT_STEP=1
+progress "Starting reportsdb..."
+docker start bahmni-standard-reportsdb-1 >/dev/null 2>&1
 
-echo "Waiting for MySQL..." | tee -a "$LOG"
 until docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' -e "SELECT 1" &>/dev/null; do
-  echo "  not ready..."; sleep 3
+  sleep 3
 done
-echo "MySQL ready." | tee -a "$LOG"
 
-echo "Dropping and recreating database..." | tee -a "$LOG"
+CURRENT_STEP=2
+progress "Dropping and recreating database..."
 docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
-  -e "DROP DATABASE IF EXISTS bahmni_reports"
+  -e "DROP DATABASE IF EXISTS bahmni_reports" 2>/dev/null
 docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
-  -e "CREATE DATABASE bahmni_reports"
+  -e "CREATE DATABASE bahmni_reports" 2>/dev/null
 
-echo "Restoring..." | tee -a "$LOG"
-docker cp "$FILE" bahmni-standard-reportsdb-1:/tmp/restore.sql.gz
-docker exec bahmni-standard-reportsdb-1 sh -c "zcat /tmp/restore.sql.gz | mysql -uroot -p'adminAdmin!123' bahmni_reports"
+CURRENT_STEP=3
+progress "Restoring from backup..."
+docker cp "$FILE" bahmni-standard-reportsdb-1:/tmp/restore.sql.gz 2>/dev/null
+docker exec bahmni-standard-reportsdb-1 sh -c "zcat /tmp/restore.sql.gz | mysql -uroot -p'adminAdmin!123' bahmni_reports" 2>/dev/null
 
-echo "Reports restore complete. Exit: $?" | tee -a "$LOG"
+CURRENT_STEP=4
+progress "Done!"
+
+printf "\r  [████████████████████] 100%% — Done!\n" | tee -a "$LOG"
+echo "Bahmni Reports restore complete." | tee -a "$LOG"
