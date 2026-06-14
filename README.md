@@ -135,7 +135,7 @@ emr/
     bahmni-odoo-modules/     # Custom Odoo addons (sale, purchase, API feed)
   backups/
     bahmni/                  # Database dumps + volume backups
-  fresh_db/                  # Scripts to clear patient data
+  fresh_db/                  # Scripts to clear patient data + reset MRN
 ```
 
 ---
@@ -375,27 +375,53 @@ docker exec bahmni-standard-openmrsdb-1 sh -c "zcat /tmp/openmrs.sql.gz | mysql 
 
 ## Fresh Database (Clear Patient Data)
 
-Remove all patient data while keeping configuration (concepts, locations, roles) intact:
+Remove all patient data while keeping configuration (concepts, locations, roles) intact. All scripts are in `fresh_db/`.
+
+### Clear all patient data (all 3 databases)
 
 ```bash
-cd fresh_db
-
-# 1. Stop app containers
-docker stop bahmni-standard-openmrs-1 bahmni-standard-openelis-1 bahmni-standard-odoo-1
-
-# 2. Copy SQL files into containers
-docker cp deletePatientDataForOpenMRS.sql bahmni-standard-openmrsdb-1:/tmp/
-docker cp deletePatientDataForOpenElis.sql bahmni-standard-openelisdb-1:/tmp/
-docker cp deletePatientDataForOpenERP.sql bahmni-standard-odoodb-1:/tmp/
-
-# 3. Execute (Linux)
-docker exec bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' openmrs < /tmp/delete_openmrs.sql
-docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d clinlims -f /tmp/delete_openelis.sql
-docker exec bahmni-standard-odoodb-1 psql -U odoo -d odoo -f /tmp/delete_openerp.sql
-
-# 4. Restart app containers
-docker start bahmni-standard-openmrs-1 bahmni-standard-openelis-1 bahmni-standard-odoo-1
+bash fresh_db/delete_patient_data_docker.sh
 ```
+
+This stops all app containers (including `odoo-connect`, `atomfeed-console`, `lab-result-sync`), runs the SQL deletion on OpenMRS, OpenELIS, and Odoo, then restarts everything. Has a progress bar.
+
+### Clear individual databases
+
+```bash
+bash fresh_db/delete_openmrs.sh    # OpenMRS only
+bash fresh_db/delete_openelis.sh   # OpenELIS only
+bash fresh_db/delete_openerp.sh    # Odoo only
+```
+
+Each script stops its app container, runs the SQL, and restarts it.
+
+### Reset MRN sequence
+
+After clearing patient data, reset the MRN counter to start from a specific number:
+
+```bash
+bash fresh_db/set_mrn_start.sh
+```
+
+Prompts for the starting MRN number (e.g., `100800`), then updates `idgen_seq_id_gen.next_sequence_value` in OpenMRS.
+
+### What gets deleted
+
+| Database | Tables affected | What is preserved |
+|----------|----------------|-------------------|
+| OpenMRS | patient, encounter, obs, orders, visit, conditions, cohorts, appointments, programs, identifiers | concepts, locations, users, providers, person (system records), global properties |
+| OpenELIS | patient, sample, analysis, result, referral, worksheets | test definitions, panels, organizers, user accounts |
+| Odoo | sale_order, account_move, res_partner (non-system) | products, users, companies, order types, journals, chart of accounts |
+
+### Available scripts
+
+| Script | What it does |
+|--------|-------------|
+| `delete_patient_data_docker.sh` | Clears all 3 databases with progress bar |
+| `delete_openmrs.sh` | Clears OpenMRS patient data only |
+| `delete_openelis.sh` | Clears OpenELIS patient data only |
+| `delete_openerp.sh` | Clears Odoo patient data only |
+| `set_mrn_start.sh` | Resets MRN sequence to a custom starting number |
 
 ---
 
