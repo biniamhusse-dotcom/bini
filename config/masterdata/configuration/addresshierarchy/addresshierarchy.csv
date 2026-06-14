@@ -1,102 +1,937 @@
-Tigray
-Tigray,Central Tigray
-Tigray,Central Tigray,Mekelle
-Tigray,Central Tigray,Aksum
-Tigray,Central Tigray,Adwa
-Tigray,Central Tigray,Entaicho
-Tigray,Central Tigray,Temben
-Tigray,Eastern Tigray
-Tigray,Southern Tigray
-Tigray,Southern Tigray,Raya Azebo
-Tigray,Southern Tigray,Alamata
-Tigray,Southern Tigray,Ofla
-Tigray,Southern Tigray,Endamehoni
-Tigray,Southern Tigray,Korem
-Tigray,Western Tigray
-Tigray,North Western Tigray
-Afar
-Amhara
-Amhara,North Gondar
-Amhara,North Gondar,Gondar
-Amhara,North Gondar,Bahir Dar
-Amhara,North Gondar,Debre Tabor
-Amhara,North Gondar,Lalibela
-Amhara,North Gondar,Woreta
-Amhara,South Gondar
-Amhara,North Wollo
-Amhara,South Wollo
-Amhara,North Shewa
-Amhara,South Shewa
-Amhara,South Shewa,Debre Zeyit
-Amhara,South Shewa,Mojo
-Amhara,South Shewa,Ambo
-Amhara,South Shewa,Wolenkomi
-Amhara,South Shewa,Sendafa
-Amhara,East Gojjam
-Amhara,West Gojjam
-Amhara,Wag Hamra
-Amhara,Awi
-Oromia
-Oromia,Addis Ababa Surround
-Oromia,East Shewa
-Oromia,East Shewa,Adama
-Oromia,East Shewa,Bishoftu
-Oromia,East Shewa,Modjo
-Oromia,East Shewa,Assella
-Oromia,East Shewa,Nazret
-Oromia,West Shewa
-Oromia,North Shewa
-Oromia,Jimma
-Oromia,Illubabor
-Oromia,Borena
-Oromia,Hararge
-Oromia,Arsi
-Oromia,East Hararghe
-Oromia,West Hararghe
-Oromia,Wollega
-Oromia,Hadiya
-Somali
-Benishangul-Gumuz
-SNNPR
-SNNPR,Sidama
-SNNPR,Hawassa
-SNNPR,Gurage
-SNNPR,Wolayita
-SNNPR,South Omo
-SNNPR,Kaffa
-SNNPR,Sheka
-SNNPR,Bench Maji
-Gambela
-Harari
 Addis Ababa
-Addis Ababa,Addis Ketema
-Addis Ababa,Addis Ketema,Addis Ketema Woreda 01
-Addis Ababa,Akaki Kality
-Addis Ababa,Akaki Kality,Akaki Kality Woreda 01
-Addis Ababa,Arada
-Addis Ababa,Arada,Arada Woreda 01
-Addis Ababa,Arada,Arada Woreda 01,Merkato
-Addis Ababa,Arada,Arada Woreda 01,Piassa
-Addis Ababa,Bole
-Addis Ababa,Bole,Bole Woreda 01
-Addis Ababa,Bole,Bole Woreda 01,Bole Medhanealem
-Addis Ababa,Bole,Bole Woreda 01,Bole Michael
-Addis Ababa,Bole,Bole Woreda 01,Bole Rwanda
-Addis Ababa,Bole,Bole Woreda 01,Atlas
-Addis Ababa,Gullele
-Addis Ababa,Gullele,Gullele Woreda 01
-Addis Ababa,Kirkos
-Addis Ababa,Kirkos,Kirkos Woreda 01
-Addis Ababa,Kolfe Keranio
-Addis Ababa,Kolfe Keranio,Kolfe Keranio Woreda 01
-Addis Ababa,Lideta
-Addis Ababa,Lideta,Lideta Woreda 01
-Addis Ababa,Nifas Silk Lafto
-Addis Ababa,Nifas Silk Lafto,Nifas Silk Lafto Woreda 01
-Addis Ababa,Yeka
-Addis Ababa,Yeka,Yeka Woreda 01
-Addis Ababa,Yeka,Yeka Woreda 01,Megenagna
-Addis Ababa,Yeka,Yeka Woreda 01,CMC
-Addis Ababa,Yeka,Yeka Woreda 01,Ayat
+Addis Ababa,Bole Sub-City
+Addis Ababa,Bole Sub-City,Woreda 01
+Addis Ababa,Bole Sub-City,Woreda 02
+Addis Ababa,Bole Sub-City,Woreda 03
+Addis Ababa,Bole Sub-City,Woreda 04
+Addis Ababa,Bole Sub-City,Woreda 05
+Addis Ababa,Bole Sub-City,Woreda 06
+Addis Ababa,Bole Sub-City,Woreda 07
+Addis Ababa,Bole Sub-City,Woreda 08
+Addis Ababa,Bole Sub-City,Woreda 09
+Addis Ababa,Bole Sub-City,Woreda 10
+Addis Ababa,Bole Sub-City,Woreda 11
+Addis Ababa,Bole Sub-City,Woreda 12
+Addis Ababa,Bole Sub-City,Woreda 13
+Addis Ababa,Bole Sub-City,Woreda 14
+Addis Ababa,Kirkos Sub-City
+Addis Ababa,Kirkos Sub-City,Woreda 01
+Addis Ababa,Kirkos Sub-City,Woreda 02
+Addis Ababa,Kirkos Sub-City,Woreda 03
+Addis Ababa,Kirkos Sub-City,Woreda 04
+Addis Ababa,Kirkos Sub-City,Woreda 05
+Addis Ababa,Kirkos Sub-City,Woreda 06
+Addis Ababa,Kirkos Sub-City,Woreda 07
+Addis Ababa,Kirkos Sub-City,Woreda 08
+Addis Ababa,Kirkos Sub-City,Woreda 09
+Addis Ababa,Kirkos Sub-City,Woreda 10
+Addis Ababa,Kirkos Sub-City,Woreda 11
+Addis Ababa,Arada Sub-City
+Addis Ababa,Arada Sub-City,Woreda 01
+Addis Ababa,Arada Sub-City,Woreda 02
+Addis Ababa,Arada Sub-City,Woreda 03
+Addis Ababa,Arada Sub-City,Woreda 04
+Addis Ababa,Arada Sub-City,Woreda 05
+Addis Ababa,Arada Sub-City,Woreda 06
+Addis Ababa,Arada Sub-City,Woreda 07
+Addis Ababa,Arada Sub-City,Woreda 08
+Addis Ababa,Arada Sub-City,Woreda 09
+Addis Ababa,Arada Sub-City,Woreda 10
+Addis Ababa,Lideta Sub-City
+Addis Ababa,Lideta Sub-City,Woreda 01
+Addis Ababa,Lideta Sub-City,Woreda 02
+Addis Ababa,Lideta Sub-City,Woreda 03
+Addis Ababa,Lideta Sub-City,Woreda 04
+Addis Ababa,Lideta Sub-City,Woreda 05
+Addis Ababa,Lideta Sub-City,Woreda 06
+Addis Ababa,Lideta Sub-City,Woreda 07
+Addis Ababa,Lideta Sub-City,Woreda 08
+Addis Ababa,Lideta Sub-City,Woreda 09
+Addis Ababa,Lideta Sub-City,Woreda 10
+Addis Ababa,Yeka Sub-City
+Addis Ababa,Yeka Sub-City,Woreda 01
+Addis Ababa,Yeka Sub-City,Woreda 02
+Addis Ababa,Yeka Sub-City,Woreda 03
+Addis Ababa,Yeka Sub-City,Woreda 04
+Addis Ababa,Yeka Sub-City,Woreda 05
+Addis Ababa,Yeka Sub-City,Woreda 06
+Addis Ababa,Yeka Sub-City,Woreda 07
+Addis Ababa,Yeka Sub-City,Woreda 08
+Addis Ababa,Yeka Sub-City,Woreda 09
+Addis Ababa,Yeka Sub-City,Woreda 10
+Addis Ababa,Yeka Sub-City,Woreda 11
+Addis Ababa,Yeka Sub-City,Woreda 12
+Addis Ababa,Yeka Sub-City,Woreda 13
+Addis Ababa,Nifas Silk-Lafto Sub-City
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 01
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 02
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 03
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 04
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 05
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 06
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 07
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 08
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 09
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 10
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 11
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 12
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 13
+Addis Ababa,Nifas Silk-Lafto Sub-City,Woreda 14
+Addis Ababa,Gullele Sub-City
+Addis Ababa,Gullele Sub-City,Woreda 01
+Addis Ababa,Gullele Sub-City,Woreda 02
+Addis Ababa,Gullele Sub-City,Woreda 03
+Addis Ababa,Gullele Sub-City,Woreda 04
+Addis Ababa,Gullele Sub-City,Woreda 05
+Addis Ababa,Gullele Sub-City,Woreda 06
+Addis Ababa,Gullele Sub-City,Woreda 07
+Addis Ababa,Gullele Sub-City,Woreda 08
+Addis Ababa,Gullele Sub-City,Woreda 09
+Addis Ababa,Gullele Sub-City,Woreda 10
+Addis Ababa,Addis Ketema Sub-City
+Addis Ababa,Addis Ketema Sub-City,Woreda 01
+Addis Ababa,Addis Ketema Sub-City,Woreda 02
+Addis Ababa,Addis Ketema Sub-City,Woreda 03
+Addis Ababa,Addis Ketema Sub-City,Woreda 04
+Addis Ababa,Addis Ketema Sub-City,Woreda 05
+Addis Ababa,Addis Ketema Sub-City,Woreda 06
+Addis Ababa,Addis Ketema Sub-City,Woreda 07
+Addis Ababa,Addis Ketema Sub-City,Woreda 08
+Addis Ababa,Addis Ketema Sub-City,Woreda 09
+Addis Ababa,Addis Ketema Sub-City,Woreda 10
+Addis Ababa,Addis Ketema Sub-City,Woreda 11
+Addis Ababa,Addis Ketema Sub-City,Woreda 12
+Addis Ababa,Addis Ketema Sub-City,Woreda 13
+Addis Ababa,Addis Ketema Sub-City,Woreda 14
+Addis Ababa,Akaki-Kality Sub-City
+Addis Ababa,Akaki-Kality Sub-City,Woreda 01
+Addis Ababa,Akaki-Kality Sub-City,Woreda 02
+Addis Ababa,Akaki-Kality Sub-City,Woreda 03
+Addis Ababa,Akaki-Kality Sub-City,Woreda 04
+Addis Ababa,Akaki-Kality Sub-City,Woreda 05
+Addis Ababa,Akaki-Kality Sub-City,Woreda 06
+Addis Ababa,Akaki-Kality Sub-City,Woreda 07
+Addis Ababa,Akaki-Kality Sub-City,Woreda 08
+Addis Ababa,Akaki-Kality Sub-City,Woreda 09
+Addis Ababa,Akaki-Kality Sub-City,Woreda 10
+Addis Ababa,Akaki-Kality Sub-City,Woreda 11
+Addis Ababa,Akaki-Kality Sub-City,Woreda 12
+Addis Ababa,Kolfe Keranio Sub-City
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 01
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 02
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 03
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 04
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 05
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 06
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 07
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 08
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 09
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 10
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 11
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 12
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 13
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 14
+Addis Ababa,Kolfe Keranio Sub-City,Woreda 15
+Addis Ababa,Lemi Kura Sub-City
+Addis Ababa,Lemi Kura Sub-City,Woreda 01
+Addis Ababa,Lemi Kura Sub-City,Woreda 02
+Addis Ababa,Lemi Kura Sub-City,Woreda 03
+Addis Ababa,Lemi Kura Sub-City,Woreda 04
+Addis Ababa,Lemi Kura Sub-City,Woreda 05
+Addis Ababa,Lemi Kura Sub-City,Woreda 06
+Addis Ababa,Lemi Kura Sub-City,Woreda 07
+Addis Ababa,Lemi Kura Sub-City,Woreda 08
+Addis Ababa,Lemi Kura Sub-City,Woreda 09
+Addis Ababa,Lemi Kura Sub-City,Woreda 10
 Dire Dawa
-Dire Dawa,Dire Dawa
+Dire Dawa,Dire Dawa City & Rural
+Dire Dawa,Dire Dawa City & Rural,Woreda 01
+Dire Dawa,Dire Dawa City & Rural,Woreda 02
+Dire Dawa,Dire Dawa City & Rural,Woreda 03
+Dire Dawa,Dire Dawa City & Rural,Woreda 04
+Dire Dawa,Dire Dawa City & Rural,Woreda 05
+Dire Dawa,Dire Dawa City & Rural,Woreda 06
+Dire Dawa,Dire Dawa City & Rural,Woreda 07
+Dire Dawa,Dire Dawa City & Rural,Woreda 08
+Dire Dawa,Dire Dawa City & Rural,Woreda 09
+Dire Dawa,Dire Dawa City & Rural,Gurgura
+Dire Dawa,Dire Dawa City & Rural,Aw-Bare
+Dire Dawa,Dire Dawa City & Rural,Melka Jebdu
+Dire Dawa,Dire Dawa City & Rural,Keffa
+Dire Dawa,Dire Dawa City & Rural,Biye Awale
+Afar Region
+Afar Region,Zone 1 (Awusi Rasu)
+Afar Region,Zone 1 (Awusi Rasu),Asayita
+Afar Region,Zone 1 (Awusi Rasu),Afambo
+Afar Region,Zone 1 (Awusi Rasu),Chifra
+Afar Region,Zone 1 (Awusi Rasu),Dubti
+Afar Region,Zone 1 (Awusi Rasu),Elidar
+Afar Region,Zone 1 (Awusi Rasu),Kori
+Afar Region,Zone 1 (Awusi Rasu),Mille
+Afar Region,Zone 1 (Awusi Rasu),Adar
+Afar Region,Zone 1 (Awusi Rasu),Semera-Logiya
+Afar Region,Zone 2 (Kilbet Rasu)
+Afar Region,Zone 2 (Kilbet Rasu),Abala
+Afar Region,Zone 2 (Kilbet Rasu),Berhale
+Afar Region,Zone 2 (Kilbet Rasu),Dallol
+Afar Region,Zone 2 (Kilbet Rasu),Erebti
+Afar Region,Zone 2 (Kilbet Rasu),Koneba
+Afar Region,Zone 2 (Kilbet Rasu),Megale
+Afar Region,Zone 2 (Kilbet Rasu),Bidu
+Afar Region,Zone 2 (Kilbet Rasu),Afdera
+Afar Region,Zone 3 (Gabi Rasu)
+Afar Region,Zone 3 (Gabi Rasu),Amibara
+Afar Region,Zone 3 (Gabi Rasu),Awash Fentale
+Afar Region,Zone 3 (Gabi Rasu),Bure Mudaytu
+Afar Region,Zone 3 (Gabi Rasu),Dulecha
+Afar Region,Zone 3 (Gabi Rasu),Gewane
+Afar Region,Zone 3 (Gabi Rasu),Gelalo
+Afar Region,Zone 3 (Gabi Rasu),Argobba (Special Woreda)
+Afar Region,Zone 4 (Fantena Rasu)
+Afar Region,Zone 4 (Fantena Rasu),Yallo
+Afar Region,Zone 4 (Fantena Rasu),Golina
+Afar Region,Zone 4 (Fantena Rasu),Ewa
+Afar Region,Zone 4 (Fantena Rasu),Aura
+Afar Region,Zone 4 (Fantena Rasu),Teru
+Afar Region,Zone 5 (Hari Rasu)
+Afar Region,Zone 5 (Hari Rasu),Dawe
+Afar Region,Zone 5 (Hari Rasu),Telalak
+Afar Region,Zone 5 (Hari Rasu),Dewe
+Afar Region,Zone 5 (Hari Rasu),Dalifage
+Afar Region,Zone 5 (Hari Rasu),Hadele'ela
+Afar Region,Zone 5 (Hari Rasu),Simurobi
+Amhara Region
+Amhara Region,North Gondar Zone
+Amhara Region,North Gondar Zone,Debark
+Amhara Region,North Gondar Zone,Addi Arkay
+Amhara Region,North Gondar Zone,Jan Amora
+Amhara Region,North Gondar Zone,Beyeda
+Amhara Region,North Gondar Zone,Debark Town
+Amhara Region,North Gondar Zone,Telemt
+Amhara Region,Central Gondar Zone
+Amhara Region,Central Gondar Zone,Gondar Zuria
+Amhara Region,Central Gondar Zone,Chilga
+Amhara Region,Central Gondar Zone,Dembiya
+Amhara Region,Central Gondar Zone,Wogera
+Amhara Region,Central Gondar Zone,Lay Armachiho
+Amhara Region,Central Gondar Zone,Alefa
+Amhara Region,Central Gondar Zone,Takusa
+Amhara Region,Central Gondar Zone,Gondar Town Administration
+Amhara Region,South Gondar Zone
+Amhara Region,South Gondar Zone,Debre Tabor Town
+Amhara Region,South Gondar Zone,Farta
+Amhara Region,South Gondar Zone,Libo Kemkem
+Amhara Region,South Gondar Zone,Fogera
+Amhara Region,South Gondar Zone,Lay Gayint
+Amhara Region,South Gondar Zone,Tach Gayint
+Amhara Region,South Gondar Zone,Simada
+Amhara Region,South Gondar Zone,Ebinat
+Amhara Region,South Gondar Zone,Mirab Este
+Amhara Region,South Gondar Zone,Misrak Este
+Amhara Region,South Gondar Zone,Dera
+Amhara Region,South Gondar Zone,Andabet
+Amhara Region,West Gondar Zone
+Amhara Region,West Gondar Zone,Metema
+Amhara Region,West Gondar Zone,Quara
+Amhara Region,West Gondar Zone,Mirab Armachiho
+Amhara Region,North Wollo Zone
+Amhara Region,North Wollo Zone,Woldiya Town
+Amhara Region,North Wollo Zone,Kobo
+Amhara Region,North Wollo Zone,Gidan
+Amhara Region,North Wollo Zone,Gubalafto
+Amhara Region,North Wollo Zone,Wadla
+Amhara Region,North Wollo Zone,Dawunt
+Amhara Region,North Wollo Zone,Bugna
+Amhara Region,North Wollo Zone,Lasta
+Amhara Region,North Wollo Zone,Meket
+Amhara Region,South Wollo Zone
+Amhara Region,South Wollo Zone,Dessie Zuria
+Amhara Region,South Wollo Zone,Kombolcha Town Administration
+Amhara Region,South Wollo Zone,Dessie Town Administration
+Amhara Region,South Wollo Zone,Ambasel
+Amhara Region,South Wollo Zone,Kalu
+Amhara Region,South Wollo Zone,Tehuledere
+Amhara Region,South Wollo Zone,Were Ilu
+Amhara Region,South Wollo Zone,Legambo
+Amhara Region,South Wollo Zone,Jama
+Amhara Region,South Wollo Zone,Kelala
+Amhara Region,South Wollo Zone,Tenta
+Amhara Region,South Wollo Zone,Kutaber
+Amhara Region,South Wollo Zone,Borena
+Amhara Region,South Wollo Zone,Albuko
+Amhara Region,South Wollo Zone,Sayint
+Amhara Region,North Shewa Zone
+Amhara Region,North Shewa Zone,Debre Berhan Town
+Amhara Region,North Shewa Zone,Angolela Teret
+Amhara Region,North Shewa Zone,Basona Werana
+Amhara Region,North Shewa Zone,Ankober
+Amhara Region,North Shewa Zone,Asagirt
+Amhara Region,North Shewa Zone,Berehet
+Amhara Region,North Shewa Zone,Hagere Mariamna Kesem
+Amhara Region,North Shewa Zone,Kewet
+Amhara Region,North Shewa Zone,Mojana Wedera
+Amhara Region,North Shewa Zone,Termaber
+Amhara Region,North Shewa Zone,Antsokia Gemza
+Amhara Region,North Shewa Zone,Gishe Rabel
+Amhara Region,North Shewa Zone,Menz Gera Midir
+Amhara Region,North Shewa Zone,Menz Keya Gebreal
+Amhara Region,North Shewa Zone,Menz Lalo Midir
+Amhara Region,North Shewa Zone,Menz Mama Midir
+Amhara Region,North Shewa Zone,Minjar Shenkora
+Amhara Region,East Gojjam Zone
+Amhara Region,East Gojjam Zone,Debre Markos Town
+Amhara Region,East Gojjam Zone,Machakel
+Amhara Region,East Gojjam Zone,Gozamin
+Amhara Region,East Gojjam Zone,Awabel
+Amhara Region,East Gojjam Zone,Dejen
+Amhara Region,East Gojjam Zone,Aneded
+Amhara Region,East Gojjam Zone,Baso Liben
+Amhara Region,East Gojjam Zone,Enemay
+Amhara Region,East Gojjam Zone,Enarj Enawga
+Amhara Region,East Gojjam Zone,Goncha Siso Enese
+Amhara Region,East Gojjam Zone,Hulet Ej Enese
+Amhara Region,East Gojjam Zone,Shebel Berenta
+Amhara Region,East Gojjam Zone,Sinan
+Amhara Region,West Gojjam Zone
+Amhara Region,West Gojjam Zone,Bahir Dar Zuria
+Amhara Region,West Gojjam Zone,Mecha
+Amhara Region,West Gojjam Zone,Yilmana Densa
+Amhara Region,West Gojjam Zone,Bure Zuria
+Amhara Region,West Gojjam Zone,Bure Town
+Amhara Region,West Gojjam Zone,Jabithennan
+Amhara Region,West Gojjam Zone,Dembecha
+Amhara Region,West Gojjam Zone,Quarit
+Amhara Region,West Gojjam Zone,Sekela
+Amhara Region,West Gojjam Zone,Degadamot
+Amhara Region,West Gojjam Zone,Konzi
+Amhara Region,West Gojjam Zone,Gonji Kolela
+Amhara Region,Awi Zone
+Amhara Region,Awi Zone,Injibara Town
+Amhara Region,Awi Zone,Dangila
+Amhara Region,Awi Zone,Dangila Town
+Amhara Region,Awi Zone,Faggeta Lekoma
+Amhara Region,Awi Zone,Guangua
+Amhara Region,Awi Zone,Jawi
+Amhara Region,Awi Zone,Ankesha Guagusa
+Amhara Region,Awi Zone,Ayehu Guagusa
+Amhara Region,Awi Zone,Banja Shigudad
+Amhara Region,Awi Zone,Zigem
+Amhara Region,Wag Hemra Zone
+Amhara Region,Wag Hemra Zone,Sekota
+Amhara Region,Wag Hemra Zone,Sekota Town
+Amhara Region,Wag Hemra Zone,Dehana
+Amhara Region,Wag Hemra Zone,Ziquala
+Amhara Region,Wag Hemra Zone,Gazgibla
+Amhara Region,Wag Hemra Zone,Abergele
+Amhara Region,Wag Hemra Zone,Sahla
+Amhara Region,Oromia Zone
+Amhara Region,Oromia Zone,Kemise Town
+Amhara Region,Oromia Zone,Artuma Fursi
+Amhara Region,Oromia Zone,Jille Timuga
+Amhara Region,Oromia Zone,Bati
+Amhara Region,Oromia Zone,Dawa Chefa
+Amhara Region,Oromia Zone,Dawa Harewa
+Oromia Region
+Oromia Region,West Shewa Zone
+Oromia Region,West Shewa Zone,Ambo Zuria
+Oromia Region,West Shewa Zone,Ambo Town
+Oromia Region,West Shewa Zone,Dendi
+Oromia Region,West Shewa Zone,Guder
+Oromia Region,West Shewa Zone,Jeldu
+Oromia Region,West Shewa Zone,Ejere
+Oromia Region,West Shewa Zone,Bako Tibe
+Oromia Region,West Shewa Zone,Cheliya
+Oromia Region,West Shewa Zone,Dano
+Oromia Region,West Shewa Zone,Meta Robi
+Oromia Region,West Shewa Zone,Midakegn
+Oromia Region,West Shewa Zone,Nonno
+Oromia Region,West Shewa Zone,Tikur Enchini
+Oromia Region,West Shewa Zone,Toke Kutaye
+Oromia Region,West Shewa Zone,Abuna Ginde Beret
+Oromia Region,West Shewa Zone,Ginde Beret
+Oromia Region,North Shewa Zone
+Oromia Region,North Shewa Zone,Fiche Town
+Oromia Region,North Shewa Zone,Gerar Jarso
+Oromia Region,North Shewa Zone,Degem
+Oromia Region,North Shewa Zone,Ya Ya Gulele
+Oromia Region,North Shewa Zone,Hidabu Abote
+Oromia Region,North Shewa Zone,Debre Libanos
+Oromia Region,North Shewa Zone,Jida
+Oromia Region,North Shewa Zone,Kimbibit
+Oromia Region,North Shewa Zone,Kuyu
+Oromia Region,North Shewa Zone,Wara Jarso
+Oromia Region,North Shewa Zone,Abichu Gnea
+Oromia Region,East Shewa Zone
+Oromia Region,East Shewa Zone,Bishoftu Town
+Oromia Region,East Shewa Zone,Adama Zuria
+Oromia Region,East Shewa Zone,Adama Town
+Oromia Region,East Shewa Zone,Ada'a
+Oromia Region,East Shewa Zone,Lume
+Oromia Region,East Shewa Zone,Dugda
+Oromia Region,East Shewa Zone,Bora
+Oromia Region,East Shewa Zone,Boset
+Oromia Region,East Shewa Zone,Gimbichu
+Oromia Region,East Shewa Zone,Liben
+Oromia Region,East Shewa Zone,Ziway/Batu Town
+Oromia Region,Southwest Shewa Zone
+Oromia Region,Southwest Shewa Zone,Woliso Zuria
+Oromia Region,Southwest Shewa Zone,Woliso Town
+Oromia Region,Southwest Shewa Zone,Becho
+Oromia Region,Southwest Shewa Zone,Kersa Malima
+Oromia Region,Southwest Shewa Zone,Amaya
+Oromia Region,Southwest Shewa Zone,Dawo
+Oromia Region,Southwest Shewa Zone,Goro
+Oromia Region,Southwest Shewa Zone,Ilu
+Oromia Region,Southwest Shewa Zone,Seden Sodo
+Oromia Region,Southwest Shewa Zone,Wonchi
+Oromia Region,Jimma Zone
+Oromia Region,Jimma Zone,Jimma Zuria
+Oromia Region,Jimma Zone,Limmu Seka
+Oromia Region,Jimma Zone,Gomma
+Oromia Region,Jimma Zone,Kersa
+Oromia Region,Jimma Zone,Seka Chekorsa
+Oromia Region,Jimma Zone,Limmu Kosa
+Oromia Region,Jimma Zone,Mana
+Oromia Region,Jimma Zone,Omo Nada
+Oromia Region,Jimma Zone,Shabe Sombo
+Oromia Region,Jimma Zone,Dedo
+Oromia Region,Jimma Zone,Gera
+Oromia Region,Jimma Zone,Guma
+Oromia Region,Jimma Zone,Nono Benja
+Oromia Region,Jimma Zone,Chora Botor
+Oromia Region,Jimma Zone,Sigmo
+Oromia Region,Illubabor Zone
+Oromia Region,Illubabor Zone,Mettu Zuria
+Oromia Region,Illubabor Zone,Mettu Town
+Oromia Region,Illubabor Zone,Darimu
+Oromia Region,Illubabor Zone,Alghe
+Oromia Region,Illubabor Zone,Yayu
+Oromia Region,Illubabor Zone,Hurumu
+Oromia Region,Illubabor Zone,Bure
+Oromia Region,Illubabor Zone,Dorani
+Oromia Region,Illubabor Zone,Nono Sale
+Oromia Region,Illubabor Zone,Alge Sachi
+Oromia Region,Buno Bedele Zone
+Oromia Region,Buno Bedele Zone,Bedele Zuria
+Oromia Region,Buno Bedele Zone,Bedele Town
+Oromia Region,Buno Bedele Zone,Borecha
+Oromia Region,Buno Bedele Zone,Gechi
+Oromia Region,Buno Bedele Zone,Dega
+Oromia Region,Buno Bedele Zone,Chora
+Oromia Region,Buno Bedele Zone,Chewaka
+Oromia Region,Buno Bedele Zone,Mako
+Oromia Region,West Guji Zone
+Oromia Region,West Guji Zone,Bule Hora
+Oromia Region,West Guji Zone,Kercha
+Oromia Region,West Guji Zone,Birbirsa Kojowa
+Oromia Region,West Guji Zone,Hambela Wamena
+Oromia Region,West Guji Zone,Abaya
+Oromia Region,West Guji Zone,Gelana
+Oromia Region,West Guji Zone,Dugda Dawa
+Oromia Region,Guji Zone
+Oromia Region,Guji Zone,Adola Town
+Oromia Region,Guji Zone,Adola Zuria
+Oromia Region,Guji Zone,Negele Borana Town
+Oromia Region,Guji Zone,Wadera
+Oromia Region,Guji Zone,Odo Shakiso
+Oromia Region,Guji Zone,Liban
+Oromia Region,Guji Zone,Gorodola
+Oromia Region,Guji Zone,Uraga
+Oromia Region,Guji Zone,Ana Sora
+Oromia Region,Guji Zone,Girja
+Oromia Region,Guji Zone,Bore
+Oromia Region,Borana Zone
+Oromia Region,Borana Zone,Yabelo Town
+Oromia Region,Borana Zone,Yabelo Zuria
+Oromia Region,Borana Zone,Moyale
+Oromia Region,Borana Zone,Dire
+Oromia Region,Borana Zone,Teltele
+Oromia Region,Borana Zone,Arero
+Oromia Region,Borana Zone,Elwaye
+Oromia Region,Borana Zone,Dubluk
+Oromia Region,Borana Zone,Dhas
+Oromia Region,Borana Zone,Miyo
+Oromia Region,East Hararghe Zone
+Oromia Region,East Hararghe Zone,Haramaya
+Oromia Region,East Hararghe Zone,Babille
+Oromia Region,East Hararghe Zone,Kersa
+Oromia Region,East Hararghe Zone,Fedis
+Oromia Region,East Hararghe Zone,Jarso
+Oromia Region,East Hararghe Zone,Gursum
+Oromia Region,East Hararghe Zone,Gola Odana Meyumuluke
+Oromia Region,East Hararghe Zone,Meta
+Oromia Region,East Hararghe Zone,Kombolcha
+Oromia Region,East Hararghe Zone,Deder
+Oromia Region,East Hararghe Zone,Gurawa
+Oromia Region,East Hararghe Zone,Kurfa Chele
+Oromia Region,East Hararghe Zone,Bedeno
+Oromia Region,East Hararghe Zone,Midega Tola
+Oromia Region,East Hararghe Zone,Chinaksen
+Oromia Region,West Hararghe Zone
+Oromia Region,West Hararghe Zone,Chiro Town
+Oromia Region,West Hararghe Zone,Chiro Zuria
+Oromia Region,West Hararghe Zone,Gemechis
+Oromia Region,West Hararghe Zone,Bedessa
+Oromia Region,West Hararghe Zone,Doba
+Oromia Region,West Hararghe Zone,Miesso
+Oromia Region,West Hararghe Zone,Tullo
+Oromia Region,West Hararghe Zone,Kuni
+Oromia Region,West Hararghe Zone,Darolebu
+Oromia Region,West Hararghe Zone,Boke
+Oromia Region,West Hararghe Zone,Habro
+Oromia Region,West Hararghe Zone,Anchar
+Oromia Region,Arsi Zone
+Oromia Region,Arsi Zone,Asella Town
+Oromia Region,Arsi Zone,Tiyo
+Oromia Region,Arsi Zone,Shirka
+Oromia Region,Arsi Zone,Ziway Dugda
+Oromia Region,Arsi Zone,Munesa
+Oromia Region,Arsi Zone,Digeluna Tijo
+Oromia Region,Arsi Zone,Hetosa
+Oromia Region,Arsi Zone,Jeju
+Oromia Region,Arsi Zone,Diksis
+Oromia Region,Arsi Zone,Robe
+Oromia Region,Arsi Zone,Tena
+Oromia Region,Arsi Zone,Sherka
+Oromia Region,Arsi Zone,Zuway Dugda
+Oromia Region,Arsi Zone,Lemuna Bilbilo
+Oromia Region,Arsi Zone,Chole
+Oromia Region,Arsi Zone,Gololcha
+Oromia Region,Arsi Zone,Amigna
+Oromia Region,Arsi Zone,Seru
+Oromia Region,West Arsi Zone
+Oromia Region,West Arsi Zone,Shashemene Town
+Oromia Region,West Arsi Zone,Shashemene Zuria
+Oromia Region,West Arsi Zone,Kofele
+Oromia Region,West Arsi Zone,Dodola
+Oromia Region,West Arsi Zone,Kokosa
+Oromia Region,West Arsi Zone,Kore
+Oromia Region,West Arsi Zone,Adaba
+Oromia Region,West Arsi Zone,Nensebo
+Oromia Region,West Arsi Zone,Gedeb Asasa
+Oromia Region,West Arsi Zone,Arsi Negele
+Oromia Region,West Arsi Zone,Siraro
+Oromia Region,West Arsi Zone,Shalla
+Oromia Region,Bale Zone
+Oromia Region,Bale Zone,Robe Town
+Oromia Region,Bale Zone,Sinana
+Oromia Region,Bale Zone,Agarfa
+Oromia Region,Bale Zone,Dinsho
+Oromia Region,Bale Zone,Goba Town
+Oromia Region,Bale Zone,Goba Zuria
+Oromia Region,Bale Zone,Berbere
+Oromia Region,Bale Zone,Delo Mena
+Oromia Region,Bale Zone,Gasera
+Oromia Region,Bale Zone,Gololcha
+Oromia Region,Bale Zone,Guradamole
+Oromia Region,Bale Zone,Harena Buluk
+Oromia Region,Bale Zone,Legehida
+Oromia Region,Bale Zone,Meda Welabu
+Oromia Region,East Bale Zone
+Oromia Region,East Bale Zone,Ginir Town
+Oromia Region,East Bale Zone,Ginir Zuria
+Oromia Region,East Bale Zone,Gololcha
+Oromia Region,East Bale Zone,Rayitu
+Oromia Region,East Bale Zone,Seweyna
+Oromia Region,East Bale Zone,Dawe Kachen
+Oromia Region,East Bale Zone,Dawe Serer
+Oromia Region,East Bale Zone,Lagahidda
+Oromia Region,Horo Guduru Wollega Zone
+Oromia Region,Horo Guduru Wollega Zone,Shambu Town
+Oromia Region,Horo Guduru Wollega Zone,Amuru
+Oromia Region,Horo Guduru Wollega Zone,Horro
+Oromia Region,Horo Guduru Wollega Zone,Jardega Jarte
+Oromia Region,Horo Guduru Wollega Zone,Abay Chomen
+Oromia Region,Horo Guduru Wollega Zone,Guduru
+Oromia Region,Horo Guduru Wollega Zone,Hababo Guduru
+Oromia Region,Horo Guduru Wollega Zone,Jimma Geneti
+Oromia Region,Horo Guduru Wollega Zone,Jimma Rare
+Oromia Region,East Wollega Zone
+Oromia Region,East Wollega Zone,Nekemte Town
+Oromia Region,East Wollega Zone,Guto Gida
+Oromia Region,East Wollega Zone,Sibu Sire
+Oromia Region,East Wollega Zone,Sasiga
+Oromia Region,East Wollega Zone,Diga
+Oromia Region,East Wollega Zone,Gwayo Tala
+Oromia Region,East Wollega Zone,Haro Limmu
+Oromia Region,East Wollega Zone,Kiremu
+Oromia Region,East Wollega Zone,Limmu
+Oromia Region,East Wollega Zone,Leka Dullecha
+Oromia Region,East Wollega Zone,Wayu Tuka
+Oromia Region,West Wollega Zone
+Oromia Region,West Wollega Zone,Gimbi Town
+Oromia Region,West Wollega Zone,Gimbi Zuria
+Oromia Region,West Wollega Zone,Boji
+Oromia Region,West Wollega Zone,Lalo Assabi
+Oromia Region,West Wollega Zone,Yubdo
+Oromia Region,West Wollega Zone,Ayra
+Oromia Region,West Wollega Zone,Guliso
+Oromia Region,West Wollega Zone,Haru
+Oromia Region,West Wollega Zone,Kiltu Kara
+Oromia Region,West Wollega Zone,Mana Sibu
+Oromia Region,West Wollega Zone,Nejo
+Oromia Region,West Wollega Zone,Babo Gambel
+Oromia Region,Kelam Wollega Zone
+Oromia Region,Kelam Wollega Zone,Dembidolo Town
+Oromia Region,Kelam Wollega Zone,Gidame
+Oromia Region,Kelam Wollega Zone,Gawo Kebe
+Oromia Region,Kelam Wollega Zone,Saylem
+Oromia Region,Kelam Wollega Zone,Dale Sedi
+Oromia Region,Kelam Wollega Zone,Dale Wabera
+Oromia Region,Kelam Wollega Zone,Hawa Gelan
+Oromia Region,Kelam Wollega Zone,Jimma Horo
+Oromia Region,Kelam Wollega Zone,Lalo Kile
+Oromia Region,Kelam Wollega Zone,Sayo
+Tigray Region
+Tigray Region,Central Tigray Zone
+Tigray Region,Central Tigray Zone,Axum Town
+Tigray Region,Central Tigray Zone,Adwa Town
+Tigray Region,Central Tigray Zone,Adwa Zuria
+Tigray Region,Central Tigray Zone,Ahferom
+Tigray Region,Central Tigray Zone,Were Lehe
+Tigray Region,Central Tigray Zone,Kola Tembien
+Tigray Region,Central Tigray Zone,Abergele
+Tigray Region,Central Tigray Zone,Degua Tembien
+Tigray Region,Central Tigray Zone,Mereb Lehe
+Tigray Region,Central Tigray Zone,Naeder Adet
+Tigray Region,Central Tigray Zone,Tahtay Maychew
+Tigray Region,East Tigray Zone
+Tigray Region,East Tigray Zone,Adigrat Town
+Tigray Region,East Tigray Zone,Ganta Afeshum
+Tigray Region,East Tigray Zone,Gulomahda
+Tigray Region,East Tigray Zone,Bizet
+Tigray Region,East Tigray Zone,Hawzen
+Tigray Region,East Tigray Zone,Irob
+Tigray Region,East Tigray Zone,Saesi Tsaedaemba
+Tigray Region,Northwest Tigray Zone
+Tigray Region,Northwest Tigray Zone,Shire Endaselassie Town
+Tigray Region,Northwest Tigray Zone,Asgede Tsimbla
+Tigray Region,Northwest Tigray Zone,Medebay Zana
+Tigray Region,Northwest Tigray Zone,Tahtay Koraro
+Tigray Region,Northwest Tigray Zone,Laelay Adyabo
+Tigray Region,Northwest Tigray Zone,Tahtay Adyabo
+Tigray Region,Northwest Tigray Zone,Tselemti
+Tigray Region,South Tigray Zone
+Tigray Region,South Tigray Zone,Maychew Town
+Tigray Region,South Tigray Zone,Alaje
+Tigray Region,South Tigray Zone,Endamehoni
+Tigray Region,South Tigray Zone,Ofla
+Tigray Region,South Tigray Zone,Raya Azebo
+Tigray Region,South Tigray Zone,Raya Alamata
+Tigray Region,South Tigray Zone,Alamata Town
+Tigray Region,Southeast Tigray Zone
+Tigray Region,Southeast Tigray Zone,Samre
+Tigray Region,Southeast Tigray Zone,Hintalo Wajirat
+Tigray Region,Southeast Tigray Zone,Enderta
+Tigray Region,Southeast Tigray Zone,Dogu'a Tembien
+Tigray Region,West Tigray Zone
+Tigray Region,West Tigray Zone,Humera Town
+Tigray Region,West Tigray Zone,Welkait
+Tigray Region,West Tigray Zone,Tsegede
+Tigray Region,West Tigray Zone,Kafta Humera
+Somali Region
+Somali Region,Fafan (Jijiga) Zone
+Somali Region,Fafan (Jijiga) Zone,Jijiga Town
+Somali Region,Fafan (Jijiga) Zone,Jijiga Zuria
+Somali Region,Fafan (Jijiga) Zone,Babille
+Somali Region,Fafan (Jijiga) Zone,Awbare
+Somali Region,Fafan (Jijiga) Zone,Gursum
+Somali Region,Fafan (Jijiga) Zone,Kebribeyah
+Somali Region,Fafan (Jijiga) Zone,Harshin
+Somali Region,Fafan (Jijiga) Zone,Sanhope
+Somali Region,Sitti Zone
+Somali Region,Sitti Zone,Shinile
+Somali Region,Sitti Zone,Aisha
+Somali Region,Sitti Zone,Dembel
+Somali Region,Sitti Zone,Erer
+Somali Region,Sitti Zone,Afdem
+Somali Region,Sitti Zone,Mieso
+Somali Region,Sitti Zone,Gablalu
+Somali Region,Jarra (Dagahbur) Zone
+Somali Region,Jarra (Dagahbur) Zone,Degehabur Town
+Somali Region,Jarra (Dagahbur) Zone,Degehabur Zuria
+Somali Region,Jarra (Dagahbur) Zone,Aware
+Somali Region,Jarra (Dagahbur) Zone,Degahamedow
+Somali Region,Jarra (Dagahbur) Zone,Gunagado
+Somali Region,Jarra (Dagahbur) Zone,Birqod
+Somali Region,Jarra (Dagahbur) Zone,Ararso
+Somali Region,Korahe Zone
+Somali Region,Korahe Zone,Kebridehar Town
+Somali Region,Korahe Zone,Kebridehar Zuria
+Somali Region,Korahe Zone,Debeweyin
+Somali Region,Korahe Zone,Shilavo
+Somali Region,Korahe Zone,Shaygosh
+Somali Region,Korahe Zone,Marsin
+Somali Region,Korahe Zone,Lasdhankair
+Somali Region,Shabelle Zone
+Somali Region,Shabelle Zone,Gode Town
+Somali Region,Shabelle Zone,Gode Zuria
+Somali Region,Shabelle Zone,Kelafo
+Somali Region,Shabelle Zone,Mustahil
+Somali Region,Shabelle Zone,Adadle
+Somali Region,Shabelle Zone,Berano
+Somali Region,Shabelle Zone,East Imey
+Somali Region,Shabelle Zone,Denan
+Somali Region,Afder Zone
+Somali Region,Afder Zone,Erer
+Somali Region,Afder Zone,Bare
+Somali Region,Afder Zone,Dolobay
+Somali Region,Afder Zone,Hargele
+Somali Region,Afder Zone,Elkere
+Somali Region,Afder Zone,West Imey
+Somali Region,Afder Zone,Mirab Abaya
+Somali Region,Afder Zone,God God
+Somali Region,Liben Zone
+Somali Region,Liben Zone,Filtu
+Somali Region,Liben Zone,Deka Suftu
+Somali Region,Liben Zone,Boqolomayo
+Somali Region,Liben Zone,Mubarak
+Somali Region,Dawa Zone
+Somali Region,Dawa Zone,Dolo Odo
+Somali Region,Dawa Zone,Hudet
+Somali Region,Dawa Zone,Moyale
+Somali Region,Dawa Zone,Kadaduma
+Somali Region,Erer Zone
+Somali Region,Erer Zone,Fiq
+Somali Region,Erer Zone,Hamero
+Somali Region,Erer Zone,Lagahida
+Somali Region,Erer Zone,Salahad
+Somali Region,Erer Zone,Babille
+Somali Region,Erer Zone,Yochale
+Somali Region,Nogob Zone
+Somali Region,Nogob Zone,Segeg
+Somali Region,Nogob Zone,Gerubo
+Somali Region,Nogob Zone,Duhun
+Somali Region,Nogob Zone,Elweyne
+Somali Region,Nogob Zone,Haramey
+Sidama Region
+Sidama Region,Northern Sidama Zone
+Sidama Region,Northern Sidama Zone,Hawassa Zuria
+Sidama Region,Northern Sidama Zone,Wotera Rassa
+Sidama Region,Northern Sidama Zone,Hawassa City
+Sidama Region,Northern Sidama Zone,Shallo
+Sidama Region,Northern Sidama Zone,Central Boricha
+Sidama Region,Eastern Sidama Zone
+Sidama Region,Eastern Sidama Zone,Arbegona
+Sidama Region,Eastern Sidama Zone,Gorche
+Sidama Region,Eastern Sidama Zone,Bansa
+Sidama Region,Eastern Sidama Zone,Chire
+Sidama Region,Eastern Sidama Zone,Aroresa
+Sidama Region,Eastern Sidama Zone,Bona Zuria
+Sidama Region,Southern Sidama Zone
+Sidama Region,Southern Sidama Zone,Aleta Wendo
+Sidama Region,Southern Sidama Zone,Dale
+Sidama Region,Southern Sidama Zone,Yirgalem Town
+Sidama Region,Southern Sidama Zone,Chuko
+Sidama Region,Southern Sidama Zone,Dara
+Sidama Region,Southern Sidama Zone,Hula
+Sidama Region,Southern Sidama Zone,Wondo Genet
+Sidama Region,Central Sidama Zone
+Sidama Region,Central Sidama Zone,Shebedino
+Sidama Region,Central Sidama Zone,Boricha Rural
+Sidama Region,Central Sidama Zone,Loka Abaya
+Sidama Region,Central Sidama Zone,Wensho
+Sidama Region,Central Sidama Zone,Malga
+Central Ethiopia Region
+Central Ethiopia Region,Gurage Zone
+Central Ethiopia Region,Gurage Zone,Welkite Town
+Central Ethiopia Region,Gurage Zone,Abeshge
+Central Ethiopia Region,Gurage Zone,Cheha
+Central Ethiopia Region,Gurage Zone,Enemorina Eaner
+Central Ethiopia Region,Gurage Zone,Soddo
+Central Ethiopia Region,Gurage Zone,Ezha
+Central Ethiopia Region,Gurage Zone,Geta
+Central Ethiopia Region,Gurage Zone,Gummer
+Central Ethiopia Region,Gurage Zone,Kebena (Special)
+Central Ethiopia Region,Gurage Zone,Mareko (Special)
+Central Ethiopia Region,Gurage Zone,Kokir Gedebano
+Central Ethiopia Region,Gurage Zone,Muhor Na Akilil
+Central Ethiopia Region,Silte Zone
+Central Ethiopia Region,Silte Zone,Worabe Town
+Central Ethiopia Region,Silte Zone,Hulbareg
+Central Ethiopia Region,Silte Zone,Sankurra
+Central Ethiopia Region,Silte Zone,Lanfro
+Central Ethiopia Region,Silte Zone,Silte Woreda
+Central Ethiopia Region,Silte Zone,Dalocha
+Central Ethiopia Region,Silte Zone,Alicho Weriro
+Central Ethiopia Region,Silte Zone,Mirab Azernet Berbere
+Central Ethiopia Region,Silte Zone,Misrak Azernet Berbere
+Central Ethiopia Region,Kembata Tembaro Zone
+Central Ethiopia Region,Kembata Tembaro Zone,Durame Town
+Central Ethiopia Region,Kembata Tembaro Zone,Angacha
+Central Ethiopia Region,Kembata Tembaro Zone,Kacha Birra
+Central Ethiopia Region,Kembata Tembaro Zone,Kedida Gamela
+Central Ethiopia Region,Kembata Tembaro Zone,Hadero Tunto
+Central Ethiopia Region,Kembata Tembaro Zone,Damboya
+Central Ethiopia Region,Kembata Tembaro Zone,Tembaro Leyu Woreda
+Central Ethiopia Region,Hadiya Zone
+Central Ethiopia Region,Hadiya Zone,Hosanna Town
+Central Ethiopia Region,Hadiya Zone,Misha
+Central Ethiopia Region,Hadiya Zone,Lemo
+Central Ethiopia Region,Hadiya Zone,Sorro
+Central Ethiopia Region,Hadiya Zone,Ana Lemo
+Central Ethiopia Region,Hadiya Zone,Duna
+Central Ethiopia Region,Hadiya Zone,Gibe
+Central Ethiopia Region,Hadiya Zone,Gomibora
+Central Ethiopia Region,Hadiya Zone,Mirab Badawacho
+Central Ethiopia Region,Hadiya Zone,Misrak Badawacho
+Central Ethiopia Region,Hadiya Zone,Shashego
+Central Ethiopia Region,Halaba Zone
+Central Ethiopia Region,Halaba Zone,Halaba Kulito Town
+Central Ethiopia Region,Halaba Zone,Halaba Rural
+South Ethiopia Region
+South Ethiopia Region,Wolayita Zone
+South Ethiopia Region,Wolayita Zone,Sodo Town
+South Ethiopia Region,Wolayita Zone,Sodo Zuria
+South Ethiopia Region,Wolayita Zone,Damot Gale
+South Ethiopia Region,Wolayita Zone,Kindit Koysha
+South Ethiopia Region,Wolayita Zone,Humbo
+South Ethiopia Region,Wolayita Zone,Boloso Sore
+South Ethiopia Region,Wolayita Zone,Boloso Bombe
+South Ethiopia Region,Wolayita Zone,Damot Sore
+South Ethiopia Region,Wolayita Zone,Damot Wayde
+South Ethiopia Region,Wolayita Zone,Diguna Fango
+South Ethiopia Region,Wolayita Zone,Kindo Didaye
+South Ethiopia Region,Wolayita Zone,Offa
+South Ethiopia Region,Gamo Zone
+South Ethiopia Region,Gamo Zone,Arba Minch Town
+South Ethiopia Region,Gamo Zone,Arba Minch Zuria
+South Ethiopia Region,Gamo Zone,Chencha
+South Ethiopia Region,Gamo Zone,Mirab Abaya
+South Ethiopia Region,Gamo Zone,Bonke
+South Ethiopia Region,Gamo Zone,Boreda
+South Ethiopia Region,Gamo Zone,Dita
+South Ethiopia Region,Gamo Zone,Daramalo
+South Ethiopia Region,Gamo Zone,Kucha
+South Ethiopia Region,Gamo Zone,Kucha Alfa
+South Ethiopia Region,Gamo Zone,Gacho Baba
+South Ethiopia Region,Gamo Zone,Kemba
+South Ethiopia Region,Gofa Zone
+South Ethiopia Region,Gofa Zone,Sawla Town
+South Ethiopia Region,Gofa Zone,Geze Gofa
+South Ethiopia Region,Gofa Zone,Demba Gofa
+South Ethiopia Region,Gofa Zone,Melo Gada
+South Ethiopia Region,Gofa Zone,Oyda
+South Ethiopia Region,Gofa Zone,Zala
+South Ethiopia Region,South Omo Zone
+South Ethiopia Region,South Omo Zone,Jinka Town
+South Ethiopia Region,South Omo Zone,Bako Gazer
+South Ethiopia Region,South Omo Zone,Hammer
+South Ethiopia Region,South Omo Zone,Kuraz
+South Ethiopia Region,South Omo Zone,Turmi Town
+South Ethiopia Region,South Omo Zone,Male
+South Ethiopia Region,South Omo Zone,Dasenech
+South Ethiopia Region,South Omo Zone,Gnangatom
+South Ethiopia Region,South Omo Zone,Salamago
+South Ethiopia Region,Konso Zone
+South Ethiopia Region,Konso Zone,Karat Town
+South Ethiopia Region,Konso Zone,Konso Rural
+South Ethiopia Region,Konso Zone,Segen Area
+South Ethiopia Region,Gedeo Zone
+South Ethiopia Region,Gedeo Zone,Dilla Town
+South Ethiopia Region,Gedeo Zone,Dilla Zuria
+South Ethiopia Region,Gedeo Zone,Yirgacheffe Town
+South Ethiopia Region,Gedeo Zone,Yirgacheffe Rural
+South Ethiopia Region,Gedeo Zone,Bule
+South Ethiopia Region,Gedeo Zone,Wenago
+South Ethiopia Region,Gedeo Zone,Gedeb
+South Ethiopia Region,Gedeo Zone,Kochere
+South Ethiopia Region,Gedeo Zone,Raphe
+South West Ethiopia Peoples' Region
+South West Ethiopia Peoples' Region,Keffa Zone
+South West Ethiopia Peoples' Region,Keffa Zone,Bonga Town
+South West Ethiopia Peoples' Region,Keffa Zone,Chena
+South West Ethiopia Peoples' Region,Keffa Zone,Decha
+South West Ethiopia Peoples' Region,Keffa Zone,Gimbo
+South West Ethiopia Peoples' Region,Keffa Zone,Saylem
+South West Ethiopia Peoples' Region,Keffa Zone,Adiyo
+South West Ethiopia Peoples' Region,Keffa Zone,Bita
+South West Ethiopia Peoples' Region,Keffa Zone,Gesha
+South West Ethiopia Peoples' Region,Keffa Zone,Gewata
+South West Ethiopia Peoples' Region,Keffa Zone,Tello
+South West Ethiopia Peoples' Region,Sheka Zone
+South West Ethiopia Peoples' Region,Sheka Zone,Mappi Town
+South West Ethiopia Peoples' Region,Sheka Zone,Anderacha
+South West Ethiopia Peoples' Region,Sheka Zone,Yeki
+South West Ethiopia Peoples' Region,Sheka Zone,Tepi Town
+South West Ethiopia Peoples' Region,Bench Sheko Zone
+South West Ethiopia Peoples' Region,Bench Sheko Zone,Mizan Aman Town
+South West Ethiopia Peoples' Region,Bench Sheko Zone,Debre Werk
+South West Ethiopia Peoples' Region,Bench Sheko Zone,Semen Bench
+South West Ethiopia Peoples' Region,Bench Sheko Zone,Gidi Bench
+South West Ethiopia Peoples' Region,Bench Sheko Zone,Shay Bench
+South West Ethiopia Peoples' Region,Bench Sheko Zone,Sheko
+South West Ethiopia Peoples' Region,Dawro Zone
+South West Ethiopia Peoples' Region,Dawro Zone,Tercha Town
+South West Ethiopia Peoples' Region,Dawro Zone,Maraka
+South West Ethiopia Peoples' Region,Dawro Zone,Isara
+South West Ethiopia Peoples' Region,Dawro Zone,Tocha
+South West Ethiopia Peoples' Region,Dawro Zone,Loma
+South West Ethiopia Peoples' Region,Dawro Zone,Genji Basa
+South West Ethiopia Peoples' Region,Dawro Zone,Mari Mansa
+South West Ethiopia Peoples' Region,Dawro Zone,Kechi
+South West Ethiopia Peoples' Region,Konta Zone
+South West Ethiopia Peoples' Region,Konta Zone,Ameya
+South West Ethiopia Peoples' Region,Konta Zone,Konta Special Woreda Rural
+South West Ethiopia Peoples' Region,West Omo Zone
+South West Ethiopia Peoples' Region,West Omo Zone,Maji
+South West Ethiopia Peoples' Region,West Omo Zone,Berji
+South West Ethiopia Peoples' Region,West Omo Zone,Surma
+South West Ethiopia Peoples' Region,West Omo Zone,Guraferda
+South West Ethiopia Peoples' Region,West Omo Zone,Meinit Goldiya
+South West Ethiopia Peoples' Region,West Omo Zone,Meinit Shasha
+Gambela Region
+Gambela Region,Anywaa (Anuak) Zone
+Gambela Region,Anywaa (Anuak) Zone,Gambela Zuria
+Gambela Region,Anywaa (Anuak) Zone,Gambela Town
+Gambela Region,Anywaa (Anuak) Zone,Abobo
+Gambela Region,Anywaa (Anuak) Zone,Gog
+Gambela Region,Anywaa (Anuak) Zone,Jor
+Gambela Region,Nuer Zone
+Gambela Region,Nuer Zone,Akobo
+Gambela Region,Nuer Zone,Lare
+Gambela Region,Nuer Zone,Jikao
+Gambela Region,Nuer Zone,Wantaho
+Gambela Region,Nuer Zone,Jikawo
+Gambela Region,Mezhenger (Majang) Zone
+Gambela Region,Mezhenger (Majang) Zone,Mengesh
+Gambela Region,Mezhenger (Majang) Zone,Godere
+Gambela Region,Special Woreda
+Gambela Region,Special Woreda,Itang Special Woreda
+Benishangul-Gumuz Region
+Benishangul-Gumuz Region,Metekel Zone
+Benishangul-Gumuz Region,Metekel Zone,Gilgel Beles Town
+Benishangul-Gumuz Region,Metekel Zone,Mandura
+Benishangul-Gumuz Region,Metekel Zone,Dangur
+Benishangul-Gumuz Region,Metekel Zone,Guba
+Benishangul-Gumuz Region,Metekel Zone,Bulen
+Benishangul-Gumuz Region,Metekel Zone,Pawe
+Benishangul-Gumuz Region,Metekel Zone,Dibate
+Benishangul-Gumuz Region,Asosa Zone
+Benishangul-Gumuz Region,Asosa Zone,Asosa Zuria
+Benishangul-Gumuz Region,Asosa Zone,Asosa Town
+Benishangul-Gumuz Region,Asosa Zone,Bambasi
+Benishangul-Gumuz Region,Asosa Zone,Menge
+Benishangul-Gumuz Region,Asosa Zone,Sherkole
+Benishangul-Gumuz Region,Asosa Zone,Kurmuk
+Benishangul-Gumuz Region,Asosa Zone,Homosha
+Benishangul-Gumuz Region,Asosa Zone,Oda Bildigilu
+Benishangul-Gumuz Region,Kamashi Zone
+Benishangul-Gumuz Region,Kamashi Zone,Kamashi
+Benishangul-Gumuz Region,Kamashi Zone,Belo Jegonfoy
+Benishangul-Gumuz Region,Kamashi Zone,Sirba Abbay
+Benishangul-Gumuz Region,Kamashi Zone,Agalo Mite
+Benishangul-Gumuz Region,Kamashi Zone,Mizhiga
+Benishangul-Gumuz Region,Kamashi Zone,Yaso
+Benishangul-Gumuz Region,Mao-Komo Zone
+Benishangul-Gumuz Region,Mao-Komo Zone,Tongo Special/Mao Komo Special Woreda
+Harari Region
+Harari Region,Amir Nur
+Harari Region,Abadir
+Harari Region,Shenkor
+Harari Region,Sofi
+Harari Region,Erer
+Harari Region,Jin'Eala
+Harari Region,Hakim
+Harari Region,Dire Teyara
+Harari Region,Mekaela
