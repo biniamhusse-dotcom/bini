@@ -76,25 +76,25 @@ class SaleOrderInherited(models.Model):
 
             if 'PaymentMethod' in attrs:
                 pm_name = attrs['PaymentMethod']
-                pm = self.env['payment.method'].search([('ilike', pm_name)], limit=1)
+                pm = self.env['payment.method'].search([('name', 'ilike', pm_name)], limit=1)
                 if pm:
                     vals['payment_method'] = pm.id
 
             if 'CreditType' in attrs:
                 ct_name = attrs['CreditType']
-                ct = self.env['credit.type'].search([('ilike', ct_name)], limit=1)
+                ct = self.env['credit.type'].search([('name', 'ilike', ct_name)], limit=1)
                 if ct:
                     vals['credit_type'] = ct.id
 
             if 'CBHIAgreedWoreda' in attrs:
                 cw_name = attrs['CBHIAgreedWoreda']
-                cw = self.env['cbhi.woreda'].search([('ilike', cw_name)], limit=1)
+                cw = self.env['cbhi.woreda'].search([('name', 'ilike', cw_name)], limit=1)
                 if cw:
                     vals['cbhi_woreda_name'] = cw.id
 
             if 'CreditCompany' in attrs:
                 cc_name = attrs['CreditCompany']
-                cc = self.env['credit.company'].search([('ilike', cc_name)], limit=1)
+                cc = self.env['credit.company'].search([('name', 'ilike', cc_name)], limit=1)
                 if cc:
                     vals['credit_company_name'] = cc.id
 
