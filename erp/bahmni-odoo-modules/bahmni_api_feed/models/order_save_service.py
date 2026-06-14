@@ -425,6 +425,7 @@ class OrderSaveService(models.Model):
                     'name': description,
                     'state': 'draft',
                     'dispensed': order_line_dispensed,
+                    'tax_id': [(5, 0, 0)],
                 }
                 sale_order_line_obj.create(sale_line_vals)
             else:
@@ -473,9 +474,11 @@ class OrderSaveService(models.Model):
             'dispensed': order_line_dispensed,
             'lot_id': lot.lot_id.id,
             'expiry_date': lot.lot_id.expiration_date,
+            'tax_id': [(5, 0, 0)],
         }
 
         sale_line = sale_order_line_obj.create(sale_order_line)
+        sale_line.write({'tax_id': [(5, 0, 0)]})
         sale_obj = self.env['sale.order'].browse(sale_order)
         if sale_obj.pricelist_id:
             line_product = prod_obj.with_context(
