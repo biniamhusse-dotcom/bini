@@ -180,7 +180,7 @@ All restore scripts follow the same pattern:
 1. **Find the backup file** — If no date is given, the script picks the most recent file. If you pass a date (e.g., `20260605_125336`), it looks for that exact backup.
 2. **Start the container** — Each script starts the relevant Docker container if it is not already running.
 3. **Wait for the database to be ready** — The script polls the database until it accepts connections, so you don't have to worry about timing.
-4. **Drop and recreate the database** — The old database is deleted and a fresh one is created before restoring. This ensures a clean state.
+4. **Drop and recreate the database** — The old database is deleted and a fresh one is created before restoring. For PostgreSQL, this uses `dropdb`/`createdb` (not multi-command SQL strings, which PostgreSQL blocks). For MySQL, separate `DROP DATABASE` and `CREATE DATABASE` statements are used.
 5. **Restore from the backup** — The compressed backup is streamed directly into the database or extracted into the volume.
 
 ### Restore everything at once
@@ -189,10 +189,10 @@ If you want to restore all databases, volumes, and images in one go, use the ful
 
 ```bash
 # Restore everything from the latest backup
-sudo bash bahmni_restore.sh
+bash bahmni_restore.sh
 
 # Restore everything from a specific date
-sudo bash bahmni_restore.sh 20260605_125336
+bash bahmni_restore.sh 20260605_125336
 ```
 
 ### Restore individual databases
@@ -223,7 +223,7 @@ bash restore_openmrs.sh 20260605_125336
 
 1. The script starts the database container (e.g., `bahmni-standard-openmrsdb-1`)
 2. Waits until the database engine is ready to accept connections
-3. Drops the existing database and creates a new empty one
+3. Drops the existing database and creates a new empty one (using `dropdb`/`createdb` for PostgreSQL, separate `DROP`/`CREATE` for MySQL)
 4. Streams the compressed SQL dump into the fresh database
 5. Reports success or failure
 
@@ -266,10 +266,9 @@ bash restore_odoofilestore.sh
 **What happens during a volume restore:**
 
 1. Finds the backup `.tar.gz` file for that volume
-2. Creates the volume data directory if it does not exist
-3. Clears the existing volume contents
-4. Extracts the backup into the volume
-5. For Odoo volumes (`odoofilestore`, `odooappdata`), automatically fixes file ownership to `101:101` so Odoo can read its files
+2. Uses `docker run` to mount the volume and extract the backup — works on both Windows and Linux without needing direct filesystem access to Docker's volume directory
+3. Clears the existing volume contents and extracts the backup
+4. For Odoo volumes (`odoofilestore`, `odooappdata`), automatically fixes file ownership to `101:101` so Odoo can read its files
 
 > **Note:** Volumes are not destructive to other data — restoring a volume only affects that specific volume. You can safely restore individual volumes without touching databases.
 
@@ -503,6 +502,45 @@ docker restart bahmni-standard-openmrs-1
 ```
 
 The corrected SQL is also saved in `config/masterdata/configuration/globalproperties/gp_orders.xml` for fresh installs.
+
+---
+
+## Address Hierarchy
+
+The registration page uses a 5-level address hierarchy for Ethiopian locations:
+
+| Level | OpenMRS Field | Example |
+|-------|---------------|---------|
+| Region | `stateProvince` | Addis Ababa, Oromia, Amhara |
+| Zone | `countyDistrict` | Bole Sub-City, Jimma Zone |
+| Woreda | `address3` | Woreda 01, Ambo Zuria |
+| Kebele | `address2` | Local kebele |
+| House Number | `address1` | House number |
+
+### Coverage
+
+937 entries across all 14 regions/city administrations:
+
+| Region | Zones | Woredas |
+|--------|-------|---------|
+| Addis Ababa | 11 sub-cities | 143 |
+| Dire Dawa | 1 | 15 |
+| Afar | 5 | 37 |
+| Amhara | 12 | 119 |
+| Oromia | 22 | 237 |
+| Tigray | 6 | 40 |
+| Somali | 11 | 47 |
+| Sidama | 4 | 25 |
+| Central Ethiopia | 5 | 44 |
+| South Ethiopia | 6 | 56 |
+| South West Ethiopia | 6 | 42 |
+| Gambela | 3 + 1 special | 13 |
+| Benishangul-Gumuz | 4 | 22 |
+| Harari | — | 9 |
+
+Data files:
+- `config/masterdata/configuration/addresshierarchy/addressConfiguration.xml` — field definitions
+- `config/masterdata/configuration/addresshierarchy/addresshierarchy.csv` — all entries
 
 ---
 
