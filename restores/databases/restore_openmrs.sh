@@ -37,11 +37,13 @@ echo "MySQL ready." | tee -a "$LOG"
 # Drop and recreate database
 echo "Dropping and recreating database..." | tee -a "$LOG"
 docker exec bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' \
-  -e "DROP DATABASE IF EXISTS openmrs; CREATE DATABASE openmrs;"
+  -e "DROP DATABASE IF EXISTS openmrs"
+docker exec bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' \
+  -e "CREATE DATABASE openmrs"
 
-# Restore
+# Restore — copy file into container for cross-platform compatibility
 echo "Restoring..." | tee -a "$LOG"
-zcat "$FILE" | docker exec -i bahmni-standard-openmrsdb-1 \
-  mysql -uroot -p'adminAdmin!123' openmrs
+docker cp "$FILE" bahmni-standard-openmrsdb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-openmrsdb-1 sh -c "zcat /tmp/restore.sql.gz | mysql -uroot -p'adminAdmin!123' openmrs"
 
 echo "OpenMRS restore complete. Exit: $?" | tee -a "$LOG"

@@ -34,10 +34,12 @@ echo "MySQL ready." | tee -a "$LOG"
 
 echo "Dropping and recreating database..." | tee -a "$LOG"
 docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
-  -e "DROP DATABASE IF EXISTS bahmni_reports; CREATE DATABASE bahmni_reports;"
+  -e "DROP DATABASE IF EXISTS bahmni_reports"
+docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
+  -e "CREATE DATABASE bahmni_reports"
 
 echo "Restoring..." | tee -a "$LOG"
-zcat "$FILE" | docker exec -i bahmni-standard-reportsdb-1 \
-  mysql -uroot -p'adminAdmin!123' bahmni_reports
+docker cp "$FILE" bahmni-standard-reportsdb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-reportsdb-1 sh -c "zcat /tmp/restore.sql.gz | mysql -uroot -p'adminAdmin!123' bahmni_reports"
 
 echo "Reports restore complete. Exit: $?" | tee -a "$LOG"

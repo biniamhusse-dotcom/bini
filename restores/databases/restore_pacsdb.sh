@@ -32,11 +32,16 @@ until docker exec bahmni-standard-pacsdb-1 pg_isready -U postgres &>/dev/null; d
 done
 echo "PostgreSQL ready." | tee -a "$LOG"
 
-echo "Dropping and recreating database..." | tee -a "$LOG"
+echo "Terminating connections and recreating database..." | tee -a "$LOG"
 docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres \
-  -c "DROP DATABASE IF EXISTS pacs_db; CREATE DATABASE pacs_db OWNER pacs_user;"
+  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='pacs_db';" >/dev/null 2>&1 || true
+docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres \
+  -c "DROP DATABASE IF EXISTS pacs_db;" >/dev/null 2>&1 || true
+docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres \
+  -c "CREATE DATABASE pacs_db OWNER pacs_user;"
 
 echo "Restoring..." | tee -a "$LOG"
-zcat "$FILE" | docker exec -i bahmni-standard-pacsdb-1 psql -U postgres -d pacs_db
+docker cp "$FILE" bahmni-standard-pacsdb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-pacsdb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U postgres -d pacs_db"
 
 echo "PACS restore complete. Exit: $?" | tee -a "$LOG"

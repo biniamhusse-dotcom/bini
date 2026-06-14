@@ -68,6 +68,14 @@ until docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' -e
 done
 echo "✓ MySQL ready." | tee -a "$LOG"
 
+# ── Stop app containers (prevent reconnection during drop) ────────────────────
+
+echo "" | tee -a "$LOG"
+echo "--- Stopping app containers ---" | tee -a "$LOG"
+docker stop bahmni-standard-odoo-1 bahmni-standard-odoo-connect-1 \
+  bahmni-standard-openelis-1 2>/dev/null || true
+sleep 2
+
 # ── Restore Databases ─────────────────────────────────────────────────────────
 
 echo "" | tee -a "$LOG"
@@ -79,8 +87,8 @@ docker exec bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' \
   -e "DROP DATABASE IF EXISTS openmrs"
 docker exec bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' \
   -e "CREATE DATABASE openmrs"
-zcat "$OPENMRS_FILE" | docker exec -i bahmni-standard-openmrsdb-1 \
-  mysql -uroot -p'adminAdmin!123' openmrs
+docker cp "$OPENMRS_FILE" bahmni-standard-openmrsdb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-openmrsdb-1 sh -c "zcat /tmp/restore.sql.gz | mysql -uroot -p'adminAdmin!123' openmrs"
 echo "✓ OpenMRS exit: $?" | tee -a "$LOG"
 
 # Bahmni Reports
@@ -89,29 +97,44 @@ docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
   -e "DROP DATABASE IF EXISTS bahmni_reports"
 docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
   -e "CREATE DATABASE bahmni_reports"
-zcat "$REPORTS_FILE" | docker exec -i bahmni-standard-reportsdb-1 \
-  mysql -uroot -p'adminAdmin!123' bahmni_reports
+docker cp "$REPORTS_FILE" bahmni-standard-reportsdb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-reportsdb-1 sh -c "zcat /tmp/restore.sql.gz | mysql -uroot -p'adminAdmin!123' bahmni_reports"
 echo "✓ Reports exit: $?" | tee -a "$LOG"
 
-# Odoo
+# Odoo — terminate connections, drop, recreate
 echo "Restoring Odoo..." | tee -a "$LOG"
-docker exec bahmni-standard-odoodb-1 dropdb -U odoo odoo 2>/dev/null || true
-docker exec bahmni-standard-odoodb-1 createdb -U odoo -O odoo odoo
-zcat "$ODOO_FILE" | docker exec -i bahmni-standard-odoodb-1 psql -U odoo -d odoo
+docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
+  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='odoo';" >/dev/null 2>&1 || true
+docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
+  -c "DROP DATABASE IF EXISTS odoo;" >/dev/null 2>&1 || true
+docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
+  -c "CREATE DATABASE odoo OWNER odoo;"
+docker cp "$ODOO_FILE" bahmni-standard-odoodb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-odoodb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U odoo -d odoo"
 echo "✓ Odoo exit: $?" | tee -a "$LOG"
 
-# OpenELIS
+# OpenELIS — terminate connections, drop, recreate
 echo "Restoring OpenELIS..." | tee -a "$LOG"
-docker exec bahmni-standard-openelisdb-1 dropdb -U clinlims clinlims 2>/dev/null || true
-docker exec bahmni-standard-openelisdb-1 createdb -U clinlims -O clinlims clinlims
-zcat "$CLINLIMS_FILE" | docker exec -i bahmni-standard-openelisdb-1 psql -U clinlims -d clinlims
+docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
+  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='clinlims';" >/dev/null 2>&1 || true
+docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
+  -c "DROP DATABASE IF EXISTS clinlims;" >/dev/null 2>&1 || true
+docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
+  -c "CREATE DATABASE clinlims OWNER clinlims;"
+docker cp "$CLINLIMS_FILE" bahmni-standard-openelisdb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-openelisdb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U clinlims -d clinlims"
 echo "✓ OpenELIS exit: $?" | tee -a "$LOG"
 
-# PACS
+# PACS — terminate connections, drop, recreate
 echo "Restoring PACS DB..." | tee -a "$LOG"
-docker exec bahmni-standard-pacsdb-1 dropdb -U postgres pacs_db 2>/dev/null || true
-docker exec bahmni-standard-pacsdb-1 createdb -U postgres -O pacs_user pacs_db
-zcat "$PACS_FILE" | docker exec -i bahmni-standard-pacsdb-1 psql -U postgres -d pacs_db
+docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres \
+  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='pacs_db';" >/dev/null 2>&1 || true
+docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres \
+  -c "DROP DATABASE IF EXISTS pacs_db;" >/dev/null 2>&1 || true
+docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres \
+  -c "CREATE DATABASE pacs_db OWNER pacs_user;"
+docker cp "$PACS_FILE" bahmni-standard-pacsdb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-pacsdb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U postgres -d pacs_db"
 echo "✓ PACS exit: $?" | tee -a "$LOG"
 
 # ── Restore Volumes ───────────────────────────────────────────────────────────
@@ -136,9 +159,11 @@ restore_volume() {
 
   echo "  Restoring volume: $NAME" | tee -a "$LOG"
   # Use docker run to restore — works on Windows without direct filesystem access
+  local BACKUP_DIR_PATH
+  BACKUP_DIR_PATH="$(cd "$(dirname "$FILE")" && pwd)"
   docker run --rm \
     -v "$NAME:/data" \
-    -v "$(cd "$(dirname "$FILE")" && pwd):/backup" \
+    -v "$BACKUP_DIR_PATH:/backup:ro" \
     busybox sh -c "rm -rf /data/* && tar xzf /backup/$(basename "$FILE") -C /data"
   echo "  ✓ exit: $?" | tee -a "$LOG"
 }
@@ -158,5 +183,11 @@ restore_volume "bahmni-standard_sms-token"
 
 echo "" | tee -a "$LOG"
 echo "=== Restore Complete: $(date) ===" | tee -a "$LOG"
-echo "You can now start all containers with:" | tee -a "$LOG"
-echo "  docker compose -f /path/to/docker-compose.yml up -d" | tee -a "$LOG"
+echo "" | tee -a "$LOG"
+echo "Restarting app containers..." | tee -a "$LOG"
+docker start bahmni-standard-odoo-1 bahmni-standard-odoo-connect-1 \
+  bahmni-standard-openelis-1 2>/dev/null || true
+echo "✓ App containers started." | tee -a "$LOG"
+echo "" | tee -a "$LOG"
+echo "Start full stack with:" | tee -a "$LOG"
+echo "  cd bahmni-docker/bahmni-standard && docker compose --env-file .env up -d" | tee -a "$LOG"

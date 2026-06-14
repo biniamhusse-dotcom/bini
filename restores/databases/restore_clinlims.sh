@@ -32,11 +32,23 @@ until docker exec bahmni-standard-openelisdb-1 pg_isready -U clinlims &>/dev/nul
 done
 echo "PostgreSQL ready." | tee -a "$LOG"
 
-echo "Dropping and recreating database..." | tee -a "$LOG"
+echo "Stopping OpenELIS app to prevent reconnections..." | tee -a "$LOG"
+docker stop bahmni-standard-openelis-1 2>/dev/null || true
+sleep 2
+
+echo "Terminating connections and recreating database..." | tee -a "$LOG"
 docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
-  -c "DROP DATABASE IF EXISTS clinlims; CREATE DATABASE clinlims OWNER clinlims;"
+  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='clinlims';" >/dev/null 2>&1 || true
+docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
+  -c "DROP DATABASE IF EXISTS clinlims;" >/dev/null 2>&1 || true
+docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
+  -c "CREATE DATABASE clinlims OWNER clinlims;"
 
 echo "Restoring..." | tee -a "$LOG"
-zcat "$FILE" | docker exec -i bahmni-standard-openelisdb-1 psql -U clinlims -d clinlims
+docker cp "$FILE" bahmni-standard-openelisdb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-openelisdb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U clinlims -d clinlims"
+
+echo "Restarting OpenELIS app..." | tee -a "$LOG"
+docker start bahmni-standard-openelis-1 2>/dev/null || true
 
 echo "OpenELIS restore complete. Exit: $?" | tee -a "$LOG"

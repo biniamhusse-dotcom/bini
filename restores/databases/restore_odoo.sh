@@ -32,11 +32,23 @@ until docker exec bahmni-standard-odoodb-1 pg_isready -U odoo &>/dev/null; do
 done
 echo "PostgreSQL ready." | tee -a "$LOG"
 
-echo "Dropping and recreating database..." | tee -a "$LOG"
+echo "Stopping Odoo app to prevent reconnections..." | tee -a "$LOG"
+docker stop bahmni-standard-odoo-1 bahmni-standard-odoo-connect-1 2>/dev/null || true
+sleep 2
+
+echo "Terminating connections and recreating database..." | tee -a "$LOG"
 docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
-  -c "DROP DATABASE IF EXISTS odoo; CREATE DATABASE odoo OWNER odoo;"
+  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='odoo';" >/dev/null 2>&1 || true
+docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
+  -c "DROP DATABASE IF EXISTS odoo;" >/dev/null 2>&1 || true
+docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
+  -c "CREATE DATABASE odoo OWNER odoo;"
 
 echo "Restoring..." | tee -a "$LOG"
-zcat "$FILE" | docker exec -i bahmni-standard-odoodb-1 psql -U odoo -d odoo
+docker cp "$FILE" bahmni-standard-odoodb-1:/tmp/restore.sql.gz
+docker exec bahmni-standard-odoodb-1 sh -c "zcat /tmp/restore.sql.gz | psql -U odoo -d odoo"
+
+echo "Restarting Odoo app..." | tee -a "$LOG"
+docker start bahmni-standard-odoo-1 bahmni-standard-odoo-connect-1 2>/dev/null || true
 
 echo "Odoo restore complete. Exit: $?" | tee -a "$LOG"
