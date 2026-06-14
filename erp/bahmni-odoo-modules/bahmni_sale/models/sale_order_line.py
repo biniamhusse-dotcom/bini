@@ -46,6 +46,8 @@ class SaleOrderLine(models.Model):
     def onchange_product_id_inherit(self):
         if self.product_id:           
            self.lot_id = self.get_available_batch_details(self.product_id,self.order_id.id)
+           if not self.product_uom_qty or self.product_uom_qty < 1:
+               self.product_uom_qty = 1.0
            
     @api.depends('product_id', 'product_uom', 'product_uom_qty')
     def _compute_price_unit(self):
