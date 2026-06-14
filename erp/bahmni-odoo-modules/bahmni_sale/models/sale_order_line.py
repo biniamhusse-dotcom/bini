@@ -24,6 +24,7 @@ class SaleOrderLine(models.Model):
                                help="Flag to identify whether drug order is dispensed or not.")
     lot_id = fields.Many2one('stock.lot', string="Batch No")
     expiry_date = fields.Datetime(string="Expiry date")
+    product_uom_qty = fields.Float(string='Quantity', digits='Product Unit of Measure', required=True, default=1.0)
     
     
     @api.onchange('product_uom_qty')

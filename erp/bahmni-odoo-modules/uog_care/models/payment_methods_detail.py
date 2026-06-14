@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 
 OPENMRS_URL = 'http://openmrs:8080/openmrs'
 OPENMRS_USER = 'admin'
-OPENMRS_PASS = 'adminAdmin!123'
+OPENMRS_PASS = 'Admin123'
 
 
 class SaleOrderInherited(models.Model):
