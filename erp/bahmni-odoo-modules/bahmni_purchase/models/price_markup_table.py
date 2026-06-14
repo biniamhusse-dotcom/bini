@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError
 
 class PriceMarkupTable(models.Model):
     _name = 'price.markup.table'
+    _description = 'Price Markup Table'
 
     lower_price = fields.Float(string="Minimum Cost", default=1)
     higher_price = fields.Float(string="Maximum Cost", default=1)

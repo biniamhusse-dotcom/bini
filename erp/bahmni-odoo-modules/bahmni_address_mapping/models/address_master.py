@@ -3,6 +3,7 @@ from odoo import models, fields, api
 
 class StateDistrict(models.Model):
     _name = 'state.district'
+    _description = 'State District'
 
     name = fields.Char(string="Name")
     state_id = fields.Many2one("res.country.state", string="State")
@@ -20,6 +21,7 @@ class StateDistrict(models.Model):
 
 class DistrictTehsil(models.Model):
     _name = 'district.subdistrict'
+    _description = 'District Subdistrict'
 
     name = fields.Char(string="Name")
     district_id = fields.Many2one('state.district', string="District")
@@ -64,6 +66,7 @@ class DistrictTehsil(models.Model):
 
 class VillageVillage(models.Model):
     _name = 'village.village'
+    _description = 'Village'
 
     name = fields.Char(string="Name")
     district_id = fields.Many2one("state.district", string="District")

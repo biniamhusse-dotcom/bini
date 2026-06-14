@@ -12,6 +12,7 @@ from odoo.tools import date_utils
 
 class PurchaseOrderInwardList(models.Model):   
     _name = 'purchase.order.inward.list'
+    _description = 'Purchase Order Inward List'
 
     name = fields.Char(string="Report Name" , default='Purchase Order Based Inward Batch List')
     from_date = fields.Date('From Date',default=lambda * a: time.strftime('%Y-%m-%d'))

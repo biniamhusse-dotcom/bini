@@ -8,6 +8,7 @@ _logger = logging.getLogger(__name__)
 
 class AddressMappingService(models.Model):
     _name = 'address.mapping.service'
+    _description = 'Address Mapping Service'
     _auto = False
     auto_create_customer_address_levels = True
 

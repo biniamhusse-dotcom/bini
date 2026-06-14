@@ -13,6 +13,7 @@ from odoo.tools import date_utils
 
 class ExpiredProductList(models.Model):   
 	_name = 'expired.product.list'
+	_description = 'Expired Product List'
 	
 	name = fields.Char(string="Report Name" , default='Expired Product List')
 	from_date = fields.Date('From Date',default=lambda * a: time.strftime('%Y-%m-%d'))

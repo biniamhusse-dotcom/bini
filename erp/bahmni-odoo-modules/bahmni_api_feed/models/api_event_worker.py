@@ -6,6 +6,7 @@ _logger = logging.getLogger(__name__)
 
 class ApiEventWorker(models.Model):
     _name = 'api.event.worker'
+    _description = 'API Event Worker'
     _auto = False
 
     @api.model

@@ -12,6 +12,7 @@ from odoo.tools import date_utils
 
 class VendorPriceComparisonList(models.Model):   
     _name = 'vendor.price.comparison.list'
+    _description = 'Vendor Price Comparison List'
 
     name = fields.Char(string="Report Name" , default='Vendor Price Comparison Register')
     from_date = fields.Date('From Date',default=lambda * a: time.strftime('%Y-%m-%d'))

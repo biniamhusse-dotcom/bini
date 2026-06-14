@@ -14,6 +14,7 @@ _logger = logging.getLogger(__name__)
 
 class OrderSaveService(models.Model):
     _name = 'order.save.service'
+    _description = 'Order Save Service'
     _auto = False
 
     def _get_openerp_orders(self, vals):

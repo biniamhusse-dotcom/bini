@@ -55,6 +55,7 @@ class ResPartner(models.Model):
 
 class ResPartnerAttributes(models.Model):
     _name = 'res.partner.attributes'
+    _description = 'Partner Attributes'
 
     partner_id = fields.Many2one('res.partner', string='Partner', required=True, index=True, readonly=False)
     name = fields.Char(string='Name', size=128, required=True)

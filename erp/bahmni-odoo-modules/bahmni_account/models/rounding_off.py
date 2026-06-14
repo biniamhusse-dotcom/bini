@@ -2,6 +2,7 @@ from odoo import models, fields, api
 
 class RoundingOff(models.Model):
     _name = 'rounding.off'
+    _description = 'Rounding Off'
 
     def round_off_value_to_nearest(self, value):        
         res_config = self.env['res.company'].search([('id','=',self.env.user.company_id.id)],order='id asc',limit=1)

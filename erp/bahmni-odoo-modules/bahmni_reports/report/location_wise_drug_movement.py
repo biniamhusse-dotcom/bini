@@ -13,6 +13,7 @@ from odoo.tools import date_utils
 
 class LocationWiseDrugMovement(models.Model):   
     _name = 'location.wise.drug.movement'
+    _description = 'Location Wise Drug Movement'
 
     name = fields.Char(string="Report Name" , default='Location Wise Product Movement Register')
     from_date = fields.Date('From Date',default=lambda * a: time.strftime('%Y-%m-%d'))

@@ -12,6 +12,7 @@ from odoo.tools import date_utils
 
 class ProductExpirationRegister(models.Model):
     _name = 'product.expiration.register'
+    _description = 'Product Expiration Register'
     _order = 'date desc'
     
     name = fields.Char(string="Report Name" , default='Product Expiration Register')

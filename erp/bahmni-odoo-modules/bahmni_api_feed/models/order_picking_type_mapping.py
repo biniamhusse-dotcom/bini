@@ -3,6 +3,7 @@ from odoo import models, fields, api
 
 class OrderType(models.Model):
     _name = 'order.type'
+    _description = 'Order Type'
 
     name = fields.Char(string='Name')
 
@@ -12,6 +13,7 @@ class OrderType(models.Model):
 
 class OrderPickingTypeMapping(models.Model):
     _name = 'order.picking.type.mapping'
+    _description = 'Order Picking Type Mapping'
 
     order_type_id = fields.Many2one('order.type', string="Order Type")
     picking_type_id = fields.Many2one('stock.picking.type', string="Picking Type")

@@ -13,6 +13,7 @@ from odoo.tools import date_utils
 
 class PurchaseReturnRegister(models.Model):   
     _name = 'purchase.return.register'
+    _description = 'Purchase Return Register'
 
     name = fields.Char(string="Report Name" , default='Purchase Return Register')
     from_date = fields.Date('From Date',default=lambda * a: time.strftime('%Y-%m-%d'))

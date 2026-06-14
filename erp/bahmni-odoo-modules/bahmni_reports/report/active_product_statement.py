@@ -16,6 +16,7 @@ from odoo.exceptions import UserError
 
 class ActiveProductStatement(models.Model):   
 	_name = 'active.product.statement'
+	_description = 'Active Product Statement'
 
 	name = fields.Char(string="Report Name" , default='Active Product Statement')
 	from_date = fields.Date('From Date',default=lambda * a: time.strftime('%Y-%m-%d'))

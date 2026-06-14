@@ -13,6 +13,7 @@ from odoo.tools import date_utils
 
 class SaleDiscountHeadStatement(models.Model):   
 	_name = 'sale.discount.head.statement'
+	_description = 'Sale Discount Head Statement'
 
 	name = fields.Char(string="Report Name" , default='Sales Discount Statement')
 	from_date = fields.Date('From Date',default=lambda * a: time.strftime('%Y-%m-%d'))

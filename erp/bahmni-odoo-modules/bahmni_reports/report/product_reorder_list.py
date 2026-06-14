@@ -12,6 +12,7 @@ from odoo.tools import date_utils
 
 class ProductReorderList(models.Model):   
     _name = 'product.reorder.list'
+    _description = 'Product Reorder List'
     _order = 'date desc'
     
     name = fields.Char(string="Report Name" , default='Product Reorder List')

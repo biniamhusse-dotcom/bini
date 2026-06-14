@@ -8,6 +8,7 @@ _logger = logging.getLogger(__name__)
 
 class ProductUomService(models.Model):
     _name = 'product.uom.service'
+    _description = 'Product UOM Service'
     _auto = False
 
     @api.model
