@@ -22,6 +22,11 @@ DECLARE
         'account_invoice_line_tax', 'account_invoice', 'account_invoice_refund', 'account_invoice_tax', 
         'account_invoice_cancel', 'account_invoice_confirm', 
 
+        -- Payments
+        'account_payment_register_move_line_rel', 'account_payment_register',
+        'account_payment_outstanding_invoice_line', 'account_payment_credit_invoice_line',
+        'account_payment_account_bank_statement_line_rel', 'account_payment',
+
         -- Vouchers & Bank Statements
         'account_voucher', 'account_bank_statement_line', 'account_voucher_line', 'account_bank_statement_line_move_rel',
 

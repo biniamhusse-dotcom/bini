@@ -80,40 +80,78 @@ END$$
 DELIMITER ;
 
 -- =========================================================
--- 2. Execute Dynamic Truncations
+-- 2. Execute Dynamic Truncations (child tables FIRST, then parents)
 -- =========================================================
 
+-- Orders and their children
+CALL truncate_if_exists('order_attribute');
 CALL truncate_if_exists('test_order');
 CALL truncate_if_exists('drug_order');
-CALL truncate_if_exists('note');   
-CALL truncate_if_exists('obs_relationship');  
-CALL truncate_if_exists('concept_proposal');  	
+CALL truncate_if_exists('note');
+CALL truncate_if_exists('obs_relationship');
+CALL truncate_if_exists('concept_proposal');
 CALL truncate_if_exists('concept_proposal_tag_map');
 CALL truncate_if_exists('obs');
 CALL truncate_if_exists('orders');
+
+-- Order groups and their children
+CALL truncate_if_exists('order_group_attribute');
+CALL truncate_if_exists('order_group');
+
+-- Relationships
 CALL truncate_if_exists('relationship');
+
+-- Visits and their children
 CALL truncate_if_exists('visit_attribute');
 CALL truncate_if_exists('bed_patient_assignment_map');
+
+-- Encounters and their children
 CALL truncate_if_exists('encounter_provider');
+CALL truncate_if_exists('encounter_diagnosis');
 CALL truncate_if_exists('episode_encounter');
-CALL truncate_if_exists('order_group');
-CALL truncate_if_exists('encounter');  
+CALL truncate_if_exists('encounter');
+
+-- Appointments
 CALL truncate_if_exists('patient_appointment');
 CALL truncate_if_exists('patient_appointment_audit');
 CALL truncate_if_exists('patient_appointment_fulfilling_encounter_map');
 CALL truncate_if_exists('patient_appointment_occurrence');
 CALL truncate_if_exists('patient_appointment_provider');
 CALL truncate_if_exists('patient_appointment_recurring_time');
-CALL truncate_if_exists('visit'); 
+
+-- Visits (parent of encounter, appointment)
+CALL truncate_if_exists('visit');
+
+-- Patient identifiers
 CALL truncate_if_exists('patient_identifier');
+
+-- Conditions
 CALL truncate_if_exists('conditions');
+
+-- Cohorts
 CALL truncate_if_exists('cohort_member');
-CALL truncate_if_exists('patient_program');
-CALL truncate_if_exists('episode_patient_program');
-CALL truncate_if_exists('patient_program_attribute');
+
+-- Medication administration and their children
+CALL truncate_if_exists('medication_administration_note');
+CALL truncate_if_exists('medication_administration_performer');
+CALL truncate_if_exists('medication_administration');
+
+-- Patient programs and their children (children FIRST)
 CALL truncate_if_exists('patient_state');
-CALL truncate_if_exists('patient'); 
+CALL truncate_if_exists('patient_program_attribute');
+CALL truncate_if_exists('episode_patient_program');
+CALL truncate_if_exists('patient_program');
+
+-- Episodes
 CALL truncate_if_exists('episode');
+
+-- Patients (parent of all patient data)
+CALL truncate_if_exists('patient');
+
+-- Bahmni-specific notes
+CALL truncate_if_exists('notes');
+
+-- Audit and feed markers
 CALL truncate_if_exists('audit_log');
 CALL truncate_if_exists('event_records_offset_marker');
 
