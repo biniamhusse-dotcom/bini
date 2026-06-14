@@ -59,7 +59,25 @@ git clone -b main https://github.com/biniamhusse-dotcom/bini.git emr
 cd emr
 ```
 
-### 2. Configure environment
+### 2. Make shell scripts executable
+
+After cloning, `.sh` files may not have execute permission. Run this once to fix all scripts:
+
+**Ubuntu:**
+```bash
+chmod +x *.sh
+chmod +x restores/*.sh
+chmod +x fresh_db/*.sh
+```
+
+**Windows (Git Bash or WSL):**
+```bash
+chmod +x *.sh restores/*.sh fresh_db/*.sh
+```
+
+**Windows (PowerShell):** Scripts run with `bash script.sh` directly, so `chmod` is not needed. Git Bash handles this automatically.
+
+### 3. Configure environment
 
 **Ubuntu** -- copy the Linux template and update paths:
 
@@ -78,7 +96,7 @@ CONFIG_VOLUME=C:/Users/YOUR_USERNAME/Documents/emr/config
 BAHMNI_APPS_PATH=C:/Users/YOUR_USERNAME/Documents/emr/apps
 ```
 
-### 3. Start all services
+### 4. Start all services
 
 ```bash
 docker compose --env-file .env up -d
