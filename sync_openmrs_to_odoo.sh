@@ -19,15 +19,19 @@ NOCOLOR='\033[0m'
 SUCCESS=0
 FAILED=0
 
+TMPDIR=$(mktemp -d)
+COOKIE_FILE="$TMPDIR/odoo_cookie.txt"
+trap "rm -rf $TMPDIR" EXIT
+
 # ── Get Odoo auth cookie ──────────────────────────────────────────────────────
 
 echo -e "${CYAN}Authenticating with Odoo...${NOCOLOR}"
-ODOO_COOKIE=$(curl.exe -s -c - -X POST "$ODOO_URL/web/session/authenticate" \
+curl.exe -s -c "$COOKIE_FILE" -X POST "$ODOO_URL/web/session/authenticate" \
   -H "Content-Type: application/json" \
   -d "{\"jsonrpc\":\"2.0\",\"method\":\"call\",\"params\":{\"login\":\"$ODOO_USER\",\"password\":\"$ODOO_PASS\",\"db\":\"odoo\"}}" \
-  | grep "session_id" | awk '{print $NF}')
+  > /dev/null 2>&1
 
-if [ -z "$ODOO_COOKIE" ]; then
+if [ ! -f "$COOKIE_FILE" ] || ! grep -q "session_id" "$COOKIE_FILE"; then
   echo -e "${RED}Failed to authenticate with Odoo. Is Odoo running?${NOCOLOR}"
   exit 1
 fi
@@ -46,9 +50,8 @@ post_to_odoo() {
   local endpoint="$1"
   local payload="$2"
   local result
-  result=$(curl.exe -s -X POST "$ODOO_URL$endpoint" \
+  result=$(curl.exe -s -b "$COOKIE_FILE" -X POST "$ODOO_URL$endpoint" \
     -H "Content-Type: application/json" \
-    -H "Cookie: session_id=$ODOO_COOKIE" \
     -d "$payload" 2>/dev/null)
   if echo "$result" | grep -q '"status":200'; then
     return 0
@@ -69,22 +72,15 @@ SUCCESS=0
 FAILED=0
 
 for PID in $PATIENT_IDS; do
-  # Get patient data from MySQL
   PATIENT_DATA=$(mysql_query "
     SELECT
       p.uuid,
       CONCAT(COALESCE(pn.given_name,''), ' ', COALESCE(pn.middle_name,''), ' ', COALESCE(pn.family_name,'')) AS name,
       COALESCE(pi.identifier, '') AS identifier,
-      COALESCE(pa.city, '') AS phone,
-      COALESCE(pa.address1, '') AS address1,
-      COALESCE(pa.address2, '') AS address2,
-      COALESCE(pa.address3, '') AS address3,
-      COALESCE(pa.county_district, '') AS county_district,
-      COALESCE(pa.state_province, '') AS state_province
+      COALESCE(pa.city, '') AS phone
     FROM person p
     JOIN person_name pn ON p.person_id = pn.person_id AND pn.voided = 0
     LEFT JOIN patient_identifier pi ON p.person_id = pi.patient_id AND pi.voided = 0
-      AND pi.patient_identifier_type = (SELECT patient_identifier_type_id FROM patient_identifier_type WHERE name = 'MRN' LIMIT 1)
     LEFT JOIN person_address pa ON p.person_id = pa.person_id AND pa.voided = 0
     WHERE p.person_id = $PID AND p.voided = 0
     LIMIT 1;
@@ -95,9 +91,8 @@ for PID in $PATIENT_IDS; do
     continue
   fi
 
-  # Parse tab-separated fields
   UUID=$(echo "$PATIENT_DATA" | cut -f1)
-  NAME=$(echo "$PATIENT_DATA" | cut -f2)
+  NAME=$(echo "$PATIENT_DATA" | cut -f2 | sed 's/"/\\"/g; s/^[[:space:]]*//; s/[[:space:]]*$//')
   IDENTIFIER=$(echo "$PATIENT_DATA" | cut -f3)
   PHONE=$(echo "$PATIENT_DATA" | cut -f4)
 
@@ -106,11 +101,7 @@ for PID in $PATIENT_IDS; do
     continue
   fi
 
-  # Escape JSON special chars
-  NAME_ESC=$(echo "$NAME" | sed 's/"/\\"/g')
-  IDENTIFIER_ESC=$(echo "$IDENTIFIER" | sed 's/"/\\"/g')
-
-  PAYLOAD="{\"category\":\"create.customer\",\"ref\":\"$IDENTIFIER_ESC\",\"name\":\"$NAME_ESC\",\"uuid\":\"$UUID\",\"primaryContact\":\"$PHONE\",\"attributes\":{},\"preferredAddress\":{}}"
+  PAYLOAD="{\"category\":\"create.customer\",\"ref\":\"$IDENTIFIER\",\"name\":\"$NAME\",\"uuid\":\"$UUID\",\"primaryContact\":\"$PHONE\",\"attributes\":{},\"preferredAddress\":{}}"
 
   if post_to_odoo "/api/bahmni-customer" "$PAYLOAD"; then
     SUCCESS=$((SUCCESS + 1))
@@ -155,20 +146,16 @@ for DID in $DRUG_IDS; do
   fi
 
   UUID=$(echo "$DRUG_DATA" | cut -f1)
-  NAME=$(echo "$DRUG_DATA" | cut -f2)
-  SHORT_NAME=$(echo "$DRUG_DATA" | cut -f3)
-  DOSAGE_FORM=$(echo "$DRUG_DATA" | cut -f4)
+  NAME=$(echo "$DRUG_DATA" | cut -f2 | sed 's/"/\\"/g')
+  SHORT_NAME=$(echo "$DRUG_DATA" | cut -f3 | sed 's/"/\\"/g')
+  DOSAGE_FORM=$(echo "$DRUG_DATA" | cut -f4 | sed 's/"/\\"/g')
 
   if [ -z "$UUID" ] || [ -z "$NAME" ]; then
     FAILED=$((FAILED + 1))
     continue
   fi
 
-  NAME_ESC=$(echo "$NAME" | sed 's/"/\\"/g')
-  SHORT_NAME_ESC=$(echo "$SHORT_NAME" | sed 's/"/\\"/g')
-  DOSAGE_FORM_ESC=$(echo "$DOSAGE_FORM" | sed 's/"/\\"/g')
-
-  PAYLOAD="{\"category\":\"create.drug\",\"uuid\":\"$UUID\",\"name\":\"$NAME_ESC\",\"shortName\":\"$SHORT_NAME_ESC\",\"genericName\":\"$NAME_ESC\",\"dosageForm\":\"$DOSAGE_FORM_ESC\"}"
+  PAYLOAD="{\"category\":\"create.drug\",\"uuid\":\"$UUID\",\"name\":\"$NAME\",\"shortName\":\"$SHORT_NAME\",\"genericName\":\"$NAME\",\"dosageForm\":\"$DOSAGE_FORM\"}"
 
   if post_to_odoo "/api/bahmni-drug" "$PAYLOAD"; then
     SUCCESS=$((SUCCESS + 1))
@@ -218,18 +205,12 @@ for TUUID in $TEST_UUIDS; do
     continue
   fi
 
-  NAME=$(echo "$TEST_DATA" | cut -f2)
+  NAME=$(echo "$TEST_DATA" | cut -f2 | sed 's/"/\\"/g')
   RETIRED=$(echo "$TEST_DATA" | cut -f3)
 
-  if [ "$RETIRED" = "1" ]; then
-    IS_ACTIVE="false"
-  else
-    IS_ACTIVE="true"
-  fi
+  if [ "$RETIRED" = "1" ]; then IS_ACTIVE="false"; else IS_ACTIVE="true"; fi
 
-  NAME_ESC=$(echo "$NAME" | sed 's/"/\\"/g')
-
-  PAYLOAD="{\"category\":\"create.lab.test\",\"uuid\":\"$TUUID\",\"name\":\"$NAME_ESC\",\"is_active\":$IS_ACTIVE,\"product_category\":\"Test\"}"
+  PAYLOAD="{\"category\":\"create.lab.test\",\"uuid\":\"$TUUID\",\"name\":\"$NAME\",\"is_active\":$IS_ACTIVE,\"product_category\":\"Test\"}"
 
   if post_to_odoo "/api/bahmni-lab-test" "$PAYLOAD"; then
     SUCCESS=$((SUCCESS + 1))
@@ -279,18 +260,12 @@ for PUUID in $PANEL_UUIDS; do
     continue
   fi
 
-  NAME=$(echo "$PANEL_DATA" | cut -f2)
+  NAME=$(echo "$PANEL_DATA" | cut -f2 | sed 's/"/\\"/g')
   RETIRED=$(echo "$PANEL_DATA" | cut -f3)
 
-  if [ "$RETIRED" = "1" ]; then
-    IS_ACTIVE="false"
-  else
-    IS_ACTIVE="true"
-  fi
+  if [ "$RETIRED" = "1" ]; then IS_ACTIVE="false"; else IS_ACTIVE="true"; fi
 
-  NAME_ESC=$(echo "$NAME" | sed 's/"/\\"/g')
-
-  PAYLOAD="{\"category\":\"create.lab.panel\",\"uuid\":\"$PUUID\",\"name\":\"$NAME_ESC\",\"is_active\":$IS_ACTIVE,\"product_category\":\"Panel\"}"
+  PAYLOAD="{\"category\":\"create.lab.panel\",\"uuid\":\"$PUUID\",\"name\":\"$NAME\",\"is_active\":$IS_ACTIVE,\"product_category\":\"Panel\"}"
 
   if post_to_odoo "/api/bahmni-lab-panel" "$PAYLOAD"; then
     SUCCESS=$((SUCCESS + 1))
@@ -340,18 +315,12 @@ for RUUID in $RAD_UUIDS; do
     continue
   fi
 
-  NAME=$(echo "$RAD_DATA" | cut -f2)
+  NAME=$(echo "$RAD_DATA" | cut -f2 | sed 's/"/\\"/g')
   RETIRED=$(echo "$RAD_DATA" | cut -f3)
 
-  if [ "$RETIRED" = "1" ]; then
-    IS_ACTIVE="false"
-  else
-    IS_ACTIVE="true"
-  fi
+  if [ "$RETIRED" = "1" ]; then IS_ACTIVE="false"; else IS_ACTIVE="true"; fi
 
-  NAME_ESC=$(echo "$NAME" | sed 's/"/\\"/g')
-
-  PAYLOAD="{\"category\":\"create.radiology.test\",\"uuid\":\"$RUUID\",\"name\":\"$NAME_ESC\",\"is_active\":$IS_ACTIVE,\"product_category\":\"Radiology\"}"
+  PAYLOAD="{\"category\":\"create.radiology.test\",\"uuid\":\"$RUUID\",\"name\":\"$NAME\",\"is_active\":$IS_ACTIVE,\"product_category\":\"Radiology\"}"
 
   if post_to_odoo "/api/bahmni-radiology-test" "$PAYLOAD"; then
     SUCCESS=$((SUCCESS + 1))
