@@ -21,10 +21,11 @@ if [ ! -f "$FILE" ]; then
 fi
 
 echo "File: $FILE"
-VOL_BASE="$(docker volume inspect --format "{{.Mountpoint}}" $VOL_NAME 2>/dev/null || echo "/var/lib/docker/volumes/$VOL_NAME/_data")"
-mkdir -p "$VOL_BASE"
-rm -rf "${VOL_BASE:?}"/*
-tar -xzf "$FILE" -C "$VOL_BASE"
+SCRIPT_DIR="$(cd "$(dirname "$FILE")" && pwd)"
+docker run --rm \
+  -v "$VOL_NAME:/data" \
+  -v "$SCRIPT_DIR:/backup" \
+  busybox sh -c "rm -rf /data/* && tar xzf /backup/$(basename "$FILE") -C /data"
 echo "Restore complete. Exit: $?"
 
 echo "Fixing Odoo filestore permissions..."

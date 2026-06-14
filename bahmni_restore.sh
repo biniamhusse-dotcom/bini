@@ -16,16 +16,6 @@ LOG_DIR="$SCRIPT_DIR/logs"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/restore_$(date +%Y%m%d_%H%M%S).log"
 
-# Detect Docker volumes base directory
-if [ -d "/var/lib/docker/volumes" ]; then
-  VOL_BASE="/var/lib/docker/volumes"
-elif docker volume inspect bahmni-standard_odooappdata &>/dev/null; then
-  VOL_BASE="$(docker volume inspect --format '{{.Mountpoint}}' bahmni-standard_odooappdata | sed 's|/_data$||')"
-else
-  # Windows Docker Desktop default
-  VOL_BASE="$APPDATA/../docker/volumes" 2>/dev/null || VOL_BASE="/var/lib/docker/volumes"
-fi
-
 echo "=== Bahmni Restore Started: $(date) ===" | tee -a "$LOG"
 
 # ── Find backup files ─────────────────────────────────────────────────────────
@@ -86,7 +76,9 @@ echo "--- DATABASE RESTORES ---" | tee -a "$LOG"
 # OpenMRS
 echo "Restoring OpenMRS..." | tee -a "$LOG"
 docker exec bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' \
-  -e "DROP DATABASE IF EXISTS openmrs; CREATE DATABASE openmrs;"
+  -e "DROP DATABASE IF EXISTS openmrs"
+docker exec bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' \
+  -e "CREATE DATABASE openmrs"
 zcat "$OPENMRS_FILE" | docker exec -i bahmni-standard-openmrsdb-1 \
   mysql -uroot -p'adminAdmin!123' openmrs
 echo "✓ OpenMRS exit: $?" | tee -a "$LOG"
@@ -94,29 +86,31 @@ echo "✓ OpenMRS exit: $?" | tee -a "$LOG"
 # Bahmni Reports
 echo "Restoring Bahmni Reports..." | tee -a "$LOG"
 docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
-  -e "DROP DATABASE IF EXISTS bahmni_reports; CREATE DATABASE bahmni_reports;"
+  -e "DROP DATABASE IF EXISTS bahmni_reports"
+docker exec bahmni-standard-reportsdb-1 mysql -uroot -p'adminAdmin!123' \
+  -e "CREATE DATABASE bahmni_reports"
 zcat "$REPORTS_FILE" | docker exec -i bahmni-standard-reportsdb-1 \
   mysql -uroot -p'adminAdmin!123' bahmni_reports
 echo "✓ Reports exit: $?" | tee -a "$LOG"
 
 # Odoo
 echo "Restoring Odoo..." | tee -a "$LOG"
-docker exec bahmni-standard-odoodb-1 psql -U odoo -d postgres \
-  -c "DROP DATABASE IF EXISTS odoo; CREATE DATABASE odoo OWNER odoo;"
+docker exec bahmni-standard-odoodb-1 dropdb -U odoo odoo 2>/dev/null || true
+docker exec bahmni-standard-odoodb-1 createdb -U odoo -O odoo odoo
 zcat "$ODOO_FILE" | docker exec -i bahmni-standard-odoodb-1 psql -U odoo -d odoo
 echo "✓ Odoo exit: $?" | tee -a "$LOG"
 
 # OpenELIS
 echo "Restoring OpenELIS..." | tee -a "$LOG"
-docker exec bahmni-standard-openelisdb-1 psql -U clinlims -d postgres \
-  -c "DROP DATABASE IF EXISTS clinlims; CREATE DATABASE clinlims OWNER clinlims;"
+docker exec bahmni-standard-openelisdb-1 dropdb -U clinlims clinlims 2>/dev/null || true
+docker exec bahmni-standard-openelisdb-1 createdb -U clinlims -O clinlims clinlims
 zcat "$CLINLIMS_FILE" | docker exec -i bahmni-standard-openelisdb-1 psql -U clinlims -d clinlims
 echo "✓ OpenELIS exit: $?" | tee -a "$LOG"
 
 # PACS
 echo "Restoring PACS DB..." | tee -a "$LOG"
-docker exec bahmni-standard-pacsdb-1 psql -U postgres -d postgres \
-  -c "DROP DATABASE IF EXISTS pacs_db; CREATE DATABASE pacs_db OWNER pacs_user;"
+docker exec bahmni-standard-pacsdb-1 dropdb -U postgres pacs_db 2>/dev/null || true
+docker exec bahmni-standard-pacsdb-1 createdb -U postgres -O pacs_user pacs_db
 zcat "$PACS_FILE" | docker exec -i bahmni-standard-pacsdb-1 psql -U postgres -d pacs_db
 echo "✓ PACS exit: $?" | tee -a "$LOG"
 
@@ -127,7 +121,6 @@ echo "--- VOLUME RESTORES ---" | tee -a "$LOG"
 
 restore_volume() {
   local NAME=$1
-  local DEST="$VOL_BASE/$NAME/_data"
 
   # Find latest or date-specific file
   if [ -z "$DATE_ARG" ]; then
@@ -142,9 +135,11 @@ restore_volume() {
   fi
 
   echo "  Restoring volume: $NAME" | tee -a "$LOG"
-  mkdir -p "$DEST"
-  rm -rf "${DEST:?}"/*
-  tar -xzf "$FILE" -C "$DEST" 2>>"$LOG"
+  # Use docker run to restore — works on Windows without direct filesystem access
+  docker run --rm \
+    -v "$NAME:/data" \
+    -v "$(cd "$(dirname "$FILE")" && pwd):/backup" \
+    busybox sh -c "rm -rf /data/* && tar xzf /backup/$(basename "$FILE") -C /data"
   echo "  ✓ exit: $?" | tee -a "$LOG"
 }
 
