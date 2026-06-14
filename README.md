@@ -82,22 +82,18 @@ chmod +x *.sh restores/databases/*.sh restores/volumes/*.sh restores/images/*.sh
 
 ### 3. Configure environment
 
-**Ubuntu** -- copy the Linux template and update paths:
+The `.env` file uses **relative paths** that work on any machine without editing:
 
 ```bash
 cd bahmni-docker/bahmni-standard
-cp .env.linux .env
-
-# Replace /home/USER with your actual home directory
-sed -i "s|/home/USER|$(echo $HOME)|g" .env
+cp .env.linux .env   # Ubuntu only (Windows .env is already correct)
 ```
 
-**Windows** -- the `.env` file already has Windows paths. Just update if your username differs:
+Paths are relative to `bahmni-docker/bahmni-standard/` and resolve to the project root:
+- `../../config` → `emr/config`
+- `../../apps` → `emr/apps`
 
-```
-CONFIG_VOLUME=C:/Users/YOUR_USERNAME/Documents/emr/config
-BAHMNI_APPS_PATH=C:/Users/YOUR_USERNAME/Documents/emr/apps
-```
+No need to update paths when cloning on a different machine.
 
 ### 4. Start all services
 
