@@ -1,13 +1,30 @@
 #!/bin/bash
 
 # Usage:
-#   sudo /opt/bahmni_restore.sh                  # restore latest
-#   sudo /opt/bahmni_restore.sh 20240512_020000  # restore specific date
+#   bash bahmni_restore.sh                  # restore latest
+#   bash bahmni_restore.sh 20240512_020000  # restore specific date
+#
+# Place backup files in ./backups/bahmni/:
+#   openmrs_*.sql.gz, odoo_*.pgsql.gz, clinlims_*.pgsql.gz,
+#   bahmni_reports_*.sql.gz, pacsdb_*.pgsql.gz
+# Volume backups go in ./backups/bahmni/volumes/
 
-BACKUP_DIR="/opt/backups/bahmni"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKUP_DIR="$SCRIPT_DIR/backups/bahmni"
 DATE_ARG="$1"
-LOG="$BACKUP_DIR/restore_$(date +%Y%m%d_%H%M%S).log"
-VOL_BASE="/var/lib/docker/volumes"
+LOG_DIR="$SCRIPT_DIR/logs"
+mkdir -p "$LOG_DIR"
+LOG="$LOG_DIR/restore_$(date +%Y%m%d_%H%M%S).log"
+
+# Detect Docker volumes base directory
+if [ -d "/var/lib/docker/volumes" ]; then
+  VOL_BASE="/var/lib/docker/volumes"
+elif docker volume inspect bahmni-standard_odooappdata &>/dev/null; then
+  VOL_BASE="$(docker volume inspect --format '{{.Mountpoint}}' bahmni-standard_odooappdata | sed 's|/_data$||')"
+else
+  # Windows Docker Desktop default
+  VOL_BASE="$APPDATA/../docker/volumes" 2>/dev/null || VOL_BASE="/var/lib/docker/volumes"
+fi
 
 echo "=== Bahmni Restore Started: $(date) ===" | tee -a "$LOG"
 

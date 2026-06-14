@@ -21,7 +21,7 @@ if [ ! -f "$FILE" ]; then
 fi
 
 echo "File: $FILE"
-VOL_BASE="/var/lib/docker/volumes/$VOL_NAME/_data"
+VOL_BASE="$(docker volume inspect --format "{{.Mountpoint}}" $VOL_NAME 2>/dev/null || echo "/var/lib/docker/volumes/$VOL_NAME/_data")"
 mkdir -p "$VOL_BASE"
 rm -rf "${VOL_BASE:?}"/*
 tar -xzf "$FILE" -C "$VOL_BASE"
