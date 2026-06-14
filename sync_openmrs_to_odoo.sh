@@ -334,4 +334,59 @@ echo ""
 echo -e "  ${GREEN}Radiology done: $SUCCESS synced, $FAILED failed${NOCOLOR}"
 echo ""
 
+# ── 6. Sync Ophthalmology Tests ─────────────────────────────────────────────
+
+echo -e "${CYAN}=== Syncing Ophthalmology Tests ===${NOCOLOR}"
+
+OPH_UUIDS=$(mysql_query "
+  SELECT DISTINCT c.uuid
+  FROM concept c
+  JOIN concept_class cc ON c.class_id = cc.concept_class_id
+  WHERE cc.name = 'Ophthalmology' AND c.retired = 0
+  ORDER BY c.concept_id;
+")
+OPH_COUNT=$(echo "$OPH_UUIDS" | grep -c '[0-9]')
+echo -e "  Found ${YELLOW}$OPH_COUNT${NOCOLOR} ophthalmology tests"
+
+SUCCESS=0
+FAILED=0
+
+for OUUID in $OPH_UUIDS; do
+  OPH_DATA=$(mysql_query "
+    SELECT
+      c.uuid,
+      cn.name,
+      c.retired
+    FROM concept c
+    JOIN concept_name cn ON c.concept_id = cn.concept_id
+      AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+    WHERE c.uuid = '$OUUID'
+    LIMIT 1;
+  ")
+
+  if [ -z "$OPH_DATA" ]; then
+    FAILED=$((FAILED + 1))
+    continue
+  fi
+
+  NAME=$(echo "$OPH_DATA" | cut -f2 | sed 's/"/\\"/g')
+  RETIRED=$(echo "$OPH_DATA" | cut -f3)
+
+  if [ "$RETIRED" = "1" ]; then IS_ACTIVE="false"; else IS_ACTIVE="true"; fi
+
+  PAYLOAD="{\"category\":\"create.ophtha.test\",\"uuid\":\"$OUUID\",\"name\":\"$NAME\",\"is_active\":$IS_ACTIVE,\"product_category\":\"Ophthalmology\"}"
+
+  if post_to_odoo "/api/bahmni-ophtha-test" "$PAYLOAD"; then
+    SUCCESS=$((SUCCESS + 1))
+  else
+    FAILED=$((FAILED + 1))
+  fi
+
+  printf "\r  Ophthalmology: %d synced, %d failed" "$SUCCESS" "$FAILED"
+done
+
+echo ""
+echo -e "  ${GREEN}Ophthalmology done: $SUCCESS synced, $FAILED failed${NOCOLOR}"
+echo ""
+
 echo -e "${CYAN}==== ALL SYNC COMPLETE ====${NOCOLOR}"

@@ -54,6 +54,8 @@ class ReferenceDataService(models.Model):
             return ["Lab", "Services", "All Products"]
         elif category == 'Panel':
             return ["Lab", "Services", "All Products"]
+        elif category == 'Ophthalmology':
+            return ["Services", "All Products"]
         else:
             return ["Services", "All"]
 

@@ -527,6 +527,72 @@ The corrected SQL is also saved in `config/masterdata/configuration/globalproper
 
 ---
 
+## Ophthalmology Module
+
+Ophthalmology orders (Keratometry, CCT, Humphrey, OCT, etc.) sync from OpenMRS to Odoo via the `sync_openmrs_to_odoo.sh` script. Products are created under the **Ophthalmology** category in Odoo and mapped to the **Ophthalmology** shop (shop ID 7).
+
+### How it works
+
+1. **Products**: 17 ophthalmology concepts (concept class `Ophthalmology`) in OpenMRS are synced as Odoo products via the `/api/bahmni-ophtha-test` endpoint
+2. **Category**: Products are placed under `Services > All Products > Ophthalmology` in Odoo
+3. **Shop mapping**: The `Ophtha Order` order type is mapped to the Ophthalmology shop
+4. **Order creation**: When an ophthalmology encounter is processed by atomfeed, sale order lines are created in the Ophthalmology shop
+
+### Sync ophthalmology products
+
+The `sync_openmrs_to_odoo.sh` script handles ophthalmology in **Section 6** (runs automatically with the full sync):
+
+```bash
+# Full sync (includes ophthalmology)
+bash sync_openmrs_to_odoo.sh
+```
+
+### Manually create ophthalmology products
+
+If you need to recreate ophthalmology products in Odoo directly (e.g., after a fresh Odoo restore):
+
+```bash
+# Run the SQL directly against Odoo PostgreSQL
+docker exec -i bahmni-standard-odoodb-1 psql -U odoo -d odoo < create_ophtha_products.sql
+```
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `sync_openmrs_to_odoo.sh` | Section 6 syncs ophthalmology concepts to Odoo products |
+| `create_ophtha_products.sql` | Direct SQL to create ophthalmology product_template + product_product records |
+| `erp/bahmni-odoo-modules/restful_api/models/api_data_feed.py` | `/api/bahmni-ophtha-test` endpoint |
+| `erp/bahmni-odoo-modules/bahmni_api_feed/models/api_event_worker.py` | `create.ophtha.test` category handler |
+| `erp/bahmni-odoo-modules/bahmni_api_feed/models/reference_data_service.py` | Ophthalmology category hierarchy |
+
+### Odoo sale shop IDs
+
+| Shop ID | Shop Name |
+|---------|-----------|
+| 1 | OPD Pharmacy |
+| 2 | IPD Pharmacy |
+| 3 | Lab |
+| 4 | Radiology |
+| 5 | EMR Billing |
+| 6 | Procedure Billing |
+| 7 | Ophthalmology |
+
+### Odoo order type mappings
+
+| OpenMRS Order Type | Odoo Order Type ID | Odoo Shop |
+|--------------------|--------------------|-----------|
+| Drug | 1 | OPD Pharmacy |
+| Lab | 2 | Lab |
+| Procedure | 3 | Procedure Billing |
+| Radiology | 4 | Radiology |
+| Registration | 5 | EMR Billing |
+| Test | 6 | Lab |
+| Ophthalmology | 8 | Ophthalmology |
+| Ophtha Order | 7 | Ophthalmology |
+
+---
+
 ## Address Hierarchy
 
 The registration page uses a 5-level address hierarchy for Ethiopian locations:

@@ -71,6 +71,15 @@ class RestFullService(http.Controller):
         except Exception as e:
             return {"status":417,'error': 'Expectation Failed: ' + str(e)}
 
+    @http.route('/api/bahmni-ophtha-test', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
+    def bahmni_ophtha_test(self, **kw):
+        json_data = _parse_json_request(request.httprequest.data)
+        try:
+            if json_data:
+               return {'status':200,'message': request.env['api.event.worker'].process_event(json_data)}
+        except Exception as e:
+            return {"status":417,'error': 'Expectation Failed: ' + str(e)}
+
     @http.route('/api/bahmni-lab-panel', type="json", auth="user", methods=["POST","OPTIONS"], csrf=False, cors='*')
     def bahmni_lab_panel(self, **kw):
         json_data = _parse_json_request(request.httprequest.data)
