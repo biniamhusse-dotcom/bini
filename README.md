@@ -68,11 +68,12 @@ After cloning, `.sh` files may not have execute permission. Run this once to fix
 chmod +x *.sh
 chmod +x restores/*.sh
 chmod +x fresh_db/*.sh
+chmod +x payment_check/*.sh
 ```
 
 **Windows (Git Bash or WSL):**
 ```bash
-chmod +x *.sh restores/*.sh fresh_db/*.sh
+chmod +x *.sh restores/*.sh fresh_db/*.sh payment_check/*.sh
 ```
 
 **Windows (PowerShell):** Scripts run with `bash script.sh` directly, so `chmod` is not needed. Git Bash handles this automatically.
@@ -415,66 +416,55 @@ docker run --rm -v bahmni-standard_odooappdata:/data busybox chown -R 101:101 /d
 
 ## Payment Status Toggle
 
+All payment scripts are in the `payment_check/` directory.
+
+### Bahmni Payment (Clinical & Orders pages)
+
 Force all patients to show "Paid" without Odoo billing integration, or restore the original behavior.
 
-### Enable Always Paid
-
 ```bash
-# Ubuntu
+cd payment_check
+
+# Disable payment check — all patients show "Paid"
 bash enable_always_paid.sh
 
-# Windows (Git Bash or WSL)
-bash enable_always_paid.sh
-```
-
-This sets `"disable checking": true` in `config/openmrs/apps/clinical/app.json` and `config/openmrs/apps/orders/app.json`. All patients will show green "Paid" status on the clinical dashboard and order fulfillment pages.
-
-### Restore Payment Checking
-
-```bash
+# Restore payment check — queries Odoo for invoice status
 bash restore_payment_check.sh
 ```
 
-This reverts to `"disable checking": false`. Payment status will query the Odoo billing system.
-
-### After running either script
-
-- **Ubuntu:** Restart Bahmni: `cd bahmni-docker/bahmni-standard && docker compose --env-file .env up -d`
+After running either script:
+- **Ubuntu:** `cd bahmni-docker/bahmni-standard && docker compose --env-file .env up -d`
 - **Windows:** Restart Docker Desktop or run: `cd bahmni-docker\bahmni-standard; docker compose --env-file .env up -d`
 - **Both:** Hard refresh browser with **Ctrl+Shift+R**
 
----
-
-## Lab Payment Check Toggle (OpenELIS)
+### Lab Payment (OpenELIS orders page)
 
 The OpenELIS lab orders page has a payment check that shows "Not Paid Yet" instead of the sample entry link for unpaid patients. These scripts toggle that behavior inside the running container — no restart needed.
 
-### Disable Lab Payment Check
-
-Removes the "Not Paid Yet" check so all orders show the clickable sample entry link regardless of payment status.
-
 ```bash
-cd restores
+cd payment_check
+
+# Disable "Not Paid Yet" — all orders show clickable link
 bash disable_lab_payment_check.sh
-```
 
-### Restore Lab Payment Check
-
-Restores the "Not Paid Yet" check so unpaid patients see the warning instead of the link.
-
-```bash
-cd restores
+# Restore "Not Paid Yet" — unpaid patients see warning
 bash restore_lab_payment_check.sh
 ```
 
-### How it works
-
-1. Backs up the original `orders.js` file inside the container
+**How it works:**
+1. Backs up the original `orders.js` inside the container
 2. Modifies the JavaScript to remove or restore the `hasPaid` conditional
-3. Verifies the change by searching for `hasPaid` in the file
-4. **No restart required** — just hard refresh the browser with **Ctrl+Shift+R**
+3. Verifies the change
+4. **No restart required** — hard refresh browser with **Ctrl+Shift+R**
 
-The backup is saved at `/run/bahmni-lab/bahmni-lab/scripts/dashBoard/orders.js.backup` inside the container.
+### All payment scripts
+
+| Script | What it does |
+|--------|-------------|
+| `enable_always_paid.sh` | Sets Bahmni clinical/orders to always show "Paid" |
+| `restore_payment_check.sh` | Restores Bahmni payment check (queries Odoo) |
+| `disable_lab_payment_check.sh` | Removes "Not Paid Yet" from OpenELIS lab orders |
+| `restore_lab_payment_check.sh` | Restores "Not Paid Yet" in OpenELIS lab orders |
 
 ---
 

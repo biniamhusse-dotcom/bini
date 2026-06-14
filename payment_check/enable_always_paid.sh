@@ -4,8 +4,8 @@
 # Modifies config JSON files to disable payment checking
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CLINICAL_APP="$SCRIPT_DIR/config/openmrs/apps/clinical/app.json"
-ORDERS_APP="$SCRIPT_DIR/config/openmrs/apps/orders/app.json"
+CLINICAL_APP="$SCRIPT_DIR/../config/openmrs/apps/clinical/app.json"
+ORDERS_APP="$SCRIPT_DIR/../config/openmrs/apps/orders/app.json"
 
 echo "=== Enabling Always Paid ==="
 
