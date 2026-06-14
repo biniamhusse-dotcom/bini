@@ -30,4 +30,14 @@
         <field name="location_name">General Ward</field>
         <field name="location_id">8</field>
     </record>
+    <record id="order_type_ophtha" model="order.type">
+        <field name="name">Ophtha Order</field>
+        <field name="description">Ophthalmology and Optometry orders for eye examinations, vision tests, and eye treatments.</field>
+    </record>
+    <record id="order_type_shop_map_ophtha" model="order.type.shop.map">
+        <field name="order_type" ref="order_type_ophtha"/>
+        <field name="shop_id" ref="sale_shop_pharmacy"/>
+        <field name="location_name">General Ward</field>
+        <field name="location_id">8</field>
+    </record>
 </odoo>
