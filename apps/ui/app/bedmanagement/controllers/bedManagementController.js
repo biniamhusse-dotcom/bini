@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('bahmni.ipd')
-    .controller('BedManagementController', ['$scope', '$rootScope', '$stateParams', '$state', 'spinner', 'wardService', 'bedManagementService', 'visitService', 'messagingService', 'appService', 'ngDialog',
-        function ($scope, $rootScope, $stateParams, $state, spinner, wardService, bedManagementService, visitService, messagingService, appService, ngDialog) {
+    .controller('BedManagementController', ['$scope', '$rootScope', '$stateParams', '$state', 'spinner', 'wardService', 'bedManagementService', 'visitService', 'messagingService', 'appService', 'ngDialog', 'dispositionService',
+        function ($scope, $rootScope, $stateParams, $state, spinner, wardService, bedManagementService, visitService, messagingService, appService, ngDialog, dispositionService) {
             $scope.wards = null;
             $scope.ward = {};
             $scope.editTagsPrivilege = Bahmni.IPD.Constants.editTagsPrivilege;
@@ -34,6 +34,28 @@ angular.module('bahmni.ipd')
                     }
                     resetDepartments();
                     resetBedInfo();
+                    checkAndRedirectToReferForm();
+                });
+            };
+
+            var checkAndRedirectToReferForm = function () {
+                if (!$rootScope.patient || !$rootScope.patient.uuid) return;
+                visitService.search({patient: $rootScope.patient.uuid, includeInactive: false, v: 'custom:(uuid)'}).then(function (visitsResponse) {
+                    var results = visitsResponse.data.results;
+                    if (results && results.length > 0) {
+                        var visitUuid = results[results.length - 1].uuid;
+                        dispositionService.getDispositionByVisit(visitUuid).then(function (response) {
+                            var dispositions = response.data;
+                            if (dispositions && dispositions.length > 0) {
+                                for (var i = 0; i < dispositions.length; i++) {
+                                    if (dispositions[i].code === Bahmni.Common.Constants.referCode) {
+                                        $state.go('referFormPrint', {patientUuid: $rootScope.patient.uuid});
+                                        break;
+                                    }
+                                }
+                            }
+                        });
+                    }
                 });
             };
 

@@ -2,9 +2,9 @@
 
 angular.module('bahmni.registration')
     .controller('ERTriageVisitController', ['$window', '$scope', '$rootScope', '$state', '$bahmniCookieStore', 'patientService', 'encounterService', '$stateParams', 'spinner', '$timeout', '$q', 'appService', 'openmrsPatientMapper', 'contextChangeHandler', 'messagingService', 'sessionService', 'visitService', '$location', '$translate',
-        'auditLogService', 'formService', 'observationsService', '$http',
+        'auditLogService', 'formService', 'observationsService', '$http', 'dispositionService',
         function ($window, $scope, $rootScope, $state, $bahmniCookieStore, patientService, encounterService, $stateParams, spinner, $timeout, $q, appService, openmrsPatientMapper, contextChangeHandler, messagingService, sessionService, visitService, $location, $translate, auditLogService,
-                  formService, observationsService, $http) {
+                  formService, observationsService, $http, dispositionService) {
             var vm = this;
             var patientUuid = $stateParams.patientUuid;
             var triageType = $stateParams.triageType;
@@ -169,7 +169,19 @@ angular.module('bahmni.registration')
                         var messageParams = {visitUuid: visitSummary.visitUuid, visitType: visitSummary.visitType};
                         auditLogService.log(patientUuid, 'CLOSE_VISIT_FAILED', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
                     } else {
-                        closeVisit(visitSummary.visitType);
+                        dispositionService.getDispositionByVisit(vm.visitUuid).then(function (dispResponse) {
+                            var dispositions = dispResponse.data;
+                            var hasEmergencyKeep = _.some(dispositions, function (d) {
+                                return d.conceptName === "Emergency keep" || d.preferredName === "Emergency keep";
+                            });
+                            if (hasEmergencyKeep) {
+                                messagingService.showMessage("error", 'REGISTRATION_VISIT_CANNOT_BE_CLOSED');
+                                var messageParams = {visitUuid: visitSummary.visitUuid, visitType: visitSummary.visitType};
+                                auditLogService.log(patientUuid, 'CLOSE_VISIT_FAILED_EMERGENCY_KEEP', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
+                            } else {
+                                closeVisit(visitSummary.visitType);
+                            }
+                        });
                     }
                 });
             };

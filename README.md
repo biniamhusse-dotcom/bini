@@ -632,6 +632,62 @@ Data files:
 
 ---
 
+## Bed Management & Referral Form
+
+### Features
+
+- **Emergency Keep** disposition with yellow ambulance icon, countdown timer, and active patient list indicator
+- **Refer Patient** disposition with comprehensive referral form matching manual paper referral slip
+- **Printable A4 Referral Form** with hospital logo, patient info, vitals, signature blocks
+- **To Refer** tab filtered by location tag — only shows patients from Refer-tagged locations
+- **Close button** ends the selected patient's visit and navigates back to "To Refer" tab
+
+### Referral Form Fields
+
+| Section | Fields |
+|---------|--------|
+| Header | Critical/Emergency/Stable checkboxes, Ref. No, MRN, Date |
+| Patient | To (facility), Hospital/Health Center, Department, Patient Name, Sex, Age, Woreda, Kebele |
+| Clinical | Chief Complaint, History of Present Illness (HPI) |
+| Physical Exam | Systolic BP, Diastolic BP, PR, RR, Body Temp, O₂ Saturation, On Oxygen |
+| Assessment | Lab Result, Diagnosis, Treatment Given, Reason of Referral |
+| Additional | Need Ambulance (Yes/No), Need Escorting Professionals (Yes/No) |
+| Signatures | Referred by (Name, Qualification, Signature, Phone), Approved by (same) |
+
+### Custom OpenMRS Concepts
+
+| Concept ID | Name | Type |
+|------------|------|------|
+| 70001 | Referral department | Text |
+| 70002 | Patient condition at referral | Text |
+| 70003 | Need ambulance | Text |
+| 70004 | Need escorting professionals | Text |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `apps/ui/app/clinical/consultation/controllers/dispositionController.js` | Referral form logic, concept UUIDs, save with `convertObsValue()` |
+| `apps/ui/app/clinical/consultation/views/disposition.html` | Referral form UI with responsive layout |
+| `apps/ui/app/bedmanagement/controllers/referFormPrintController.js` | Print form data loading, close visit, fetch Woreda/Kebele from registration |
+| `apps/ui/app/bedmanagement/views/referFormPrint.html` | A4 printable referral slip |
+| `apps/ui/app/bedmanagement/controllers/bedManagementController.js` | Auto-redirect to referral form for REFER disposition |
+| `apps/ui/app/common/patient-search/controllers/patientsListController.js` | Yellow ambulance + blue refer icons, "To Refer" tab switch |
+| `config/masterdata/configuration/liquibase/liquibase.xml` | EMERGENCY_KEEP + REFER concept mappings |
+| `config/masterdata/configuration/sql/emrapi.sqlSearch.patientsToRefer.sql` | Patient list filtered by Refer location tag |
+
+### EMR API Notes
+
+- **EMERGENCY_KEEP** and **REFER** must have `org.openmrs.module.emrapi` mapping (code only, name=NULL)
+- All disposition obs values must be sent as **strings** (not numbers/booleans) — `EncounterDispositionServiceHelper` casts to `String`, causing `ClassCastException` with numeric Java objects
+- Bahmni `byFullySpecifiedName` API fails for newly created concepts — use hardcoded UUIDs
+- Concept UUIDs must come from the `concept` table (not `concept_name` table)
+- Chief Complaint uses text concept 160531 (not coded concept 5219)
+- Lab Result uses text concept 161577 (not coded concept)
+- On Oxygen uses concept 6212e416 (Boolean) — save as `"true"`/`"false"` strings
+
+---
+
 ## Troubleshooting
 
 ### Docker not responding

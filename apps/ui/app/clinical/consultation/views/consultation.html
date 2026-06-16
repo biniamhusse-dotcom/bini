@@ -238,7 +238,13 @@
             <ul class="block-content">
                 <li>
                     <div class="expander-row row-click">
-                        <span class="disposition-state">{{consultation.disposition.conceptName}} <span ng-if="consultation.disposition.dispositionDateTime">{{ 'CONSULTATION_ON_KEY'|translate }}</span> {{consultation.disposition.dispositionDateTime | bahmniDateTime }}</span>
+                        <span class="disposition-state"><i ng-if="consultation.disposition.code === 'EMERGENCY_KEEP'" class="fa fa-ambulance emergency-keep-icon" title="Emergency keep - patient in hold"></i> {{consultation.disposition.conceptName}} <span ng-if="consultation.disposition.dispositionDateTime">{{ 'CONSULTATION_ON_KEY'|translate }}</span> {{consultation.disposition.dispositionDateTime | bahmniDateTime }}</span>
+                        <span ng-if="consultation.disposition.code === 'EMERGENCY_KEEP' && keepCountdown && !keepExpired" class="keep-countdown" style="margin-left: 15px; padding: 3px 10px; border-radius: 4px; font-weight: bold; font-size: 13px; background-color: #fff3cd; color: #856404; border: 1px solid #ffc107;">
+                            <i class="fa fa-clock-o"></i> Time left: {{keepCountdown.hours}}h {{keepCountdown.minutes}}m {{keepCountdown.seconds}}s
+                        </span>
+                        <span ng-if="consultation.disposition.code === 'EMERGENCY_KEEP' && keepExpired" class="keep-expired" style="margin-left: 15px; padding: 3px 10px; border-radius: 4px; font-weight: bold; font-size: 13px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">
+                            <i class="fa fa-exclamation-triangle"></i> Keep duration expired
+                        </span>
                         <button class="toggle fr" ng-class="{'has-notes': consultation.disposition.additionalObs[0].value}" toggle="disposition.show">
                             <i class="fa fa-plus-circle"></i>
                             <i class="fa fa-minus-circle"></i>

@@ -5,7 +5,16 @@
             <tbody ng-repeat="disposition in dispositions" class="row">
             <tr class="view-past" ng-class="::{'test-notes-parent': getNotes(disposition), 'notes-open': (disposition.show == true)}">
                 <td class="name">
-                    <span class="disposition-state">{{::getDisplayName(disposition)}}</span>
+                    <span class="disposition-state">
+                        <i ng-if="disposition.code === 'EMERGENCY_KEEP'" class="fa fa-ambulance" style="color: #e67e22; margin-right: 4px;"></i>
+                        {{::getDisplayName(disposition)}}
+                        <span ng-if="disposition.code === 'EMERGENCY_KEEP' && getCountdown($index) && !isExpired($index)" style="margin-left: 8px; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; background-color: #fff3cd; color: #856404; border: 1px solid #ffc107;">
+                            <i class="fa fa-clock-o"></i> {{getCountdown($index).hours}}h {{getCountdown($index).minutes}}m {{getCountdown($index).seconds}}s
+                        </span>
+                        <span ng-if="disposition.code === 'EMERGENCY_KEEP' && isExpired($index)" style="margin-left: 8px; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">
+                            <i class="fa fa-exclamation-triangle"></i> Expired
+                        </span>
+                    </span>
                 </td>
                 <td class="value">
                     {{::disposition.dispositionDateTime| bahmniDate}}

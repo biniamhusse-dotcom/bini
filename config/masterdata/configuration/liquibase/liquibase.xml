@@ -353,4 +353,87 @@
         </sql>
 
     </changeSet>
+
+    <changeSet id="emergency-keep-mapping-20250615" author="Custom-Config">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM concept_reference_term rt
+                JOIN concept_reference_source rs ON rt.concept_source_id = rs.concept_source_id
+                WHERE rs.name = 'org.openmrs.module.emrapi' AND rt.code = 'EMERGENCY_KEEP';
+            </sqlCheck>
+        </preConditions>
+        <comment>Create EMERGENCY_KEEP mapping for existing Emergency keep concept</comment>
+        <sql>
+            -- Get emrapi source ID
+            SET @emrapi_source_id = (SELECT concept_source_id FROM concept_reference_source 
+                WHERE name = 'org.openmrs.module.emrapi' LIMIT 1);
+
+            -- Create reference term EMERGENCY_KEEP (name set to NULL for REST API display compatibility)
+            INSERT INTO concept_reference_term (concept_source_id, code, name, creator, date_created, uuid, retired)
+            VALUES (@emrapi_source_id, 'EMERGENCY_KEEP', NULL, 1, NOW(), UUID(), 0);
+
+            SET @emergency_term_id = (SELECT concept_reference_term_id FROM concept_reference_term
+                WHERE concept_source_id = @emrapi_source_id AND code = 'EMERGENCY_KEEP' LIMIT 1);
+
+            -- Find the existing Emergency keep concept by name
+            SET @emergency_concept_id = (SELECT concept_id FROM concept_name
+                WHERE name = 'Emergency keep' AND concept_name_type = 'FULLY_SPECIFIED' 
+                AND locale = 'en' AND voided = 0 LIMIT 1);
+
+            -- Map concept to reference term (only if concept exists and not already mapped)
+            INSERT INTO concept_reference_map (concept_reference_term_id, concept_id, creator, date_created, uuid)
+            SELECT @emergency_term_id, @emergency_concept_id, 1, NOW(), UUID()
+            WHERE @emergency_concept_id IS NOT NULL
+            AND NOT EXISTS (
+                SELECT 1 FROM concept_reference_map 
+                WHERE concept_reference_term_id = @emergency_term_id 
+                AND concept_id = @emergency_concept_id
+            );
+
+            -- Get Disposition concept ID
+            SET @disposition_concept_id = (SELECT concept_id FROM concept_name
+                WHERE name = 'Disposition' AND concept_name_type = 'FULLY_SPECIFIED' 
+                AND locale = 'en' AND voided = 0 LIMIT 1);
+
+            -- Add as answer to Disposition if not already an answer
+            INSERT INTO concept_answer (concept_id, answer_concept, creator, date_created, uuid)
+            SELECT @disposition_concept_id, @emergency_concept_id, 1, NOW(), UUID()
+            WHERE @disposition_concept_id IS NOT NULL 
+            AND @emergency_concept_id IS NOT NULL
+            AND NOT EXISTS (
+                SELECT 1 FROM concept_answer 
+                WHERE concept_id = @disposition_concept_id 
+                AND answer_concept = @emergency_concept_id
+            );
+        </sql>
+    </changeSet>
+    <changeSet id="refer-mapping-20250615" author="Custom-Config">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM concept_reference_term rt
+                JOIN concept_reference_source rs ON rt.concept_source_id = rs.concept_source_id
+                WHERE rs.name = 'org.openmrs.module.emrapi' AND rt.code = 'REFER';
+            </sqlCheck>
+        </preConditions>
+        <comment>Create REFER mapping for existing Refer Patient concept</comment>
+        <sql>
+            SET @emrapi_source_id = (SELECT concept_source_id FROM concept_reference_source
+                WHERE name = 'org.openmrs.module.emrapi' LIMIT 1);
+            INSERT INTO concept_reference_term (concept_source_id, code, name, creator, date_created, uuid, retired)
+            VALUES (@emrapi_source_id, 'REFER', NULL, 1, NOW(), UUID(), 0);
+            SET @refer_term_id = (SELECT concept_reference_term_id FROM concept_reference_term
+                WHERE concept_source_id = @emrapi_source_id AND code = 'REFER' LIMIT 1);
+            SET @refer_concept_id = (SELECT concept_id FROM concept_name
+                WHERE name = 'Refer Patient' AND concept_name_type = 'FULLY_SPECIFIED'
+                AND locale = 'en' AND voided = 0 LIMIT 1);
+            INSERT INTO concept_reference_map (concept_reference_term_id, concept_id, creator, date_created, uuid)
+            SELECT @refer_term_id, @refer_concept_id, 1, NOW(), UUID()
+            WHERE @refer_concept_id IS NOT NULL
+            AND NOT EXISTS (
+                SELECT 1 FROM concept_reference_map
+                WHERE concept_reference_term_id = @refer_term_id
+                AND concept_id = @refer_concept_id
+            );
+        </sql>
+    </changeSet>
 </databaseChangeLog>

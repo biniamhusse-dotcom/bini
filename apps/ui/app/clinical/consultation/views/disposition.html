@@ -1,4 +1,33 @@
-<style> #btn:hover { background-color: #eee; } .round { position: relative; } .round label { background-color: #fff; border: 2px solid #ccc; border-radius: 50%; cursor: pointer; height: 17px; left: 0; position: absolute; width: 17px; } .round label:after { border: 2px solid #fff; border-top: none; border-right: none; content: ""; height: 3px; left: 4px; opacity: 0; position: absolute; top: 4px; transform: rotate(-45deg); width: 7px; } .round input[type="checkbox"] { visibility: hidden; } .round input[type="checkbox"]:checked+label { background-color: #66bb6a; border-color: #66bb6a; } .round input[type="checkbox"]:checked+label:after { opacity: 1; } .label { font-weight: bold; font-family: 'Times New Roman', Times, serif; } @keyframes glowing { 0% { box-shadow: 0 0 5px #2ba805; } 50% { box-shadow: 0 0 20px #49e819; } 100% { box-shadow: 0 0 5px #2ba805; } } .blink { animation: glowing 1300ms infinite; margin-left: 20px; } </style>
+<style> #btn:hover { background-color: #eee; } .round { position: relative; } .round label { background-color: #fff; border: 2px solid #ccc; border-radius: 50%; cursor: pointer; height: 17px; left: 0; position: absolute; width: 17px; } .round label:after { border: 2px solid #fff; border-top: none; border-right: none; content: ""; height: 3px; left: 4px; opacity: 0; position: absolute; top: 4px; transform: rotate(-45deg); width: 7px; } .round input[type="checkbox"] { visibility: hidden; } .round input[type="checkbox"]:checked+label { background-color: #66bb6a; border-color: #66bb6a; } .round input[type="checkbox"]:checked+label:after { opacity: 1; } .label { font-weight: bold; font-family: 'Times New Roman', Times, serif; } @keyframes glowing { 0% { box-shadow: 0 0 5px #2ba805; } 50% { box-shadow: 0 0 20px #49e819; } 100% { box-shadow: 0 0 5px #2ba805; } } .blink { animation: glowing 1300ms infinite; margin-left: 20px; }
+.refer-form-container { margin: 10px 6%; border: 1px solid #ddd; border-radius: 6px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
+.refer-form-header { background: #2c3e50; color: #fff; padding: 10px 15px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px; }
+.refer-form-header i { margin-right: 8px; }
+.refer-form-section { padding: 10px 15px; border-bottom: 1px solid #f0f0f0; }
+.refer-form-section:last-child { border-bottom: none; }
+.refer-form-subheader { font-weight: bold; font-size: 13px; color: #2c3e50; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px dashed #ccc; }
+.refer-form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.refer-form-field { flex: 1; min-width: 140px; }
+.refer-form-field-wide { flex: 2; min-width: 250px; }
+.refer-label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 3px; }
+.refer-input { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; transition: border-color 0.2s; }
+.refer-input:focus { border-color: #3498db; outline: none; box-shadow: 0 0 0 2px rgba(52,152,219,0.15); }
+.refer-input-sm { max-width: 100px; }
+.refer-textarea { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; resize: vertical; font-family: inherit; transition: border-color 0.2s; }
+.refer-textarea:focus { border-color: #3498db; outline: none; box-shadow: 0 0 0 2px rgba(52,152,219,0.15); }
+.refer-radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+.refer-radio-label { cursor: pointer; }
+.refer-radio-label input[type="radio"] { display: none; }
+.refer-radio { display: inline-block; padding: 5px 14px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-weight: 500; transition: all 0.2s; }
+.refer-radio.critical { color: #c0392b; border-color: #e74c3c; background: #fdf2f2; }
+.refer-radio.emergency { color: #e67e22; border-color: #f39c12; background: #fef9e7; }
+.refer-radio.stable { color: #27ae60; border-color: #2ecc71; background: #eafaf1; }
+.refer-radio-label input[type="radio"]:checked + .refer-radio.critical { background: #c0392b; color: #fff; border-color: #c0392b; }
+.refer-radio-label input[type="radio"]:checked + .refer-radio.emergency { background: #e67e22; color: #fff; border-color: #e67e22; }
+.refer-radio-label input[type="radio"]:checked + .refer-radio.stable { background: #27ae60; color: #fff; border-color: #27ae60; }
+.refer-radio-inline { display: flex; gap: 12px; align-items: center; }
+.refer-radio-inline label { font-size: 12px; font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+@media (max-width: 768px) { .refer-form-row { flex-direction: column; } .refer-form-field { min-width: 100%; } .refer-input-sm { max-width: 100%; } }
+</style>
 <div class="disposition-wrapper">
     <div class="infoMsgRetrospectiveModeEnabled" ng-if="isRetrospectiveMode()">
         <i class="fa fa-info-circle"></i>
@@ -14,6 +43,7 @@
                 <span style="font-weight: bolder;">Transfer Patient: </span> Inform the liaison officer or ward Nurse to transfer the patient to other ward available at UoG Hospital. <br><br>
                 <span style="font-weight: bolder;">Discharge Patient: </span> Inform the liaison officer or ward Nurse to discharge the patient out of the ward. <br><br>
                 <span style="font-weight: bolder;">Keep Patient: </span> Select this option if the patient needs other investigation before he/she goes to home. <br><br>
+                <span style="font-weight: bolder;">Emergency keep: </span> Select this option to keep the patient in the visit until manually closed. The visit will not close automatically. <br><br>
                 <span style="font-weight: bolder;">Leaving Against Medical Advice and Service: </span> Select this option if the patient against any service or advice.
             </div>
             <span ng-if="dispositionTypeInfo"><br><br> <br></span>
@@ -31,10 +61,148 @@
                     <option value="" class="label">Select ward</option>
                 </select>
             </div>
-            <label for="referralHospital" ng-if="dispositionCode==='REFER' || dispositionCode==='REFER'" class="label"
-                style="margin-left: 6%;">{{ 'TO'|translate }}: </label>
-            <div ng-if="dispositionCode==='REFER'" style="margin-left: 30%;">
-                <input type="text" id="referralHospital" ng-model="refers.value" placeholder="Enter Facility Name">
+            <div ng-if="dispositionCode==='REFER'" class="refer-form-container">
+                <div class="refer-form-header">
+                    <i class="fa fa-share-alt"></i> PATIENT REFERRAL FORM
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-row">
+                        <div class="refer-form-field refer-form-field-wide">
+                            <label class="refer-label">{{'Facility Name'|translate}}</label>
+                            <input type="text" ng-model="refers.value" class="refer-input" placeholder="Enter facility name">
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">{{'Department'|translate}}</label>
+                            <input type="text" ng-model="referralDepartment.value" class="refer-input" placeholder="Enter department">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <label class="refer-label">{{'Patient Condition'|translate}}</label>
+                    <div class="refer-radio-group">
+                        <label class="refer-radio-label">
+                            <input type="radio" name="patientCondition" ng-model="patientCondition.value" value="Critical">
+                            <span class="refer-radio critical">Critical</span>
+                        </label>
+                        <label class="refer-radio-label">
+                            <input type="radio" name="patientCondition" ng-model="patientCondition.value" value="Emergency">
+                            <span class="refer-radio emergency">Emergency</span>
+                        </label>
+                        <label class="refer-radio-label">
+                            <input type="radio" name="patientCondition" ng-model="patientCondition.value" value="Stable">
+                            <span class="refer-radio stable">Stable</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-field">
+                        <label class="refer-label">{{'Chief Complaint'|translate}}</label>
+                        <textarea ng-model="chiefComplaint.value" class="refer-textarea" placeholder="Enter chief complaint" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-field">
+                        <label class="refer-label">{{'History of Present Illness'|translate}}</label>
+                        <textarea ng-model="historyOfPresentIllness.value" class="refer-textarea" placeholder="Enter history of present illness" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-subheader">Physical Examination (P/E)</div>
+                    <div class="refer-form-row">
+                        <div class="refer-form-field">
+                            <label class="refer-label">Systolic BP</label>
+                            <input type="text" ng-model="systolicBP.value" class="refer-input refer-input-sm" placeholder="mmHg" ng-pattern="/^[0-9]*\.?[0-9]+$/">
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">Diastolic BP</label>
+                            <input type="text" ng-model="diastolicBP.value" class="refer-input refer-input-sm" placeholder="mmHg" ng-pattern="/^[0-9]*\.?[0-9]+$/">
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">PR (/min)</label>
+                            <input type="text" ng-model="pulseRate.value" class="refer-input refer-input-sm" placeholder="/min" ng-pattern="/^[0-9]*\.?[0-9]+$/">
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">RR (/min)</label>
+                            <input type="text" ng-model="respiratoryRate.value" class="refer-input refer-input-sm" placeholder="/min" ng-pattern="/^[0-9]*\.?[0-9]+$/">
+                        </div>
+                    </div>
+                    <div class="refer-form-row">
+                        <div class="refer-form-field">
+                            <label class="refer-label">Body T&deg; (&deg;C)</label>
+                            <input type="text" ng-model="bodyTemperature.value" class="refer-input refer-input-sm" placeholder="&deg;C" ng-pattern="/^[0-9]*\.?[0-9]+$/">
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">O<sub>2</sub> Saturation (%)</label>
+                            <input type="text" ng-model="oxygenSaturation.value" class="refer-input refer-input-sm" placeholder="%" ng-pattern="/^[0-9]*\.?[0-9]+$/">
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">On Oxygen</label>
+                            <div class="refer-radio-inline">
+                                <label><input type="radio" name="onOxygen" ng-model="onOxygen.value" value="Yes"> Yes</label>
+                                <label><input type="radio" name="onOxygen" ng-model="onOxygen.value" value="No"> No</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-field">
+                        <label class="refer-label">{{'Lab Result'|translate}}</label>
+                        <textarea ng-model="labResult.value" class="refer-textarea" placeholder="Enter lab results" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-field">
+                        <label class="refer-label">{{'Diagnosis'|translate}}</label>
+                        <textarea ng-model="referralDiagnosis.value" class="refer-textarea" placeholder="Enter diagnosis" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-field">
+                        <label class="refer-label">{{'Treatment Given'|translate}}</label>
+                        <textarea ng-model="treatmentProvided.value" class="refer-textarea" placeholder="Enter treatment provided" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-field">
+                        <label class="refer-label">{{'REASON_FOR_REFERRAL'|translate}}</label>
+                        <textarea ng-model="reasonForReferral.value" class="refer-textarea" placeholder="Enter reason for referral" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-field">
+                        <label class="refer-label">{{'Relevant Clinical History'|translate}}</label>
+                        <textarea ng-model="clinicalHistory.value" class="refer-textarea" placeholder="Enter relevant clinical history" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="refer-form-section">
+                    <div class="refer-form-row">
+                        <div class="refer-form-field">
+                            <label class="refer-label">{{'Need Ambulance'|translate}}</label>
+                            <div class="refer-radio-inline">
+                                <label><input type="radio" name="needAmbulance" ng-model="needAmbulance.value" value="Yes"> Yes</label>
+                                <label><input type="radio" name="needAmbulance" ng-model="needAmbulance.value" value="No"> No</label>
+                            </div>
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">{{'Need Escorting Professionals'|translate}}</label>
+                            <div class="refer-radio-inline">
+                                <label><input type="radio" name="needEscorting" ng-model="needEscorting.value" value="Yes"> Yes</label>
+                                <label><input type="radio" name="needEscorting" ng-model="needEscorting.value" value="No"> No</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <label for="Duration" ng-if="dispositionCode==='KEEP'" class="label" style="margin-left: 6%;">{{
@@ -43,6 +211,18 @@
                 <input id="Duration" type="text" ng-model="durationOfStay.value" placeholder="Enter duration of stay" />
             </div>
             <div for="durationUnits" style="margin-left: 50%; margin-top: -3%;" ng-if="dispositionCode==='KEEP'">
+                <select id="durationUnits" ng-model="durationOfStayUnite.value"
+                    ng-options="du for du in durationUniteConcepts">
+                    <option value="" class="label" style="opacity: 1;">Duration Measurment</option>
+                </select>
+            </div>
+
+            <label for="Duration" ng-if="dispositionCode==='EMERGENCY_KEEP'" class="label" style="margin-left: 6%;">{{
+                'For'|translate }}: </label>
+            <div ng-if="dispositionCode==='EMERGENCY_KEEP'">
+                <input id="Duration" type="text" ng-model="durationOfStay.value" placeholder="Enter duration of stay" />
+            </div>
+            <div for="durationUnits" style="margin-left: 50%; margin-top: -3%;" ng-if="dispositionCode==='EMERGENCY_KEEP'">
                 <select id="durationUnits" ng-model="durationOfStayUnite.value"
                     ng-options="du for du in durationUniteConcepts">
                     <option value="" class="label" style="opacity: 1;">Duration Measurment</option>

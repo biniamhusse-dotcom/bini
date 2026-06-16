@@ -364,7 +364,13 @@ angular.module('bahmni.clinical')
 
         var getReferalHospitalAndDurationUniteConcepts = function () {
             return dispositionService.getDurationUniteConcept().then(function (response) {
-                $scope.durationUniteConcepts = response.data.results.length > 0 ? response.data.results[0].answers.map((e) => e.name.name): false;
+                if (response.data.results.length > 0 && response.data.results[0].answers.length > 0) {
+                    $scope.durationUniteConcepts = response.data.results[0].answers.map((e) => e.name.name);
+                } else {
+                    $scope.durationUniteConcepts = ['Hour', 'Day'];
+                }
+            }).catch(function () {
+                $scope.durationUniteConcepts = ['Hour', 'Day'];
             });
         };
         getReferalHospitalAndDurationUniteConcepts();
@@ -589,6 +595,30 @@ angular.module('bahmni.clinical')
             }
         };
 
+        var getPreviousReasonForReferral = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.reasonForReferralConceptUuid;
+                });
+            }
+        };
+
+        var getPreviousClinicalHistory = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.clinicalHistoryConceptUuid;
+                });
+            }
+        };
+
+        var getPreviousTreatmentProvided = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.treatmentProvidedConceptUuid;
+                });
+            }
+        };
+
         var getDispositionNotes = function () {
             var previousDispositionNotes = getPreviousDispositionNote();
             if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
@@ -607,6 +637,261 @@ angular.module('bahmni.clinical')
             else {
                 return { concept: { uuid: $scope.refersConceptUuid } };
             }
+        };
+
+        var getReasonForReferral = function () {
+            var previousReasonForReferral = getPreviousReasonForReferral();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(previousReasonForReferral) || { concept: { uuid: $scope.reasonForReferralConceptUuid } };
+            }
+            else {
+                return { concept: { uuid: $scope.reasonForReferralConceptUuid } };
+            }
+        };
+
+        var getClinicalHistory = function () {
+            var previousClinicalHistory = getPreviousClinicalHistory();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(previousClinicalHistory) || { concept: { uuid: $scope.clinicalHistoryConceptUuid } };
+            }
+            else {
+                return { concept: { uuid: $scope.clinicalHistoryConceptUuid } };
+            }
+        };
+
+        var getTreatmentProvided = function () {
+            var previousTreatmentProvided = getPreviousTreatmentProvided();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(previousTreatmentProvided) || { concept: { uuid: $scope.treatmentProvidedConceptUuid } };
+            }
+            else {
+                return { concept: { uuid: $scope.treatmentProvidedConceptUuid } };
+            }
+        };
+
+        var getPreviousReferralDepartment = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.referralDepartmentConceptUuid;
+                });
+            }
+        };
+        var getReferralDepartment = function () {
+            var prev = getPreviousReferralDepartment();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.referralDepartmentConceptUuid } };
+            }
+            return { concept: { uuid: $scope.referralDepartmentConceptUuid } };
+        };
+
+        var getPreviousPatientCondition = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.patientConditionConceptUuid;
+                });
+            }
+        };
+        var getPatientCondition = function () {
+            var prev = getPreviousPatientCondition();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.patientConditionConceptUuid } };
+            }
+            return { concept: { uuid: $scope.patientConditionConceptUuid } };
+        };
+
+        var getPreviousChiefComplaint = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.chiefComplaintConceptUuid;
+                });
+            }
+        };
+        var getChiefComplaint = function () {
+            var prev = getPreviousChiefComplaint();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.chiefComplaintConceptUuid } };
+            }
+            return { concept: { uuid: $scope.chiefComplaintConceptUuid } };
+        };
+
+        var getPreviousHistoryOfPresentIllness = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.historyOfPresentIllnessConceptUuid;
+                });
+            }
+        };
+        var getHistoryOfPresentIllness = function () {
+            var prev = getPreviousHistoryOfPresentIllness();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.historyOfPresentIllnessConceptUuid } };
+            }
+            return { concept: { uuid: $scope.historyOfPresentIllnessConceptUuid } };
+        };
+
+        var getPreviousSystolicBP = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.systolicBPConceptUuid;
+                });
+            }
+        };
+        var getSystolicBP = function () {
+            var prev = getPreviousSystolicBP();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.systolicBPConceptUuid } };
+            }
+            return { concept: { uuid: $scope.systolicBPConceptUuid } };
+        };
+
+        var getPreviousDiastolicBP = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.diastolicBPConceptUuid;
+                });
+            }
+        };
+        var getDiastolicBP = function () {
+            var prev = getPreviousDiastolicBP();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.diastolicBPConceptUuid } };
+            }
+            return { concept: { uuid: $scope.diastolicBPConceptUuid } };
+        };
+
+        var getPreviousPulseRate = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.pulseRateConceptUuid;
+                });
+            }
+        };
+        var getPulseRate = function () {
+            var prev = getPreviousPulseRate();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.pulseRateConceptUuid } };
+            }
+            return { concept: { uuid: $scope.pulseRateConceptUuid } };
+        };
+
+        var getPreviousRespiratoryRate = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.respiratoryRateConceptUuid;
+                });
+            }
+        };
+        var getRespiratoryRate = function () {
+            var prev = getPreviousRespiratoryRate();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.respiratoryRateConceptUuid } };
+            }
+            return { concept: { uuid: $scope.respiratoryRateConceptUuid } };
+        };
+
+        var getPreviousBodyTemperature = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.bodyTemperatureConceptUuid;
+                });
+            }
+        };
+        var getBodyTemperature = function () {
+            var prev = getPreviousBodyTemperature();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.bodyTemperatureConceptUuid } };
+            }
+            return { concept: { uuid: $scope.bodyTemperatureConceptUuid } };
+        };
+
+        var getPreviousOxygenSaturation = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.oxygenSaturationConceptUuid;
+                });
+            }
+        };
+        var getOxygenSaturation = function () {
+            var prev = getPreviousOxygenSaturation();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.oxygenSaturationConceptUuid } };
+            }
+            return { concept: { uuid: $scope.oxygenSaturationConceptUuid } };
+        };
+
+        var getPreviousOnOxygen = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.onOxygenConceptUuid;
+                });
+            }
+        };
+        var getOnOxygen = function () {
+            var prev = getPreviousOnOxygen();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.onOxygenConceptUuid } };
+            }
+            return { concept: { uuid: $scope.onOxygenConceptUuid } };
+        };
+
+        var getPreviousLabResult = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.labResultConceptUuid;
+                });
+            }
+        };
+        var getLabResult = function () {
+            var prev = getPreviousLabResult();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.labResultConceptUuid } };
+            }
+            return { concept: { uuid: $scope.labResultConceptUuid } };
+        };
+
+        var getPreviousReferralDiagnosis = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.referralDiagnosisConceptUuid;
+                });
+            }
+        };
+        var getReferralDiagnosis = function () {
+            var prev = getPreviousReferralDiagnosis();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.referralDiagnosisConceptUuid } };
+            }
+            return { concept: { uuid: $scope.referralDiagnosisConceptUuid } };
+        };
+
+        var getPreviousNeedAmbulance = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.needAmbulanceConceptUuid;
+                });
+            }
+        };
+        var getNeedAmbulance = function () {
+            var prev = getPreviousNeedAmbulance();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.needAmbulanceConceptUuid } };
+            }
+            return { concept: { uuid: $scope.needAmbulanceConceptUuid } };
+        };
+
+        var getPreviousNeedEscorting = function () {
+            if (consultation.disposition && (!consultation.disposition.voided)) {
+                return _.find(consultation.disposition.additionalObs, function (obs) {
+                    return obs.concept.uuid === $scope.needEscortingConceptUuid;
+                });
+            }
+        };
+        var getNeedEscorting = function () {
+            var prev = getPreviousNeedEscorting();
+            if (getSelectedConceptName($scope.dispositionCode, $scope.dispositionActions)) {
+                return _.cloneDeep(prev) || { concept: { uuid: $scope.needEscortingConceptUuid } };
+            }
+            return { concept: { uuid: $scope.needEscortingConceptUuid } };
         };
 
         var getDurationOfStay = function () {
@@ -745,6 +1030,24 @@ angular.module('bahmni.clinical')
                 linkageVisitTypes();
                 $scope.signature = getSignature();
                 $scope.specialty = getSpecialty();
+                $scope.reasonForReferral = getReasonForReferral();
+                $scope.clinicalHistory = getClinicalHistory();
+                $scope.treatmentProvided = getTreatmentProvided();
+                $scope.referralDepartment = getReferralDepartment();
+                $scope.patientCondition = getPatientCondition();
+                $scope.chiefComplaint = getChiefComplaint();
+                $scope.historyOfPresentIllness = getHistoryOfPresentIllness();
+                $scope.systolicBP = getSystolicBP();
+                $scope.diastolicBP = getDiastolicBP();
+                $scope.pulseRate = getPulseRate();
+                $scope.respiratoryRate = getRespiratoryRate();
+                $scope.bodyTemperature = getBodyTemperature();
+                $scope.oxygenSaturation = getOxygenSaturation();
+                $scope.onOxygen = getOnOxygen();
+                $scope.labResult = getLabResult();
+                $scope.referralDiagnosis = getReferralDiagnosis();
+                $scope.needAmbulance = getNeedAmbulance();
+                $scope.needEscorting = getNeedEscorting();
                 suggestedProviders();
             });
         };
@@ -762,7 +1065,7 @@ angular.module('bahmni.clinical')
             return translatedName;
         };
         var filterDispositionActions = function (dispositions, visitSummary) {
-            var defaultDispositions = ["Undo Discharge", "Admit Patient", "Transfer Patient", "Discharge Patient", "Refer Patient", "Give Appointment", "Keep Patient", "Leaving Against Medical Advice and Service", "Link Patient"];
+            var defaultDispositions = ["Undo Discharge", "Admit Patient", "Transfer Patient", "Discharge Patient", "Refer Patient", "Give Appointment", "Keep Patient", "Leaving Against Medical Advice and Service", "Link Patient", "Emergency keep"];
             var finalDispositionActions = _.filter(dispositions, function (disposition) {
                 return defaultDispositions.indexOf(disposition.name) < 0;
             });
@@ -775,6 +1078,7 @@ angular.module('bahmni.clinical')
                 finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[3] });
                 finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[4] });
                 finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[8] });
+                finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[9] });
                 finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[7] });
             }
             else {
@@ -783,6 +1087,7 @@ angular.module('bahmni.clinical')
                 finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[8] });
                 finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[5] });
                 finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[6] });
+                finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[9] });
                 finalDispositionActions = getDispositionActions(finalDispositionActions, dispositions, { name: defaultDispositions[7] });
             }
             return finalDispositionActions;
@@ -797,25 +1102,59 @@ angular.module('bahmni.clinical')
         };
 
         var getDispositionNotePromise = function () {
-            return dispositionService.getDispositionNoteConcept().then(function (response) {
-                $scope.dispositionNoteConceptUuid = response.data.results[0].uuid;
-            }), dispositionService.getRefersConcept().then(function (response) {
-                $scope.refersConceptUuid = response.data.results[0].uuid;
-            }), dispositionService.getDurationOfStayConcept().then(function (response) {
-                $scope.durationOfStayConceptUuid = response.data.results[0].uuid;
-            }), dispositionService.getDurationOfStayUniteConcept().then(function (response) {
-                $scope.durationOfStayUniteConceptUuid = response.data.results[0].uuid;
-            }), dispositionService.getAdmissionWardConcept().then(function (response) {
-                $scope.admissionWardConceptUuid = response.data.results[0].uuid;
-            }), dispositionService.getLinkageVisitTypeConcept().then(function (response) {
-                $scope.linkageVisitTypeConceptUuid = response.data.results[0].uuid;
-            }), dispositionService.getSignatureConcept().then(function (response) {
-                $scope.signatureConceptUuid = response.data.results[0].uuid;
-            }), dispositionService.getSpecialtyConcept().then(function (response) {
-                $scope.specialtyConceptUuid = response.data.results[0].uuid;
-            }), dispositionService.getSuggestedProviderConcept().then(function (response) {
-                $scope.suggestedProviderConceptUuid = response.data.results[0].uuid;
-            });
+            $scope.referralDepartmentConceptUuid = 'a1b2c3d4-e5f6-7890-abcd-100000000001';
+            $scope.patientConditionConceptUuid = 'a1b2c3d4-e5f6-7890-abcd-100000000002';
+            $scope.needAmbulanceConceptUuid = 'a1b2c3d4-e5f6-7890-abcd-100000000003';
+            $scope.needEscortingConceptUuid = 'a1b2c3d4-e5f6-7890-abcd-100000000004';
+            $scope.chiefComplaintConceptUuid = '160531AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            $scope.historyOfPresentIllnessConceptUuid = '1390AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            $scope.systolicBPConceptUuid = '5085AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            $scope.diastolicBPConceptUuid = '5086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            $scope.pulseRateConceptUuid = '5087AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            $scope.respiratoryRateConceptUuid = '5242AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            $scope.bodyTemperatureConceptUuid = '9bb0795c-4ff0-0305-1990-000000000020';
+            $scope.oxygenSaturationConceptUuid = '5092AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            $scope.onOxygenConceptUuid = '6212e416-d1bd-4126-b159-83845b59f3f0';
+            $scope.labResultConceptUuid = '161577AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            $scope.referralDiagnosisConceptUuid = 'd3681d2a-5e07-11ef-8f7c-0242ac120002';
+            return $q.all([
+                dispositionService.getDispositionNoteConcept().then(function (response) {
+                    $scope.dispositionNoteConceptUuid = response.data.results[0].uuid;
+                }),
+                dispositionService.getRefersConcept().then(function (response) {
+                    $scope.refersConceptUuid = response.data.results[0].uuid;
+                }),
+                dispositionService.getDurationOfStayConcept().then(function (response) {
+                    $scope.durationOfStayConceptUuid = response.data.results[0].uuid;
+                }),
+                dispositionService.getDurationOfStayUniteConcept().then(function (response) {
+                    $scope.durationOfStayUniteConceptUuid = response.data.results[0].uuid;
+                }),
+                dispositionService.getAdmissionWardConcept().then(function (response) {
+                    $scope.admissionWardConceptUuid = response.data.results[0].uuid;
+                }),
+                dispositionService.getLinkageVisitTypeConcept().then(function (response) {
+                    $scope.linkageVisitTypeConceptUuid = response.data.results[0].uuid;
+                }),
+                dispositionService.getSignatureConcept().then(function (response) {
+                    $scope.signatureConceptUuid = response.data.results[0].uuid;
+                }),
+                dispositionService.getSpecialtyConcept().then(function (response) {
+                    $scope.specialtyConceptUuid = response.data.results[0].uuid;
+                }),
+                dispositionService.getSuggestedProviderConcept().then(function (response) {
+                    $scope.suggestedProviderConceptUuid = response.data.results[0].uuid;
+                }),
+                $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Reason for referral (text)&v=custom:(uuid)").then(function (response) {
+                    $scope.reasonForReferralConceptUuid = response.data.results[0] ? response.data.results[0].uuid : null;
+                }),
+                $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Relevant clinical history&v=custom:(uuid)").then(function (response) {
+                    $scope.clinicalHistoryConceptUuid = response.data.results[0] ? response.data.results[0].uuid : null;
+                }),
+                $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Treatment provided&v=custom:(uuid)").then(function (response) {
+                    $scope.treatmentProvidedConceptUuid = response.data.results[0] ? response.data.results[0].uuid : null;
+                })
+            ]);
         };
 
         var loadDispositionActions = function () {
@@ -832,11 +1171,43 @@ angular.module('bahmni.clinical')
             $scope.signature.value = null;
             $scope.specialty.value = null;
             $scope.suggestedProvider.value = null;
+            $scope.reasonForReferral.value = null;
+            $scope.clinicalHistory.value = null;
+            $scope.treatmentProvided.value = null;
+            if ($scope.referralDepartment) $scope.referralDepartment.value = null;
+            if ($scope.patientCondition) $scope.patientCondition.value = null;
+            if ($scope.chiefComplaint) $scope.chiefComplaint.value = null;
+            if ($scope.historyOfPresentIllness) $scope.historyOfPresentIllness.value = null;
+            if ($scope.systolicBP) $scope.systolicBP.value = null;
+            if ($scope.diastolicBP) $scope.diastolicBP.value = null;
+            if ($scope.pulseRate) $scope.pulseRate.value = null;
+            if ($scope.respiratoryRate) $scope.respiratoryRate.value = null;
+            if ($scope.bodyTemperature) $scope.bodyTemperature.value = null;
+            if ($scope.oxygenSaturation) $scope.oxygenSaturation.value = null;
+            if ($scope.onOxygen) $scope.onOxygen.value = null;
+            if ($scope.labResult) $scope.labResult.value = null;
+            if ($scope.referralDiagnosis) $scope.referralDiagnosis.value = null;
+            if ($scope.needAmbulance) $scope.needAmbulance.value = null;
+            if ($scope.needEscorting) $scope.needEscorting.value = null;
         };
 
         var getSelectedConceptName = function (dispositionCode, dispositions) {
             var selectedDispositionConceptName = _.findLast(dispositions, { code: dispositionCode }) || {};
             return selectedDispositionConceptName.name;
+        };
+
+        var booleanConceptUuids = [
+            '6212e416-d1bd-4126-b159-83845b59f3f0'
+        ];
+        var convertObsValue = function (obs, conceptUuid) {
+            var clone = _.clone(obs);
+            if (clone.value === null || clone.value === undefined || clone.value === '') return clone;
+            if (booleanConceptUuids.indexOf(conceptUuid) >= 0) {
+                clone.value = (clone.value === true || clone.value === 'Yes' || clone.value === 'true') ? 'true' : 'false';
+            } else {
+                clone.value = String(clone.value);
+            }
+            return clone;
         };
 
         var getSelectedDisposition = function () {
@@ -850,14 +1221,37 @@ angular.module('bahmni.clinical')
                 $scope.signature.voided = !$scope.signature.value;
                 $scope.specialty.voided = !$scope.specialty.value;
                 $scope.suggestedProvider.voided = !$scope.suggestedProvider.value;
+                $scope.reasonForReferral.voided = !$scope.reasonForReferral.value;
+                $scope.clinicalHistory.voided = !$scope.clinicalHistory.value;
+                $scope.treatmentProvided.voided = !$scope.treatmentProvided.value;
+                if ($scope.referralDepartment) $scope.referralDepartment.voided = !$scope.referralDepartment.value;
+                if ($scope.patientCondition) $scope.patientCondition.voided = !$scope.patientCondition.value;
+                if ($scope.chiefComplaint) $scope.chiefComplaint.voided = !$scope.chiefComplaint.value;
+                if ($scope.historyOfPresentIllness) $scope.historyOfPresentIllness.voided = !$scope.historyOfPresentIllness.value;
+                if ($scope.systolicBP) $scope.systolicBP.voided = !$scope.systolicBP.value;
+                if ($scope.diastolicBP) $scope.diastolicBP.voided = !$scope.diastolicBP.value;
+                if ($scope.pulseRate) $scope.pulseRate.voided = !$scope.pulseRate.value;
+                if ($scope.respiratoryRate) $scope.respiratoryRate.voided = !$scope.respiratoryRate.value;
+                if ($scope.bodyTemperature) $scope.bodyTemperature.voided = !$scope.bodyTemperature.value;
+                if ($scope.oxygenSaturation) $scope.oxygenSaturation.voided = !$scope.oxygenSaturation.value;
+                if ($scope.onOxygen) $scope.onOxygen.voided = !$scope.onOxygen.value;
+                if ($scope.labResult) $scope.labResult.voided = !$scope.labResult.value;
+                if ($scope.referralDiagnosis) $scope.referralDiagnosis.voided = !$scope.referralDiagnosis.value;
+                if ($scope.needAmbulance) $scope.needAmbulance.voided = !$scope.needAmbulance.value;
+                if ($scope.needEscorting) $scope.needEscorting.voided = !$scope.needEscorting.value;
                 var disposition = {
                     additionalObs: [], referObs: [], durationOfStayObs: [], durationOfStayUniteObs: [], admissionWardObs: [], linkageVisitTypeObs: [],
                     signatureObs: [], specialtyObs: [], suggestedProviderObs: [], dispositionNoteObs: [],
+                    reasonForReferralObs: [], clinicalHistoryObs: [], treatmentProvidedObs: [],
+                    referralDepartmentObs: [], patientConditionObs: [], chiefComplaintObs: [], historyOfPresentIllnessObs: [],
+                    systolicBPObs: [], diastolicBPObs: [], pulseRateObs: [], respiratoryRateObs: [],
+                    bodyTemperatureObs: [], oxygenSaturationObs: [], onOxygenObs: [],
+                    labResultObs: [], referralDiagnosisObs: [], needAmbulanceObs: [], needEscortingObs: [],
                     dispositionDateTime: consultation.disposition && consultation.disposition.dispositionDateTime,
                     code: $scope.dispositionCode,
                     conceptName: getSelectedConceptName($scope.dispositionCode, allDispositions)
                 };
-                if ($scope.dispositionNote.value || $scope.dispositionNote.uuid || $scope.refers.value || $scope.refers.uuid || $scope.admissionWard.value || $scope.admissionWard.uuid || $scope.linkageVisitType.value || $scope.linkageVisitType.uuid || $scope.durationOfStay.value || $scope.durationOfStay.uuid || $scope.specialty.value || $scope.specialty.uuid || $scope.suggestedProvider.value || $scope.suggestedProvider.uuid || $scope.signature.value || $scope.signature.uuid) {
+                if ($scope.dispositionNote.value || $scope.dispositionNote.uuid || $scope.refers.value || $scope.refers.uuid || $scope.admissionWard.value || $scope.admissionWard.uuid || $scope.linkageVisitType.value || $scope.linkageVisitType.uuid || $scope.durationOfStay.value || $scope.durationOfStay.uuid || $scope.specialty.value || $scope.specialty.uuid || $scope.suggestedProvider.value || $scope.suggestedProvider.uuid || $scope.signature.value || $scope.signature.uuid || $scope.reasonForReferral.value || $scope.reasonForReferral.uuid || $scope.clinicalHistory.value || $scope.clinicalHistory.uuid || $scope.treatmentProvided.value || $scope.treatmentProvided.uuid || $scope.referralDepartment.value || $scope.referralDepartment.uuid || $scope.patientCondition.value || $scope.patientCondition.uuid || $scope.chiefComplaint.value || $scope.chiefComplaint.uuid || $scope.historyOfPresentIllness.value || $scope.historyOfPresentIllness.uuid || $scope.systolicBP.value || $scope.systolicBP.uuid || $scope.diastolicBP.value || $scope.diastolicBP.uuid || $scope.pulseRate.value || $scope.pulseRate.uuid || $scope.respiratoryRate.value || $scope.respiratoryRate.uuid || $scope.bodyTemperature.value || $scope.bodyTemperature.uuid || $scope.oxygenSaturation.value || $scope.oxygenSaturation.uuid || $scope.onOxygen.value || $scope.onOxygen.uuid || $scope.labResult.value || $scope.labResult.uuid || $scope.referralDiagnosis.value || $scope.referralDiagnosis.uuid || $scope.needAmbulance.value || $scope.needAmbulance.uuid || $scope.needEscorting.value || $scope.needEscorting.uuid) {
                     if ($scope.dispositionNote.value || $scope.dispositionNote.uuid) {
                         disposition.dispositionNoteObs = [_.clone($scope.dispositionNote)];
                     }
@@ -884,7 +1278,61 @@ angular.module('bahmni.clinical')
                     if ($scope.signature.value || $scope.signature.uuid) {
                         disposition.signatureObs = [_.clone($scope.signature)];
                     }
-                    disposition.additionalObs = [...disposition.referObs, ...disposition.dispositionNoteObs, ...disposition.durationOfStayObs, ...disposition.durationOfStayUniteObs, ...disposition.admissionWardObs, ...disposition.linkageVisitTypeObs, ...disposition.specialtyObs, ...disposition.suggestedProviderObs, ...disposition.signatureObs];
+                    if ($scope.reasonForReferral.value || $scope.reasonForReferral.uuid) {
+                        disposition.reasonForReferralObs = [_.clone($scope.reasonForReferral)];
+                    }
+                    if ($scope.clinicalHistory.value || $scope.clinicalHistory.uuid) {
+                        disposition.clinicalHistoryObs = [_.clone($scope.clinicalHistory)];
+                    }
+                    if ($scope.treatmentProvided.value || $scope.treatmentProvided.uuid) {
+                        disposition.treatmentProvidedObs = [_.clone($scope.treatmentProvided)];
+                    }
+                    if ($scope.referralDepartment.value || $scope.referralDepartment.uuid) {
+                        disposition.referralDepartmentObs = [_.clone($scope.referralDepartment)];
+                    }
+                    if ($scope.patientCondition.value || $scope.patientCondition.uuid) {
+                        disposition.patientConditionObs = [_.clone($scope.patientCondition)];
+                    }
+                    if ($scope.chiefComplaint.value || $scope.chiefComplaint.uuid) {
+                        disposition.chiefComplaintObs = [_.clone($scope.chiefComplaint)];
+                    }
+                    if ($scope.historyOfPresentIllness.value || $scope.historyOfPresentIllness.uuid) {
+                        disposition.historyOfPresentIllnessObs = [_.clone($scope.historyOfPresentIllness)];
+                    }
+                    if ($scope.systolicBP.value || $scope.systolicBP.uuid) {
+                        disposition.systolicBPObs = [convertObsValue($scope.systolicBP, $scope.systolicBPConceptUuid)];
+                    }
+                    if ($scope.diastolicBP.value || $scope.diastolicBP.uuid) {
+                        disposition.diastolicBPObs = [convertObsValue($scope.diastolicBP, $scope.diastolicBPConceptUuid)];
+                    }
+                    if ($scope.pulseRate.value || $scope.pulseRate.uuid) {
+                        disposition.pulseRateObs = [convertObsValue($scope.pulseRate, $scope.pulseRateConceptUuid)];
+                    }
+                    if ($scope.respiratoryRate.value || $scope.respiratoryRate.uuid) {
+                        disposition.respiratoryRateObs = [convertObsValue($scope.respiratoryRate, $scope.respiratoryRateConceptUuid)];
+                    }
+                    if ($scope.bodyTemperature.value || $scope.bodyTemperature.uuid) {
+                        disposition.bodyTemperatureObs = [convertObsValue($scope.bodyTemperature, $scope.bodyTemperatureConceptUuid)];
+                    }
+                    if ($scope.oxygenSaturation.value || $scope.oxygenSaturation.uuid) {
+                        disposition.oxygenSaturationObs = [convertObsValue($scope.oxygenSaturation, $scope.oxygenSaturationConceptUuid)];
+                    }
+                    if ($scope.onOxygen.value || $scope.onOxygen.uuid) {
+                        disposition.onOxygenObs = [convertObsValue($scope.onOxygen, $scope.onOxygenConceptUuid)];
+                    }
+                    if ($scope.labResult.value || $scope.labResult.uuid) {
+                        disposition.labResultObs = [_.clone($scope.labResult)];
+                    }
+                    if ($scope.referralDiagnosis.value || $scope.referralDiagnosis.uuid) {
+                        disposition.referralDiagnosisObs = [_.clone($scope.referralDiagnosis)];
+                    }
+                    if ($scope.needAmbulance.value || $scope.needAmbulance.uuid) {
+                        disposition.needAmbulanceObs = [_.clone($scope.needAmbulance)];
+                    }
+                    if ($scope.needEscorting.value || $scope.needEscorting.uuid) {
+                        disposition.needEscortingObs = [_.clone($scope.needEscorting)];
+                    }
+                    disposition.additionalObs = [...disposition.referObs, ...disposition.dispositionNoteObs, ...disposition.durationOfStayObs, ...disposition.durationOfStayUniteObs, ...disposition.admissionWardObs, ...disposition.linkageVisitTypeObs, ...disposition.specialtyObs, ...disposition.suggestedProviderObs, ...disposition.signatureObs, ...disposition.reasonForReferralObs, ...disposition.clinicalHistoryObs, ...disposition.treatmentProvidedObs, ...disposition.referralDepartmentObs, ...disposition.patientConditionObs, ...disposition.chiefComplaintObs, ...disposition.historyOfPresentIllnessObs, ...disposition.systolicBPObs, ...disposition.diastolicBPObs, ...disposition.pulseRateObs, ...disposition.respiratoryRateObs, ...disposition.bodyTemperatureObs, ...disposition.oxygenSaturationObs, ...disposition.onOxygenObs, ...disposition.labResultObs, ...disposition.referralDiagnosisObs, ...disposition.needAmbulanceObs, ...disposition.needEscortingObs];
                 }
                 return disposition;
             }

@@ -1,7 +1,86 @@
 'use strict';
 
 angular.module('bahmni.clinical')
-    .controller('ConsultationSummaryController', ['$http', '$scope', '$state', 'conceptSetUiConfigService', 'conceptGroupFormatService', 'visitService', 'messagingService', 'providerService', function ($http, $scope, $state, conceptSetUiConfigService, conceptGroupFormatService, visitService, messagingService, providerService) {
+    .controller('ConsultationSummaryController', ['$http', '$scope', '$state', '$interval', 'conceptSetUiConfigService', 'conceptGroupFormatService', 'visitService', 'messagingService', 'providerService', function ($http, $scope, $state, $interval, conceptSetUiConfigService, conceptGroupFormatService, visitService, messagingService, providerService) {
+        var countdownInterval = null;
+        $scope.keepCountdown = null;
+        $scope.keepExpired = false;
+
+        var getDurationValue = function (additionalObs, conceptName) {
+            if (!additionalObs || !conceptName) return null;
+            for (var i = 0; i < additionalObs.length; i++) {
+                if (additionalObs[i].concept && additionalObs[i].concept.name === conceptName) {
+                    return additionalObs[i].value;
+                }
+            }
+            return null;
+        };
+
+        var startCountdownTimer = function () {
+            if (countdownInterval) {
+                $interval.cancel(countdownInterval);
+                countdownInterval = null;
+            }
+
+            var disposition = $scope.consultation.disposition;
+            if (!disposition || disposition.code !== 'EMERGENCY_KEEP' || disposition.voided) {
+                return;
+            }
+
+            var durationVal = parseFloat(getDurationValue(disposition.additionalObs, 'Duration of Stay'));
+            var durationUnit = getDurationValue(disposition.additionalObs, 'Duration of Stay Unite');
+            var dispDateTime = disposition.dispositionDateTime;
+
+            if (!durationVal || !durationUnit || !dispDateTime) {
+                return;
+            }
+
+            var startMs = typeof dispDateTime === 'number' ? dispDateTime : new Date(dispDateTime).getTime();
+            var durationMs = durationUnit === 'Day' ? durationVal * 86400000 : durationVal * 3600000;
+            var endMs = startMs + durationMs;
+
+            var updateCountdown = function () {
+                var now = Date.now();
+                var remaining = endMs - now;
+
+                if (remaining <= 0) {
+                    $scope.keepCountdown = { hours: 0, minutes: 0, seconds: 0 };
+                    $scope.keepExpired = true;
+                    if (countdownInterval) {
+                        $interval.cancel(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    messagingService.showMessage('warn', 'Emergency keep duration has expired for this patient.');
+                    return;
+                }
+
+                var totalSeconds = Math.floor(remaining / 1000);
+                $scope.keepCountdown = {
+                    hours: Math.floor(totalSeconds / 3600),
+                    minutes: Math.floor((totalSeconds % 3600) / 60),
+                    seconds: totalSeconds % 60
+                };
+                $scope.keepExpired = false;
+            };
+
+            updateCountdown();
+            countdownInterval = $interval(updateCountdown, 1000);
+        };
+
+        $scope.$watch(function () {
+            var d = $scope.consultation && $scope.consultation.disposition;
+            return d ? (d.code + '|' + d.dispositionDateTime + '|' + d.voided) : null;
+        }, function (newVal, oldVal) {
+            if (newVal !== oldVal) {
+                startCountdownTimer();
+            }
+        });
+
+        $scope.$on('$destroy', function () {
+            if (countdownInterval) {
+                $interval.cancel(countdownInterval);
+            }
+        });
         var geEditedDiagnosesFromPastEncounters = function () {
             var editedDiagnosesFromPastEncounters = [];
             $scope.consultation.pastDiagnoses.forEach(function (pastDiagnosis) {

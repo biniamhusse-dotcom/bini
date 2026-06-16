@@ -1,0 +1,191 @@
+<style>
+    @media print {
+        body { margin: 0; padding: 0; background: #fff; }
+        body * { visibility: hidden; }
+        .print-form, .print-form * { visibility: visible; }
+        .no-print { display: none !important; }
+        .print-form { position: absolute; left: 0; top: 0; width: 210mm; padding: 8mm 10mm; margin: 0; box-shadow: none; border: none; }
+        .print-form * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; margin: 0; padding: 0; background: #e8e8e8; font-size: 11px; color: #000; }
+    .no-print { text-align: center; margin: 15px 0; }
+    .no-print button { padding: 8px 24px; font-size: 14px; background: #1a5276; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-family: inherit; }
+    .no-print button:hover { background: #1f639a; }
+    .no-print button.close-btn { background: #c0392b; }
+    .no-print button.close-btn:hover { background: #e74c3c; }
+    .print-form {
+        width: 210mm; min-height: 297mm; margin: 15px auto; background: #fff;
+        padding: 10mm 12mm; box-sizing: border-box;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+    }
+    .form-title-section { text-align: center; border-bottom: 2px solid #1a5276; padding-bottom: 8px; margin-bottom: 8px; }
+    .form-title-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .form-title-row img { height: 45px; }
+    .form-title-section h1 { font-size: 12px; margin: 0 0 2px 0; color: #555; font-weight: normal; letter-spacing: 0.5px; }
+    .form-title-section h2 { font-size: 15px; margin: 0; color: #1a5276; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; border-top: 1px solid #1a5276; border-bottom: 1px solid #1a5276; padding: 4px 0; }
+    .top-bar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; font-size: 11px; }
+    .top-bar .condition-boxes { display: flex; gap: 12px; align-items: center; }
+    .top-bar .condition-boxes label { display: flex; align-items: center; gap: 3px; cursor: default; }
+    .top-bar .ref-date { text-align: right; }
+    .top-bar .ref-date .line { border-bottom: 1px solid #000; display: inline-block; min-width: 100px; padding: 0 2px; }
+    .section-label { font-weight: 700; font-size: 11px; color: #1a5276; text-transform: uppercase; margin: 8px 0 3px 0; border-bottom: 1px solid #bdc3c7; padding-bottom: 2px; }
+    .field-line { border-bottom: 1px solid #000; display: inline-block; min-width: 80px; padding: 0 2px; margin: 0 2px; }
+    .field-line.wide { min-width: 180px; }
+    .field-line.full { display: block; border-bottom: 1px solid #000; min-height: 16px; margin: 2px 0; }
+    .row { display: flex; align-items: baseline; gap: 6px; margin: 3px 0; flex-wrap: wrap; }
+    .row label { font-weight: normal; white-space: nowrap; font-size: 11px; }
+    .vitals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 16px; margin: 4px 0; }
+    .vital-item { display: flex; align-items: baseline; gap: 4px; }
+    .vital-item label { font-weight: normal; white-space: nowrap; font-size: 11px; color: #333; }
+    .checkbox-box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid #333; vertical-align: middle; margin-right: 2px; background: #fff; }
+    .checkbox-box.checked { background: #1a5276; }
+    .yes-no-group { display: flex; align-items: baseline; gap: 4px; margin: 2px 0; }
+    .yes-no-group label { font-weight: normal; font-size: 11px; }
+    .yes-no-group .cb { display: inline-flex; align-items: center; gap: 2px; margin-right: 10px; }
+    .signature-section { margin-top: 15px; border-top: 1px solid #bdc3c7; padding-top: 10px; }
+    .sig-block-title { font-style: italic; font-size: 11px; color: #555; margin-bottom: 4px; }
+    .sig-row { display: flex; align-items: baseline; gap: 6px; margin: 4px 0; flex-wrap: wrap; }
+    .sig-line { border-bottom: 1px solid #000; display: inline-block; min-width: 100px; padding: 0 2px; }
+    .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #777; border-top: 1px solid #bdc3c7; padding-top: 6px; }
+    .footer .phone { font-weight: bold; color: #1a5276; }
+</style>
+
+<div class="no-print">
+    <button ng-click="printForm()"><i class="fa fa-print"></i> Print Referral Form</button>
+    <button class="close-btn" ng-click="closeForm()" style="margin-left:10px;">Close</button>
+</div>
+
+<div class="print-form">
+    <div class="form-title-section">
+        <div class="form-title-row">
+            <img src="/bahmni_config/openmrs/apps/home/logo.png" alt="Logo">
+            <h1>AMHARA NATIONAL REGIONAL STATE HEALTH BUREAU</h1>
+        </div>
+        <h2>PATIENT REFERRAL SLIP</h2>
+    </div>
+
+    <div class="top-bar">
+        <div class="condition-boxes">
+            <label><span class="checkbox-box" ng-class="{'checked': patientCondition === 'Critical'}"></span> Critical</label>
+            <label><span class="checkbox-box" ng-class="{'checked': patientCondition === 'Emergency'}"></span> Emergency</label>
+            <label><span class="checkbox-box" ng-class="{'checked': patientCondition === 'Stable'}"></span> Stable</label>
+        </div>
+        <div class="ref-date">
+            <div>Ref. No. <span class="line">&nbsp;</span></div>
+            <div>MRN <span class="line"> {{patient.identifier}}</span></div>
+            <div>Date <span class="line"> {{currentDate | date:'dd/MM/yyyy'}}</span></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <label>TO</label>
+        <span class="field-line wide"> {{referredTo}}&nbsp;</span>
+        <label>Hospital/ Health Center</label>
+        <span class="field-line wide"> {{referralDepartment}}&nbsp;</span>
+        <label>Department</label>
+        <span class="field-line"> {{referralDept}}&nbsp;</span>
+    </div>
+
+    <div class="row">
+        <label>Patient Name</label>
+        <span class="field-line wide"> {{patient.name}}</span>
+        <label>Sex</label>
+        <span class="field-line"> {{patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other'}}</span>
+        <label>Age</label>
+        <span class="field-line" style="min-width:35px;"> {{patient.age}}</span>
+        <label>Woreda</label>
+        <span class="field-line"> {{woreda}}&nbsp;</span>
+        <label>Kebele</label>
+        <span class="field-line"> {{kebele}}&nbsp;</span>
+    </div>
+
+    <div class="section-label">Chief Complaint</div>
+    <div class="field-line full">{{chiefComplaint}}&nbsp;</div>
+
+    <div class="section-label">History of Present Illness (HPI)</div>
+    <div class="field-line full">{{historyOfPresentIllness}}&nbsp;</div>
+
+    <div class="section-label">Physical Examination (P/E)</div>
+    <div class="vitals-grid">
+        <div class="vital-item">
+            <label>BP:</label>
+            <span class="field-line" style="min-width:50px;"> {{systolicBP}}/{{diastolicBP}}</span>
+            <label>mmHg</label>
+        </div>
+        <div class="vital-item">
+            <label>PR:</label>
+            <span class="field-line" style="min-width:50px;"> {{pulseRate}}</span>
+            <label>/min</label>
+        </div>
+        <div class="vital-item">
+            <label>RR:</label>
+            <span class="field-line" style="min-width:50px;"> {{respiratoryRate}}</span>
+            <label>/min</label>
+        </div>
+        <div class="vital-item">
+            <label>Body T&deg;:</label>
+            <span class="field-line" style="min-width:50px;"> {{bodyTemperature}}</span>
+            <label>&deg;C</label>
+        </div>
+        <div class="vital-item">
+            <label>O<sub>2</sub> Sat:</label>
+            <span class="field-line" style="min-width:50px;"> {{oxygenSaturation}}</span>
+            <label>%</label>
+        </div>
+        <div class="vital-item">
+            <label>On Oxygen:</label>
+            <span class="field-line" style="min-width:30px;"> {{onOxygen}}</span>
+        </div>
+    </div>
+
+    <div class="section-label">Lab Result</div>
+    <div class="field-line full">{{labResult}}&nbsp;</div>
+
+    <div class="section-label">Diagnosis</div>
+    <div class="field-line full">{{referralDiagnosis}}&nbsp;</div>
+
+    <div class="section-label">Treatment Given</div>
+    <div class="field-line full">{{treatmentProvided}}&nbsp;</div>
+
+    <div class="section-label">Reason of Referral</div>
+    <div class="field-line full">{{reasonForReferral}}&nbsp;</div>
+
+    <div class="section-label">Additional Information</div>
+    <div class="yes-no-group">
+        <span class="cb"><span class="checkbox-box" ng-class="{'checked': needAmbulance === 'Yes'}"></span> Need Ambulance?</span>
+        <span class="cb"><span class="checkbox-box" ng-class="{'checked': needEscorting === 'Yes'}"></span> Need Escorting Professionals?</span>
+    </div>
+
+    <div class="signature-section">
+        <div class="sig-block-title">Referred by</div>
+        <div class="sig-row">
+            <label>Name</label>
+            <span class="sig-line" style="min-width:160px;"> {{referringDoctor}}&nbsp;</span>
+            <label>Qualification</label>
+            <span class="sig-line" style="min-width:90px;">&nbsp;</span>
+            <label>Signature</label>
+            <span class="sig-line" style="min-width:90px;">&nbsp;</span>
+            <label>Phone No.</label>
+            <span class="sig-line" style="min-width:80px;">&nbsp;</span>
+        </div>
+    </div>
+
+    <div class="signature-section" style="margin-top:12px;">
+        <div class="sig-block-title">Approved by</div>
+        <div class="sig-row">
+            <label>Name</label>
+            <span class="sig-line" style="min-width:160px;">&nbsp;</span>
+            <label>Qualification</label>
+            <span class="sig-line" style="min-width:90px;">&nbsp;</span>
+            <label>Signature</label>
+            <span class="sig-line" style="min-width:90px;">&nbsp;</span>
+            <label>Phone No.</label>
+            <span class="sig-line" style="min-width:80px;">&nbsp;</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div>Boru Meda General Hospital Liaison Office &nbsp;|&nbsp; <span class="phone">033 241 50 06</span></div>
+        <div style="margin-top:3px;">We Appreciate your Feedback</div>
+    </div>
+</div>

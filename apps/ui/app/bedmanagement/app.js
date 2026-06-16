@@ -130,6 +130,28 @@ angular.module('ipd').config(['$stateProvider', '$httpProvider', '$urlRouterProv
                         });
                     }
                 }
+            }).state('referFormPrint', {
+                url: '/referFormPrint/:patientUuid',
+                data: {
+                    homeBackLink: homeBackLink,
+                    navigationLinks: navigationLinks
+                },
+                views: {
+                    'content': {
+                        templateUrl: 'views/referFormPrint.html',
+                        controller: 'ReferFormPrintController'
+                    },
+                    'additional-header': {
+                        templateUrl: 'views/header.html',
+                        controller: 'HeaderController'
+                    }
+                },
+                resolve: {
+                    initialization: 'initialization',
+                    patientResolution: function ($stateParams, patientInitialization) {
+                        return patientInitialization($stateParams.patientUuid);
+                    }
+                }
             }).state('careViewDashboard', {
                 url: '/home/careViewDashboard',
                 views: {

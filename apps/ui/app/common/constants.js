@@ -183,6 +183,7 @@ Bahmni.Common = Bahmni.Common || {};
         transferCode: 'TRANSFER',
         referCode: 'REFER',
         undoDischargeCode: 'UNDO_DISCHARGE',
+        emergencyKeepCode: 'EMERGENCY_KEEP',
         vitalsConceptName: "Vitals",
         heightConceptName: "HEIGHT",
         weightConceptName: "WEIGHT",

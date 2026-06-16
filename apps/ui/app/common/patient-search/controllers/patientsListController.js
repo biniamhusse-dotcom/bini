@@ -2,8 +2,8 @@
 
 angular.module('bahmni.common.patientSearch')
 .controller('PatientsListController', ['$scope', '$window', 'patientService', '$rootScope', 'appService', 'spinner',
-    '$stateParams', '$bahmniCookieStore', 'printer', 'configurationService', '$timeout', 'observationsService',
-    function ($scope, $window, patientService, $rootScope, appService, spinner, $stateParams, $bahmniCookieStore, printer, configurationService, $timeout, observationsService) {
+    '$stateParams', '$bahmniCookieStore', 'printer', 'configurationService', '$timeout', 'observationsService', 'dispositionService',
+    function ($scope, $window, patientService, $rootScope, appService, spinner, $stateParams, $bahmniCookieStore, printer, configurationService, $timeout, observationsService, dispositionService) {
         $scope.preferExtraIdInSearchResults = appService.getAppDescriptor().getConfigValue("preferExtraIdInSearchResults");
         $scope.activeHeaders = [];
         const DEFAULT_FETCH_DELAY = 2000;
@@ -45,21 +45,44 @@ angular.module('bahmni.common.patientSearch')
             if ($rootScope.currentSearchType != null) {
                 $scope.search.switchSearchType($rootScope.currentSearchType);
             }
+            if ($rootScope.toReferTab) {
+                $rootScope.toReferTab = false;
+                var referSearchType = _.find($scope.search.searchTypes, function (st) {
+                    return st && st.id === 'bahmni.adt.patients.search.patientsToRefer';
+                });
+                if (referSearchType) {
+                    $scope.search.switchSearchType(referSearchType);
+                }
+            }
             configurationService.getConfigurations(['identifierTypesConfig']).then(function (response) {
                 $scope.primaryIdentifier = _.find(response.identifierTypesConfig, {primary: true}).name;
             }); 
         };
         $scope.start = function(patient){
             if(patient!=undefined){
-                   
                 patient.triageStatus = "#88af28";
-              
-                    if(patient.hasBeenAdmitted == "true"){
-                          observationsService.fetch(patient.uuid, "Triage Color Result").then(function (response) {
-                            if(response.data.length!=0){
-                                patient.triageStatus = response.data[0].value;
+                if(patient.hasBeenAdmitted == "true"){
+                    observationsService.fetch(patient.uuid, "Triage Color Result").then(function (response) {
+                        if(response.data.length!=0){
+                            patient.triageStatus = response.data[0].value;
+                        }
+                    });
+                }
+                if(patient.activeVisitUuid){
+                    dispositionService.getDispositionByVisit(patient.activeVisitUuid).then(function (response) {
+                        var dispositions = response.data;
+                        if(dispositions && dispositions.length > 0){
+                            for(var i = 0; i < dispositions.length; i++){
+                                if(dispositions[i].code === Bahmni.Common.Constants.emergencyKeepCode){
+                                    patient.isEmergencyKeep = true;
+                                }
+                                if(dispositions[i].code === Bahmni.Common.Constants.referCode){
+                                    patient.isRefer = true;
+                                }
+                                if(patient.isEmergencyKeep || patient.isRefer) break;
                             }
-                        })
+                        }
+                    });
                 }
             }
         }
