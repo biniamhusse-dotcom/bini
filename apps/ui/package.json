@@ -109,7 +109,7 @@
     "test:watch": "grunt karma:watch",
     "watch": "grunt watch",
     "preinstall": "node -e \"if (process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('Use yarn for installing: https://yarnpkg.com/en/docs/install')\"",
-    "postinstall": "node -e \"\nvar fs = require('fs');\ntry { fs.symlinkSync('../node_modules/@bower_components', 'app/components', 'junction'); } catch(e) {}\ntry { fs.symlinkSync('../../node_modules/react', 'node_modules/@bower_components/react', 'junction'); } catch(e) {}\ntry { fs.symlinkSync('../../node_modules/react-dom', 'node_modules/@bower_components/react-dom', 'junction'); } catch(e) {}\ntry { fs.symlinkSync('../../node_modules/bahmni-form-controls', 'node_modules/@bower_components/bahmni-form-controls', 'junction'); } catch(e) {}\n\"",
+    "postinstall": "node -e \"var fs=require('fs');try{fs.symlinkSync('../node_modules/@bower_components','app/components','junction')}catch(e){}try{fs.cpSync('node_modules/react','node_modules/@bower_components/react',{recursive:true})}catch(e){}try{fs.cpSync('node_modules/react-dom','node_modules/@bower_components/react-dom',{recursive:true})}catch(e){}try{fs.cpSync('node_modules/bahmni-form-controls','node_modules/@bower_components/bahmni-form-controls',{recursive:true})}catch(e){}\"",
     "default": "grunt",
     "build": "grunt build",
     "dev": "grunt dev",
