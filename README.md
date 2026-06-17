@@ -732,3 +732,79 @@ netstat -ano | findstr :8186
 ```bash
 docker ps --format "table {{.Names}}\t{{.Status}}"
 ```
+
+### Clinical page shows white screen (after cloning on a new PC)
+
+The clinical module loads hundreds of JS files from a `components/` symlink that points to `node_modules/@bower_components`. If this symlink is missing or broken, every script 404s and AngularJS never bootstraps — resulting in a white screen.
+
+**Step 1: Install Node.js and Yarn (Ubuntu)**
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm install -g yarn
+```
+
+**Step 2: Install UI dependencies**
+
+```bash
+cd ~/Documents/Production/emr/apps/ui
+yarn install
+```
+
+This creates the `app/components/` symlink via the postinstall script. If it fails with a permission error:
+
+```bash
+sudo chown -R $USER:$USER ~/Documents/Production/emr/apps/ui/node_modules
+yarn install
+```
+
+**Step 3: Verify the symlink exists**
+
+```bash
+ls -la ~/Documents/Production/emr/apps/ui/app/components
+```
+
+It should be a symlink pointing to `../node_modules/@bower_components`. If it's a regular directory or missing:
+
+```bash
+rm -rf ~/Documents/Production/emr/apps/ui/app/components
+cd ~/Documents/Production/emr/apps/ui/app
+ln -s ../node_modules/@bower_components components
+```
+
+**Step 4: Verify micro-frontend dist files exist**
+
+```bash
+ls ~/Documents/Production/emr/apps/ui/app/micro-frontends-dist/
+```
+
+You should see `shared.min.js`, `ipd.min.js`, `next-ui.min.js`. If missing, the micro-frontends need to be rebuilt (see `apps/micro-frontends/`).
+
+**Step 5: Restart Docker and hard refresh**
+
+```bash
+cd ~/Documents/Production/emr/bahmni-docker/bahmni-standard
+docker compose --env-file .env up -d
+```
+
+Then open the browser and hard refresh with **Ctrl+Shift+R**.
+
+**Step 6: Check browser console (F12)**
+
+If still white, open browser Developer Tools (F12) → Console tab. Look for 404 errors on `.js` files. The missing file paths will tell you exactly which component is not installed.
+
+### Docker Compose v1 not found (`docker-compose` command)
+
+Ubuntu may only have the older `docker-compose` standalone binary. Use the modern plugin syntax instead:
+
+```bash
+# Instead of: docker-compose up -d
+docker compose up -d
+```
+
+If `docker compose` also doesn't work, install the plugin:
+
+```bash
+sudo apt install docker-compose-plugin -y
+```
