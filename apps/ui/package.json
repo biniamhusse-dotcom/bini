@@ -109,7 +109,7 @@
     "test:watch": "grunt karma:watch",
     "watch": "grunt watch",
     "preinstall": "node -e \"if (process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('Use yarn for installing: https://yarnpkg.com/en/docs/install')\"",
-    "postinstall": "node -e \"try { require('fs').symlinkSync('../node_modules/@bower_components', 'app/components', 'junction') } catch (e){ console.info(e.message) } \"",
+    "postinstall": "node -e \"\nvar fs = require('fs');\ntry { fs.symlinkSync('../node_modules/@bower_components', 'app/components', 'junction'); } catch(e) {}\ntry { fs.symlinkSync('../../node_modules/react', 'node_modules/@bower_components/react', 'junction'); } catch(e) {}\ntry { fs.symlinkSync('../../node_modules/react-dom', 'node_modules/@bower_components/react-dom', 'junction'); } catch(e) {}\ntry { fs.symlinkSync('../../node_modules/bahmni-form-controls', 'node_modules/@bower_components/bahmni-form-controls', 'junction'); } catch(e) {}\n\"",
     "default": "grunt",
     "build": "grunt build",
     "dev": "grunt dev",

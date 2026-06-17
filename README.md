@@ -749,48 +749,65 @@ sudo npm install -g yarn
 
 ```bash
 cd ~/Documents/Production/emr/apps/ui
-yarn install
+yarn install --force
 ```
 
-This creates the `app/components/` symlink via the postinstall script. If it fails with a permission error:
+The `postinstall` script creates:
+- `app/components/` → `node_modules/@bower_components` (vendor libraries)
+- `node_modules/@bower_components/react` → `node_modules/react`
+- `node_modules/@bower_components/react-dom` → `node_modules/react-dom`
+- `node_modules/@bower_components/bahmni-form-controls` → `node_modules/bahmni-form-controls`
+
+If it fails with a permission error:
 
 ```bash
 sudo chown -R $USER:$USER ~/Documents/Production/emr/apps/ui/node_modules
-yarn install
+yarn install --force
 ```
 
-**Step 3: Verify the symlink exists**
+**Step 3: Verify all required files exist**
 
 ```bash
+# Component symlink
 ls -la ~/Documents/Production/emr/apps/ui/app/components
+
+# React (needed by micro-frontends)
+ls ~/Documents/Production/emr/apps/ui/node_modules/@bower_components/react/react.production.min.js
+ls ~/Documents/Production/emr/apps/ui/node_modules/@bower_components/react-dom/react-dom.production.min.js
+
+# Bahmni form controls
+ls ~/Documents/Production/emr/apps/ui/node_modules/@bower_components/bahmni-form-controls/helpers.js
+ls ~/Documents/Production/emr/apps/ui/node_modules/@bower_components/bahmni-form-controls/bundle.js
+
+# Angular workers
+ls ~/Documents/Production/emr/apps/ui/app/lib/angular-workers/dist/angular-workers.js
+
+# Micro-frontends
+ls ~/Documents/Production/emr/apps/ui/app/micro-frontends-dist/shared.min.js
 ```
 
-It should be a symlink pointing to `../node_modules/@bower_components`. If it's a regular directory or missing:
+If any symlink is missing, recreate them manually:
 
 ```bash
-rm -rf ~/Documents/Production/emr/apps/ui/app/components
-cd ~/Documents/Production/emr/apps/ui/app
-ln -s ../node_modules/@bower_components components
+cd ~/Documents/Production/emr/apps/ui
+rm -f app/components
+ln -sf ../node_modules/@bower_components app/components
+ln -sf ../../node_modules/react node_modules/@bower_components/react
+ln -sf ../../node_modules/react-dom node_modules/@bower_components/react-dom
+ln -sf ../../node_modules/bahmni-form-controls node_modules/@bower_components/bahmni-form-controls
 ```
 
-**Step 4: Verify micro-frontend dist files exist**
-
-```bash
-ls ~/Documents/Production/emr/apps/ui/app/micro-frontends-dist/
-```
-
-You should see `shared.min.js`, `ipd.min.js`, `next-ui.min.js`. If missing, the micro-frontends need to be rebuilt (see `apps/micro-frontends/`).
-
-**Step 5: Restart Docker and hard refresh**
+**Step 4: Restart Docker and hard refresh**
 
 ```bash
 cd ~/Documents/Production/emr/bahmni-docker/bahmni-standard
+docker compose --env-file .env down
 docker compose --env-file .env up -d
 ```
 
 Then open the browser and hard refresh with **Ctrl+Shift+R**.
 
-**Step 6: Check browser console (F12)**
+**Step 5: Check browser console (F12)**
 
 If still white, open browser Developer Tools (F12) → Console tab. Look for 404 errors on `.js` files. The missing file paths will tell you exactly which component is not installed.
 
