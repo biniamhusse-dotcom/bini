@@ -152,6 +152,25 @@ angular.module('ipd').config(['$stateProvider', '$httpProvider', '$urlRouterProv
                         return patientInitialization($stateParams.patientUuid);
                     }
                 }
+            }).state('referralManagement', {
+                url: '/referralManagement',
+                data: {
+                    homeBackLink: homeBackLink,
+                    navigationLinks: navigationLinks
+                },
+                views: {
+                    'content': {
+                        templateUrl: 'views/referralManagement.html',
+                        controller: 'ReferralManagementController'
+                    },
+                    'additional-header': {
+                        templateUrl: 'views/header.html',
+                        controller: 'HeaderController'
+                    }
+                },
+                resolve: {
+                    initialization: 'initialization'
+                }
             }).state('careViewDashboard', {
                 url: '/home/careViewDashboard',
                 views: {

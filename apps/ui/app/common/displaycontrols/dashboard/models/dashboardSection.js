@@ -19,7 +19,8 @@
         "obsToObsFlowSheet",
         "pacsOrders",
         "patientInformation",
-        "conditionsList"
+        "conditionsList",
+        "referralHistory"
     ];
     var reactDisplayControls = [
         "allergies",

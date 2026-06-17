@@ -1,0 +1,23 @@
+-- Register the referral management SQL search handler
+-- Run this against the OpenMRS database
+
+SET @property_value = (
+SELECT LOAD_FILE('/dev/null') -- placeholder, we'll set it below
+);
+
+-- First, check if the property exists
+SET @exists = (SELECT COUNT(*) FROM global_property WHERE property = 'emrapi.sqlSearch.referralManagement');
+
+-- Delete if exists
+DELETE FROM global_property WHERE property = 'emrapi.sqlSearch.referralManagement';
+
+-- Insert the SQL
+INSERT INTO global_property (property, property_value, description, uuid)
+VALUES (
+'emrapi.sqlSearch.referralManagement',
+'SELECT DISTINCT concat(pn.given_name, '' '', ifnull(pn.family_name,'''')) AS name, pi.identifier AS identifier, concat("""", p.uuid) AS patientUuid, concat("""", v.uuid) AS visitUuid, v.date_created AS referDate, v.date_stopped AS closedDate, IF(v.date_stopped IS NULL, ''Open'', ''Closed'') AS status, IFNULL(refers.value_text, '''') AS referredTo, IFNULL(dept.value_text, '''') AS department, IFNULL(diag.value_text, '''') AS diagnosis, IFNULL(cond.value_text, '''') AS patientCondition, IFNULL(reason.value_text, '''') AS reasonForReferral, IFNULL(ambulance.value_text, '''') AS needAmbulance, IFNULL(escort.value_text, '''') AS needEscorting FROM visit v INNER JOIN person_name pn ON v.patient_id = pn.person_id AND pn.voided = 0 INNER JOIN patient_identifier pi ON v.patient_id = pi.patient_id INNER JOIN patient_identifier_type pit ON pi.identifier_type = pit.patient_identifier_type_id INNER JOIN global_property gp ON gp.property = ''bahmni.primaryIdentifierType'' AND gp.property_value = pit.uuid INNER JOIN person p ON v.patient_id = p.person_id INNER JOIN encounter e ON v.visit_id = e.visit_id INNER JOIN obs disp_o ON e.encounter_id = disp_o.encounter_id AND disp_o.voided = 0 INNER JOIN concept_name disp_cn ON disp_o.value_coded = disp_cn.concept_id AND disp_cn.concept_name_type = ''FULLY_SPECIFIED'' AND disp_cn.voided = 0 LEFT JOIN obs refers ON e.encounter_id = refers.encounter_id AND refers.voided = 0 AND refers.concept_id = (SELECT concept_id FROM concept_name WHERE name = ''Refers'' AND concept_name_type = ''FULLY_SPECIFIED'' AND voided = 0 LIMIT 1) LEFT JOIN obs dept ON e.encounter_id = dept.encounter_id AND dept.voided = 0 AND dept.concept_id = (SELECT concept_id FROM concept_name WHERE name = ''Referral department'' AND concept_name_type = ''FULLY_SPECIFIED'' AND voided = 0 LIMIT 1) LEFT JOIN obs diag ON e.encounter_id = diag.encounter_id AND diag.voided = 0 AND diag.concept_id = (SELECT concept_id FROM concept_name WHERE name = ''Non-coded Diagnosis'' AND concept_name_type = ''FULLY_SPECIFIED'' AND voided = 0 LIMIT 1) LEFT JOIN obs cond ON e.encounter_id = cond.encounter_id AND cond.voided = 0 AND cond.concept_id = (SELECT concept_id FROM concept_name WHERE name = ''Patient condition at referral'' AND concept_name_type = ''FULLY_SPECIFIED'' AND voided = 0 LIMIT 1) LEFT JOIN obs reason ON e.encounter_id = reason.encounter_id AND reason.voided = 0 AND reason.concept_id = (SELECT concept_id FROM concept_name WHERE name = ''Reason for referral (text)'' AND concept_name_type = ''FULLY_SPECIFIED'' AND voided = 0 LIMIT 1) LEFT JOIN obs ambulance ON e.encounter_id = ambulance.encounter_id AND ambulance.voided = 0 AND ambulance.concept_id = (SELECT concept_id FROM concept_name WHERE name = ''Need ambulance'' AND concept_name_type = ''FULLY_SPECIFIED'' AND voided = 0 LIMIT 1) LEFT JOIN obs escort ON e.encounter_id = escort.encounter_id AND escort.voided = 0 AND escort.concept_id = (SELECT concept_id FROM concept_name WHERE name = ''Need escorting professionals'' AND concept_name_type = ''FULLY_SPECIFIED'' AND voided = 0 LIMIT 1) WHERE v.voided = 0 AND disp_cn.name = ''Refer Patient'' AND EXISTS (SELECT 1 FROM location_tag_map ltm JOIN location_tag lt ON ltm.location_tag_id = lt.location_tag_id JOIN location l ON ltm.location_id = l.location_id WHERE l.uuid = ${location_uuid} AND lt.name = ''Refer'') GROUP BY v.visit_id ORDER BY v.date_created DESC',
+'Referral Management SQL search handler - returns all referred patients with details',
+UUID()
+);
+
+SELECT 'Done: Referral Management SQL registered' AS result;

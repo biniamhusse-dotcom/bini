@@ -125,6 +125,13 @@
                 "numberOfVisits":1,
                 "displayOrder":7
             },
+            "referralHistory": {
+                "translationKey": "DASHBOARD_TITLE_REFERRAL_HISTORY_KEY",
+                "type": "referralHistory",
+                "showDetailsButton": true,
+                "numberOfVisits": 5,
+                "displayOrder": 8
+            },
             "treatments":{  
                 "translationKey":"DASHBOARD_TITLE_TREATMENTS_KEY",
                 "type":"treatment",

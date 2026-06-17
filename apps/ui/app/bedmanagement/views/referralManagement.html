@@ -1,0 +1,301 @@
+<style>
+    .referral-mgmt-wrapper { padding: 15px 20px; background: #f0f2f5; min-height: calc(100vh - 60px); }
+    .referral-mgmt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+    .referral-mgmt-header h2 { margin: 0; font-size: 18px; color: #1a237e; font-weight: 700; }
+    .referral-mgmt-header .btn-group { display: flex; gap: 8px; }
+    .btn { padding: 7px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 500; transition: background 0.2s; }
+    .btn-primary { background: #1565c0; color: #fff; }
+    .btn-primary:hover { background: #0d47a1; }
+    .btn-secondary { background: #78909c; color: #fff; }
+    .btn-secondary:hover { background: #546e7a; }
+    .btn-outline { background: #fff; color: #1565c0; border: 1px solid #1565c0; }
+    .btn-outline:hover { background: #e3f2fd; }
+
+    .filter-panel { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 12px; display: none; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .filter-panel.show { display: block; }
+    .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; gap: 3px; min-width: 110px; flex: 1; }
+    .filter-group label { font-size: 10px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .filter-group input, .filter-group select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: inherit; }
+    .filter-group input:focus, .filter-group select:focus { border-color: #1565c0; outline: none; box-shadow: 0 0 0 2px rgba(21,101,192,0.12); }
+
+    .referral-stats { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .stat-card { background: #fff; border-radius: 8px; padding: 10px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px; }
+    .stat-card .stat-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; }
+    .stat-card .stat-icon.total { background: #1565c0; }
+    .stat-card .stat-icon.open { background: #2e7d32; }
+    .stat-card .stat-icon.closed { background: #78909c; }
+    .stat-card .stat-icon.ambulance { background: #e65100; }
+    .stat-card .stat-value { font-size: 20px; font-weight: 700; color: #333; }
+    .stat-card .stat-label { font-size: 11px; color: #888; }
+
+    .register-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+    .register-title { text-align: center; font-size: 16px; font-weight: 700; padding: 12px 15px; border-bottom: 2px solid #1565c0; background: #e3f2fd; color: #0d47a1; letter-spacing: 0.5px; }
+    .register-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .register-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: auto; white-space: nowrap; }
+    .register-table th, .register-table td { border: 1px solid #ccc; padding: 6px 8px; text-align: center; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; white-space: nowrap; }
+    .register-table thead tr.group-header th { background: #bbdefb; font-weight: 700; font-size: 12px; color: #0d47a1; border-bottom: 2px solid #1565c0; padding: 7px 8px; }
+    .register-table thead tr.col-header th { background: #e8eaf6; font-weight: 600; font-size: 10px; color: #333; line-height: 1.3; padding: 6px 5px; }
+    .register-table thead tr.col-num th { background: #f5f5f5; font-size: 9px; color: #999; padding: 3px; border-bottom: 2px solid #1565c0; }
+    .register-table tbody td { font-size: 12px; padding: 5px 6px; white-space: nowrap; }
+    .register-table tbody tr:nth-child(even) td { background: #fafafa; }
+    .register-table tbody tr:hover td { background: #e3f2fd; }
+
+    .col-sn { width: 30px; }
+    .col-date { width: 70px; }
+    .col-mrn { width: 55px; font-weight: 600; color: #333; }
+    .col-name { min-width: 120px; text-align: left !important; padding-left: 8px !important; font-weight: 500; }
+    .col-age { width: 30px; }
+    .col-sex { width: 28px; font-weight: 600; }
+    .col-region { min-width: 80px; font-size: 11px; }
+    .col-subcity { min-width: 80px; font-size: 11px; }
+    .col-woreda { min-width: 100px; font-size: 11px; }
+    .col-refin { width: 30px; color: #2e7d32; font-weight: 700; font-size: 14px; }
+    .col-refout { width: 30px; }
+    .col-facility { min-width: 80px; text-align: left !important; padding-left: 6px !important; font-weight: 500; }
+    .col-casetype { min-width: 60px; }
+    .col-diagnosis { min-width: 100px; text-align: left !important; padding-left: 6px !important; }
+    .col-dept { min-width: 60px; text-align: left !important; padding-left: 6px !important; }
+    .col-reason { min-width: 100px; text-align: left !important; padding-left: 6px !important; }
+    .col-ambulance { width: 35px; font-weight: 600; }
+    .col-comm { width: 35px; font-weight: 600; }
+    .col-action { width: 45px; }
+
+    .check-mark { color: #2e7d32; font-weight: 700; font-size: 14px; }
+    .yes-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 1px 6px; border-radius: 3px; font-weight: 600; font-size: 11px; }
+    .no-badge { display: inline-block; background: #f5f5f5; color: #999; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+    .status-open { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 11px; }
+    .status-closed { display: inline-block; background: #eceff1; color: #607d8b; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+
+    .action-link { color: #1565c0; cursor: pointer; text-decoration: none; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 3px; transition: background 0.2s; }
+    .action-link:hover { background: #e3f2fd; text-decoration: none; }
+    .action-link.print { color: #7b1fa2; }
+    .action-link.print:hover { background: #f3e5f5; }
+
+    .register-footer { border-top: 2px solid #1565c0; padding: 10px 15px; font-size: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #f5f5f5; }
+    .legend-section { display: flex; gap: 20px; flex-wrap: wrap; }
+    .legend-item { font-size: 10px; color: #555; }
+    .legend-item strong { color: #333; }
+
+    .empty-state { text-align: center; padding: 50px 20px; color: #999; }
+    .empty-state i { font-size: 48px; margin-bottom: 12px; display: block; color: #ccc; }
+    .empty-state div { font-size: 14px; }
+
+    .tooltip-cell { position: relative; }
+
+    @media (max-width: 768px) {
+        .referral-mgmt-wrapper { padding: 10px; }
+        .referral-mgmt-header { flex-direction: column; align-items: flex-start; }
+        .filter-row { flex-direction: column; }
+        .filter-group { min-width: 100%; }
+        .referral-stats { flex-direction: column; }
+        .stat-card { width: 100%; }
+    }
+</style>
+
+<div class="referral-mgmt-wrapper">
+    <div class="referral-mgmt-header">
+        <h2><i class="fa fa-exchange" style="margin-right:8px;"></i>Referral Management</h2>
+        <div class="btn-group">
+            <button class="btn btn-outline" ng-click="toggleFilters()">
+                <i class="fa fa-filter"></i> {{showFilters ? 'Hide Filters' : 'Filters'}}
+            </button>
+            <button class="btn btn-primary" ng-click="loadReferrals()">
+                <i class="fa fa-refresh"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="filter-panel" ng-class="{'show': showFilters}">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Patient Name</label>
+                <input type="text" ng-model="searchParams.patientName" ng-change="applyFilters()" placeholder="Search name...">
+            </div>
+            <div class="filter-group">
+                <label>MRN</label>
+                <input type="text" ng-model="searchParams.mrn" ng-change="applyFilters()" placeholder="MRN...">
+            </div>
+            <div class="filter-group">
+                <label>Region</label>
+                <input type="text" ng-model="searchParams.region" ng-change="applyFilters()" placeholder="Region...">
+            </div>
+            <div class="filter-group">
+                <label>Subcity/Zone</label>
+                <input type="text" ng-model="searchParams.subcity" ng-change="applyFilters()" placeholder="Subcity...">
+            </div>
+            <div class="filter-group">
+                <label>Woreda</label>
+                <input type="text" ng-model="searchParams.woreda" ng-change="applyFilters()" placeholder="Woreda...">
+            </div>
+            <div class="filter-group">
+                <label>Facility</label>
+                <input type="text" ng-model="searchParams.referredTo" ng-change="applyFilters()" placeholder="Facility...">
+            </div>
+            <div class="filter-group">
+                <label>Dept</label>
+                <input type="text" ng-model="searchParams.department" ng-change="applyFilters()" placeholder="Dept...">
+            </div>
+            <div class="filter-group">
+                <label>Diagnosis</label>
+                <input type="text" ng-model="searchParams.diagnosis" ng-change="applyFilters()" placeholder="Diagnosis...">
+            </div>
+            <div class="filter-group">
+                <label>Condition</label>
+                <input type="text" ng-model="searchParams.condition" ng-change="applyFilters()" placeholder="Case type...">
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select ng-model="searchParams.status" ng-change="applyFilters()">
+                    <option value="">All</option>
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>From</label>
+                <input type="date" ng-model="searchParams.dateFrom" ng-change="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>To</label>
+                <input type="date" ng-model="searchParams.dateTo" ng-change="applyFilters()">
+            </div>
+            <div class="filter-group" style="flex:0;">
+                <label>&nbsp;</label>
+                <button class="btn btn-secondary" ng-click="clearFilters()" style="padding:6px 12px;font-size:12px;">
+                    <i class="fa fa-times"></i> Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="referral-stats">
+        <div class="stat-card">
+            <div class="stat-icon total"><i class="fa fa-list"></i></div>
+            <div><div class="stat-value">{{referrals.length}}</div><div class="stat-label">Total Referrals</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon open"><i class="fa fa-circle"></i></div>
+            <div><div class="stat-value">{{(referrals | filter:{status:'Open'}).length}}</div><div class="stat-label">Open</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon closed"><i class="fa fa-check-circle"></i></div>
+            <div><div class="stat-value">{{(referrals | filter:{status:'Closed'}).length}}</div><div class="stat-label">Closed</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon ambulance"><i class="fa fa-ambulance"></i></div>
+            <div><div class="stat-value">{{(referrals | filter:{needAmbulance:'Yes'}).length}}</div><div class="stat-label">With Ambulance</div></div>
+        </div>
+    </div>
+
+    <div class="register-card">
+        <div class="register-title">Liaison Referral-in/out Register</div>
+        <div class="register-scroll">
+            <table class="register-table" ng-if="filteredReferrals.length > 0">
+                <thead>
+                    <tr class="group-header">
+                        <th colspan="6">Identification</th>
+                        <th colspan="3">Address</th>
+                        <th colspan="2">Type of Referral</th>
+                        <th colspan="7">Referral Service</th>
+                        <th colspan="2">Actions</th>
+                    </tr>
+                    <tr class="col-header">
+                        <th class="col-sn">S/N</th>
+                        <th class="col-date">Service Date<br><span style="font-weight:normal;font-size:9px;">(DD/MM/YY)</span></th>
+                        <th class="col-mrn">MRN</th>
+                        <th class="col-name">Name of the Patient</th>
+                        <th class="col-age">Age</th>
+                        <th class="col-sex">Sex</th>
+                        <th class="col-region">Region</th>
+                        <th class="col-subcity">Subcity/<br>Zone</th>
+                        <th class="col-woreda">Woreda/<br>Kebele</th>
+                        <th class="col-refin">In<br>(&#10003;)</th>
+                        <th class="col-refout">Out<br>(&#10003;)</th>
+                        <th class="col-facility">Referred To Facility</th>
+                        <th class="col-casetype">Type of<br>Case</th>
+                        <th class="col-diagnosis">Diagnosis</th>
+                        <th class="col-dept">Department</th>
+                        <th class="col-reason">Reason for<br>Referral</th>
+                        <th class="col-ambulance">Ambul.<br>(Y/N)</th>
+                        <th class="col-comm">Escort<br>(Y/N)</th>
+                        <th class="col-action">Print</th>
+                        <th class="col-action">View</th>
+                    </tr>
+                    <tr class="col-num">
+                        <th>(1)</th><th>(2)</th><th>(3)</th><th>(4)</th><th>(5)</th><th>(6)</th>
+                        <th>(7)</th><th>(8)</th><th>(9)</th><th>(10)</th><th>(11)</th>
+                        <th>(12)</th><th>(13)</th><th>(14)</th><th>(15)</th><th>(16)</th>
+                        <th>(17)</th><th>(18)</th><th></th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="ref in filteredReferrals | orderBy:sortField:sortReverse">
+                        <td class="col-sn">{{$index + 1}}</td>
+                        <td class="col-date">{{getServiceDate(ref)}}</td>
+                        <td class="col-mrn">{{ref.identifier}}</td>
+                        <td class="col-name">
+                            <a ng-click="openPatientDashboard(ref)" class="action-link" style="font-weight:600;font-size:12px;">
+                                {{ref.name}}
+                            </a>
+                        </td>
+                        <td class="col-age">{{ref.age}}</td>
+                        <td class="col-sex">{{ref.sex === 'Male' ? 'M' : ref.sex === 'Female' ? 'F' : 'O'}}</td>
+                        <td class="col-region">{{ref.region || ''}}</td>
+                        <td class="col-subcity">{{ref.subcity || ''}}</td>
+                        <td class="col-woreda">{{ref.woreda}}<span ng-if="ref.kebele">/{{ref.kebele}}</span></td>
+                        <td class="col-refin"><span class="check-mark" ng-if="ref.referralDirection === 'In'">&#10003;</span></td>
+                        <td class="col-refout"><span class="check-mark" ng-if="ref.referralDirection === 'Out'">&#10003;</span></td>
+                        <td class="col-facility tooltip-cell" data-full="{{ref.referredTo}}">{{ref.referredTo || '-'}}</td>
+                        <td class="col-casetype">
+                            <span ng-if="ref.patientCondition" style="font-size:11px;">{{ref.patientCondition}}</span>
+                            <span ng-if="!ref.patientCondition" style="color:#ccc;">-</span>
+                        </td>
+                        <td class="col-diagnosis tooltip-cell" data-full="{{ref.diagnosis}}">{{ref.diagnosis || '-'}}</td>
+                        <td class="col-dept">{{ref.department || '-'}}</td>
+                        <td class="col-reason tooltip-cell" data-full="{{ref.reasonForReferral}}">{{ref.reasonForReferral || '-'}}</td>
+                        <td class="col-ambulance">
+                            <span ng-if="ref.needAmbulance === 'Yes'" class="yes-badge">Y</span>
+                            <span ng-if="ref.needAmbulance !== 'Yes'" class="no-badge">N</span>
+                        </td>
+                        <td class="col-comm">
+                            <span ng-if="ref.needEscorting === 'Yes'" class="yes-badge">Y</span>
+                            <span ng-if="ref.needEscorting !== 'Yes'" class="no-badge">N</span>
+                        </td>
+                        <td class="col-action">
+                            <a ng-click="openPrintForm(ref)" class="action-link print" title="Print Referral Form">
+                                <i class="fa fa-print"></i>
+                            </a>
+                        </td>
+                        <td class="col-action">
+                            <a ng-click="openPatientDashboard(ref)" class="action-link" title="View Patient">
+                                <i class="fa fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="register-footer">
+            <div class="legend-section">
+                <div class="legend-item"><strong>*Reason for referral</strong> (col 16)</div>
+                <div class="legend-item"><strong>**Type of case</strong> (col 13): Emergency, Cold case</div>
+            </div>
+            <div class="legend-section">
+                <div class="legend-item">Showing <strong>{{filteredReferrals.length}}</strong> of {{referrals.length}} referrals</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="empty-state" ng-if="filteredReferrals.length === 0 && referrals.length > 0">
+        <i class="fa fa-search"></i>
+        <div>No referrals match your filters</div>
+        <button class="btn btn-outline" ng-click="clearFilters()" style="margin-top:10px;">Clear Filters</button>
+    </div>
+
+    <div class="empty-state" ng-if="referrals.length === 0">
+        <i class="fa fa-exchange"></i>
+        <div>No referrals found</div>
+    </div>
+</div>

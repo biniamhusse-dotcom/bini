@@ -10,6 +10,8 @@ angular.module('bahmni.ipd')
                     return true;
                 } else if (($state.current.name === "bedManagement" || $state.current.name === "bedManagement.bed") && link.name === "BED_MANAGEMENT_KEY") {
                     return true;
+                } else if ($state.current.name === "referralManagement" && link.name === "REFERRAL_MANAGEMENT_KEY") {
+                    return true;
                 }
             };
             $scope.linkAction = function (type, value, params) {
