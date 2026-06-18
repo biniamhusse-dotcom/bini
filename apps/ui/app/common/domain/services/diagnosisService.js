@@ -60,10 +60,39 @@ angular.module('bahmni.common.domain')
             });
         };
 
-        this.populateDiagnosisInformation = function (patientUuid, consultation) {
+        this.populateDiagnosisInformation = function (patientUuid, consultation, originalNewDiagnoses) {
             return this.getPastAndCurrentDiagnoses(patientUuid, consultation.encounterUuid).then(function (diagnosis) {
                 consultation.pastDiagnoses = diagnosis.pastDiagnoses;
                 consultation.savedDiagnosesFromCurrentEncounter = diagnosis.savedDiagnosesFromCurrentEncounter;
+
+                if (!consultation.mainDiagnosis && consultation.savedDiagnosesFromCurrentEncounter.length > 0) {
+                    var primaryDiag = null;
+                    consultation.savedDiagnosesFromCurrentEncounter.forEach(function (d) {
+                        if (d.order === "PRIMARY" && d.icd11Code && !d.voided) {
+                            primaryDiag = d;
+                        }
+                    });
+                    if (primaryDiag) {
+                        consultation.mainDiagnosis = {
+                            name: primaryDiag.codedAnswer ? primaryDiag.codedAnswer.name : '',
+                            uuid: primaryDiag.codedAnswer ? primaryDiag.codedAnswer.uuid : '',
+                            icd11Code: primaryDiag.icd11Code || '',
+                            icd11Name: primaryDiag.icd11Name || '',
+                            occurrence: primaryDiag.diagnosisOccurrence || '',
+                            conceptSystem: (primaryDiag.codedAnswer && primaryDiag.codedAnswer.conceptSystem) ? primaryDiag.codedAnswer.conceptSystem : ''
+                        };
+                    }
+                }
+
+                var mainUuid = consultation.mainDiagnosis && consultation.mainDiagnosis.uuid;
+                consultation.savedDiagnosesFromCurrentEncounter.forEach(function (d) {
+                    if (mainUuid && d.codedAnswer && d.codedAnswer.uuid !== mainUuid) {
+                        d.icd11Code = "";
+                        d.icd11Name = "";
+                        d.diagnosisOccurrence = "";
+                    }
+                });
+
                 return consultation;
             });
         };

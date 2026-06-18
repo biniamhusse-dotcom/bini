@@ -2,6 +2,42 @@
     <fieldset>
         <div class="diagnosis" focus-on-input-errors>
             <div id="selectedNodesArea">
+                <div class="icd11-global-filter" style="display:none;"></div>
+
+                <div style="background:#fff8f0;border:2px solid #f5a623;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+                    <h3 style="margin:0 0 8px 0;font-size:14px;color:#333;font-weight:600;">
+                        <i class="fa fa-star" style="color:#f5a623;margin-right:6px;"></i>Main Diagnosis
+                        <span style="font-weight:normal;font-size:12px;color:#888;margin-left:8px;">(Only ONE per encounter)</span>
+                    </h3>
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:250px;">
+                            <input ng-model="consultation.mainDiagnosis.name" type="text" name="mainDiagnosisName"
+                                id="mainDiagnosisInput" bahmni-autocomplete source="getDiagnosis"
+                                response-map="cleanOutDiagnosisList"
+                                on-select="onMainDiagnosisSelect()"
+                                ng-change="onMainDiagnosisChange()"
+                                placeholder="Search diagnosis concept...">
+                        </div>
+                        <div>
+                            <select ng-model="consultation.mainDiagnosis.occurrence"
+                                style="padding:6px 10px;font-size:13px;border:1px solid #ccc;border-radius:4px;background:white;color:#333;cursor:pointer;min-width:110px;">
+                                <option value="">Occurrence</option>
+                                <option value="New">New</option>
+                                <option value="Repeat">Repeat</option>
+                            </select>
+                        </div>
+                        <div ng-if="consultation.mainDiagnosis.icd11Code" style="display:inline-flex;align-items:center;gap:4px;background:#f5a623;color:white;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600;">
+                            <i class="fa fa-star" style="font-size:12px;"></i>
+                            ICD-11: {{consultation.mainDiagnosis.icd11Code}}
+                        </div>
+                        <button type="button" ng-if="consultation.mainDiagnosis.name" ng-click="clearMainDiagnosis()"
+                            style="padding:6px 10px;font-size:12px;border:1px solid #ccc;border-radius:4px;background:#f5f5f5;color:#666;cursor:pointer;">
+                            <i class="fa fa-remove"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <h3 style="margin:0 0 8px 0;font-size:13px;color:#666;font-weight:600;">Additional Diagnoses</h3>
                 <div class="table new-diagnosis primary-section-grid">
                     <div ng-repeat="diagnosis in consultation.newlyAddedDiagnoses" ng-hide="diagnosis.voided"
                         class="table-body">
@@ -34,10 +70,10 @@
                                             ng-class="{
                                                     illegalValue: diagnosis.codedAnswer.name && !diagnosis.codedAnswer.uuid && !diagnosis.isNonCodedAnswer,
                                                     active: diagnosis.isNonCodedAnswer
-                                                }" ng-disabled="diagnosis.codedAnswer.uuid"><span></span>{{
-                                            ::'CLINICAL_ACCEPT'| translate }}</button>
-                                    </span>
-                                </div>
+                                                 }" ng-disabled="diagnosis.codedAnswer.uuid"><span></span>{{
+                                             ::'CLINICAL_ACCEPT'| translate }}</button>
+                                     </span>
+                                 </div>
                                 <div class="tooltip cdss-tooltip history-alert" bm-pop-over-target>
                                     <cdss-popover alerts="diagnosis.alerts"></cdss-popover>
                                 </div>

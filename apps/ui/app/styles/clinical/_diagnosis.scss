@@ -1,4 +1,42 @@
 .diagnosis {
+    .main-diagnosis-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f5a623;
+        color: white;
+        padding: 12px 15px;
+        margin-bottom: 0;
+        border: 1px solid #e6951a;
+        border-bottom: none;
+
+        .banner-content {
+            .banner-title {
+                font-size: 16px;
+                font-weight: bold;
+                font-family: $OpenSansBoldFont;
+            }
+        }
+
+        .banner-dropdown {
+            select {
+                padding: 6px 12px;
+                font-size: 14px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background: white;
+                color: #333;
+                cursor: pointer;
+                min-width: 120px;
+
+                &:focus {
+                    outline: none;
+                    border-color: #f5a623;
+                }
+            }
+        }
+    }
+
     .table {
         // overflow: hidden;
 

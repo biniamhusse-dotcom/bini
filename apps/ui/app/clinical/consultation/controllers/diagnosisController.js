@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('bahmni.clinical')
-    .controller('DiagnosisController', ['$scope', '$rootScope', 'diagnosisService', 'messagingService', 'contextChangeHandler', 'spinner', 'appService', '$translate', 'retrospectiveEntryService', '$state', 'drugService', 'cdssService',
-        function ($scope, $rootScope, diagnosisService, messagingService, contextChangeHandler, spinner, appService, $translate, retrospectiveEntryService, $state, drugService, cdssService) {
+    .controller('DiagnosisController', ['$scope', '$rootScope', 'diagnosisService', 'messagingService', 'contextChangeHandler', 'spinner', 'appService', '$translate', 'retrospectiveEntryService', '$state', 'drugService', 'cdssService', '$http', '$q',
+        function ($scope, $rootScope, diagnosisService, messagingService, contextChangeHandler, spinner, appService, $translate, retrospectiveEntryService, $state, drugService, cdssService, $http, $q) {
             var DateUtil = Bahmni.Common.Util.DateUtil;
             $scope.todayWithoutTime = DateUtil.getDateWithoutTime(DateUtil.today());
             $scope.toggles = {
@@ -38,6 +38,7 @@ angular.module('bahmni.clinical')
                 'CLINICAL_DIAGNOSIS_OCCURRENCE_NEW': 'New',
                 'CLINICAL_DIAGNOSIS_OCCURRENCE_REPEAT': 'Repeat'
             };
+
             $scope.translateDiagnosisLabels = function (key, type) {
                 if (key) {
                     var translationKey = "CLINICAL_DIAGNOSIS_" + type + "_" + key.toUpperCase();
@@ -51,6 +52,88 @@ angular.module('bahmni.clinical')
 
             $scope.getDiagnosis = function (params) {
                 return diagnosisService.getAllFor(params.term, $rootScope.currentUser.userProperties.defaultLocale).then(mapConcept);
+            };
+
+            var icd11Data = [];
+            $rootScope.icd11Data = $rootScope.icd11Data || [];
+
+            $http.get('../i18n/clinical/icd11_data.json').then(function (response) {
+                icd11Data = response.data;
+                $rootScope.icd11Data = response.data;
+            }).catch(function () {
+                $http.get('i18n/clinical/icd11_data.json').then(function (response) {
+                    icd11Data = response.data;
+                    $rootScope.icd11Data = response.data;
+                }).catch(function () {});
+            });
+
+            var lookupIcd11ByName = function (name) {
+                if (!name || !icd11Data) return null;
+                var lowerName = name.toLowerCase().trim();
+                for (var i = 0; i < icd11Data.length; i++) {
+                    if (icd11Data[i].name.toLowerCase() === lowerName) {
+                        return icd11Data[i];
+                    }
+                }
+                for (var i = 0; i < icd11Data.length; i++) {
+                    if (lowerName.indexOf(icd11Data[i].name.toLowerCase()) !== -1) {
+                        return icd11Data[i];
+                    }
+                }
+                for (var i = 0; i < icd11Data.length; i++) {
+                    if (icd11Data[i].name.toLowerCase().indexOf(lowerName) !== -1) {
+                        return icd11Data[i];
+                    }
+                }
+                return null;
+            };
+
+            $scope.mainDiagnosis = $scope.consultation.mainDiagnosis || {
+                name: '',
+                uuid: '',
+                icd11Code: '',
+                icd11Name: '',
+                occurrence: '',
+                conceptSystem: ''
+            };
+            $scope.consultation.mainDiagnosis = $scope.mainDiagnosis;
+
+            $scope.onMainDiagnosisSelect = function () {
+                return function (item) {
+                    var concept = item.lookup;
+                    $scope.consultation.mainDiagnosis.name = concept.name;
+                    $scope.consultation.mainDiagnosis.uuid = concept.uuid;
+                    $scope.consultation.mainDiagnosis.conceptSystem = concept.conceptSystem || '';
+                    var icd11Match = lookupIcd11ByName(concept.name);
+                    if (icd11Match) {
+                        $scope.consultation.mainDiagnosis.icd11Code = icd11Match.code;
+                        $scope.consultation.mainDiagnosis.icd11Name = icd11Match.name;
+                    } else {
+                        $scope.consultation.mainDiagnosis.icd11Code = '';
+                        $scope.consultation.mainDiagnosis.icd11Name = '';
+                    }
+                    $scope.mainDiagnosis = $scope.consultation.mainDiagnosis;
+                };
+            };
+
+            $scope.onMainDiagnosisChange = function () {
+                if (!$scope.consultation.mainDiagnosis.name) {
+                    $scope.consultation.mainDiagnosis.uuid = '';
+                    $scope.consultation.mainDiagnosis.icd11Code = '';
+                    $scope.consultation.mainDiagnosis.icd11Name = '';
+                }
+            };
+
+            $scope.clearMainDiagnosis = function () {
+                $scope.consultation.mainDiagnosis = {
+                    name: '',
+                    uuid: '',
+                    icd11Code: '',
+                    icd11Name: '',
+                    occurrence: '',
+                    conceptSystem: ''
+                };
+                $scope.mainDiagnosis = $scope.consultation.mainDiagnosis;
             };
 
             var _canAdd = function (diagnosis) {
@@ -86,10 +169,14 @@ angular.module('bahmni.clinical')
                     var diagnosisBeingEdited = $scope.consultation.newlyAddedDiagnoses[index];
                     var diagnosis = new Bahmni.Common.Domain.Diagnosis(concept, diagnosisBeingEdited.order,
                         diagnosisBeingEdited.certainty, diagnosisBeingEdited.existingObs);
+                    
+                    var icd11Match = lookupIcd11ByName(concept.name);
+                    if (icd11Match) {
+                        diagnosis.icd11Code = icd11Match.code;
+                        diagnosis.icd11Name = icd11Match.name;
+                    }
+                    
                     if (_canAdd(diagnosis)) {
-                        /* TODO:
-                         change to say array[index]=newObj instead array.splice(index,1,newObj);
-                         */
                         $scope.consultation.newlyAddedDiagnoses.splice(index, 1, diagnosis);
                         getAlerts();
                     }
@@ -307,8 +394,15 @@ angular.module('bahmni.clinical')
             };
 
             var contextChange = function () {
+                var hasMainDiagnosis = $scope.consultation.mainDiagnosis && $scope.consultation.mainDiagnosis.uuid;
+                var hasNewDiagnoses = $scope.consultation.newlyAddedDiagnoses.some(function (d) { return !d.isEmpty(); });
+                var hasSavedDiagnoses = $scope.consultation.savedDiagnosesFromCurrentEncounter.length > 0;
+                if (!hasMainDiagnosis && (hasNewDiagnoses || hasSavedDiagnoses)) {
+                    $scope.errorMessage = "Main Diagnosis is required. Please select a Main Diagnosis before saving.";
+                    return { allow: false, errorMessage: $scope.errorMessage };
+                }
                 var invalidnewlyAddedDiagnoses = $scope.consultation.newlyAddedDiagnoses.filter(function (diagnosis) {
-                    return isDuplicateWithNewlyAddedDiagnosis(diagnosis) || !$scope.isValid(diagnosis) || isDuplicateWithSavedDiagnosis(diagnosis) || $scope.isDiagnosisStatusValid === false;;
+                    return isDuplicateWithNewlyAddedDiagnosis(diagnosis) || !$scope.isValid(diagnosis) || isDuplicateWithSavedDiagnosis(diagnosis) || $scope.isDiagnosisStatusValid === false;
                 });
                 var invalidSavedDiagnosesFromCurrentEncounter = $scope.consultation.savedDiagnosesFromCurrentEncounter.filter(function (diagnosis) {
                     return !$scope.isValid(diagnosis);
@@ -486,6 +580,10 @@ angular.module('bahmni.clinical')
                 return allDiagnoses ? allDiagnoses.filter(function (diagnosis) {
                     return !alreadyAddedToDiagnosis(diagnosis);
                 }) : [];
+            };
+
+            $scope.dirtyCheck = function (diagnosis) {
+                diagnosis.isDirty = true;
             };
 
             var alreadyAddedToDiagnosis = function (diagnosis) {

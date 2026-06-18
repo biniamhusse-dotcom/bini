@@ -8,8 +8,27 @@ angular.module('bahmni.common.displaycontrol.diagnosis')
                     return diagnosisService.getDiagnoses($scope.patientUuid, $scope.visitUuid).then(function (response) {
                         var diagnosisMapper = new Bahmni.DiagnosisMapper($rootScope.diagnosisStatus);
                         $scope.allDiagnoses = diagnosisMapper.mapDiagnoses(response.data);
+                        $scope.mainDiagnosisDi = null;
+                        $scope.additionalDiagnoses = [];
+                        var mainFound = false;
+                        $scope.allDiagnoses.forEach(function (d) {
+                            if (!d.voided) {
+                                if (!mainFound && d.order === "PRIMARY") {
+                                    $scope.mainDiagnosisDi = d;
+                                    mainFound = true;
+                                } else {
+                                    d.icd11Code = "";
+                                    d.icd11Name = "";
+                                    d.diagnosisOccurrence = "";
+                                    $scope.additionalDiagnoses.push(d);
+                                }
+                            }
+                        });
+                        if (!$scope.mainDiagnosisDi && $scope.additionalDiagnoses.length > 0) {
+                            $scope.mainDiagnosisDi = $scope.additionalDiagnoses.shift();
+                        }
                         if ($scope.showRuledOutDiagnoses == false) {
-                            $scope.allDiagnoses = _.filter($scope.allDiagnoses, function (diagnoses) {
+                            $scope.additionalDiagnoses = _.filter($scope.additionalDiagnoses, function (diagnoses) {
                                 return diagnoses.diagnosisStatus !== $rootScope.diagnosisStatus;
                             });
                         }

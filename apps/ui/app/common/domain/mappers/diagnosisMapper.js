@@ -23,6 +23,15 @@ Bahmni.DiagnosisMapper = function (diagnosisStatus) {
                 mappedDiagnosis.diagnosisStatus = diagnosisStatus;
             }
         }
+        if (mappedDiagnosis.parseIcd11FromComments) {
+            try {
+                mappedDiagnosis.parseIcd11FromComments();
+            } catch (error) {
+                console.error('Error parsing ICD-11 from comments:', error);
+                mappedDiagnosis.icd11Code = mappedDiagnosis.icd11Code || "";
+                mappedDiagnosis.diagnosisOccurrence = mappedDiagnosis.diagnosisOccurrence || "";
+            }
+        }
         return mappedDiagnosis;
     };
 

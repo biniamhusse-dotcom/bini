@@ -720,6 +720,7 @@ angular.module('bahmni.clinical').controller('ConsultationController',
                         $rootScope.cdssAlerts = cdssAlerts;
                     }
                     preSaveEvents();
+                    var originalNewDiagnoses = $scope.consultation.newlyAddedDiagnoses ? $scope.consultation.newlyAddedDiagnoses.slice() : [];
                     return spinner.forPromise($q.all([preSavePromise(),
                     encounterService.getEncounterType($state.params.programUuid, sessionService.getLoginLocationUuid())]).then(function (results) {
                         var encounterData = results[0];
@@ -743,7 +744,7 @@ angular.module('bahmni.clinical').controller('ConsultationController',
                                 consultation.lastvisited = $scope.lastvisited;
                                 return consultation;
                             }).then(function (savedConsultation) {
-                                return spinner.forPromise(diagnosisService.populateDiagnosisInformation($scope.patient.uuid, savedConsultation)
+                                return spinner.forPromise(diagnosisService.populateDiagnosisInformation($scope.patient.uuid, savedConsultation, originalNewDiagnoses)
                                     .then(function (consultationWithDiagnosis) {
                                         return saveConditions().then(function (savedConditions) {
                                             consultationWithDiagnosis.conditions = savedConditions;

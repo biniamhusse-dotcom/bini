@@ -16,6 +16,9 @@ Bahmni.Common.Domain.Diagnosis = function (codedAnswer, order, certainty, existi
     self.voided = voided;
     self.firstDiagnosis = null;
     self.comments = "";
+    self.icd11Code = "";
+    self.icd11Name = "";
+    self.diagnosisOccurrence = "";
 
     self.getDisplayName = function () {
         if (self.freeTextAnswer) {
@@ -81,5 +84,26 @@ Bahmni.Common.Domain.Diagnosis = function (codedAnswer, order, certainty, existi
 
     self.setAsNonCodedAnswer = function () {
         self.isNonCodedAnswer = !self.isNonCodedAnswer;
+    };
+
+    self.parseIcd11FromComments = function () {
+        try {
+            if (!self.comments || typeof self.comments !== 'string') {
+                return;
+            }
+            var remaining = self.comments;
+            var icd11Match = remaining.match(/^\[ICD11:([^\]]+)\]/);
+            if (icd11Match) {
+                self.icd11Code = icd11Match[1];
+                remaining = remaining.substring(icd11Match[0].length);
+            }
+            var occMatch = remaining.match(/^\[OCC:([^\]]+)\]/);
+            if (occMatch) {
+                self.diagnosisOccurrence = occMatch[1];
+                remaining = remaining.substring(occMatch[0].length);
+            }
+            self.comments = remaining.trim();
+        } catch (error) {
+        }
     };
 };
