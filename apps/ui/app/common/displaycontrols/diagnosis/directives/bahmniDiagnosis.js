@@ -5,7 +5,7 @@ angular.module('bahmni.common.displaycontrol.diagnosis')
         function (diagnosisService, $q, spinner, $rootScope, $filter, $translate, providerInfoService) {
             var controller = function ($scope) {
                 var getAllDiagnosis = function () {
-                    return diagnosisService.getDiagnoses($scope.patientUuid, $scope.visitUuid).then(function (response) {
+                    return diagnosisService.getDiagnoses($scope.patientUuid).then(function (response) {
                         var diagnosisMapper = new Bahmni.DiagnosisMapper($rootScope.diagnosisStatus);
                         $scope.allDiagnoses = diagnosisMapper.mapDiagnoses(response.data);
                         $scope.mainDiagnosisDi = null;
@@ -17,9 +17,6 @@ angular.module('bahmni.common.displaycontrol.diagnosis')
                                     $scope.mainDiagnosisDi = d;
                                     mainFound = true;
                                 } else {
-                                    d.icd11Code = "";
-                                    d.icd11Name = "";
-                                    d.diagnosisOccurrence = "";
                                     $scope.additionalDiagnoses.push(d);
                                 }
                             }

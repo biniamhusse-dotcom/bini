@@ -306,6 +306,7 @@ module.exports = function (grunt) {
                             'styles/fonts/**/*',
                             'clinical/config/*.json',
                             'i18n/**/*.json',
+                            'data/**/*.json',
                             'lib/**/*',
                             "micro-frontends-dist/i18n/**/*.json"
                         ]

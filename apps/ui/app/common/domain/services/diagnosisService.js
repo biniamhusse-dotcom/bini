@@ -84,15 +84,6 @@ angular.module('bahmni.common.domain')
                     }
                 }
 
-                var mainUuid = consultation.mainDiagnosis && consultation.mainDiagnosis.uuid;
-                consultation.savedDiagnosesFromCurrentEncounter.forEach(function (d) {
-                    if (mainUuid && d.codedAnswer && d.codedAnswer.uuid !== mainUuid) {
-                        d.icd11Code = "";
-                        d.icd11Name = "";
-                        d.diagnosisOccurrence = "";
-                    }
-                });
-
                 return consultation;
             });
         };

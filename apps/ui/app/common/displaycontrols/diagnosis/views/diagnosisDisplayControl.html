@@ -40,7 +40,10 @@
                 ng-class="::{'notes-open': (diagnosis.showDetails == true) || (diagnosis.showLatestDetails == true), 'test-notes-parent': diagnosis.comments}">
                 <td class="name">
                     <span id="diagnosisName" class="diagnosis-name" ng-class="::{'ruled-out': diagnosis.diagnosisStatus}">
+                        <span ng-if="::diagnosis.order === 'PRIMARY' && diagnosis.icd11Code" style="color:#f5a623;margin-right:4px;font-size:14px;">&#9733;</span>
                         {{::diagnosis.getDisplayName()}}
+                        <span ng-if="::diagnosis.order === 'PRIMARY' && diagnosis.icd11Code" style="display:inline-block;margin-left:6px;padding:1px 6px;background:#f5a623;color:white;border-radius:3px;font-size:11px;">ICD-11: {{::diagnosis.icd11Code}}</span>
+                        <span ng-if="::diagnosis.order === 'PRIMARY' && diagnosis.diagnosisOccurrence" style="display:inline-block;margin-left:4px;padding:1px 6px;background:#e8e8e8;color:#333;border-radius:3px;font-size:11px;">{{::diagnosis.diagnosisOccurrence}}</span>
                     </span>
                 </td>
 
