@@ -191,6 +191,16 @@
     "icon": "fa fa-calendar-o",
     "order": 8,
     "requiredPrivilege": "app:appointments"
+  },
+  "hmis": {
+    "id": "bahmni.hmis",
+    "extensionPointId": "org.bahmni.home.dashboard",
+    "type": "link",
+    "translationKey": "HMIS",
+    "url": "../hmis/#/dashboard",
+    "icon": "fa fa-bar-chart",
+    "order": 9,
+    "requiredPrivilege": "app:reports"
   }
 
 }

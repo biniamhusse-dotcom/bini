@@ -1,0 +1,22 @@
+{
+  "id": "bahmni.hmis",
+  "description": "HMIS Observation Reports",
+  "configOptions": {
+    "conceptSets": {
+      "name": "conceptSets",
+      "description": "List of concept sets available for HMIS reporting",
+      "type": "Array",
+      "defaultValue": [
+        { "name": "Vitals", "display": "Vitals" },
+        { "name": "Laboratory", "display": "Laboratory Results" },
+        { "name": "Radiology", "display": "Radiology" }
+      ]
+    }
+  },
+  "extensionPoints": [
+    {
+      "id": "org.bahmni.hmis.reports",
+      "description": "Extension point for HMIS reports"
+    }
+  ]
+}

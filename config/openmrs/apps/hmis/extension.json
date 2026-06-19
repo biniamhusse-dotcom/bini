@@ -1,0 +1,13 @@
+{
+  "bahmni.hmis": {
+    "extensionPointId": "org.bahmni.hmis.reports",
+    "type": "config",
+    "config": {
+      "conceptSets": [
+        { "name": "Vitals", "display": "Vitals" },
+        { "name": "Laboratory", "display": "Laboratory Results" },
+        { "name": "Radiology", "display": "Radiology" }
+      ]
+    }
+  }
+}
