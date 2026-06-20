@@ -49,6 +49,30 @@ angular.module('bahmni.hmis')
             return $q.all(promises);
         };
 
+        self.getEncountersForPatient = function (patientUuid, startDate, endDate) {
+            return $http.get("/openmrs/ws/rest/v1/encounter", {
+                params: {
+                    patient: patientUuid,
+                    fromdate: startDate ? moment(startDate).format("YYYY-MM-DD") : undefined,
+                    todate: endDate ? moment(endDate).format("YYYY-MM-DD") : undefined,
+                    v: "full",
+                    limit: 200
+                },
+                withCredentials: true
+            });
+        };
+
+        self.getDiagnoses = function (patientUuid, visitUuid) {
+            var params = { patientUuid: patientUuid };
+            if (visitUuid) {
+                params.visitUuid = visitUuid;
+            }
+            return $http.get(Bahmni.Common.Constants.bahmniDiagnosisUrl, {
+                params: params,
+                withCredentials: true
+            });
+        };
+
         self.exportToCsv = function (rows, filename) {
             var csvContent = "";
             if (rows.length > 0) {
