@@ -1,5 +1,6 @@
 'use strict';
 
 angular.module('bahmni.hmis')
-    .controller('DashboardHeaderController', ['$scope', '$rootScope', function ($scope, $rootScope) {
+    .controller('DashboardHeaderController', ['$scope', '$state', function ($scope, $state) {
+        $scope.$state = $state;
     }]);

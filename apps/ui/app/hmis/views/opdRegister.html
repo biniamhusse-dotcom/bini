@@ -1,0 +1,220 @@
+<style>
+    .opd-register-container { padding: 15px; max-width: 100%; margin: 0 auto; }
+    .opd-register-container h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #f5a623; padding-bottom: 8px; }
+    .opd-register-container .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .opd-register-container .toolbar .info { font-size: 13px; color: #666; }
+    .opd-register-container .toolbar .search-box input { padding: 5px 10px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; min-width: 200px; }
+    .btn-success { background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    .btn-success:hover { background: #218838; }
+    .btn-primary { background: #f5a623; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    .btn-primary:hover { background: #e6951a; }
+    .btn-secondary { background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    .btn-secondary:hover { background: #5a6268; }
+    .btn-danger { background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-sm { padding: 4px 10px !important; font-size: 12px !important; }
+    .table-wrap { overflow-x: auto; border: 1px solid #ddd; border-radius: 4px; }
+    .opd-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; min-width: 2800px; }
+    .opd-table th { background: #2c3e50; color: white; padding: 6px 3px; text-align: center; border: 1px solid #1a252f; white-space: nowrap; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+    .opd-table td { padding: 3px; border: 1px solid #ddd; vertical-align: middle; }
+    .opd-table td input, .opd-table td select { width: 100%; border: none; background: transparent; padding: 2px 4px; font-size: 11px; box-sizing: border-box; }
+    .opd-table td input:focus, .opd-table td select:focus { outline: 1px solid #f5a623; background: #fffbe6; }
+    .opd-table tbody tr:hover { background: #f0f7ff; }
+    .opd-table tbody tr.editing { background: #fffbe6; }
+    .opd-table .sno-col { width: 30px; text-align: center; }
+    .opd-table .date-col { width: 70px; }
+    .opd-table .mrn-col { width: 100px; }
+    .opd-table .age-col { width: 40px; }
+    .opd-table .sex-col { width: 35px; }
+    .opd-table .addr-col { width: 100px; }
+    .opd-table .diag-name-col { width: 120px; }
+    .opd-table .diag-code-col { width: 90px; }
+    .opd-table .chk-col { width: 35px; text-align: center; }
+    .opd-table .rta-col { width: 70px; }
+    .opd-table .pop-cat-col { width: 50px; }
+    .opd-table .tb-col { width: 70px; }
+    .opd-table .eval-col { width: 80px; }
+    .opd-table .ref-col { width: 60px; }
+    .opd-table .remark-col { width: 100px; }
+    .opd-table .actions-col { width: 60px; text-align: center; }
+    .opd-table .actions-col button { margin: 1px; }
+    .opd-table td input[type="checkbox"] { width: auto; margin: 0 auto; display: block; }
+    .add-row-bar { background: #f8f9fa; padding: 6px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; }
+    .add-row-bar .btn { margin: 2px; }
+    .legends { margin-top: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+    .legends h4 { color: #2c3e50; margin-bottom: 8px; }
+    .legends .legend-grid { display: flex; flex-wrap: wrap; gap: 20px; }
+    .legends .legend-section { flex: 1; min-width: 250px; }
+    .legends table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .legends table th { background: #eee; text-align: left; padding: 4px 6px; border: 1px solid #ddd; }
+    .legends table td { padding: 3px 6px; border: 1px solid #ddd; }
+    .opd-empty { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+</style>
+
+<div class="opd-register-container">
+    <h3>OPD Register</h3>
+
+    <div class="toolbar">
+        <div class="info">
+            Total Entries: {{filteredData.length}} | Page: <span style="font-weight:600;">Daily OPD Register</span>
+        </div>
+        <div class="search-box">
+            <input type="text" ng-model="searchText" placeholder="Search in table..." />
+        </div>
+        <div>
+            <button class="btn-success btn-sm" ng-click="exportCsv()" ng-disabled="filteredData.length === 0">Export CSV</button>
+        </div>
+    </div>
+
+    <div ng-if="entries.length === 0 && editingIndex === -1" class="opd-empty">
+        No entries yet. Fill out the form below and click "Add Entry" to start the OPD Register.
+    </div>
+
+    <div class="table-wrap" ng-if="entries.length > 0 || editingIndex !== -1">
+        <table class="opd-table">
+            <thead>
+                <tr>
+                    <th class="sno-col">S/No</th>
+                    <th class="date-col">Service Date</th>
+                    <th class="mrn-col">MRN</th>
+                    <th class="age-col">Age</th>
+                    <th class="sex-col">Sex</th>
+                    <th class="addr-col">Address</th>
+                    <th class="diag-name-col">Diagnosis Name</th>
+                    <th class="diag-code-col">ICD-11 Code</th>
+                    <th class="chk-col">New</th>
+                    <th class="chk-col">Repeat</th>
+                    <th class="rta-col">RTA Ped</th>
+                    <th class="rta-col">RTA Mcyc</th>
+                    <th class="rta-col">RTA Veh</th>
+                    <th class="chk-col">HIV Done</th>
+                    <th class="chk-col">HIV Perf</th>
+                    <th class="pop-cat-col">Pop Cat</th>
+                    <th class="chk-col">HIV Res+</th>
+                    <th class="chk-col">Malaria</th>
+                    <th class="chk-col">TB Screen</th>
+                    <th class="chk-col">TB Res+</th>
+                    <th class="eval-col">Diag Eval</th>
+                    <th class="tb-col">TB No</th>
+                    <th class="ref-col">Referred</th>
+                    <th class="chk-col">Died</th>
+                    <th class="chk-col">Death Vrf</th>
+                    <th class="remark-col">Remark</th>
+                    <th class="actions-col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="entry in filteredData track by $index" ng-class="{editing: $index === editingIndex}">
+                    <td class="sno-col">{{entry.sno}}</td>
+                    <td class="date-col">{{entry.serviceDate | date:'dd/MM/yy'}}</td>
+                    <td class="mrn-col">{{entry.mrn}}</td>
+                    <td class="age-col">{{entry.age}}</td>
+                    <td class="sex-col">{{entry.sex}}</td>
+                    <td class="addr-col">{{entry.address}}</td>
+                    <td class="diag-name-col">{{entry.diagnosisName}}</td>
+                    <td class="diag-code-col">{{entry.diagnosisCode}}</td>
+                    <td class="chk-col">{{entry.isNew ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.isRepeat ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.rtaPedestrian ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.rtaMotorcyclist ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.rtaVehicle ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.hivTestDone ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.hivTestPerformed ? '+' : ''}}</td>
+                    <td class="pop-cat-col">{{entry.populationCategory}}</td>
+                    <td class="chk-col">{{entry.hivResultPositive ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.travelHistoryMalaria ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.screenedForTB ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.tbScreenResultPositive ? '+' : ''}}</td>
+                    <td class="eval-col">{{entry.diagnosticEval}}</td>
+                    <td class="tb-col">{{entry.tbNumber}}</td>
+                    <td class="ref-col">{{entry.referredTo}}</td>
+                    <td class="chk-col">{{entry.died ? '+' : ''}}</td>
+                    <td class="chk-col">{{entry.deathVerified ? '+' : ''}}</td>
+                    <td class="remark-col">{{entry.remark}}</td>
+                    <td class="actions-col">
+                        <button class="btn-secondary btn-sm" ng-click="editEntry($index)" title="Edit">E</button>
+                        <button class="btn-danger btn-sm" ng-click="deleteEntry($index)" title="Delete">X</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="add-row-bar">
+        <form ng-submit="editingIndex >= 0 ? updateEntry() : addEntry()" style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
+            <input type="date" ng-model="newEntry.serviceDate" placeholder="Date" style="width:90px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
+            <input type="text" ng-model="newEntry.mrn" placeholder="MRN" style="width:80px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
+            <input type="number" ng-model="newEntry.age" placeholder="Age" style="width:40px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
+            <select ng-model="newEntry.sex" style="width:50px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;">
+                <option value="">Sex</option>
+                <option value="M">M</option>
+                <option value="F">F</option>
+            </select>
+            <input type="text" ng-model="newEntry.address" placeholder="Address" style="width:100px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
+            <input type="text" ng-model="newEntry.diagnosisName" placeholder="Diagnosis" style="width:100px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
+            <input type="text" ng-model="newEntry.diagnosisCode" placeholder="ICD-11" style="width:70px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.isNew" /> New</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.isRepeat" /> Rpt</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.rtaPedestrian" /> Ped</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.rtaMotorcyclist" /> Cyc</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.rtaVehicle" /> Veh</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.hivTestDone" /> HIV</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.hivTestPerformed" /> Perf</label>
+            <select ng-model="newEntry.populationCategory" style="width:50px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;">
+                <option value="">Pop</option>
+                <option ng-repeat="cat in targetPopCategories" value="{{cat.code}}">{{cat.code}}</option>
+            </select>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.hivResultPositive" /> Res+</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.travelHistoryMalaria" /> Mal</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.screenedForTB" /> Scrn</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.tbScreenResultPositive" /> TB+</label>
+            <select ng-model="newEntry.diagnosticEval" style="width:60px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;">
+                <option value="">Eval</option>
+                <option ng-repeat="d in diagEvalTypes" value="{{d.code}}">{{d.code}}</option>
+            </select>
+            <input type="text" ng-model="newEntry.tbNumber" placeholder="TB No" style="width:50px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
+            <select ng-model="newEntry.referredTo" style="width:60px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;">
+                <option value="">Ref</option>
+                <option ng-repeat="r in referralCodes" value="{{r.code}}">{{r.code}}</option>
+            </select>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.died" /> Died</label>
+            <label style="font-size:11px;"><input type="checkbox" ng-model="newEntry.deathVerified" /> DV</label>
+            <input type="text" ng-model="newEntry.remark" placeholder="Remark" style="width:80px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
+            <button type="submit" class="btn-primary btn-sm">{{editingIndex >= 0 ? 'Update' : 'Add'}}</button>
+            <button type="button" class="btn-secondary btn-sm" ng-click="cancelEdit()" ng-show="editingIndex >= 0">Cancel</button>
+        </form>
+    </div>
+
+    <div class="legends">
+        <h4>Codes &amp; Legends</h4>
+        <div class="legend-grid">
+            <div class="legend-section">
+                <strong>Col. 16 - Targeted Population Category:</strong>
+                <table>
+                    <thead><tr><th>Code</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr ng-repeat="cat in targetPopCategories"><td>{{cat.code}}</td><td>{{cat.label}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="legend-section">
+                <strong>Col. 21 - Type of Diagnostic Evaluation:</strong>
+                <table>
+                    <thead><tr><th>Code</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr ng-repeat="d in diagEvalTypes"><td>{{d.code}}</td><td>{{d.label}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="legend-section">
+                <strong>Col. 23 - Referred To:</strong>
+                <table>
+                    <thead><tr><th>Code</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr ng-repeat="r in referralCodes"><td>{{r.code}}</td><td>{{r.label}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

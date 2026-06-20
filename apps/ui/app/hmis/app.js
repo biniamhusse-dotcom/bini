@@ -47,6 +47,22 @@ angular
                         controller: 'HmisController'
                     }
                 }
+            }).state('dashboard.registration', {
+                url: '/registration?appName',
+                views: {
+                    'content': {
+                        templateUrl: 'views/opdRegister.html',
+                        controller: 'OpdRegisterController'
+                    }
+                }
+            }).state('dashboard.opdRegister', {
+                url: '/opdRegister?appName',
+                views: {
+                    'content': {
+                        templateUrl: 'views/opdRegister.html',
+                        controller: 'OpdRegisterController'
+                    }
+                }
             });
 
             var getAppName = function () {
