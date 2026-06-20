@@ -50,9 +50,8 @@
         <div class="filter-row">
             <div class="filter-group" style="flex:2;min-width:200px;">
                 <label>Observation Template / Concept Set</label>
-                <select ng-model="filters.conceptSet">
+                <select ng-model="filters.conceptSet" ng-options="cs.uuid as cs.display for cs in conceptSets">
                     <option value="">-- Select Concept Set --</option>
-                    <option ng-repeat="cs in conceptSets" value="{{cs.name}}">{{cs.display || cs.name}}</option>
                 </select>
             </div>
             <div class="filter-group">

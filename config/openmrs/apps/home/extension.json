@@ -200,7 +200,7 @@
     "url": "../hmis/#/dashboard",
     "icon": "fa fa-bar-chart",
     "order": 9,
-    "requiredPrivilege": "app:reports"
+    "requiredPrivilege": "app:hmis"
   }
 
 }

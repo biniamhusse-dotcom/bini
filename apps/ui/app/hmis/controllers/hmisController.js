@@ -26,12 +26,10 @@ angular.module('bahmni.hmis')
         $scope.sortReverse = false;
         $scope.searchText = '';
 
-        var hmisConfig = appService.getAppDescriptor().getConfigForPage("hmisReports");
-
         var init = function () {
-            if (hmisConfig && hmisConfig.conceptSets) {
-                $scope.conceptSets = hmisConfig.conceptSets;
-            }
+            hmisService.getConceptSets().then(function (response) {
+                $scope.conceptSets = response.data.setMembers || [];
+            });
             hmisService.getLocations().then(function (response) {
                 $scope.locations = response.data.results || [];
             });
@@ -50,7 +48,7 @@ angular.module('bahmni.hmis')
             var query = $scope.filters.patientQuery;
             if (query && query.length >= 3) {
                 hmisService.searchPatients(query).then(function (response) {
-                    $scope.searchResults = response.data.pageOfResults || [];
+                    $scope.searchResults = response.data.results || [];
                 });
             } else {
                 $scope.searchResults = [];
@@ -81,6 +79,10 @@ angular.module('bahmni.hmis')
                 $scope.errorMessage = 'Start date cannot be later than end date';
                 return;
             }
+            if (!$scope.selectedPatient) {
+                $scope.errorMessage = 'Please select a patient';
+                return;
+            }
 
             $scope.errorMessage = '';
             $scope.loading = true;
@@ -98,48 +100,74 @@ angular.module('bahmni.hmis')
                 params.patientUuid = $scope.selectedPatient.uuid;
             }
 
+            var conceptSetValue = $scope.filters.conceptSet;
+            var conceptDisplayName = '';
+            $scope.conceptSets.forEach(function (cs) {
+                if (cs.uuid === conceptSetValue) {
+                    conceptDisplayName = cs.display;
+                }
+            });
+
             spinner.forPromise(
                 hmisService.getObsInFlowSheet(
                     params.patientUuid,
-                    params.conceptSet,
-                    null,
-                    null,
-                    null,
+                    conceptDisplayName,
                     200,
                     params.startDate,
                     params.endDate
                 ).then(function (response) {
-                    var data = response.data;
-                    if (data && data.rows && data.rows.length > 0) {
-                        $scope.columns = data.headers || [];
-                        $scope.reportData = data.rows.map(function (row) {
-                            var flatRow = {};
-                            if (data.headers) {
-                                data.headers.forEach(function (header) {
-                                    var col = row.columns[header.name];
-                                    if (col) {
-                                        var values = [];
-                                        if (angular.isArray(col)) {
-                                            col.forEach(function (item) {
-                                                if (item && item.value) {
-                                                    values.push(item.value.shortName || item.value.name || item.value);
-                                                }
-                                            });
-                                        } else if (col.value) {
-                                            values.push(col.value.shortName || col.value.name || col.value);
-                                        }
-                                        flatRow[header.name] = values.join(', ');
-                                    } else {
-                                        flatRow[header.name] = '';
-                                    }
-                                });
+                    var obsList = response.data || [];
+                    var encUuids = [];
+                    obsList.forEach(function (obs) {
+                        if (obs.encounterUuid && encUuids.indexOf(obs.encounterUuid) === -1) {
+                            encUuids.push(obs.encounterUuid);
+                        }
+                    });
+                    if (encUuids.length === 0) {
+                        return { obsList: obsList, encMap: {} };
+                    }
+                    return hmisService.getEncounterByUuids(encUuids).then(function (encResponses) {
+                        var encMap = {};
+                        encResponses.forEach(function (er) {
+                            var enc = er.data;
+                            if (enc && enc.uuid) {
+                                encMap[enc.uuid] = enc;
                             }
-                            flatRow._encounterDate = row.encounterDateTime || '';
-                            flatRow._patientName = row.patientName || '';
-                            flatRow._patientId = row.patientId || '';
-                            flatRow._location = row.location || '';
-                            return flatRow;
                         });
+                        return { obsList: obsList, encMap: encMap };
+                    });
+                }).then(function (result) {
+                    var obsList = result.obsList;
+                    var encMap = result.encMap;
+
+                    if (obsList.length > 0) {
+                        var conceptNames = [];
+                        var rows = [];
+                        obsList.forEach(function (obs) {
+                            var members = obs.groupMembers && obs.groupMembers.length > 0 ? obs.groupMembers : [obs];
+                            var enc = encMap[obs.encounterUuid] || {};
+                            var dt = enc.encounterDatetime || obs.obsDatetime || '';
+                            var locObj = enc.location || {};
+                            var loc = locObj.display || '';
+                            var row = { _encounterDate: dt, _location: loc };
+                            members.forEach(function (m) {
+                                var cpt = m.concept || {};
+                                var name = cpt.shortName || (typeof cpt.name === 'object' ? (cpt.name.name || cpt.name.display) : cpt.name) || cpt.display || 'Unknown';
+                                if (conceptNames.indexOf(name) === -1) { conceptNames.push(name); }
+                                var val = m.value;
+                                if (val !== null && val !== undefined) {
+                                    if (typeof val === 'object') {
+                                        val = val.shortName || (typeof val.name === 'object' ? (val.name.name || val.name.display) : val.name) || val.display || JSON.stringify(val);
+                                    }
+                                } else {
+                                    val = '';
+                                }
+                                row[name] = val;
+                            });
+                            rows.push(row);
+                        });
+                        $scope.columns = conceptNames.map(function (n) { return { name: n }; });
+                        $scope.reportData = rows;
                         $scope.filteredData = [].concat($scope.reportData);
                         $scope.reportGenerated = true;
                     } else {
@@ -149,9 +177,9 @@ angular.module('bahmni.hmis')
                         $scope.reportGenerated = true;
                     }
                     $scope.loading = false;
-                }, function () {
+                }, function (error) {
                     $scope.loading = false;
-                    $scope.errorMessage = 'Error generating report. Please try again.';
+                    $scope.errorMessage = 'Error generating report. ' + (error.data && error.data.error ? error.data.error.message : (error.statusText || 'Please check server logs.'));
                 })
             );
         };

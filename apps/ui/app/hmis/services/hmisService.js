@@ -5,8 +5,8 @@ angular.module('bahmni.hmis')
         var self = this;
 
         self.searchPatients = function (query) {
-            return $http.get(Bahmni.Common.Constants.bahmniSearchUrl + "/patient", {
-                params: { q: query, limit: 20 }
+            return $http.get("/openmrs/ws/rest/v1/patient", {
+                params: { q: query, limit: 20, v: "full" }
             });
         };
 
@@ -16,30 +16,37 @@ angular.module('bahmni.hmis')
             });
         };
 
-        self.getConceptByName = function (name) {
-            return $http.get(Bahmni.Common.Constants.conceptUrl, {
+        self.getConceptSets = function () {
+            return $http.get(Bahmni.Common.Constants.conceptUrl + "/d4739519-5e07-11ef-8f7c-0242ac120002", {
                 params: {
-                    v: "custom:(uuid,name,display,conceptClass,setMembers:(uuid,name,display))",
-                    name: name
+                    v: "custom:(uuid,name,display,setMembers:(uuid,name,display))"
                 }
             });
         };
 
-        self.getObsInFlowSheet = function (patientUuid, conceptSet, groupByConcept, orderByConcept, conceptNames,
-                                            numberOfVisits, startDate, endDate) {
-            var params = {
-                patientUuid: patientUuid,
-                conceptSet: conceptSet,
-                groupByConcept: groupByConcept,
-                orderByConcept: orderByConcept,
-                conceptNames: conceptNames,
-                numberOfVisits: numberOfVisits || 100,
-                startDate: startDate ? Bahmni.Common.Util.DateUtil.parseLongDateToServerFormat(startDate) : undefined,
-                endDate: endDate ? Bahmni.Common.Util.DateUtil.parseLongDateToServerFormat(endDate) : undefined
-            };
-            return $http.get(Bahmni.Common.Constants.observationsUrl + "/flowSheet", {
-                params: params
+        self.getObsInFlowSheet = function (patientUuid, conceptSet, numberOfVisits, startDate, endDate) {
+            return $http.get(Bahmni.Common.Constants.observationsUrl, {
+                params: {
+                    patientUuid: patientUuid,
+                    concept: conceptSet,
+                    numberOfVisits: numberOfVisits || 100,
+                    scope: "latest"
+                },
+                withCredentials: true
             });
+        };
+
+        self.getEncounterByUuids = function (encounterUuids) {
+            if (!encounterUuids || encounterUuids.length === 0) {
+                return $q.when({ data: [] });
+            }
+            var promises = encounterUuids.map(function (uuid) {
+                return $http.get("/openmrs/ws/rest/v1/encounter/" + uuid, {
+                    params: { v: "custom:(uuid,encounterDatetime,location:(display))" },
+                    withCredentials: true
+                });
+            });
+            return $q.all(promises);
         };
 
         self.exportToCsv = function (rows, filename) {
