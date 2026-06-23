@@ -688,7 +688,79 @@ Data files:
 
 ---
 
-## Troubleshooting
+## HMIS Reports
+
+The HMIS module provides hospital-level reporting dashboards accessible from the Bahmni home page.
+
+### Modules
+
+| Module | URL | Description |
+|--------|-----|-------------|
+| **HMIS Report** | `/bahmni/hmis/#/dashboard/hmis` | Observation-based report filtered by concept set and patient |
+| **OPD Register** | `/bahmni/hmis/#/dashboard/registration` | Auto-populated daily OPD encounter register with Ethiopian calendar |
+
+### OPD Register
+
+Displays all patients who had encounters on a selected date range, with their PRIMARY diagnosis from the patient chart.
+
+#### How to use
+
+1. Navigate to **Registration → OPD Register** from the Bahmni home page
+2. Select a date range using the **Ethiopian calendar** date pickers (From / To)
+3. Click **Fetch Register** — the system searches for encounters in that range
+4. For each unique patient, the PRIMARY diagnosis is fetched and displayed
+5. ICD-11 codes are extracted from the diagnosis data
+6. Use the **Search** box to filter rows in the table
+7. Click **Export CSV** to download the register
+
+#### Data flow
+
+```
+Fetch Register
+  ├─ Try 1: GET /openmrs/ws/rest/v1/encounter?fromdate=...&todate=...
+  │         (encounters directly, no patient filter — some servers support this)
+  │
+  └─ Fallback: GET /openmrs/ws/rest/v1/visit?fromdate=...&todate=...
+              (visits with ±30 day expanded range, then filter encounters by date)
+  
+  For each patient → GET /bahmnicore/diagnosis/search?patientUuid=...
+                    → Extract PRIMARY diagnosis (order == 'PRIMARY')
+                    → Read ICD-11 code from diagnosis.icd11Code
+```
+
+- The encounter date range is converted from Ethiopian to Gregorian automatically
+- All checked columns (RTA, HIV, TB, etc.) default to empty — they require clinical data not yet available via the API
+- The table is **read-only** — no manual data entry (add/edit/delete)
+
+#### HMIS Report
+
+The classic HMIS report fetches observations grouped by concept set:
+
+```
+/bahmnicore/observations?patientUuid=...&concept=...&numberOfVisits=...&scope=latest
+```
+
+1. Select a **patient** (required — observations API needs patient UUID)
+2. Select a **concept set** (e.g., "History and Physical Examination")
+3. Click **Fetch Report** — observations are grouped by visit
+4. Encounter date and location are fetched separately from:
+   `GET /openmrs/ws/rest/v1/encounter/{uuid}`
+
+#### Key Files
+
+| File | Purpose |
+|------|---------|
+| `apps/ui/app/hmis/init.js` | Module declaration, depends on `bahmni.common.ethiopianDateSelector` |
+| `apps/ui/app/hmis/app.js` | Route definitions — `dashboard.hmis`, `dashboard.registration`, `dashboard.opdRegister` |
+| `apps/ui/app/hmis/controllers/hmisController.js` | HMIS Report — observations + encounter details |
+| `apps/ui/app/hmis/controllers/opdRegisterController.js` | OPD Register — auto-fetch encounters by date, PRIMARY diagnosis |
+| `apps/ui/app/hmis/views/opdRegister.html` | OPD Register view — Ethiopian date pickers, read-only table, CSV export |
+| `apps/ui/app/hmis/services/hmisService.js` | API service — encounters, visits, diagnoses, CSV export |
+| `apps/ui/app/hmis/views/dashboardHeader.html` | Header tabs — HMIS Report, Registration, OPD Register |
+| `apps/ui/app/common/constants.js` | API URL constants (`bahmniDiagnosisUrl`, `observationsUrl`) |
+| `apps/ui/app/common/ethiopianDateSelector/` | Ethiopian calendar directive and conversion service |
+
+---
 
 ### Docker not responding
 
