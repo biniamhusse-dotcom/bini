@@ -49,7 +49,7 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
                 calendar: calendar,
                 onSelect: function () {
                     var eth = $(element[0].childNodes[0].childNodes[0]).val();
-                    var greg = DateUtil.parse(ethiopianGregorianService.ethToGreg(eth));
+                    var greg = moment(ethiopianGregorianService.ethToGreg(eth), "M/D/YYYY").toDate();
                     scope.date = greg;
                     scope.$apply();
                     scope.handler();
@@ -127,7 +127,7 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
                 calendar: calendar,
                 onSelect: function () {
                     var eth = $(element[0].childNodes[0].childNodes[1]).val();
-                    var greg = DateUtil.parse(ethiopianGregorianService.ethToGreg(eth));
+                    var greg = moment(ethiopianGregorianService.ethToGreg(eth), "M/D/YYYY").toDate();
                     scope.date = greg;
                     scope.$apply();
                     scope.handler();
@@ -194,7 +194,7 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
                 calendar: calendar,
                 onSelect: function () {
                     var eth = $(element[0].childNodes[0].childNodes[0]).val();
-                    var greg = Bahmni.Common.Util.DateUtil.parse(ethiopianGregorianService.ethToGreg(eth));
+                    var greg = moment(ethiopianGregorianService.ethToGreg(eth), "M/D/YYYY").toDate();
                     scope.date = greg;
                     scope.$apply();
                     scope.handler(scope.handlerParam);

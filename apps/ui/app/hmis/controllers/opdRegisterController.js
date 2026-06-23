@@ -1,22 +1,17 @@
 'use strict';
 
 angular.module('bahmni.hmis')
-    .controller('OpdRegisterController', ['$scope', '$filter', 'hmisService', 'spinner', '$q', function ($scope, $filter, hmisService, spinner, $q) {
+    .controller('OpdRegisterController', ['$scope', '$filter', 'hmisService', 'spinner', '$q', 'ethiopianGregorianService', function ($scope, $filter, hmisService, spinner, $q, ethiopianGregorianService) {
 
         $scope.entries = [];
-        $scope.newEntry = {};
-        $scope.searchText = '';
         $scope.filteredData = [];
-        $scope.editingIndex = -1;
         $scope.isLoading = false;
-        $scope.selectedPatient = null;
-        $scope.filters = {
-            startDate: new Date(),
-            endDate: new Date(),
-            patientQuery: ''
-        };
-        $scope.searchResults = [];
+        $scope.selectedDateFrom = new Date();
+        $scope.selectedDateTo = new Date();
+        $scope.searchText = '';
         $scope.errorMessage = '';
+        $scope.totalCount = 0;
+        $scope.hasFetched = false;
 
         var targetPopCategories = [
             { code: 'A', label: 'Female Commercial Sex workers' },
@@ -51,191 +46,241 @@ angular.module('bahmni.hmis')
         $scope.diagEvalTypes = diagEvalTypes;
         $scope.referralCodes = referralCodes;
 
-        $scope.searchPatient = function (query) {
-            if (query && query.length >= 3) {
-                return hmisService.searchPatients(query).then(function (response) {
-                    return response.data.pageOfResults || [];
-                });
+        $scope.noop = function () {};
+
+        function getPatientId(patient) {
+            if (!patient) return '';
+            if (patient.identifiers && patient.identifiers.length > 0) {
+                return patient.identifiers[0].identifier;
             }
-            return [];
-        };
+            return patient.display || '';
+        }
 
-        $scope.onPatientQueryChange = function () {
-            var query = $scope.filters.patientQuery;
-            if (query && query.length >= 3) {
-                hmisService.searchPatients(query).then(function (response) {
-                    $scope.searchResults = response.data.results || [];
-                });
-            } else {
-                $scope.searchResults = [];
+        function getAge(person) {
+            return person ? person.age : '';
+        }
+
+        function getSex(person) {
+            return person ? person.gender : '';
+        }
+
+        function getAddress(person) {
+            if (person && person.addresses && person.addresses.length > 0) {
+                var a = person.addresses[0];
+                return (a.address1 || '') + ' ' + (a.cityVillage || '');
             }
-        };
+            return '';
+        }
 
-        $scope.selectPatient = function (patient) {
-            $scope.selectedPatient = patient;
-            $scope.filters.patientQuery = patient.display || patient.identifier;
-            $scope.searchResults = [];
-        };
+        function isNewVisit(occurrence) {
+            return occurrence === 'New' || occurrence === 'NEW' || occurrence === 'new';
+        }
 
-        $scope.clearPatient = function () {
-            $scope.selectedPatient = null;
-            $scope.filters.patientQuery = '';
-        };
+        function isRepeatVisit(occurrence) {
+            return occurrence === 'Repeat' || occurrence === 'REPEAT' || occurrence === 'repeat';
+        }
 
-        $scope.fetchFromChart = function () {
-            if (!$scope.selectedPatient) {
-                $scope.errorMessage = 'Please select a patient';
-                return;
-            }
-            if (!$scope.filters.startDate || !$scope.filters.endDate) {
-                $scope.errorMessage = 'Please select start and end dates';
-                return;
-            }
-
+        $scope.fetchRegister = function () {
             $scope.errorMessage = '';
             $scope.isLoading = true;
+            $scope.hasFetched = false;
 
-            var patient = $scope.selectedPatient;
-            var patientUuid = patient.uuid;
-            var identifier = '';
-            if (patient.identifiers && patient.identifiers.length > 0) {
-                identifier = patient.identifiers[0].identifier;
+            function resolveGregDate(d) {
+                if (typeof d === 'string' && d.indexOf('/') >= 0) {
+                    try {
+                        var greg = ethiopianGregorianService.ethToGreg(d);
+                        var parts = greg.split('/');
+                        return new Date(parts[2], parts[0] - 1, parts[1]);
+                    } catch (e) {
+                        return new Date();
+                    }
+                }
+                if (typeof d === 'string') {
+                    return new Date(d);
+                }
+                return d || new Date();
             }
-            var age = patient.person ? patient.person.age : '';
-            var sex = patient.person ? patient.person.gender : '';
-            var address = '';
-            if (patient.person && patient.person.addresses && patient.person.addresses.length > 0) {
-                var a = patient.person.addresses[0];
-                address = (a.address1 || '') + ' ' + (a.address2 || '') + ' ' + (a.cityVillage || '');
+
+            var gregFrom = resolveGregDate($scope.selectedDateFrom);
+            var gregTo = resolveGregDate($scope.selectedDateTo);
+
+            var dateFromStr = $filter('date')(gregFrom, 'yyyy-MM-dd');
+            var dateToStr = $filter('date')(gregTo, 'yyyy-MM-dd');
+
+            function processEncounters(allEncounters) {
+                if (!allEncounters || allEncounters.length === 0) {
+                    $scope.isLoading = false;
+                    $scope.entries = [];
+                    $scope.filteredData = [];
+                    $scope.totalCount = 0;
+                    $scope.hasFetched = true;
+                    $scope.errorMessage = 'No encounters found for the selected date';
+                    return;
+                }
+
+                var encounterRows = [];
+                allEncounters.forEach(function (enc) {
+                    var patient = enc.patient || {};
+                    encounterRows.push({
+                        patient: patient,
+                        person: patient.person || {},
+                        encounterDatetime: enc.encounterDatetime || '',
+                        location: enc.location || {},
+                        encounterUuid: enc.uuid,
+                        patientUuid: patient.uuid || ''
+                    });
+                });
+
+                var patientUuids = [];
+                encounterRows.forEach(function (row) {
+                    if (row.patientUuid && patientUuids.indexOf(row.patientUuid) === -1) {
+                        patientUuids.push(row.patientUuid);
+                    }
+                });
+
+                var diagPromises = patientUuids.map(function (puuid) {
+                    return hmisService.getDiagnoses(puuid, null);
+                });
+
+                return $q.all(diagPromises).then(function (diagResponses) {
+                    var diagByPatient = {};
+                    diagResponses.forEach(function (dr, idx) {
+                        var diagnoses = dr.data || [];
+                        var puuid = patientUuids[idx];
+                        diagnoses.forEach(function (d) {
+                            if (d.order === 'PRIMARY' || d.order === 'primary') {
+                                if (!diagByPatient[puuid]) {
+                                    diagByPatient[puuid] = d;
+                                }
+                            }
+                        });
+                    });
+
+                    var rows = [];
+                    encounterRows.forEach(function (er, idx) {
+                        var patient = er.patient || {};
+                        var person = patient.person || {};
+                        var mainDiag = diagByPatient[er.patientUuid] || null;
+
+                        var diagName = mainDiag && mainDiag.codedAnswer ? (mainDiag.codedAnswer.name || mainDiag.codedAnswer.display || '') : '';
+                        var diagCode = mainDiag ? (mainDiag.icd11Code || '') : '';
+                        var isNew = mainDiag ? isNewVisit(mainDiag.diagnosisOccurrence) : false;
+                        var isRepeat = mainDiag ? isRepeatVisit(mainDiag.diagnosisOccurrence) : false;
+
+                        rows.push({
+                            sno: idx + 1,
+                            serviceDate: er.encounterDatetime,
+                            mrn: getPatientId(patient),
+                            age: getAge(person),
+                            sex: getSex(person),
+                            address: getAddress(person),
+                            diagnosisName: diagName,
+                            diagnosisCode: diagCode,
+                            isNew: isNew,
+                            isRepeat: isRepeat,
+                            rtaPedestrian: false,
+                            rtaMotorcyclist: false,
+                            rtaVehicle: false,
+                            hivTestDone: false,
+                            hivTestPerformed: false,
+                            populationCategory: '',
+                            hivResultPositive: false,
+                            travelHistoryMalaria: false,
+                            screenedForTB: false,
+                            tbScreenResultPositive: false,
+                            diagnosticEval: '',
+                            tbNumber: '',
+                            referredTo: '',
+                            died: false,
+                            deathVerified: false,
+                            remark: ''
+                        });
+                    });
+
+                    $scope.entries = rows;
+                    $scope.filteredData = [].concat(rows);
+                    $scope.totalCount = rows.length;
+                    $scope.isLoading = false;
+                    $scope.hasFetched = true;
+                });
             }
 
             spinner.forPromise(
-                hmisService.getEncountersForPatient(patientUuid, $scope.filters.startDate, $scope.filters.endDate)
+                hmisService.getEncountersByDateRange(dateFromStr, dateToStr, 500)
                     .then(function (encResponse) {
                         var encounters = encResponse.data.results || [];
-                        if (encounters.length === 0) {
-                            $scope.isLoading = false;
-                            $scope.errorMessage = 'No encounters found for this patient in the selected date range';
-                            return [];
+                        if (encounters.length > 0) {
+                            return processEncounters(encounters);
                         }
-
-                        var uniqueEncounterUuids = [];
-                        encounters.forEach(function (e) {
-                            if (uniqueEncounterUuids.indexOf(e.uuid) === -1) {
-                                uniqueEncounterUuids.push(e.uuid);
+                        // Try visit API with expanded range
+                        var expFrom = moment(dateFromStr).subtract(30, 'days').format("YYYY-MM-DD");
+                        var expTo = moment(dateToStr).add(30, 'days').format("YYYY-MM-DD");
+                        return hmisService.getVisitsByDate(expFrom, expTo, 500).then(function (visitResponse) {
+                            var visits = visitResponse.data.results || [];
+                            if (visits.length === 0) {
+                                $scope.isLoading = false;
+                                $scope.entries = [];
+                                $scope.filteredData = [];
+                                $scope.totalCount = 0;
+                                $scope.hasFetched = true;
+                                $scope.errorMessage = 'No visits or encounters found for the selected date';
+                                return;
                             }
-                        });
-
-                        var diagPromises = uniqueEncounterUuids.map(function (encUuid) {
-                            return hmisService.getDiagnoses(patientUuid, encUuid);
-                        });
-
-                        return $q.all(diagPromises).then(function (diagResponses) {
-                            var rows = [];
-                            var sno = $scope.entries.length + 1;
-
-                            diagResponses.forEach(function (dr, idx) {
-                                var diagnoses = dr.data || [];
-                                var mainDiag = null;
-                                diagnoses.forEach(function (d) {
-                                    if (d.order === 'PRIMARY' && !mainDiag) {
-                                        mainDiag = d;
-                                    }
-                                });
-
-                                var enc = encounters[idx] || {};
-                                var serviceDate = enc.encounterDatetime || '';
-                                var diagName = '';
-                                var diagCode = '';
-                                var isNew = '';
-                                var isRepeat = '';
-
-                                if (mainDiag) {
-                                    diagName = mainDiag.codedAnswer ? mainDiag.codedAnswer.name || mainDiag.codedAnswer.display || '' : '';
-                                    diagCode = mainDiag.icd11Code || '';
-                                    isNew = mainDiag.diagnosisOccurrence === 'New' || mainDiag.diagnosisOccurrence === 'NEW' ? true : false;
-                                    isRepeat = mainDiag.diagnosisOccurrence === 'Repeat' || mainDiag.diagnosisOccurrence === 'REPEAT' ? true : false;
-                                }
-
-                                rows.push({
-                                    sno: sno + idx,
-                                    serviceDate: serviceDate,
-                                    mrn: identifier,
-                                    age: age,
-                                    sex: sex,
-                                    address: address,
-                                    diagnosisName: diagName,
-                                    diagnosisCode: diagCode,
-                                    isNew: isNew,
-                                    isRepeat: isRepeat,
-                                    rtaPedestrian: false,
-                                    rtaMotorcyclist: false,
-                                    rtaVehicle: false,
-                                    hivTestDone: false,
-                                    hivTestPerformed: false,
-                                    populationCategory: '',
-                                    hivResultPositive: false,
-                                    travelHistoryMalaria: false,
-                                    screenedForTB: false,
-                                    tbScreenResultPositive: false,
-                                    diagnosticEval: '',
-                                    tbNumber: '',
-                                    referredTo: '',
-                                    died: false,
-                                    deathVerified: false,
-                                    remark: ''
+                            var allEncs = [];
+                            visits.forEach(function (visit) {
+                                var patient = visit.patient || {};
+                                var encs = visit.encounters || [];
+                                encs.forEach(function (enc) {
+                                    allEncs.push({
+                                        uuid: enc.uuid,
+                                        encounterDatetime: enc.encounterDatetime || '',
+                                        location: enc.location || {},
+                                        patient: patient
+                                    });
                                 });
                             });
-
-                            $scope.entries = $scope.entries.concat(rows);
-                            $scope.applyFilter();
-                            $scope.isLoading = false;
+                            var filteredEncs = allEncs.filter(function (enc) {
+                                var encDate = moment(enc.encounterDatetime).format("YYYY-MM-DD");
+                                return encDate >= dateFromStr && encDate <= dateToStr;
+                            });
+                            processEncounters(filteredEncs);
                         });
-                    }, function (error) {
-                        $scope.isLoading = false;
-                        $scope.errorMessage = 'Error fetching patient data. ' + (error.data && error.data.error ? error.data.error.message : (error.statusText || ''));
+                    }, function () {
+                        // Encounter API failed (500), try visit API with expanded range
+                        var expFrom = moment(dateFromStr).subtract(30, 'days').format("YYYY-MM-DD");
+                        var expTo = moment(dateToStr).add(30, 'days').format("YYYY-MM-DD");
+                        return hmisService.getVisitsByDate(expFrom, expTo, 500).then(function (visitResponse) {
+                            var visits = visitResponse.data.results || [];
+                            if (visits.length === 0) {
+                                $scope.isLoading = false;
+                                $scope.entries = [];
+                                $scope.filteredData = [];
+                                $scope.totalCount = 0;
+                                $scope.hasFetched = true;
+                                $scope.errorMessage = 'No visits or encounters found for the selected date';
+                                return;
+                            }
+                            var allEncs = [];
+                            visits.forEach(function (visit) {
+                                var patient = visit.patient || {};
+                                var encs = visit.encounters || [];
+                                encs.forEach(function (enc) {
+                                    allEncs.push({
+                                        uuid: enc.uuid,
+                                        encounterDatetime: enc.encounterDatetime || '',
+                                        location: enc.location || {},
+                                        patient: patient
+                                    });
+                                });
+                            });
+                            var filteredEncs = allEncs.filter(function (enc) {
+                                var encDate = moment(enc.encounterDatetime).format("YYYY-MM-DD");
+                                return encDate >= dateFromStr && encDate <= dateToStr;
+                            });
+                            processEncounters(filteredEncs);
+                        });
                     })
             );
-        };
-
-        $scope.getNextSerial = function () {
-            return $scope.entries.length + 1;
-        };
-
-        $scope.addEntry = function () {
-            var entry = angular.copy($scope.newEntry);
-            entry.sno = $scope.getNextSerial();
-            entry.serviceDate = entry.serviceDate || new Date();
-            $scope.entries.push(entry);
-            $scope.newEntry = {};
-            $scope.editingIndex = -1;
-            $scope.applyFilter();
-        };
-
-        $scope.editEntry = function (index) {
-            $scope.editingIndex = index;
-            $scope.newEntry = angular.copy($scope.entries[index]);
-            $scope.newEntry.serviceDate = $scope.newEntry.serviceDate ? new Date($scope.newEntry.serviceDate) : new Date();
-        };
-
-        $scope.updateEntry = function () {
-            if ($scope.editingIndex >= 0) {
-                $scope.entries[$scope.editingIndex] = angular.copy($scope.newEntry);
-                $scope.newEntry = {};
-                $scope.editingIndex = -1;
-                $scope.applyFilter();
-            }
-        };
-
-        $scope.deleteEntry = function (index) {
-            $scope.entries.splice(index, 1);
-            $scope.entries.forEach(function (e, i) { e.sno = i + 1; });
-            $scope.applyFilter();
-        };
-
-        $scope.cancelEdit = function () {
-            $scope.newEntry = {};
-            $scope.editingIndex = -1;
         };
 
         $scope.applyFilter = function () {
@@ -263,9 +308,29 @@ angular.module('bahmni.hmis')
             }
         };
 
-        $scope.clearEntries = function () {
-            $scope.entries = [];
-            $scope.filteredData = [];
-            $scope.errorMessage = '';
+        $scope.getEthiopianDate = function (gregDate) {
+            if (!gregDate) return '';
+            try {
+                var d = new Date(gregDate);
+                var mm = d.getMonth() + 1;
+                var dd = d.getDate();
+                var yyyy = d.getFullYear();
+                var gregStr = mm + '/' + dd + '/' + yyyy;
+                return ethiopianGregorianService.gregToEth(gregStr);
+            } catch (e) {
+                return '';
+            }
+        };
+
+        $scope.formatServiceDate = function (dt) {
+            if (!dt) return '';
+            try {
+                var d = new Date(dt);
+                var gregStr = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+                var ethDate = ethiopianGregorianService.gregToEth(gregStr);
+                return ethDate;
+            } catch (e) {
+                return $filter('date')(dt, 'dd/MM/yy');
+            }
         };
     }]);

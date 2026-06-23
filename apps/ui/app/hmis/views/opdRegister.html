@@ -1,12 +1,10 @@
 <style>
     .opd-register-container { padding: 15px; max-width: 100%; margin: 0 auto; }
     .opd-register-container h3 { margin-bottom: 15px; color: #333; border-bottom: 2px solid #f5a623; padding-bottom: 8px; }
-    .opd-filters { background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 12px; margin-bottom: 15px; }
-    .opd-filters .filter-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .opd-filters { background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 12px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
     .opd-filters .filter-group { display: flex; flex-direction: column; }
     .opd-filters .filter-group label { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 2px; }
-    .opd-filters .filter-group input, .opd-filters .filter-group select { padding: 5px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; }
-    .opd-filters .actions { margin-top: 10px; }
+    .opd-filters .filter-group input { padding: 5px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; }
     .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
     .toolbar .info { font-size: 13px; color: #666; }
     .toolbar .search-box input { padding: 5px 10px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; min-width: 200px; }
@@ -17,45 +15,31 @@
     .btn-success:hover { background: #218838; }
     .btn-secondary { background: #6c757d; color: white; }
     .btn-secondary:hover { background: #5a6268; }
-    .btn-danger { background: #dc3545; color: white; }
-    .btn-danger:hover { background: #c82333; }
-    .btn-info { background: #17a2b8; color: white; }
-    .btn-info:hover { background: #138496; }
     .btn-sm { padding: 4px 10px !important; font-size: 12px !important; }
-    .patient-tag { display: inline-flex; align-items: center; background: #e8f0fe; border: 1px solid #c6dafc; border-radius: 3px; padding: 4px 10px; font-size: 13px; }
-    .patient-tag .remove { margin-left: 6px; cursor: pointer; color: #666; font-weight: bold; }
-    .patient-tag .remove:hover { color: #dc3545; }
-    .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-top: none; max-height: 200px; overflow-y: auto; z-index: 1000; }
-    .search-dropdown div { padding: 6px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; }
-    .search-dropdown div:hover { background: #f0f0f0; }
     .table-wrap { overflow-x: auto; border: 1px solid #ddd; border-radius: 4px; }
     .opd-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; min-width: 2800px; }
     .opd-table th { background: #2c3e50; color: white; padding: 6px 3px; text-align: center; border: 1px solid #1a252f; white-space: nowrap; font-weight: 600; position: sticky; top: 0; z-index: 10; }
-    .opd-table td { padding: 3px; border: 1px solid #ddd; vertical-align: middle; }
-    .opd-table td input, .opd-table td select { width: 100%; border: none; background: transparent; padding: 2px 4px; font-size: 11px; box-sizing: border-box; }
-    .opd-table td input:focus, .opd-table td select:focus { outline: 1px solid #f5a623; background: #fffbe6; }
+    .opd-table td { padding: 3px; border: 1px solid #ddd; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
     .opd-table tbody tr:hover { background: #f0f7ff; }
-    .opd-table tbody tr.editing { background: #fffbe6; }
+    .opd-table tbody tr:nth-child(even) { background: #fafafa; }
+    .opd-table tbody tr:nth-child(even):hover { background: #f0f7ff; }
     .opd-table .sno-col { width: 30px; text-align: center; }
-    .opd-table .date-col { width: 70px; }
+    .opd-table .date-col { width: 70px; text-align: center; }
     .opd-table .mrn-col { width: 100px; }
-    .opd-table .age-col { width: 35px; }
-    .opd-table .sex-col { width: 30px; }
+    .opd-table .age-col { width: 35px; text-align: center; }
+    .opd-table .sex-col { width: 30px; text-align: center; }
     .opd-table .addr-col { width: 100px; }
     .opd-table .diag-name-col { width: 120px; }
-    .opd-table .diag-code-col { width: 80px; }
+    .opd-table .diag-code-col { width: 80px; text-align: center; }
     .opd-table .chk-col { width: 32px; text-align: center; }
-    .opd-table .rta-col { width: 65px; }
-    .opd-table .pop-cat-col { width: 45px; }
-    .opd-table .tb-col { width: 60px; }
-    .opd-table .eval-col { width: 70px; }
-    .opd-table .ref-col { width: 50px; }
+    .opd-table .rta-col { width: 65px; text-align: center; }
+    .opd-table .pop-cat-col { width: 45px; text-align: center; }
+    .opd-table .tb-col { width: 60px; text-align: center; }
+    .opd-table .eval-col { width: 70px; text-align: center; }
+    .opd-table .ref-col { width: 50px; text-align: center; }
     .opd-table .remark-col { width: 90px; }
-    .opd-table .actions-col { width: 55px; text-align: center; }
-    .opd-table .actions-col button { margin: 1px; padding: 2px 5px; font-size: 10px; }
-    .opd-table td input[type="checkbox"] { width: auto; margin: 0 auto; display: block; }
-    .add-row-bar { background: #f8f9fa; padding: 6px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; }
-    .add-row-bar .btn { margin: 2px; }
+    .opd-error { color: #dc3545; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin-bottom: 12px; }
+    .opd-empty { text-align: center; padding: 40px; color: #999; font-size: 14px; }
     .legends { margin-top: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
     .legends h4 { color: #2c3e50; margin-bottom: 8px; }
     .legends .legend-grid { display: flex; flex-wrap: wrap; gap: 20px; }
@@ -63,43 +47,27 @@
     .legends table { width: 100%; border-collapse: collapse; font-size: 11px; }
     .legends table th { background: #eee; text-align: left; padding: 4px 6px; border: 1px solid #ddd; }
     .legends table td { padding: 3px 6px; border: 1px solid #ddd; }
-    .opd-error { color: #dc3545; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin-bottom: 12px; }
-    .opd-empty { text-align: center; padding: 40px; color: #999; font-size: 14px; }
-    .relative { position: relative; }
+    .eth-date-wrapper { display: inline-block; }
+    .eth-date-wrapper input { padding: 5px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; width: 160px; }
+    .total-badge { background: #f5a623; color: white; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; }
 </style>
 
 <div class="opd-register-container">
     <h3>OPD Register</h3>
 
     <div class="opd-filters">
-        <div class="filter-row">
-            <div class="filter-group" style="flex:1;min-width:250px;position:relative;">
-                <label>Search Patient</label>
-                <div ng-if="!selectedPatient">
-                    <input type="text" ng-model="filters.patientQuery" ng-change="onPatientQueryChange()" ng-model-options="{debounce:300}" placeholder="Type patient name or ID (min 3 chars)..." style="width:100%;" />
-                    <div class="search-dropdown" ng-if="searchResults.length > 0">
-                        <div ng-repeat="patient in searchResults" ng-click="selectPatient(patient)">
-                            {{patient.display || patient.identifier}}
-                        </div>
-                    </div>
-                </div>
-                <div ng-if="selectedPatient" class="patient-tag">
-                    {{selectedPatient.display || selectedPatient.identifier}}
-                    <span class="remove" ng-click="clearPatient()">&times;</span>
-                </div>
-            </div>
-            <div class="filter-group">
-                <label>Start Date</label>
-                <input type="date" ng-model="filters.startDate" />
-            </div>
-            <div class="filter-group">
-                <label>End Date</label>
-                <input type="date" ng-model="filters.endDate" />
-            </div>
+        <div class="filter-group">
+            <label>From (Ethiopian Calendar)</label>
+            <ethiopian-date-selector date="selectedDateFrom" handler="noop()" change="noop()"></ethiopian-date-selector>
         </div>
-        <div class="actions">
-            <button class="btn btn-info" ng-click="fetchFromChart()" ng-disabled="isLoading">Fetch from Patient Chart</button>
-            <button class="btn btn-secondary btn-sm" ng-click="clearEntries()" ng-disabled="entries.length === 0">Clear All</button>
+        <div class="filter-group">
+            <label>To (Ethiopian Calendar)</label>
+            <ethiopian-date-selector date="selectedDateTo" handler="noop()" change="noop()"></ethiopian-date-selector>
+        </div>
+        <div style="align-self:flex-end;">
+            <button class="btn btn-primary" ng-click="fetchRegister()" ng-disabled="isLoading">
+                <i class="fa fa-refresh"></i> Fetch Register
+            </button>
         </div>
     </div>
 
@@ -107,19 +75,23 @@
 
     <div class="toolbar">
         <div class="info">
-            <span ng-if="entries.length > 0">{{filteredData.length}} entries</span>
+            <span ng-if="hasFetched && entries.length > 0">
+                {{filteredData.length}} entries
+                <span class="total-badge">Total: {{totalCount}}</span>
+            </span>
+            <span ng-if="hasFetched && entries.length === 0">No entries found</span>
             <span ng-if="isLoading" style="color:#f5a623;">Fetching data...</span>
         </div>
         <div class="search-box">
-            <input type="text" ng-model="searchText" placeholder="Search in table..." />
+            <input type="text" ng-model="searchText" placeholder="Search in table..." ng-show="entries.length > 0" />
         </div>
         <div>
             <button class="btn btn-success btn-sm" ng-click="exportCsv()" ng-disabled="filteredData.length === 0">Export CSV</button>
         </div>
     </div>
 
-    <div ng-if="entries.length === 0 && !isLoading" class="opd-empty">
-        No entries yet. Select a patient and date range, then click "Fetch from Patient Chart" to populate from clinical data, or use the form below to add manually.
+    <div ng-if="!hasFetched && entries.length === 0 && !isLoading" class="opd-empty">
+        Select a date range in Ethiopian calendar and click "Fetch Register" to load all OPD encounters.
     </div>
 
     <div class="table-wrap" ng-if="entries.length > 0">
@@ -152,18 +124,17 @@
                     <th class="chk-col">Died</th>
                     <th class="chk-col">DV</th>
                     <th class="remark-col">Remark</th>
-                    <th class="actions-col">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="entry in filteredData track by $index" ng-class="{editing: $index === editingIndex}">
+                <tr ng-repeat="entry in filteredData track by $index">
                     <td class="sno-col">{{entry.sno}}</td>
-                    <td class="date-col">{{entry.serviceDate | date:'dd/MM/yy'}}</td>
-                    <td class="mrn-col">{{entry.mrn}}</td>
+                    <td class="date-col" title="{{entry.serviceDate | date:'dd/MM/yy'}}">{{formatServiceDate(entry.serviceDate)}}</td>
+                    <td class="mrn-col" title="{{entry.mrn}}">{{entry.mrn}}</td>
                     <td class="age-col">{{entry.age}}</td>
                     <td class="sex-col">{{entry.sex}}</td>
-                    <td class="addr-col">{{entry.address}}</td>
-                    <td class="diag-name-col">{{entry.diagnosisName}}</td>
+                    <td class="addr-col" title="{{entry.address}}">{{entry.address}}</td>
+                    <td class="diag-name-col" title="{{entry.diagnosisName}}">{{entry.diagnosisName}}</td>
                     <td class="diag-code-col">{{entry.diagnosisCode}}</td>
                     <td class="chk-col">{{entry.isNew ? '+' : ''}}</td>
                     <td class="chk-col">{{entry.isRepeat ? '+' : ''}}</td>
@@ -182,59 +153,10 @@
                     <td class="ref-col">{{entry.referredTo}}</td>
                     <td class="chk-col">{{entry.died ? '+' : ''}}</td>
                     <td class="chk-col">{{entry.deathVerified ? '+' : ''}}</td>
-                    <td class="remark-col">{{entry.remark}}</td>
-                    <td class="actions-col">
-                        <button class="btn btn-secondary btn-sm" ng-click="editEntry($index)" title="Edit">E</button>
-                        <button class="btn btn-danger btn-sm" ng-click="deleteEntry($index)" title="Delete">X</button>
-                    </td>
+                    <td class="remark-col" title="{{entry.remark}}">{{entry.remark}}</td>
                 </tr>
             </tbody>
         </table>
-    </div>
-
-    <div class="add-row-bar">
-        <form ng-submit="editingIndex >= 0 ? updateEntry() : addEntry()" style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
-            <input type="date" ng-model="newEntry.serviceDate" placeholder="Date" style="width:85px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
-            <input type="text" ng-model="newEntry.mrn" placeholder="MRN" style="width:75px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
-            <input type="number" ng-model="newEntry.age" placeholder="Age" style="width:35px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
-            <select ng-model="newEntry.sex" style="width:45px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;">
-                <option value="">Sx</option>
-                <option value="M">M</option>
-                <option value="F">F</option>
-            </select>
-            <input type="text" ng-model="newEntry.address" placeholder="Address" style="width:90px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
-            <input type="text" ng-model="newEntry.diagnosisName" placeholder="Diagnosis" style="width:90px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
-            <input type="text" ng-model="newEntry.diagnosisCode" placeholder="ICD-11" style="width:60px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.isNew" /> N</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.isRepeat" /> R</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.rtaPedestrian" /> Pd</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.rtaMotorcyclist" /> Cy</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.rtaVehicle" /> Vh</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.hivTestDone" /> HIV</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.hivTestPerformed" /> Pf</label>
-            <select ng-model="newEntry.populationCategory" style="width:40px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;">
-                <option value="">P</option>
-                <option ng-repeat="cat in targetPopCategories" value="{{cat.code}}">{{cat.code}}</option>
-            </select>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.hivResultPositive" /> R+</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.travelHistoryMalaria" /> Ml</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.screenedForTB" /> Sc</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.tbScreenResultPositive" /> TB</label>
-            <select ng-model="newEntry.diagnosticEval" style="width:45px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;">
-                <option value="">Ev</option>
-                <option ng-repeat="d in diagEvalTypes" value="{{d.code}}">{{d.code}}</option>
-            </select>
-            <input type="text" ng-model="newEntry.tbNumber" placeholder="TB No" style="width:40px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
-            <select ng-model="newEntry.referredTo" style="width:45px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;">
-                <option value="">Rf</option>
-                <option ng-repeat="r in referralCodes" value="{{r.code}}">{{r.code}}</option>
-            </select>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.died" /> Di</label>
-            <label style="font-size:10px;"><input type="checkbox" ng-model="newEntry.deathVerified" /> DV</label>
-            <input type="text" ng-model="newEntry.remark" placeholder="Remark" style="width:70px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:2px;" />
-            <button type="submit" class="btn btn-primary btn-sm">{{editingIndex >= 0 ? 'Update' : 'Add'}}</button>
-            <button type="button" class="btn btn-secondary btn-sm" ng-click="cancelEdit()" ng-show="editingIndex >= 0">Cancel</button>
-        </form>
     </div>
 
     <div class="legends">

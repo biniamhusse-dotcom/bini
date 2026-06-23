@@ -7,6 +7,7 @@
         <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
         <!-- build:css hmis.min.css -->
         <link rel="stylesheet" href="../styles/clinical.css"/>
+        <link rel="stylesheet" href="../lib/jquery-calendars/css/jquery.calendars.picker.css"/>
         <!-- endbuild -->
     </head>
     <body>
@@ -20,6 +21,11 @@
         <script src="../components/jquery.cookie/jquery.cookie.js"></script>
         <script src="../lib/jquery/jquery-ui-1.10.4.custom.min.js"></script>
         <script src="../lib/modernizr.custom.80690.js"></script>
+
+        <script src="../lib/jquery-calendars/js/jquery.plugin.min.js"></script>
+        <script src="../lib/jquery-calendars/js/jquery.calendars.all.min.js"></script>
+        <script src="../lib/jquery-calendars/js/jquery.calendars.ethiopian.min.js"></script>
+        <script src="../lib/jquery-calendars/js/jquery.calendars.ethiopian-am.js"></script>
 
         <script src="../components/angular/angular.min.js"></script>
         <script src="../components/angular-sanitize/angular-sanitize.min.js"></script>
@@ -129,6 +135,10 @@
         <script src="../common/logging/services/loggingService.js"></script>
         <script src="../common/logging/services/auditLogService.js"></script>
         <script src="../common/models/auditLogEventDetails.js"></script>
+
+        <script src="../common/ethiopianDateSelector/init.js"></script>
+        <script src="../common/ethiopianDateSelector/services/ethiopianGregorianConversionService.js"></script>
+        <script src="../common/ethiopianDateSelector/directives/ethiopian-date-selector.js"></script>
 
         <script src="init.js"></script>
         <script src="initialization.js"></script>

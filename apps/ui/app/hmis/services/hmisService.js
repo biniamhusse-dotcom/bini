@@ -49,14 +49,41 @@ angular.module('bahmni.hmis')
             return $q.all(promises);
         };
 
-        self.getEncountersForPatient = function (patientUuid, startDate, endDate) {
+        self.getEncountersForPatient = function (patientUuid, startDate, endDate, limit) {
+            var params = {
+                fromdate: startDate ? moment(startDate).format("YYYY-MM-DD") : undefined,
+                todate: endDate ? moment(endDate).format("YYYY-MM-DD") : undefined,
+                v: "custom:(uuid,encounterDatetime,location:(display),patient:(uuid,display,identifiers:(identifier),person:(age,gender,addresses:(address1,address2,cityVillage))),visit:(uuid))",
+                limit: limit || 200
+            };
+            if (patientUuid) {
+                params.patient = patientUuid;
+            }
+            return $http.get("/openmrs/ws/rest/v1/encounter", {
+                params: params,
+                withCredentials: true
+            });
+        };
+
+        self.getEncountersByDateRange = function (startDate, endDate, limit) {
             return $http.get("/openmrs/ws/rest/v1/encounter", {
                 params: {
-                    patient: patientUuid,
                     fromdate: startDate ? moment(startDate).format("YYYY-MM-DD") : undefined,
                     todate: endDate ? moment(endDate).format("YYYY-MM-DD") : undefined,
-                    v: "full",
-                    limit: 200
+                    v: "custom:(uuid,encounterDatetime,location:(display),patient:(uuid,display,identifiers:(identifier),person:(age,gender,addresses:(address1,address2,cityVillage))))",
+                    limit: limit || 500
+                },
+                withCredentials: true
+            });
+        };
+
+        self.getVisitsByDate = function (startDate, endDate, limit) {
+            return $http.get("/openmrs/ws/rest/v1/visit", {
+                params: {
+                    fromdate: startDate ? moment(startDate).format("YYYY-MM-DD") : undefined,
+                    todate: endDate ? moment(endDate).format("YYYY-MM-DD") : undefined,
+                    v: "custom:(uuid,patient:(uuid,display,identifiers:(identifier),person:(age,gender,addresses:(address1,address2,cityVillage))),encounters:(uuid,encounterDatetime,location:(display)))",
+                    limit: limit || 200
                 },
                 withCredentials: true
             });
