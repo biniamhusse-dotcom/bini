@@ -170,6 +170,11 @@
                                     Date:</h2>
                                 <input type="date" id="dateFilter" ng-model="selectedDate"
                                     ng-change="filterPrescriptions(selectedDate)" />
+                                <button class="btn btn-sm btn-success" style="margin-left: 20px;"
+                                    ng-if="pharmacyConfig.enabled"
+                                    ng-click="sendAllToPharmacy()">
+                                    Send All to Pharmacy
+                                </button>
                             </div>
                             <div style="overflow-x:auto;">
                                 <table class="table table-striped table-bordered">
@@ -194,7 +199,7 @@
                                             <th>Payment Status</th>
                                             <th>Counseled?</th>
                                             <th>Action/Status</th>
-                                            <th>Print</th>
+                                            <th>Print / Pharmacy</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -284,6 +289,12 @@
                                                 <button class="btn btn-sm btn-primary"
                                                     ng-click="printPrescription(prescription, selectedAction)">
                                                     Print
+                                                </button>
+                                                <button class="btn btn-sm btn-success" style="margin-top: 2px;"
+                                                    ng-if="pharmacyConfig.enabled && prescription.status !== 'DISPENSED' && prescription.status !== 'DISCARDED'"
+                                                    ng-click="sendToPharmacy(prescription)"
+                                                    ng-disabled="prescription.pharmacy_synced">
+                                                    {{prescription.pharmacy_synced ? 'Synced' : 'Send to Pharmacy'}}
                                                 </button>
                                             </td>
                                         </tr>

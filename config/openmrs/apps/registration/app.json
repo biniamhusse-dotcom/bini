@@ -368,7 +368,23 @@
                     "concept_name": "HEIGHT",
                     "lable": "height"
                 }
-            ]
+            ],
+            "pharmacy_integration": {
+                "enabled": true,
+                "pharmacy_app_url": "http://localhost:3001",
+                "dispense_endpoint": "/api/prescription/send",
+                "bulk_send_endpoint": "/api/prescription/bulk-send",
+                "dtp_endpoint": "/api/prescription/dtp-callback",
+                "status_endpoint": "/api/prescription/status",
+                "send_on_save": true,
+                "send_on_dispense": true,
+                "dtp_callback_enabled": true,
+                "timeout_ms": 10000,
+                "drug_mapping": {
+                    "use_internal_code": true,
+                    "fallback_to_drug_name": true
+                }
+            }
         },
         "printOptions": [
             {

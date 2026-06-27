@@ -2,9 +2,9 @@
 
 angular.module('bahmni.clinical')
     .controller('DrugOrderHistoryController', ['$q', '$scope', '$filter', '$stateParams', 'activeDrugOrders', 'appService',
-        'treatmentConfig', 'treatmentService', 'spinner', 'drugOrderHistoryHelper', 'visitHistory', '$translate', '$rootScope', 'providerService', 'observationsService', 'diagnosisService', 'allergyService',
+        'treatmentConfig', 'treatmentService', 'spinner', 'drugOrderHistoryHelper', 'visitHistory', '$translate', '$rootScope', 'providerService', 'observationsService', 'diagnosisService', 'allergyService', 'pharmacyIntegrationService',
         function ($q, $scope, $filter, $stateParams, activeDrugOrders, appService, treatmentConfig, treatmentService, spinner,
-            drugOrderHistoryHelper, visitHistory, $translate, $rootScope, providerService, observationsService, diagnosisService, allergyService) {
+            drugOrderHistoryHelper, visitHistory, $translate, $rootScope, providerService, observationsService, diagnosisService, allergyService, pharmacyIntegrationService) {
             var DrugOrderViewModel = Bahmni.Clinical.DrugOrderViewModel;
             var DateUtil = Bahmni.Common.Util.DateUtil;
             var currentVisit = visitHistory.activeVisit;
@@ -255,6 +255,19 @@ angular.module('bahmni.clinical')
 
             $scope.refillAll = function (drugOrders) {
                 $rootScope.$broadcast("event:refillDrugOrders", drugOrders);
+            };
+
+            $scope.sendToPharmacy = function (drugOrder) {
+                var providerName = $rootScope.currentProvider ? $rootScope.currentProvider.display : '';
+                pharmacyIntegrationService.sendPrescriptionToPharmacy(drugOrder, $scope.patient, providerName);
+            };
+
+            $scope.sendAllToPharmacy = function (drugOrders) {
+                if (!drugOrders || drugOrders.length === 0) {
+                    return;
+                }
+                var providerName = $rootScope.currentProvider ? $rootScope.currentProvider.display : '';
+                pharmacyIntegrationService.sendBulkPrescriptionsToPharmacy(drugOrders, $scope.patient, providerName);
             };
 
             $scope.revise = function (drugOrder, drugOrders) {

@@ -1,0 +1,19 @@
+[Unit]
+Description=EMR eAPTs Fetch/Prescription Listener
+After=network.target openmrs.service
+Wants=openmrs.service
+
+[Service]
+Type=simple
+User=openmrs
+Group=openmrs
+WorkingDirectory=/opt/emr-eAPTs
+EnvironmentFile=/opt/emr-eAPTs/.env
+ExecStart=/usr/bin/node index.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/emr-eApts.log
+StandardError=append:/var/log/emr-eApt-error.log
+
+[Install]
+WantedBy=multi-user.target

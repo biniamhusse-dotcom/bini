@@ -12,6 +12,9 @@ Complete Bahmni EMR stack running on Docker with OpenMRS, OpenELIS, Odoo ERP, dc
 | **dcm4chee** | `http://localhost:8055` | PACS imaging archive |
 | **Implementer Interface** | via Bahmni proxy | Configuration management |
 | **Appointments** | via Bahmni proxy | Patient scheduling |
+| **eAPTs Sync** | `http://localhost:3005` | Prescription sync to Dagu pharmacy |
+| **Prescription Sync** | `http://localhost:3001` | "Send to Pharmacy" bridge service |
+| **Dagu eAPTS** | `http://localhost:80` | OPD Pharmacy dispensing system |
 
 ---
 
@@ -129,6 +132,8 @@ emr/
     openelis/                # OpenELIS config
   erp/
     bahmni-odoo-modules/     # Custom Odoo addons (sale, purchase, API feed)
+  emr-eAPTs/                 # Node.js service: EMR → Dagu prescription bridge
+  prescription-sync-service/ # Node.js service: "Send to Pharmacy" button handler
   backups/
     bahmni/                  # Database dumps + volume backups
   fresh_db/                  # Scripts to clear patient data + reset MRN
@@ -759,6 +764,203 @@ The classic HMIS report fetches observations grouped by concept set:
 | `apps/ui/app/hmis/views/dashboardHeader.html` | Header tabs — HMIS Report, Registration, OPD Register |
 | `apps/ui/app/common/constants.js` | API URL constants (`bahmniDiagnosisUrl`, `observationsUrl`) |
 | `apps/ui/app/common/ethiopianDateSelector/` | Ethiopian calendar directive and conversion service |
+
+---
+
+## eAPTs / Dagu Pharmacy Integration
+
+Prescriptions created in Bahmni Clinical flow to the Dagu pharmacy dispensing system via two Node.js services: **emr-eAPTs** (auto-polling) and **prescription-sync-service** (on-click "Send to Pharmacy").
+
+### Architecture
+
+```
+Bahmni Clinical (prescriber clicks "Send to Pharmacy")
+  → prescription-sync-service (port 3001) — receives the click
+    → emr-eAPTs /fetch (port 3005) — queries OpenMRS for new orders
+      → OpenMRS SQL query (emr.eapts.api) — fetches drug orders with mappings
+        → emr-eAPTs modules/mapping.js — transforms to Dagu API format
+          → Dagu backend API (port 5133) — creates prescription in du.prescription
+            → Dagu UI (port 80) — "Pending Dispenses" tab shows the prescription
+```
+
+### Services
+
+| Service | Port | Container | Source |
+|---------|------|-----------|--------|
+| emr-eAPTs | 3005 | bahmni-standard-emr-eapts-1 | `emr-eAPTs/` |
+| Prescription Sync | 3001 | bahmni-standard-prescription-sync-1 | `prescription-sync-service/` |
+| Dagu Backend | 5133 | (external IIS/Windows) | `C:\App\v2.1.6\e-dagu-be\` |
+| Dagu UI | 80 | (external IIS/Windows) | `localhost/dispensing-unit` |
+
+### How the data flows
+
+1. **OpenMRS SQL** (`emr.eapts.api` global property) runs against the `drug_order` table and returns patient/prescriber/drug data with **Dagu UUIDs** joined from mapping tables.
+2. **emr-eAPTs** polls every 60 seconds (or on-demand via `GET /fetch`). It reads `orderNumber.json` as a checkpoint, queries OpenMRS for orders with `order_id > checkpoint`, then transforms the data via `modules/mapping.js`.
+3. **mapping.js** resolves institution, frequency, administration route, and drug item UUIDs. The `selected-institution.json` file determines which Dagu institution receives prescriptions.
+4. **Dagu backend** accepts the POST at `/api/Patient/EMRPrescription`, creates records in `du.prescription` and `du.prescription_detail`, returns the prescription ID.
+5. **Checkpoint advances**: after successful send, `orderNumber.json` is updated with the highest processed order ID.
+
+### Key mapping tables (OpenMRS → Dagu)
+
+| OpenMRS Table | Purpose | Dagu FK |
+|---------------|---------|---------|
+| `eapts_drug_mapping` | Maps OpenMRS drug_id → Dagu item_unit UUID | `item_unit.rowguid` |
+| `eapts_frequency_mapping` | Maps OpenMRS order_frequency ID → Dagu frequency_type UUID | `common.frequency_type.rowguid` |
+| `eapts_route_mapping` | Maps OpenMRS concept_id (route) → Dagu administration UUID | `common.administration.rowguid` |
+| `mapping.payment_type` | Payment type self-mapping (EMR UUID = Dagu UUID) | `common.payment_type.rowguid` |
+| `mapping.patient_type` | Patient type self-mapping | `common.patient_type.rowguid` |
+| `mapping.administration` | Administration route self-mapping | `common.administration.rowguid` |
+| `mapping.frequency_type` | Frequency type self-mapping | `common.frequency_type.rowguid` |
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `emr-eAPTs/.env` | API URLs (OpenMRS, Dagu), credentials |
+| `emr-eAPTs/services/index.js` | Main orchestration: poll OpenMRS → map → POST to Dagu |
+| `emr-eAPTs/modules/mapping.js` | Transforms OpenMRS SQL rows → Dagu prescription JSON |
+| `emr-eAPTs/location-mapping.json` | Maps Bahmni locations → Dagu institution UUIDs |
+| `emr-eAPTs/selected-institution.json` | Current Dagu institution (overrides location lookup) |
+| `emr-eAPTs/orderNumber.json` | Checkpoint — last processed order ID |
+| `prescription-sync-service/server.js` | Express API: "Send to Pharmacy", DTP callbacks, retry queue |
+
+### Configuration on a fresh PC
+
+#### Step 1: Ensure Dagu backend is running
+
+The Dagu backend runs on Windows IIS. Verify:
+- `http://localhost:5133/api/Patient/EMRPrescription` responds
+- PostgreSQL is running on `localhost:5432` (database `eapts_dev`)
+
+#### Step 2: Update OpenMRS mapping tables
+
+Run these SQL statements against the OpenMRS database to ensure all mapping tables exist:
+
+```sql
+-- Check drug mappings
+SELECT COUNT(*) FROM eapts_drug_mapping;
+
+-- Check frequency mappings  
+SELECT COUNT(*) FROM eapts_frequency_mapping;
+
+-- Check route mappings
+SELECT COUNT(*) FROM eapts_route_mapping;
+
+-- Check global_property SQL
+SELECT property, LEFT(property_value, 80) FROM global_property 
+WHERE property IN ('emr.eapts.api', 'emr.eapts.api.dtp');
+```
+
+If tables are empty, restore from backup (`openmrs_backup_20260626_134854.sql`).
+
+#### Step 3: Set the institution
+
+The `selected-institution.json` determines which Dagu pharmacy receives prescriptions. Must match the institution of the logged-in Dagu user:
+
+```json
+{
+  "institutionId": "c1704170-564b-4cdb-b742-11e05b6da50c",
+  "name": "OPD Pharmacy"
+}
+```
+
+Known Dagu institution UUIDs:
+
+| UUID | Name | Dagu DB ID |
+|------|------|------------|
+| `c1704170-564b-4cdb-b742-11e05b6da50c` | OPD Pharmacy | 12290 |
+| `ad9cc7f9-7910-43ba-b507-3ca563bde6b5` | ART Pharmacy | 12291 |
+| `836aaff8-79ba-45ef-8e21-46511aad3527` | Hospital | 3101 |
+
+#### Step 4: Configure docker-compose.yml
+
+The `emr-eAPTs` and `prescription-sync` services are added to `docker-compose.yml` with bind mounts:
+
+```yaml
+emr-eapts:
+  volumes:
+    - ../../emr-eAPTs/location-mapping.json:/app/location-mapping.json
+    - ../../emr-eAPTs/services/index.js:/app/services/index.js
+    - ../../emr-eAPTs/orderNumber.json:/app/orderNumber.json
+```
+
+**Important**: Only `services/index.js`, `location-mapping.json`, and `orderNumber.json` are bind-mounted. The `modules/mapping.js` file is NOT bind-mounted — it must be copied into the container after each restart:
+
+```powershell
+Get-Content "emr-eAPTs\modules\mapping.js" -Raw | docker exec -i bahmni-standard-emr-eapts-1 sh -c "cat > /app/modules/mapping.js"
+```
+
+#### Step 5: Start services
+
+```bash
+cd bahmni-docker/bahmni-standard
+docker compose --env-file .env up -d emr-eapts prescription-sync
+```
+
+#### Step 6: Verify
+
+```bash
+# Check emr-eAPTs is running
+curl http://localhost:3005/health
+
+# Check prescription-sync is running
+curl http://localhost:3001/health
+
+# Check Dagu API is reachable
+curl http://localhost:5133/api/Patient/DuItems?institutionId=c1704170-564b-4cdb-b742-11e05b6da50c
+```
+
+### Common issues
+
+#### "No data to display" in Dagu Pending Dispenses
+
+The prescriptions exist in `du.prescription` but don't appear. Cause: **institution mismatch**.
+
+```sql
+-- Check what institution prescriptions were created under
+SELECT p.id, p.institution_id, i.name 
+FROM du.prescription p 
+JOIN institution.institution i ON p.institution_id = i.id 
+ORDER BY p.id DESC LIMIT 5;
+```
+
+Fix: Update `selected-institution.json` to match the Dagu UI user's institution (check `institution.user_institution` table).
+
+#### Container restart loses mapping.js changes
+
+The `modules/mapping.js` is not bind-mounted. After every `docker restart` or `docker compose up -d`, re-copy it:
+
+```powershell
+Get-Content "emr-eAPTs\modules\mapping.js" -Raw | docker exec -i bahmni-standard-emr-eapts-1 sh -c "cat > /app/modules/mapping.js"
+```
+
+To make it permanent, add a bind mount in `docker-compose.yml`:
+
+```yaml
+volumes:
+  - ../../emr-eAPTs/modules/mapping.js:/app/modules/mapping.js
+```
+
+#### Dagu 400 "Object is null" error
+
+Common causes:
+- `numberOfDuration` is empty string (should be integer) — fix: ensure SQL uses `COALESCE(doord.duration, 1)`
+- `administrationId` is invalid UUID — fix: check `eapts_route_mapping` table
+- `frequencyTypeId` not in Dagu `common.frequency_type` — fix: check `eapts_frequency_mapping` table
+
+#### 404 on Dagu API
+
+Dagu backend may not be running. Check IIS and logs at `C:\App\v2.1.6\e-dagu-be\logs\`.
+
+### Dagu database reference
+
+Dagu uses PostgreSQL at `localhost:5432`, database `eapts_dev`:
+
+```powershell
+$env:PGPASSWORD="6h5Q4W4gPC"; & "C:\Program Files\PostgreSQL\11\bin\psql.exe" -h localhost -p 5432 -U postgres -d eapts_dev -c "SELECT id, name FROM du.prescription_status ORDER BY id;"
+```
+
+Prescription statuses: 1=Draft, 2=Picklisted, 3=Issued, 4=Cancelled, 5=Counseled, 6=Void, 7=Stocked Out.
 
 ---
 

@@ -1,0 +1,108 @@
+{
+  "defaultInstitutionId": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+  "locationInstitutionMap": {
+    "OPD Pharmacy": "c1704170-564b-4cdb-b742-11e05b6da50c",
+    "ART Pharmacy": "ad9cc7f9-7910-43ba-b507-3ca563bde6b5",
+    "EOPD Pharmacy": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+    "IPD Pharmacy": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+    "Inpatient Pharmacy 1": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+    "Inpatient Pharmacy 2": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+    "Oncology Pharmacy": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+    "MDR TB Pharmacy": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+    "OPD Pharmacy 2": "40849db8-e29e-4c82-b4a9-97ea25fe2462",
+    "Ophthalmology and Fistula Pharmacy": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+    "OR pharmacy": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b",
+    "Gyn & OBS Pharmacy": "8e8c620e-17ed-4a7c-ae91-a770d3ce2f8b"
+  },
+  "loginLocationMapping": [
+    {
+      "keywords": [
+        "ART"
+      ],
+      "dispUnit": "ART Pharmacy"
+    },
+    {
+      "keywords": [
+        "EMERGENCY",
+        "ER ",
+        "TRIAGE",
+        "RESUSCITATION",
+        "PROCEDURE ROOM"
+      ],
+      "dispUnit": "EOPD Pharmacy"
+    },
+    {
+      "keywords": [
+        "WARD",
+        "INPATIENT",
+        "IPD",
+        "ICU",
+        "NICU",
+        "MICU"
+      ],
+      "dispUnit": "IPD Pharmacy"
+    },
+    {
+      "keywords": [
+        "ONCOLOGY"
+      ],
+      "dispUnit": "Oncology Pharmacy"
+    },
+    {
+      "keywords": [
+        "TB ",
+        "MDR"
+      ],
+      "dispUnit": "MDR TB Pharmacy"
+    },
+    {
+      "keywords": [
+        "GNY",
+        "GYN",
+        "OBS",
+        "ANC",
+        "PNC",
+        "MATERNITY",
+        "LABOR",
+        "DELIVERY",
+        "FISTULA",
+        "INFERTILITY",
+        "PMTCT",
+        "FAMILY PLANNING"
+      ],
+      "dispUnit": "Gyn & OBS Pharmacy"
+    },
+    {
+      "keywords": [
+        "OR ",
+        "SURGERY",
+        "SURGICAL",
+        "OPERATION"
+      ],
+      "dispUnit": "OR pharmacy"
+    },
+    {
+      "keywords": [
+        "EYE",
+        "OPHTHALMOLOGY",
+        "OPTOMETRY",
+        "VISION"
+      ],
+      "dispUnit": "Ophthalmology and Fistula Pharmacy"
+    },
+    {
+      "keywords": [
+        "DENTAL"
+      ],
+      "dispUnit": "OPD Pharmacy"
+    },
+    {
+      "keywords": [
+        "OPD",
+        "CLINIC",
+        "CONSULTATION"
+      ],
+      "dispUnit": "OPD Pharmacy"
+    }
+  ]
+}

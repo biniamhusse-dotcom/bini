@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('bahmni.registration')
-    .factory('prescriptionService', ['$http', '$q', 'messagingService', function ($http, $q, messagingService) {
+    .factory('prescriptionService', ['$http', '$q', 'messagingService', 'pharmacyIntegrationService', function ($http, $q, messagingService, pharmacyIntegrationService) {
 
 
         const baseURL = `${window.location.protocol}//${window.location.hostname}`;
@@ -368,12 +368,25 @@ angular.module('bahmni.registration')
             return obsData;
         };
 
-        var handlePrescriptionAction = function (prescription, action, patientUuid, config) {
+        var handlePrescriptionAction = function (prescription, action, patientUuid, config, patient, providerName) {
             var formattedDate = getFormattedDate();
 
             let obsData = buildObsData(prescription, action, patientUuid, config, formattedDate);
             if (obsData && obsData.length > 0) {
-                return postPrescriptionObs(obsData, `Prescription ${action} successfully!`);
+                return postPrescriptionObs(obsData, `Prescription ${action} successfully!`).then(function () {
+                    // Send to pharmacy app after successful save
+                    var pharmacyConfig = config.pharmacy_integration;
+                    if (pharmacyConfig && pharmacyConfig.enabled) {
+                        if (action === "dispense" && pharmacyConfig.send_on_dispense) {
+                            prescription.status = "DISPENSED";
+                            return pharmacyIntegrationService.notifyPharmacyDispensed(prescription, patient, providerName, pharmacyConfig);
+                        } else if (pharmacyConfig.send_on_save) {
+                            prescription.status = action.toUpperCase();
+                            return pharmacyIntegrationService.sendPrescriptionToPharmacy(prescription, patient, providerName, pharmacyConfig);
+                        }
+                    }
+                    return $q.resolve({ success: true });
+                });
             }
             return $q.reject("Invalid data or action");
         };

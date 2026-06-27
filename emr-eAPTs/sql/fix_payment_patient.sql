@@ -1,0 +1,65 @@
+UPDATE global_property 
+SET property_value = 'SELECT 
+  pn.given_name AS prescriber_firstName,
+  pn.middle_name AS prescriber_middleName,
+  pn.family_name AS prescriber_lastName,
+  ''Doctor'' AS prescriber_role,
+  '''' AS prescriber_registrationNumber,
+  prov.uuid AS prescriber_rowGuid,
+  ptn.given_name AS firstName,
+  ptn.middle_name AS middleName,
+  ptn.family_name AS lastName,
+  COALESCE(phone_attr.value, '''') AS phoneNumber,
+  TIMESTAMPDIFF(YEAR, pt.birthdate, CURDATE()) AS age,
+  0 AS weight,
+  pt.gender AS sex,
+  '''' AS houseNumber,
+  COALESCE(pi.identifier, '''') AS cardNumber,
+  pt.uuid AS patient_rowGuid,
+  ''4a9afabb-f066-4267-a943-e489409368f3'' AS paymentType,
+  '''' AS sponsorName,
+  ''c5129e01-02b6-44e5-8386-7f5c5a7f9266'' AS patientTypeId,
+  COALESCE(pa.address5, '''') AS woredaId,
+  doord.dose AS dose,
+  COALESCE(doord.dose, 0) AS strength,
+  doord.quantity AS quantity,
+  doord.duration_units AS duration_units,
+  doord.duration AS numberOfDuration,
+  COALESCE(doord.dosing_instructions, '''') AS additionalNote,
+  o.order_id AS orderNumber,
+  COALESCE(rm.dagu_administration_uuid, ''8e86138e-3bf7-424f-9888-a096d78b37ad'') AS administrationId,
+  COALESCE(fm.dagu_frequency_uuid, ''44bead48-74a0-4107-a09d-e52be2c25803'') AS frequencyTypeId,
+  COALESCE(dm.dagu_item_uuid, d.uuid) AS itemUnitId,
+  DATE_FORMAT(o.date_activated, ''%Y-%m-%dT%H:%i:%s.000Z'') AS prescriptionDate,
+  COALESCE(diag.diag_uuids, '''') AS diagnosises,
+  COALESCE(diag.diag_info, '''') AS additionalInfo,
+  enc.uuid AS rowGuid
+FROM orders o
+JOIN drug_order doord ON o.order_id = doord.order_id
+JOIN drug d ON doord.drug_inventory_id = d.drug_id
+JOIN encounter enc ON o.encounter_id = enc.encounter_id
+JOIN person pt ON o.patient_id = pt.person_id
+JOIN patient pat ON pt.person_id = pat.patient_id
+JOIN person_name ptn ON pt.person_id = ptn.person_id AND ptn.preferred = 1
+JOIN encounter_provider ep ON enc.encounter_id = ep.encounter_id
+JOIN provider prov ON ep.provider_id = prov.provider_id
+JOIN person_name pn ON prov.person_id = pn.person_id
+LEFT JOIN patient_identifier pi ON pat.patient_id = pi.patient_id AND pi.preferred = 1
+LEFT JOIN person_attribute phone_attr ON pt.person_id = phone_attr.person_id AND phone_attr.person_attribute_type_id = 14
+LEFT JOIN person_address pa ON pt.person_id = pa.person_id AND pa.preferred = 1
+LEFT JOIN eapts_drug_mapping dm ON doord.drug_inventory_id = dm.openmrs_drug_id
+LEFT JOIN eapts_route_mapping rm ON doord.route = rm.openmrs_route_concept_id
+LEFT JOIN eapts_frequency_mapping fm ON doord.frequency = fm.openmrs_frequency_id
+LEFT JOIN (
+  SELECT obs.encounter_id,
+    GROUP_CONCAT(DISTINCT cn_diag.uuid SEPARATOR ''#'') AS diag_uuids,
+    COALESCE(MAX(CASE WHEN obs.obs_id IS NOT NULL THEN obs.value_text ELSE '''' END), '''') AS diag_info
+  FROM obs
+  JOIN concept_name cn_diag ON obs.value_coded = cn_diag.concept_id AND cn_diag.concept_name_type = ''FULLY_SPECIFIED'' AND cn_diag.voided = 0
+  WHERE obs.concept_id = 22 AND obs.voided = 0
+  GROUP BY obs.encounter_id
+) diag ON enc.encounter_id = diag.encounter_id
+WHERE o.order_type_id = 2 AND o.voided = 0
+  AND o.order_action = ''D''
+ORDER BY o.date_activated DESC'
+WHERE property = 'emr.eapts.api';

@@ -623,6 +623,56 @@ services:
       JAVA_OPTS: ${CDSS_JAVA_SERVER_OPTS}
     logging: *log-config
 
+  prescription-sync:
+    profiles: ["bahmni-standard"]
+    build:
+      context: ../../prescription-sync-service
+      dockerfile: Dockerfile
+    ports:
+      - '3001:3001'
+    environment:
+      TZ: ${TZ}
+      PORT: 3001
+      OPENMRS_URL: http://${OPENMRS_HOST:-openmrs}:${OPENMRS_PORT:-8080}
+      OPENMRS_USER: ${OPENMRS_ATOMFEED_USER:-admin}
+      OPENMRS_PASS: ${OPENMRS_ATOMFEED_PASSWORD:-Admin123}
+      DAGU_API_URL: ${DAGU_API_URL:-http://host.docker.internal:5133}
+      DAGU_API_TOKEN: ${DAGU_API_TOKEN:-}
+      EAPTS_API_URL: ${EAPTS_API_URL:-https://eapts-dev-api.hcmis.org/api/Patient/EMRPrescription}
+      EAPTS_USERNAME: ${EAPTS_USERNAME:-test}
+      EAPTS_PASSWORD: ${EAPTS_PASSWORD:-Admin@123}
+      EMR_EAPTS_URL: http://emr-eapts:3005
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      openmrs:
+        condition: service_started
+      emr-eapts:
+        condition: service_started
+    logging: *log-config
+    restart: ${RESTART_POLICY}
+
+  emr-eapts:
+    profiles: ["bahmni-standard"]
+    build:
+      context: ../../emr-eAPTs
+      dockerfile: Dockerfile
+    ports:
+      - '3005:3005'
+    environment:
+      TZ: ${TZ}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      openmrs:
+        condition: service_started
+    volumes:
+      - ../../emr-eAPTs/location-mapping.json:/app/location-mapping.json
+      - ../../emr-eAPTs/services/index.js:/app/services/index.js
+      - ../../emr-eAPTs/orderNumber.json:/app/orderNumber.json
+    logging: *log-config
+    restart: ${RESTART_POLICY}
+
   snowstorm-lite:
     profiles: [ "snowstorm-lite" ]
     image: snomedinternational/snowstorm-lite:${SNOWSTORM_LITE_IMAGE_TAG:?}

@@ -12596,9 +12596,50 @@ button.add-condition {
 /* line 348, clinical/treatment/_treatment.scss */
 .treatment-page-container .tabs .tab [type=radio]:checked ~ .dispense-all-btn,
 .treatment-page-container .tabs .tab [type=radio]:checked ~ .refill-drugs-btn,
-.treatment-page-container .tabs .tab [type=radio]:checked ~ .print-drugs-btn {
+.treatment-page-container .tabs .tab [type=radio]:checked ~ .print-drugs-btn,
+.treatment-page-container .tabs .tab [type=radio]:checked ~ .send-to-pharmacy-btn {
   display: inline-block;
   line-height: 14px;
+}
+.treatment-page-container .send-to-pharmacy-btn {
+  background-color: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 14px;
+  margin-left: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.treatment-page-container .send-to-pharmacy-btn:hover {
+  background-color: #1b5e20;
+}
+.treatment-page-container .send-to-pharmacy-btn i {
+  padding: 0;
+  font-size: 14px;
+  color: #fff;
+}
+.treatment-page-container .button-group-wrapper button.send-to-pharmacy-btn.per-row {
+  padding: 3px 6px;
+  margin: 0;
+  margin-right: 2px;
+  font-size: 12px;
+  line-height: 1.2em;
+  background-color: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  float: left;
+}
+.treatment-page-container .button-group-wrapper button.send-to-pharmacy-btn.per-row:hover {
+  background-color: #1b5e20;
+}
+.treatment-page-container .button-group-wrapper button.send-to-pharmacy-btn.per-row i {
+  font-size: 12px;
+  color: #fff;
+  padding: 0;
 }
 /* line 356, clinical/treatment/_treatment.scss */
 .treatment-page-container .invalid {

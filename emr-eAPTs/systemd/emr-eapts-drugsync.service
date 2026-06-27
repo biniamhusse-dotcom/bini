@@ -1,0 +1,21 @@
+[Unit]
+Description=EMR eAPTs Drug Sync Listener
+After=network.target openmrs.service
+Wants=openmrs.service
+
+[Service]
+Type=simple
+User=openmrs
+Group=openmrs
+WorkingDirectory=/opt/emr-eAPTs
+EnvironmentFile=/opt/emr-eAPTs/.env
+Environment=PORT=3007
+Environment=ROUTE=drugSync
+ExecStart=/usr/bin/node index.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/emr-eApts-drugSync.log
+StandardError=append:/var/log/emr-eApt-drugSync-error.log
+
+[Install]
+WantedBy=multi-user.target

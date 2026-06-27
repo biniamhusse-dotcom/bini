@@ -1,0 +1,21 @@
+[Unit]
+Description=EMR eAPTs Address Sync Listener
+After=network.target openmrs.service
+Wants=openmrs.service
+
+[Service]
+Type=simple
+User=openmrs
+Group=openmrs
+WorkingDirectory=/opt/emr-eAPTs
+EnvironmentFile=/opt/emr-eAPTs/.env
+Environment=PORT=3009
+Environment=ROUTE=addressSync
+ExecStart=/usr/bin/node index.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/emr-eApts-address.log
+StandardError=append:/var/log/emr-eApt-address-error.log
+
+[Install]
+WantedBy=multi-user.target

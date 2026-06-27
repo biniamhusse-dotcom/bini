@@ -2,9 +2,9 @@
 
 angular.module('bahmni.registration')
     .controller('prescriptionController', ['$window', '$scope', '$rootScope', '$state', '$bahmniCookieStore', 'patientService', 'encounterService', '$stateParams', 'spinner', '$timeout', '$q', 'appService', 'openmrsPatientMapper', 'contextChangeHandler', 'messagingService', 'sessionService', 'visitService', '$location', '$translate',
-        'auditLogService', 'formService', 'observationsService', 'ngDialog', '$http', 'paymentStatusService', 'prescriptionService',
+        'auditLogService', 'formService', 'observationsService', 'ngDialog', '$http', 'paymentStatusService', 'prescriptionService', 'pharmacyIntegrationService',
         function ($window, $scope, $rootScope, $state, $bahmniCookieStore, patientService, encounterService, $stateParams, spinner, $timeout, $q, appService, openmrsPatientMapper, contextChangeHandler, messagingService, sessionService, visitService, $location, $translate, auditLogService,
-            formService, observationsService, ngDialog, $http, paymentStatusService, prescriptionService) {
+            formService, observationsService, ngDialog, $http, paymentStatusService, prescriptionService, pharmacyIntegrationService) {
             var vm = this;
             var patientUuid = $stateParams.patientUuid;
             var extensions = appService.getAppDescriptor().getExtensions("org.bahmni.registration.conceptSetGroup.observations", "prescriptionconfig");
@@ -167,6 +167,45 @@ angular.module('bahmni.registration')
                 }
             });
 
+            $scope.pharmacyConfig = $scope.rx_config.pharmacy_integration || { enabled: false };
+
+            $scope.sendToPharmacy = function (prescription) {
+                if (!$scope.pharmacyConfig.enabled) {
+                    messagingService.showMessage('warning', "Pharmacy integration is disabled.");
+                    return;
+                }
+                messagingService.showMessage('info', "Sending prescription to pharmacy system...");
+                pharmacyIntegrationService.sendPrescriptionToPharmacy(
+                    prescription, $scope.patient, $scope.providerName, $scope.pharmacyConfig
+                ).then(function (result) {
+                    if (result && result.success) {
+                        prescription.pharmacy_synced = true;
+                    }
+                });
+            };
+
+            $scope.sendAllToPharmacy = function () {
+                if (!$scope.pharmacyConfig.enabled) {
+                    messagingService.showMessage('warning', "Pharmacy integration is disabled.");
+                    return;
+                }
+                var unsyncedPrescriptions = $scope.prescriptions.filter(function (p) {
+                    return !p.pharmacy_synced && p.status !== 'DISPENSED' && p.status !== 'DISCARDED';
+                });
+                if (unsyncedPrescriptions.length === 0) {
+                    messagingService.showMessage('info', "All prescriptions already synced to pharmacy.");
+                    return;
+                }
+                messagingService.showMessage('info', "Sending " + unsyncedPrescriptions.length + " prescription(s) to pharmacy...");
+                pharmacyIntegrationService.sendBulkPrescriptionsToPharmacy(
+                    unsyncedPrescriptions, $scope.patient, $scope.providerName, $scope.pharmacyConfig
+                ).then(function (results) {
+                    var syncedCount = results.filter(function (r) { return r && r.success; }).length;
+                    messagingService.showMessage('info', syncedCount + " prescription(s) synced to pharmacy.");
+                    unsyncedPrescriptions.forEach(function (p) { p.pharmacy_synced = true; });
+                });
+            };
+
             $scope.getVitalsAndDiagnosis = function (uuid) {
                 var params = {
                     q: "emrapi.getPatientVitalsAndDiagnosis",
@@ -304,7 +343,7 @@ angular.module('bahmni.registration')
 
             $scope.handlePrescriptionAction = function (action, prescription) {
                 console.log("Handling action:", action, "for prescription:", prescription);
-                prescriptionService.handlePrescriptionAction(prescription, action, patientUuid, $scope.rx_config);
+                prescriptionService.handlePrescriptionAction(prescription, action, patientUuid, $scope.rx_config, $scope.patient, $scope.providerName);
             };
 
             $scope.printPrescription = function (prescription, action) {

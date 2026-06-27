@@ -1,0 +1,15 @@
+{
+  "port": 4003,
+  "heartbeat": true,
+  "register": false,
+  "host": "",
+  "endpoints": [],
+  "log_level": "info",
+  "statsd": {},
+  "api": {
+    "apiURL": "https://localhost:8080",
+    "username": "root@openhim.org",
+    "password": "Orbit123!",
+    "trustSelfSigned": true
+  }
+} 

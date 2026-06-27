@@ -19,6 +19,21 @@ angular.module('bahmni.clinical')
             $scope.cdssEnabled = false;
             $scope.clearButtonClicked = false;
             $scope.conceptSource = localStorage.getItem("conceptSource") || "";
+            $scope.dispensingUnits = [];
+            $scope.selectedDispensingUnit = null;
+
+            locationService.getAllByTag('Drug dispensing unit').then(function (response) {
+                $scope.dispensingUnits = response.data.results || [];
+            });
+
+            $scope.onDispensingUnitChange = function () {
+                if ($scope.selectedDispensingUnit) {
+                    $http.post('http://localhost:3005/setInstitution', {
+                        institutionId: $scope.selectedDispensingUnit.uuid,
+                        name: $scope.selectedDispensingUnit.name
+                    });
+                }
+            };
 
             $scope.allMedicinesInPrescriptionAvailableForIPD = appService.getAppDescriptor().getConfigValue("allMedicinesInPrescriptionAvailableForIPD") !== null ? appService.getAppDescriptor().getConfigValue("allMedicinesInPrescriptionAvailableForIPD") : true;
             var currentVisitType;
@@ -444,6 +459,9 @@ angular.module('bahmni.clinical')
                     $scope.treatment.drugNonCoded = $scope.treatment.drugNameDisplay;
                 }
                 $scope.treatment.setUniformDoseFraction();
+                if ($scope.selectedDispensingUnit) {
+                    $scope.treatment.dispensingUnit = $scope.selectedDispensingUnit;
+                }
                 var newDrugOrder = $scope.treatment;
                 setNonCodedDrugConcept($scope.treatment);
 
@@ -676,6 +694,7 @@ angular.module('bahmni.clinical')
             $scope.clearForm = function () {
                 $scope.treatment = newTreatment();
                 $scope.formInvalid = false;
+                $scope.selectedDispensingUnit = null;
                 clearHighlights();
                 markVariable("startNewDrugEntry");
             };

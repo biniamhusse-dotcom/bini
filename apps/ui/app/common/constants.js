@@ -321,7 +321,18 @@ Bahmni.Common = Bahmni.Common || {};
         visit: "VISIT",
         defaultImageUploadSize: 500000, // Default patient profile photo size
         maxImageUploadSize: 9000000, // to ensure, extreme max size and prevent choking up server capacity (max size is 9MB)
-        adhocTeleconsultationLinkServiceUrl: RESTWS_V1 + "/adhocTeleconsultation/generateAdhocTeleconsultationLink"
+        adhocTeleconsultationLinkServiceUrl: RESTWS_V1 + "/adhocTeleconsultation/generateAdhocTeleconsultationLink",
+        pharmacyAppBaseUrl: "http://localhost:3001",
+        pharmacyDispenseApiUrl: "http://localhost:3001/api/prescription/send",
+        pharmacySendToEaptsApiUrl: "http://localhost:3001/api/prescription/send-to-eapts",
+        pharmacyBulkSendApiUrl: "http://localhost:3001/api/prescription/bulk-send",
+        pharmacyDtpApiUrl: "http://localhost:3001/api/prescription/dtp-callback",
+        pharmacyStatusApiUrl: "http://localhost:3001/api/prescription/status",
+        eaptsMediatorBaseUrl: "http://localhost:3005",
+        eaptsDrugSyncUrl: "http://localhost:3005/drugSync",
+        eaptsDtpUrl: "http://localhost:3005/dtpCase",
+        eaptsDispenseUrl: "http://localhost:3005/drugDispense",
+        eaptsAddressSyncUrl: "http://localhost:3005/addressSync"
     };
 })();
 
