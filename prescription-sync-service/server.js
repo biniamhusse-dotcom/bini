@@ -281,166 +281,111 @@ function mapPrescriptionToDagu(prescription) {
 app.post('/api/prescription/send', async (req, res) => {
   try {
     const prescription = req.body;
-    logger.info('Send to Pharmacy triggered - triggering eAPTs sync', { prescription_uuid: prescription.prescription_uuid });
+    const encounterUuid = prescription.encounter_uuid;
+    logger.info('Send to Pharmacy triggered', { prescription_uuid: prescription.prescription_uuid, encounter_uuid: encounterUuid });
+
+    if (!encounterUuid) {
+      logger.warn('No encounter_uuid in prescription payload, triggering full eAPTs sync');
+      try {
+        const eaptsResponse = await axios.get(`${EMR_EAPTS_URL}/fetch`, { timeout: 30000 });
+        logger.info('eAPTs sync triggered successfully', { prescription_uuid: prescription.prescription_uuid });
+        res.json({ success: true, message: 'Prescription synced to pharmacy system via eAPTs', eapts_response: eaptsResponse.data });
+      } catch (eaptsError) {
+        logger.error('eAPTs sync failed', { error: eaptsError.message });
+        res.status(500).json({ success: false, error: 'eAPTs sync failed', details: eaptsError.message });
+      }
+      return;
+    }
 
     try {
-      const eaptsResponse = await axios.get(`${EMR_EAPTS_URL}/fetch`, { timeout: 30000 });
+      const eaptsResponse = await axios.post(`${EMR_EAPTS_URL}/fetch-single`, { encounterUuid }, { timeout: 30000 });
 
-      logger.info('eAPTs sync triggered successfully', {
+      logger.info('eAPTs single-order sync completed', {
         prescription_uuid: prescription.prescription_uuid,
         eapts_response: eaptsResponse.data
       });
 
-      res.json({
-        success: true,
-        message: 'Prescription synced to pharmacy system via eAPTs',
-        eapts_response: eaptsResponse.data
-      });
+      if (eaptsResponse.data && eaptsResponse.data.length > 0) {
+        res.json({ success: true, message: 'Prescription sent to pharmacy system', eapts_response: eaptsResponse.data });
+      } else {
+        res.json({ success: true, message: 'Order not found or already sent', eapts_response: [] });
+      }
     } catch (eaptsError) {
-      logger.warn('eAPTs sync failed, falling back to direct Dagu send', {
+      logger.warn('eAPTs single-order sync failed, trying full sync', {
         prescription_uuid: prescription.prescription_uuid,
         error: eaptsError.message
       });
 
-      const daguPayload = mapPrescriptionToDagu(prescription);
-      const headers = { 'Content-Type': 'application/json' };
-      const jwtToken = generateDaguToken();
-      headers['Authorization'] = `Bearer ${jwtToken}`;
-
       try {
-        const response = await axios.post(`${DAGU_API_URL}/api/Patient/EMRPrescription`, daguPayload, {
-          headers: headers,
-          timeout: 15000
-        });
-
-        logger.info('Prescription sent to Dagu directly', {
-          prescription_uuid: prescription.prescription_uuid,
-          dagu_response: response.data
-        });
-
-        res.json({
-          success: true,
-          message: 'Prescription sent to pharmacy system',
-          dagu_response: response.data
-        });
-      } catch (daguError) {
-        logger.warn('Dagu API rejected prescription, queueing for retry', {
-          prescription_uuid: prescription.prescription_uuid,
-          error: daguError.message,
-          status: daguError.response?.status
-        });
-
-        prescriptionQueue.push({
-          prescription_uuid: prescription.prescription_uuid,
-          original_payload: prescription,
-          mapped_payload: daguPayload,
-          created_at: new Date().toISOString(),
-          retry_count: 0,
-          last_error: daguError.response?.data || daguError.message
-        });
-        saveQueue();
-
-        res.json({
-          success: true,
-          queued: true,
-          message: 'Prescription saved locally. Will retry sending to pharmacy system.',
-          prescription_uuid: prescription.prescription_uuid
-        });
+        const fallbackResponse = await axios.get(`${EMR_EAPTS_URL}/fetch`, { timeout: 30000 });
+        res.json({ success: true, message: 'Prescription synced via full eAPTs sync', eapts_response: fallbackResponse.data });
+      } catch (fallbackError) {
+        logger.error('All sync methods failed', { error: fallbackError.message });
+        res.status(500).json({ success: false, error: 'Sync failed', details: fallbackError.message });
       }
     }
   } catch (error) {
-    logger.error('Failed to send prescription to Dagu', {
+    logger.error('Failed to send prescription', {
       error: error.message,
       prescription_uuid: req.body.prescription_uuid
     });
-
-    res.status(500).json({
-      success: false,
-      error: 'Internal error',
-      details: error.message
-    });
+    res.status(500).json({ success: false, error: 'Internal error', details: error.message });
   }
 });
 
 app.post('/api/prescription/bulk-send', async (req, res) => {
   try {
     const { prescriptions, patient, dispenser } = req.body;
-    logger.info('Bulk send triggered - triggering eAPTs sync', { count: prescriptions.length });
+    logger.info('Bulk send triggered', { count: prescriptions.length });
 
-    try {
-      const eaptsResponse = await axios.get(`${EMR_EAPTS_URL}/fetch`, { timeout: 30000 });
+    const results = [];
+    let usedFetchSingle = false;
 
-      logger.info('eAPTs sync triggered successfully for bulk send', {
-        count: prescriptions.length,
-        eapts_response: eaptsResponse.data
-      });
-
-      res.json({
-        success: true,
-        message: `${prescriptions.length} prescriptions synced to pharmacy system via eAPTs`,
-        eapts_response: eaptsResponse.data
-      });
-    } catch (eaptsError) {
-      logger.warn('eAPTs sync failed for bulk send, falling back to direct Dagu send', {
-        error: eaptsError.message
-      });
-
-      const results = [];
-      for (const prescription of prescriptions) {
-        const daguPayload = mapPrescriptionToDagu({
-          ...prescription,
-          patient: patient,
-          dispenser: dispenser
-        });
-
+    for (const prescription of prescriptions) {
+      const encounterUuid = prescription.encounter_uuid;
+      if (encounterUuid) {
         try {
-          const headers = { 'Content-Type': 'application/json' };
-          const jwtToken = generateDaguToken();
-          headers['Authorization'] = `Bearer ${jwtToken}`;
-
-          const response = await axios.post(`${DAGU_API_URL}/api/Patient/EMRPrescription`, daguPayload, {
-            headers: headers,
-            timeout: 15000
-          });
-
-          results.push({
+          const eaptsResponse = await axios.post(`${EMR_EAPTS_URL}/fetch-single`, { encounterUuid }, { timeout: 30000 });
+          usedFetchSingle = true;
+          if (eaptsResponse.data && eaptsResponse.data.length > 0) {
+            results.push({ prescription_uuid: prescription.prescription_uuid, success: true, method: 'fetch-single', eapts_response: eaptsResponse.data });
+          } else {
+            results.push({ prescription_uuid: prescription.prescription_uuid, success: true, method: 'fetch-single', message: 'Order not found or already sent' });
+          }
+        } catch (singleError) {
+          logger.warn('Bulk send: fetch-single failed for encounter, queuing', {
             prescription_uuid: prescription.prescription_uuid,
-            success: true,
-            dagu_response: response.data
+            error: singleError.message
           });
-        } catch (err) {
-          logger.warn('Bulk send: Dagu rejected prescription, queueing', {
-            prescription_uuid: prescription.prescription_uuid,
-            error: err.message
-          });
-
+          const daguPayload = mapPrescriptionToDagu({ ...prescription, patient, dispenser });
           prescriptionQueue.push({
             prescription_uuid: prescription.prescription_uuid,
             original_payload: { ...prescription, patient, dispenser },
             mapped_payload: daguPayload,
             created_at: new Date().toISOString(),
             retry_count: 0,
-            last_error: err.response?.data || err.message
+            last_error: singleError.message
           });
           saveQueue();
-
-          results.push({
-            prescription_uuid: prescription.prescription_uuid,
-            success: true,
-            queued: true
-          });
+          results.push({ prescription_uuid: prescription.prescription_uuid, success: true, queued: true });
         }
+      } else {
+        results.push({ prescription_uuid: prescription.prescription_uuid, success: false, error: 'No encounter_uuid' });
       }
-
-      const successCount = results.filter(r => r.success).length;
-      logger.info('Bulk send completed', { success: successCount, failed: results.length - successCount });
-
-      res.json({
-        success: true,
-        message: `${successCount}/${results.length} prescriptions processed`,
-        results: results
-      });
     }
+
+    if (!usedFetchSingle) {
+      try {
+        const eaptsResponse = await axios.get(`${EMR_EAPTS_URL}/fetch`, { timeout: 30000 });
+        logger.info('eAPTs full sync triggered as fallback', { eapts_response: eaptsResponse.data });
+      } catch (fallbackError) {
+        logger.warn('eAPTs full sync fallback failed', { error: fallbackError.message });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    logger.info('Bulk send completed', { success: successCount, failed: results.length - successCount });
+    res.json({ success: true, message: `${successCount}/${results.length} prescriptions processed`, results });
   } catch (error) {
     logger.error('Bulk send error', { error: error.message });
     res.status(500).json({ success: false, error: error.message });

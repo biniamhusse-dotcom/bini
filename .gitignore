@@ -17,3 +17,10 @@ Desktop.ini
 
 # Logs
 logs/
+
+# Database backups
+*.sql
+
+# Temp files
+temp_*
+sentEncounters.json

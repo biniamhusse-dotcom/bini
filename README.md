@@ -1099,3 +1099,144 @@ If `docker compose` also doesn't work, install the plugin:
 ```bash
 sudo apt install docker-compose-plugin -y
 ```
+
+---
+
+## Sponsor Mapping & Dagu Fix Scripts
+
+Two fix scripts apply all sponsor dropdown and OpenMRS-to-Dagu mapping fixes in one run. They are **idempotent** (safe to re-run).
+
+### What the scripts fix
+
+| Step | Problem | Fix |
+|------|---------|-----|
+| 1 | Dagu backend filters sponsors by `woreda_id` (`GetSponsorByWoreda`). Different institutions had different `woreda_id` values, so the sponsor dropdown was empty for most users. | Set **all 12 sponsors** `woreda_id = 5024` (Dire Dawa). |
+| 2 | OPD Pharmacy had `woreda_id = 10934` (Legehare) which didn't match most sponsors. | Reverted OPD Pharmacy to `woreda_id = 5024`. Now **all 8 institutions** share the same `woreda_id`. |
+| 3 | `common.sponsor_mapping` had only 1 row (N/A). Patients with non-N/A CreditCompany had no mapping. | Populated **33 rows** — all OpenMRS CreditCompany concept UUIDs mapped to Dagu sponsors. |
+
+### Why this is needed
+
+The Dagu backend (`GetSponsorByWoreda` in `Dagu.Modules.DispensingUnit.dll`) filters the `GET /api/Patient/sponsor` endpoint by the logged-in user's institution `woreda_id`. If sponsors and institutions don't share the same `woreda_id`, the Angular frontend receives an empty list and shows "No items found" in the sponsor dropdown.
+
+### Run the fix (PowerShell — Windows)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File dagu-sponsor-fix.ps1
+```
+
+### Run the fix (bash — Linux/WSL)
+
+```bash
+bash dagu-sponsor-fix.sh
+```
+
+### Custom database connection
+
+Both scripts default to `localhost:5432/eapts_dev` with user `postgres` / password `6h5Q4W4gPC`. Override with environment variables:
+
+**PowerShell:**
+```powershell
+$env:PGHOST = "myhost"
+$env:PGPORT = "5433"
+$env:PGPASSWORD = "mypass"
+powershell -ExecutionPolicy Bypass -File dagu-sponsor-fix.ps1
+```
+
+**Bash:**
+```bash
+PGHOST=myhost PGPORT=5433 PGPASSWORD=mypass bash dagu-sponsor-fix.sh
+```
+
+### What the scripts output
+
+```
+============================================
+  Dagu Sponsor & Mapping Fix
+  Target: eapts_dev @ localhost:5432
+============================================
+
+[1/3] Setting all sponsors woreda_id = 5024 ...
+UPDATE 12
+  Done. Verifying:
+ id |          name           | woreda_id
+  1 | CBHI -08                |      5024
+  ...
+ 12 | tt                      |      5024
+
+[2/3] Setting OPD Pharmacy (12290) woreda_id = 5024 ...
+UPDATE 1
+  Done. Verifying all institutions:
+   id    |      name      | woreda_id
+---------+----------------+-----------
+    3101 | Hospital       |      5024
+   12290 | OPD Pharmacy   |      5024
+   ...
+
+[3/3] Populating common.sponsor_mapping ...
+DELETE 33
+INSERT 0 33
+  Done. Verifying:
+ total_mappings
+--------------
+            33
+
+============================================
+  All fixes applied successfully!
+============================================
+```
+
+### Sponsor mapping table reference
+
+The `common.sponsor_mapping` table links OpenMRS `CreditCompany` person attribute concept UUIDs to Dagu `du.sponsor` IDs:
+
+| OpenMRS Concept UUID | Concept Name | Dagu Sponsor ID |
+|----------------------|-------------|-----------------|
+| `fd08aa37-e18d-415d-be41-f8bbbc81bea3` | N/A | NULL |
+| `482a0e3e-c7f2-4605-9ced-05e56ef7dcd1` | Carvico Ethiopia PLC | NULL |
+| `931e01fa-6147-4832-a159-a4f31b260f89` | Insurance Organization | NULL |
+| `562e67ca-661b-48e8-ba7b-d5ad76f914de` | MTI | NULL |
+| ... | (33 total) | ... |
+
+All currently map to `NULL` sponsor because OpenMRS CreditCompany values are employer names (police, universities, companies) that don't have 1:1 Dagu sponsor equivalents. Pharmacy staff manually select the sponsor in the Dagu dispense form. To auto-assign a specific sponsor, update the `dagu_sponsor_id` column:
+
+```sql
+-- Example: Map "Insurance Organization" to Dagu sponsor "CBHI -08" (id=1)
+UPDATE common.sponsor_mapping
+SET dagu_sponsor_id = 1
+WHERE openmrs_concept_uuid = '931e01fa-6147-4832-a159-a4f31b260f89';
+```
+
+### Key database tables
+
+| Table | Purpose |
+|-------|---------|
+| `du.sponsor` | Dagu sponsor list (12 rows). `woreda_id` must match institution for `GetSponsorByWoreda` to return them. |
+| `common.sponsor_mapping` | Cross-reference: OpenMRS CreditCompany UUID → Dagu sponsor ID. |
+| `institution.institution` | Dagu institutions. `woreda_id` is the filter key used by the backend. |
+| `du.patient` | Patients. `payment_type_id`, `sponsor_id`, `insurance_number` set by emr-eAPTs after each prescription send. |
+
+### How the data flows end-to-end
+
+```
+1. emr-eAPTs sends prescription to Dagu API
+   → Dagu creates du.prescription + du.patient
+
+2. emr-eAPTs calls getPatientPaymentType(patientRowGuid)
+   → Queries OpenMRS REST API for person attributes
+   → Returns: { paymentTypeUuid, creditCompanyUuid, referenceNumber }
+
+3. emr-eAPTs calls resolveSponsorId(creditCompanyUuid)
+   → Queries: SELECT dagu_sponsor_id FROM common.sponsor_mapping
+              WHERE openmrs_concept_uuid = $1
+   → Returns: dagu_sponsor_id (integer or NULL)
+
+4. emr-eAPTs calls updatePatientBillingInfo(patientId, paymentTypeUuid, sponsorId, insuranceNumber)
+   → UPDATE du.patient SET payment_type_id=$1, sponsor_id=$2, insurance_number=$3
+
+5. User opens Dagu dispense form
+   → Selects CBHI payment type (parent code = "CRD")
+   → Angular calls GET /api/Patient/sponsor
+   → Backend filters by institution woreda_id (5024)
+   → Returns all 12 sponsors (all have woreda_id=5024)
+   → Dropdown shows all sponsors
+```

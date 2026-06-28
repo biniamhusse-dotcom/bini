@@ -18,6 +18,20 @@ router.use('/fetch', (req, res) => {
   });
 });
 
+// Route for handling the '/fetch-single' endpoint
+// Sends a specific order by encounter UUID, bypassing checkpoint
+router.post('/fetch-single', (req, res) => {
+  const { encounterUuid } = req.body;
+  if (!encounterUuid) {
+    return res.status(400).json({ error: 'encounterUuid is required' });
+  }
+  require('../services/index').eaptsServiceSingle(encounterUuid).then(response => {
+    res.send(response);
+  }).catch(error => {
+    res.status(500).send({ error: error.message || 'Failed to fetch single order' });
+  });
+});
+
 // Route for handling the '/dtpCase' endpoint
 // Sends the request to the 'dtpService' function in the 'services/dtpCase' module
 router.use('/dtpCase', (req, res) => {

@@ -661,6 +661,11 @@ services:
       - '3005:3005'
     environment:
       TZ: ${TZ}
+      DAGU_DB_HOST: host.docker.internal
+      DAGU_DB_PORT: '5432'
+      DAGU_DB_NAME: eapts_dev
+      DAGU_DB_USER: postgres
+      DAGU_DB_PASSWORD: 6h5Q4W4gPC
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -670,6 +675,11 @@ services:
       - ../../emr-eAPTs/location-mapping.json:/app/location-mapping.json
       - ../../emr-eAPTs/services/index.js:/app/services/index.js
       - ../../emr-eAPTs/orderNumber.json:/app/orderNumber.json
+      - ../../emr-eAPTs/selected-institution.json:/app/selected-institution.json
+      - ../../emr-eAPTs/routes/index.js:/app/routes/index.js
+      - ../../emr-eAPTs/modules/mapping.js:/app/modules/mapping.js
+      - ../../emr-eAPTs/modules/daguDb.js:/app/modules/daguDb.js
+      - ../../emr-eAPTs/modules/emr.js:/app/modules/emr.js
     logging: *log-config
     restart: ${RESTART_POLICY}
 

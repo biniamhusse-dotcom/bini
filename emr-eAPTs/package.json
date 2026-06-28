@@ -5,6 +5,7 @@
     "json2csv": "^6.0.0-alpha.2",
     "openhim-mediator-utils": "^0.2.4",
     "path": "^0.12.7",
+    "pg": "^8.11.0",
     "requestretry": "^7.1.0",
     "winston": "^3.8.1"
   }

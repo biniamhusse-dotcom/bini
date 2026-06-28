@@ -86,6 +86,13 @@ function resolveInstitutionId(locationName) {
   return defaultInstitutionId;
 }
 
+const PAYMENT_TYPE_UUID_TO_ID = {
+  '390c4b8b-d206-4a9d-9162-e59ffa183440': 1033,
+  'f72199ee-509f-4087-88cd-c743052b3bae': 1030,
+  'b25e8721-4d82-49e7-8c4e-0b6667eab8aa': 1023,
+  '4a9afabb-f066-4267-a943-e489409368f3': 1016,
+};
+
 function mappingRequest(emrData) {
   return new Promise((resolve, reject) => {
     const sendData = [];
@@ -212,7 +219,7 @@ function mappingRequest(emrData) {
           rowGuid: emrData[key][0].prescriber_rowGuid,
         },
         patient: {
-          paymentTypeId: emrData[key][0].paymentType,
+          paymentTypeId: emrData[key][0].paymentType || '4a9afabb-f066-4267-a943-e489409368f3',
           sponsorName: emrData[key][0].sponsorName !== '' && emrData[key][0].sponsorName !== undefined ? emrData[key][0].sponsorName : '',
           patientTypeId: emrData[key][0].patientTypeId,
           firstName: emrData[key][0].firstName,
