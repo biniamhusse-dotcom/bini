@@ -101,6 +101,12 @@
                 <div class="dashboard-date-picker" ng-controller="PatientListHeaderController">
                     <div class="retro-date-widget-wrapper fr">
                         <div class="retro-date-widget-header fr">
+                            <a href="https://www.uptodate.com" target="_blank" style="cursor:pointer;padding:10px 14px;color:#fff;border:1px solid #c57a00;border-radius:4px;background:linear-gradient(to bottom,#FF9800,#E65100);font-size:14px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.2);margin-right:10px;" onmouseover="this.style.background='linear-gradient(to bottom,#F57C00,#BF360C)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 6px rgba(0,0,0,0.3)'" onmouseout="this.style.background='linear-gradient(to bottom,#FF9800,#E65100)';this.style.transform='translateY(0)';this.style.boxShadow='0 2px 4px rgba(0,0,0,0.2)'">
+                                <i class="fa fa-external-link" style="font-size:12px;"></i> UpToDate
+                            </a>
+                            <a href="../clinical-reference/index.html#/dashboard/clinicalReference" target="_blank" style="cursor:pointer;padding:10px 14px;color:#fff;border:1px solid #00796b;border-radius:4px;background:linear-gradient(to bottom,#009688,#004D40);font-size:14px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.2);margin-right:10px;" onmouseover="this.style.background='linear-gradient(to bottom,#00897B,#00695C)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 3px 6px rgba(0,0,0,0.3)'" onmouseout="this.style.background='linear-gradient(to bottom,#009688,#004D40)';this.style.transform='translateY(0)';this.style.boxShadow='0 2px 4px rgba(0,0,0,0.2)'">
+                                <i class="fa fa-book" style="font-size:12px;"></i> Clinical Reference
+                            </a>
                             <button ng-click="popUpHandler()" show-if-privilege="{{retrospectivePrivilege}},{{onBehalfOfPrivilege}},{{locationPickerPrivilege}}" ng-if="getTitle()">{{ getTitle() | translate }}</button>
                         </div>
                     </div>

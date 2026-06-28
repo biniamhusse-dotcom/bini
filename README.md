@@ -297,6 +297,17 @@ Global health indicators by country from WHO Global Health Observatory:
    - **Clinical Guidelines** — View evidence-based guidelines
    - **Drug Safety Check** — Check drug interactions between multiple drugs
 
+### Header Quick-Access Buttons
+
+The clinical app header includes two quick-access buttons next to the location name:
+
+| Button | Style | URL | Description |
+|--------|-------|-----|-------------|
+| **UpToDate** | Orange gradient | `https://www.uptodate.com` | Opens UpToDate in a new tab |
+| **Clinical Reference** | Teal gradient | `../clinical-reference/index.html#/dashboard/clinicalReference` | Opens the clinical reference dashboard |
+
+These buttons appear on both the patient search page and the clinical dashboard header.
+
 ### Direct URL Access
 
 - **Drug Search:** `http://localhost:8186/bahmni/clinical-reference/index.html#/dashboard/drugSearch`
