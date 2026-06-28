@@ -491,7 +491,7 @@ cd restores/images
 bash restore_bahmni_openmrs-db.sh
 
 # Restore the Bahmni web application image
-bash restore_selamsew_bahmni-web.sh
+bash restore_bini_bahmni-web.sh
 
 # Restore MySQL base image
 bash restore_mysql.sh
@@ -516,12 +516,12 @@ bash restore_mysql.sh
 | `restore_bahmni_reports.sh` | bahmni_reports:1.1.0 | Reporting module |
 | `restore_mysql.sh` | mysql:8.0 | MySQL base image |
 | `restore_postgres.sh` | postgres:9.6 | PostgreSQL base image |
-| `restore_selamsew_bahmni-web.sh` | selamsew_bahmni-web:1.1.0-uog-1.0.0 | Custom Bahmni web |
-| `restore_selamsew_global_property.sh` | selamsew_global_property:uog-1.0.2 | Custom global properties |
-| `restore_selamsew_lab-result-sync.sh` | selamsew_lab-result-sync:1.0.2 | Custom lab result sync |
-| `restore_selamsew_odoo-16.sh` | selamsew_odoo-16:1.0.0-uog-1.0.3 | Custom Odoo |
-| `restore_selamsew_openelis.sh` | selamsew_openelis:1.0.0-uog-1.0.5 | Custom OpenELIS |
-| `restore_selamsew_openmrs.sh` | selamsew_openmrs:1.1.1-uog-1.0.2 | Custom OpenMRS |
+| `restore_bini_bahmni-web.sh` | bini_bahmni-web:1.1.0-b-1.0.0 | Custom Bahmni web |
+| `restore_bini_global_property.sh` | bini_global_property:b-1.0.2 | Custom global properties |
+| `restore_bini_lab-result-sync.sh` | bini_lab-result-sync:1.0.2 | Custom lab result sync |
+| `restore_bini_odoo-16.sh` | bini_odoo-16:1.0.0-b-1.0.3 | Custom Odoo |
+| `restore_bini_openelis.sh` | bini_openelis:1.0.0-b-1.0.5 | Custom OpenELIS |
+| `restore_bini_openmrs.sh` | bini_openmrs:1.1.1-b-1.0.2 | Custom OpenMRS |
 
 **What happens during an image restore:**
 
