@@ -1,0 +1,124 @@
+<div class="guidelines-container">
+    <div class="header">
+        <h2>Clinical Practice Guidelines</h2>
+        <p>Evidence-based guidelines from major medical organizations</p>
+    </div>
+    
+    <div class="loading" ng-if="isLoading">
+        <i class="fa fa-spinner fa-spin"></i> Loading guideline...
+    </div>
+    
+    <!-- Guidelines List -->
+    <div ng-if="!selectedGuideline && !isLoading">
+        <div class="guidelines-grid">
+            <div class="guideline-card" ng-repeat="guideline in guidelines" ng-click="viewGuideline(guideline)">
+                <div class="source-badge" ng-style="{'background': getSourceColor(guideline.source)}">
+                    {{guideline.source}}
+                </div>
+                <h4>{{guideline.name}}</h4>
+                <p class="year">Year: {{guideline.year}}</p>
+                <p class="doi" ng-if="guideline.doi">DOI: {{guideline.doi}}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Selected Guideline -->
+    <div ng-if="selectedGuideline && !isLoading" class="guideline-detail">
+        <button class="btn btn-outline" ng-click="goBack()">Back to List</button>
+        <h3>{{selectedGuideline.name}}</h3>
+        <p class="source-info"><strong>Source:</strong> {{selectedGuideline.source}}</p>
+        <p class="doi-info" ng-if="selectedGuideline.doi"><strong>DOI:</strong> <a href="https://doi.org/{{selectedGuideline.doi}}" target="_blank">{{selectedGuideline.doi}}</a></p>
+        
+        <div class="recommendations">
+            <h4>Key Recommendations</h4>
+            <ul>
+                <li ng-repeat="rec in selectedGuideline.key_recommendations">{{rec}}</li>
+            </ul>
+        </div>
+        
+        <div class="evidence-level" ng-if="selectedGuideline.evidence_level">
+            <p><strong>Evidence Level:</strong> {{selectedGuideline.evidence_level}}</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.guidelines-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.guidelines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+.guideline-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+.guideline-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+.source-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 15px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.guideline-card h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+}
+.year, .doi {
+    color: #7f8c8d;
+    font-size: 14px;
+    margin: 5px 0;
+}
+.guideline-detail {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.source-info, .doi-info {
+    margin: 10px 0;
+    color: #666;
+}
+.recommendations {
+    margin-top: 30px;
+}
+.recommendations h4 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+.recommendations ul {
+    list-style: none;
+    padding: 0;
+}
+.recommendations li {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border-left: 4px solid #3498db;
+}
+.evidence-level {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f5e9;
+    border-radius: 5px;
+}
+</style>

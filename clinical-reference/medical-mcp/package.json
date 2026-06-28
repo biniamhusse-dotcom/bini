@@ -1,0 +1,16 @@
+{
+  "name": "bahmni-medical-mcp",
+  "version": "1.0.0",
+  "description": "Medical MCP server for Bahmni EMR - Drug info, PubMed, WHO stats",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "xml2js": "^0.6.2"
+  }
+}

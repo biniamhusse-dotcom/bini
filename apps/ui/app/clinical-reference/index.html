@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" ng-app="bahmni.clinicalReference">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Reference - Bahmni</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="styles/clinical-reference.css"/>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <div class="header-content">
+                <a href="../home/index.html" class="home-link">
+                    <i class="fa fa-home"></i> Home
+                </a>
+                <span class="app-title">Clinical Reference Tools</span>
+            </div>
+        </div>
+        <div class="app-content">
+            <div ui-view></div>
+        </div>
+    </div>
+
+    <script src="../components/jquery/jquery.min.js"></script>
+    <script src="../components/angular/angular.min.js"></script>
+    <script src="../components/angular-ui-router/release/angular-ui-router.min.js"></script>
+    <script src="../components/angular-cookies/angular-cookies.min.js"></script>
+    <script src="../components/moment/moment.js"></script>
+
+    <script src="app.js"></script>
+    <script src="services/clinicalReferenceService.js"></script>
+    <script src="controllers/clinicalReferenceController.js"></script>
+    <script src="controllers/drugSearchController.js"></script>
+    <script src="controllers/calculatorsController.js"></script>
+    <script src="controllers/guidelinesController.js"></script>
+    <script src="controllers/drugCheckController.js"></script>
+</body>
+</html>

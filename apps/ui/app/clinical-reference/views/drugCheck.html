@@ -1,0 +1,334 @@
+<div class="drug-check-container">
+    <div class="header">
+        <h2>Drug Safety Check</h2>
+        <p>Check drug interactions, contraindications, and safety information</p>
+    </div>
+    
+    <div class="patient-context" ng-if="patientContext">
+        <h4>Patient Context</h4>
+        <p><strong>Patient:</strong> {{patientContext.patient.name}} ({{patientContext.patient.gender}}, {{patientContext.patient.age}} years)</p>
+        <div ng-if="patientContext.diagnoses.length > 0">
+            <p><strong>Current Diagnoses:</strong></p>
+            <ul>
+                <li ng-repeat="dx in patientContext.diagnoses">{{dx.name}}</li>
+            </ul>
+        </div>
+        <div ng-if="patientContext.medications.length > 0">
+            <p><strong>Current Medications:</strong></p>
+            <ul>
+                <li ng-repeat="med in patientContext.medications">{{med.drug}} {{med.dose}} {{med.units}} {{med.frequency}}</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="drug-input-section">
+        <h4>Enter Drugs to Check</h4>
+        <div class="drug-input-row" ng-repeat="drug in drugs track by $index">
+            <input type="text" ng-model="drugs[$index]" placeholder="Drug name (e.g., Aspirin)">
+            <button class="btn btn-sm btn-danger" ng-click="removeDrug($index)" ng-if="drugs.length > 1">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <button class="btn btn-outline" ng-click="addDrug()">+ Add Another Drug</button>
+        <button class="btn btn-primary" ng-click="runDrugCheck()" style="margin-left: 10px;">Check Interactions</button>
+        <button class="btn btn-outline" ng-click="clearResults()" style="margin-left: 10px;">Clear</button>
+    </div>
+    
+    <div class="loading" ng-if="isLoading">
+        <i class="fa fa-spinner fa-spin"></i> Checking drug interactions...
+    </div>
+    
+    <!-- Results -->
+    <div class="results-section" ng-if="checkResults && !isLoading">
+        <h3>Drug Safety Report</h3>
+        
+        <!-- Drug Label Information -->
+        <div class="drug-labels">
+            <h4>Drug Information</h4>
+            <div class="label-card" ng-repeat="check in checkResults.checks">
+                <h5>{{check.drug}}</h5>
+                <div ng-if="check.labelInfo && !check.labelInfo.error">
+                    <div class="info-section">
+                        <strong>Indications:</strong>
+                        <p>{{check.labelInfo.indications | limitTo:200}}...</p>
+                    </div>
+                    <div class="info-section warning">
+                        <strong>Warnings:</strong>
+                        <p>{{check.labelInfo.warnings | limitTo:200}}...</p>
+                    </div>
+                    <div class="info-section danger">
+                        <strong>Contraindications:</strong>
+                        <p>{{check.labelInfo.contraindications | limitTo:200}}...</p>
+                    </div>
+                </div>
+                <div ng-if="check.error" class="error">{{check.error}}</div>
+            </div>
+        </div>
+        
+        <!-- Drug Interactions -->
+        <div class="interactions-section" ng-if="checkResults.interactions.length > 0">
+            <h4>Drug Interactions Found</h4>
+            <div class="interaction-card" ng-repeat="interaction in checkResults.interactions" ng-class="'severity-' + interaction.severity">
+                <div class="interaction-header">
+                    <span class="drug-badge">{{interaction.drug1}}</span>
+                    <i class="fa fa-arrows-h"></i>
+                    <span class="drug-badge">{{interaction.drug2}}</span>
+                    <span class="severity-badge" ng-class="'severity-' + interaction.severity">
+                        <i class="fa" ng-class="{
+                            'fa-exclamation-triangle': interaction.severity === 'high',
+                            'fa-exclamation-circle': interaction.severity === 'moderate',
+                            'fa-info-circle': interaction.severity === 'low' || interaction.severity === 'info',
+                            'fa-question-circle': interaction.severity === 'unknown'
+                        }"></i>
+                        {{interaction.severity === 'high' ? 'High Risk' : interaction.severity === 'moderate' ? 'Moderate' : interaction.severity === 'low' ? 'Low Risk' : 'Unknown'}}
+                    </span>
+                </div>
+                <div class="interaction-body">
+                    <div class="interaction-description">
+                        <strong>Clinical Significance:</strong>
+                        <p>{{interaction.description}}</p>
+                    </div>
+                    <div class="interaction-recommendation">
+                        <strong>Recommendation:</strong>
+                        <p>{{interaction.recommendation}}</p>
+                    </div>
+                    <div class="combination-products" ng-if="interaction.combinationProducts.length > 0">
+                        <strong>Combination Products Available:</strong>
+                        <div class="product-list">
+                            <span class="product-tag" ng-repeat="product in interaction.combinationProducts | limitTo:5">{{product}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="no-interactions" ng-if="checkResults.interactions.length === 0">
+            <i class="fa fa-check-circle"></i>
+            <p>No known drug interactions found</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.drug-check-container {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.patient-context {
+    background: #e3f2fd;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+.patient-context h4 {
+    margin: 0 0 15px 0;
+    color: #1565c0;
+}
+.drug-input-section {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+.drug-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.drug-input-row input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+.btn-outline {
+    background: white;
+    border: 2px solid #ddd;
+    color: #666;
+}
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+.btn-sm {
+    padding: 8px 15px;
+    font-size: 12px;
+}
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+.results-section {
+    margin-top: 20px;
+}
+.drug-labels h4, .interactions-section h4 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+.label-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.label-card h5 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+}
+.info-section {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+.info-section.warning {
+    background: #fff3cd;
+}
+.info-section.danger {
+    background: #f8d7da;
+}
+.interaction-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #ffc107;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.interaction-card.severity-high {
+    border-left-color: #e74c3c;
+    background: #fdf2f2;
+}
+.interaction-card.severity-moderate {
+    border-left-color: #f39c12;
+    background: #fef9e7;
+}
+.interaction-card.severity-low,
+.interaction-card.severity-info {
+    border-left-color: #27ae60;
+    background: #f0faf4;
+}
+.interaction-card.severity-unknown {
+    border-left-color: #95a5a6;
+    background: #f8f9fa;
+}
+.interaction-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+.drug-badge {
+    background: #2c3e50;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.severity-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: auto;
+}
+.severity-badge.severity-high {
+    background: #e74c3c;
+    color: white;
+}
+.severity-badge.severity-moderate {
+    background: #f39c12;
+    color: white;
+}
+.severity-badge.severity-low,
+.severity-badge.severity-info {
+    background: #27ae60;
+    color: white;
+}
+.severity-badge.severity-unknown {
+    background: #95a5a6;
+    color: white;
+}
+.interaction-body {
+    margin-top: 10px;
+}
+.interaction-description,
+.interaction-recommendation {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 5px;
+}
+.interaction-description strong,
+.interaction-recommendation strong {
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+.interaction-description p,
+.interaction-recommendation p {
+    margin: 0;
+    color: #555;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.combination-products {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 5px;
+}
+.combination-products strong {
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+.product-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.product-tag {
+    background: #e8e8e8;
+    color: #555;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+.no-interactions {
+    text-align: center;
+    padding: 40px;
+    background: #d4edda;
+    border-radius: 10px;
+    color: #155724;
+}
+.no-interactions i {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+</style>

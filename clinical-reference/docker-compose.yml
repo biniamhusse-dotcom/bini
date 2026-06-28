@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  medical-mcp:
+    build:
+      context: ./medical-mcp
+      dockerfile: Dockerfile
+    container_name: bahmni-medical-mcp
+    ports:
+      - "3010:3010"
+    environment:
+      - PORT=3010
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  open-medicine:
+    build:
+      context: ./open-medicine
+      dockerfile: Dockerfile
+    container_name: bahmni-open-medicine
+    ports:
+      - "3011:3011"
+    environment:
+      - PORT=3011
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3011/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  cdss-integration:
+    build:
+      context: ./cdss-integration
+      dockerfile: Dockerfile
+    container_name: bahmni-cdss-integration
+    ports:
+      - "3012:3012"
+    environment:
+      - PORT=3012
+      - MEDICAL_MCP_URL=http://medical-mcp:3010
+      - OPEN_MEDICINE_URL=http://open-medicine:3011
+      - OPENMRS_URL=http://openmrs:8080
+    depends_on:
+      - medical-mcp
+      - open-medicine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3012/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

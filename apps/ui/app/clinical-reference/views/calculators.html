@@ -1,0 +1,175 @@
+<div class="calculators-container">
+    <div class="header">
+        <h2>Clinical Calculators</h2>
+        <p>Evidence-based clinical calculators with DOI-traceable sources</p>
+    </div>
+    
+    <div class="loading" ng-if="isLoading">
+        <i class="fa fa-spinner fa-spin"></i> Calculating...
+    </div>
+    
+    <!-- Calculator List -->
+    <div ng-if="!selectedCalculator && !isLoading">
+        <div class="category-filter">
+            <button class="btn btn-sm" ng-repeat="calc in calculators | unique:'category'" 
+                    ng-click="filterCategory = calc.category"
+                    ng-class="{'active': filterCategory === calc.category}"
+                    ng-style="{'background': getCategoryColor(calc.category)}">
+                {{calc.category}}
+            </button>
+            <button class="btn btn-sm btn-outline" ng-click="filterCategory = null">All</button>
+        </div>
+        
+        <div class="calculator-grid">
+            <div class="calculator-card" ng-repeat="calc in calculators | filter:{category: filterCategory}" 
+                 ng-click="selectCalculator(calc)">
+                <div class="calc-category" ng-style="{'background': getCategoryColor(calc.category)}">
+                    {{calc.category}}
+                </div>
+                <h4>{{calc.name}}</h4>
+                <p class="calc-inputs">Inputs: {{calc.inputs.join(', ')}}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Selected Calculator -->
+    <div ng-if="selectedCalculator && !isLoading" class="calculator-form">
+        <button class="btn btn-outline" ng-click="goBack()">Back to List</button>
+        <h3>{{selectedCalculator.name}}</h3>
+        <p class="category-badge" ng-style="{'background': getCategoryColor(selectedCalculator.category)}">
+            {{selectedCalculator.category}}
+        </p>
+        
+        <div class="input-form">
+            <div class="form-group" ng-repeat="input in selectedCalculator.inputs">
+                <label>{{input.replace('_', ' ')}}</label>
+                <input type="number" step="any" ng-model="calculatorInput[input]" 
+                       placeholder="Enter {{input.replace('_', ' ')}}">
+            </div>
+            <button class="btn btn-primary" ng-click="runCalculator()">Calculate</button>
+        </div>
+        
+        <div class="result-box" ng-if="calculatorResult">
+            <h4>Result</h4>
+            <div class="result-value">{{calculatorResult.result}}</div>
+            <div class="result-interpretation">{{calculatorResult.interpretation}}</div>
+            <div class="result-source">
+                <p><strong>Source:</strong> {{calculatorResult.source}}</p>
+                <p ng-if="calculatorResult.doi"><strong>DOI:</strong> <a href="https://doi.org/{{calculatorResult.doi}}" target="_blank">{{calculatorResult.doi}}</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.calculators-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.category-filter {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+.category-filter .btn {
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+}
+.category-filter .btn.active {
+    outline: 3px solid #2c3e50;
+}
+.calculator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+.calculator-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+.calculator-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+.calc-category {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 15px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.calculator-card h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+}
+.calc-inputs {
+    color: #7f8c8d;
+    font-size: 13px;
+}
+.calculator-form {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.input-form {
+    margin: 20px 0;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #2c3e50;
+    text-transform: capitalize;
+}
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+.result-box {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+.result-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #3498db;
+    text-align: center;
+    margin: 15px 0;
+}
+.result-interpretation {
+    font-size: 18px;
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+.result-source {
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+    font-size: 14px;
+    color: #666;
+}
+</style>

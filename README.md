@@ -15,6 +15,9 @@ Complete Bahmni EMR stack running on Docker with OpenMRS, OpenELIS, Odoo ERP, dc
 | **eAPTs Sync** | `http://localhost:3005` | Prescription sync to Dagu pharmacy |
 | **Prescription Sync** | `http://localhost:3001` | "Send to Pharmacy" bridge service |
 | **Dagu eAPTS** | `http://localhost:80` | OPD Pharmacy dispensing system |
+| **Medical MCP** | `http://localhost:3010` | Drug info, PubMed, WHO statistics |
+| **Open Medicine** | `http://localhost:3011` | Clinical calculators, guidelines |
+| **CDSS Integration** | `http://localhost:3012` | Unified clinical reference API |
 
 ---
 
@@ -137,7 +140,211 @@ emr/
   backups/
     bahmni/                  # Database dumps + volume backups
   fresh_db/                  # Scripts to clear patient data + reset MRN
+  clinical-reference/        # Clinical decision support tools
+    medical-mcp/             # Drug info, PubMed, WHO statistics
+    open-medicine/           # Clinical calculators, guidelines
+    cdss-integration/        # Unified API for Bahmni integration
+    ui/                      # Clinical reference UI components
 ```
+
+---
+
+## Clinical Reference Tools (CDSS)
+
+Free/open-source clinical decision support system integrated with Bahmni EMR. Provides drug information, clinical calculators, guidelines, drug interactions, and PubMed literature search. Runs as three Docker microservices connected to public APIs (FDA, PubMed, WHO GHO).
+
+### Quick Start
+
+```bash
+# Start clinical reference services
+cd clinical-reference
+docker compose up -d
+
+# Verify all 3 services are healthy
+docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "medical|cdss|open-medicine"
+```
+
+Wait 30 seconds for containers to initialize, then access via Bahmni home page.
+
+### Architecture
+
+```
+Bahmni Home → Clinical Reference tab
+  → Clinical Reference UI (AngularJS, served by bahmni-web)
+    → CDSS Integration API (port 3012) — unified bridge
+      → Medical MCP (port 3010) — drug search, PubMed, WHO stats
+      → Open Medicine (port 3011) — calculators, guidelines
+    → OpenFDA API (public) — drug labels, interactions
+    → PubMed API (public) — medical literature
+    → DailyMed API (public) — drug names, product data
+```
+
+### Services
+
+| Service | Container | Port | Description |
+|---------|-----------|------|-------------|
+| Medical MCP | bahmni-medical-mcp | 3010 | Drug search, PubMed, WHO statistics |
+| Open Medicine | bahmni-open-medicine | 3011 | Clinical calculators, guidelines |
+| CDSS Integration | bahmni-cdss-integration | 3012 | Unified API bridge for Bahmni |
+
+### Features
+
+#### 1. Drug Search & Label Information
+Search the FDA drug database by brand name, generic name, or substance. Returns:
+- Brand name, generic name, manufacturer, route of administration
+- Full prescribing information: indications, dosage, warnings, contraindications
+- Adverse reactions and drug interactions from FDA labels
+
+**Data source:** OpenFDA Drugs@FDA API + FDA Drug Label API
+
+#### 2. Drug Safety Check (Interactions)
+Enter 2+ drugs to check for clinically significant interactions. Returns:
+- **Severity level**: High (red), Moderate (orange), Low (green)
+- **Clinical significance**: What happens when drugs are combined
+- **Recommendation**: What to do about the interaction
+- **Combination products**: FDA-approved products containing both drugs
+
+**Interaction database:** 120+ clinically significant drug pairs covering:
+- NSAIDs (aspirin, ibuprofen, naproxen) with anticoagulants, lithium, methotrexate
+- Antibiotics (ciprofloxacin, metronidazole, fluconazole, rifampin) with warfarin
+- Cardiovascular drugs (amiodarone, digoxin, statins) interactions
+- Psychiatric medications (lithium, SSRIs, benzodiazepines, antiepileptics)
+- Diabetes medications (metformin, insulin, SGLT2 inhibitors)
+- Thyroid medications with calcium, iron, antacids
+- Gout medications (allopurinol, colchicine) interactions
+
+#### 3. Clinical Calculators
+12+ evidence-based calculators:
+
+| Calculator | What it measures |
+|------------|-----------------|
+| BMI | Body Mass Index from height/weight |
+| GCS | Glasgow Coma Scale (eye, verbal, motor) |
+| Wells PE | Pulmonary embolism probability |
+| CURB-65 | Community-acquired pneumonia severity |
+| CHA₂DS₂-VASc | Stroke risk in atrial fibrillation |
+| qSOFA | Quick Sepsis Organ Failure Assessment |
+| SOFA | Sequential Organ Failure Assessment |
+| PHQ-9 | Patient Health Questionnaire (depression) |
+| GAD-7 | Generalized Anxiety Disorder assessment |
+| Child-Pugh | Liver disease severity |
+| MELD | Model for End-Stage Liver Disease |
+| APACHE II | Acute physiology assessment |
+
+#### 4. Clinical Guidelines
+Evidence-based guidelines for common conditions:
+
+| Guideline | Organization |
+|-----------|-------------|
+| Sepsis-3 | Society of Critical Care Medicine |
+| WHO CAP | World Health Organization |
+| ACC/AHA AF | American College of Cardiology |
+| GOLD COPD | Global Initiative for Chronic Lung Disease |
+| RCP NEWS2 | Royal College of Physicians |
+| WHO Surgical Safety | World Health Organization |
+
+#### 5. PubMed Literature Search
+Search 30+ million medical citations from PubMed/NCBI. Returns:
+- Article title, authors, journal, publication date
+- PubMed ID and direct link to full article
+
+#### 6. WHO Health Statistics
+Global health indicators by country from WHO Global Health Observatory:
+- Disease prevalence, mortality rates, health system indicators
+- Data for all WHO member states
+
+### API Reference
+
+#### Medical MCP (port 3010)
+
+| Endpoint | Method | Parameters | Description |
+|----------|--------|------------|-------------|
+| `/api/drugs/search` | GET | `name` | Search FDA drug database |
+| `/api/drugs/label` | GET | `name` | Get full drug label information |
+| `/api/drugs/interactions` | GET | `drug` | Get related drug products |
+| `/api/pubmed/search` | GET | `query`, `max_results` | Search PubMed literature |
+| `/api/who/health-stats` | GET | `country` | Get WHO health indicators |
+| `/api/guidelines/search` | GET | `query` | Search NICE guidelines |
+| `/api/rxnorm/normalize` | GET | `name` | Normalize drug name to RxNorm |
+
+#### Open Medicine (port 3011)
+
+| Endpoint | Method | Parameters | Description |
+|----------|--------|------------|-------------|
+| `/api/calculators/list` | GET | — | List all available calculators |
+| `/api/calculators/{id}` | GET | Varies by calculator | Run a clinical calculator |
+| `/api/guidelines/list` | GET | — | List all available guidelines |
+| `/api/guidelines/{id}` | GET | — | Get full guideline content |
+
+#### CDSS Integration (port 3012)
+
+| Endpoint | Method | Parameters | Description |
+|----------|--------|------------|-------------|
+| `/api/clinical/search` | GET | `query`, `type` | Unified search across all tools |
+| `/api/clinical/drug-check` | POST | `{drugs: [], patientDiagnoses: []}` | Drug interaction check |
+| `/api/clinical/patient/{uuid}/context` | GET | — | Patient clinical context from OpenMRS |
+| `/api/clinical/calculator/{id}` | GET | Varies | Run calculator via unified API |
+| `/api/clinical/guideline/{id}` | GET | — | Get guideline via unified API |
+| `/api/clinical/who-stats` | GET | `country` | WHO statistics via unified API |
+
+### Access from Bahmni
+
+1. Navigate to Bahmni Home (`http://localhost:8186`)
+2. Click on **Clinical Reference** tab
+3. Select a tool:
+   - **Drug Search** — Search FDA drug database by name
+   - **Clinical Calculators** — Run BMI, GCS, Wells PE, etc.
+   - **Clinical Guidelines** — View evidence-based guidelines
+   - **Drug Safety Check** — Check drug interactions between multiple drugs
+
+### Direct URL Access
+
+- **Drug Search:** `http://localhost:8186/bahmni/clinical-reference/index.html#/dashboard/drugSearch`
+- **Calculators:** `http://localhost:8186/bahmni/clinical-reference/index.html#/dashboard/calculators`
+- **Guidelines:** `http://localhost:8186/bahmni/clinical-reference/index.html#/dashboard/guidelines`
+- **Drug Check:** `http://localhost:8186/bahmni/clinical-reference/index.html#/dashboard/drugCheck`
+
+### Testing the APIs
+
+```bash
+# Search for a drug
+curl "http://localhost:3010/api/drugs/search?name=metformin"
+
+# Get drug label info
+curl "http://localhost:3010/api/drugs/label?name=ibuprofen"
+
+# Check drug interactions
+curl -X POST "http://localhost:3012/api/clinical/drug-check" \
+  -H "Content-Type: application/json" \
+  -d '{"drugs":["warfarin","amiodarone"],"patientDiagnoses":[]}'
+
+# List calculators
+curl "http://localhost:3011/api/calculators/list"
+
+# Run BMI calculator
+curl "http://localhost:3011/api/calculators/bmi?weight=70&height=175"
+
+# Search PubMed
+curl "http://localhost:3010/api/pubmed/search?query=hypertension+treatment&max_results=5"
+```
+
+### Stopping Services
+
+```bash
+cd clinical-reference
+docker compose down
+```
+
+### Files
+
+| Path | Description |
+|------|-------------|
+| `clinical-reference/docker-compose.yml` | Docker Compose for 3 services |
+| `clinical-reference/medical-mcp/` | Drug search, PubMed, WHO API server |
+| `clinical-reference/open-medicine/` | Clinical calculators, guidelines (FastAPI) |
+| `clinical-reference/cdss-integration/` | Unified API bridge |
+| `apps/ui/app/clinical-reference/` | Bahmni UI module (AngularJS) |
+| `config/openmrs/apps/home/extension.json` | Home page tab registration |
 
 ---
 

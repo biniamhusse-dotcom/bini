@@ -1,0 +1,185 @@
+<div class="drug-search-container">
+    <div class="header">
+        <h2>Drug Information & Literature Search</h2>
+        <p>Search FDA drug database, PubMed literature, and more</p>
+    </div>
+    
+    <div class="search-box">
+        <input type="text" ng-model="searchQuery" placeholder="Search drug name or medical term..." 
+               ng-keyup="$event.keyCode === 13 && searchDrugs()">
+        <button class="btn btn-primary" ng-click="searchDrugs()">Search Drugs</button>
+        <button class="btn btn-secondary" ng-click="searchLiterature()">Search Literature</button>
+        <button class="btn btn-outline" ng-click="clearResults()">Clear</button>
+    </div>
+    
+    <div class="loading" ng-if="isLoading">
+        <i class="fa fa-spinner fa-spin"></i> Loading...
+    </div>
+    
+    <!-- Drug Search Results -->
+    <div class="results-section" ng-if="activeTab === 'search' && searchResults.length > 0">
+        <h3>Drug Search Results ({{searchResults.length}})</h3>
+        <div class="drug-card" ng-repeat="drug in searchResults">
+            <div class="drug-header">
+                <h4>{{drug.brandName}}</h4>
+                <span class="generic-name">{{drug.genericName}}</span>
+            </div>
+            <div class="drug-details">
+                <p><strong>Manufacturer:</strong> {{drug.manufacturer}}</p>
+                <p><strong>Route:</strong> {{drug.route}}</p>
+                <p><strong>Dosage Form:</strong> {{drug.dosageForms}}</p>
+            </div>
+            <button class="btn btn-sm btn-primary" ng-click="getDrugDetails(drug.genericName)">View Details</button>
+        </div>
+    </div>
+    
+    <!-- Drug Details -->
+    <div class="results-section" ng-if="activeTab === 'details' && drugDetails">
+        <button class="btn btn-outline" ng-click="activeTab = 'search'">Back to Results</button>
+        <h3>Drug Label Information</h3>
+        <div class="drug-label">
+            <div class="label-section">
+                <h4>Indications</h4>
+                <p>{{drugDetails.indications}}</p>
+            </div>
+            <div class="label-section">
+                <h4>Dosage & Administration</h4>
+                <p>{{drugDetails.dosage}}</p>
+            </div>
+            <div class="label-section warning">
+                <h4>Warnings</h4>
+                <p>{{drugDetails.warnings}}</p>
+            </div>
+            <div class="label-section danger">
+                <h4>Contraindications</h4>
+                <p>{{drugDetails.contraindications}}</p>
+            </div>
+            <div class="label-section">
+                <h4>Adverse Reactions</h4>
+                <p>{{drugDetails.adverseReactions}}</p>
+            </div>
+            <div class="label-section">
+                <h4>Drug Interactions</h4>
+                <p>{{drugDetails.drugInteractions}}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Literature Results -->
+    <div class="results-section" ng-if="activeTab === 'literature' && literatureResults.length > 0">
+        <h3>PubMed Literature ({{literatureResults.length}})</h3>
+        <div class="article-card" ng-repeat="article in literatureResults">
+            <div class="article-header">
+                <h4><a href="{{article.url}}" target="_blank">{{article.title}}</a></h4>
+            </div>
+            <div class="article-meta">
+                <p><strong>Authors:</strong> {{article.authors}}</p>
+                <p><strong>Journal:</strong> {{article.journal}}</p>
+                <p><strong>Published:</strong> {{article.pubDate}}</p>
+                <p><strong>PMID:</strong> {{article.pmid}}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.drug-search-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+.search-box input {
+    flex: 1;
+    min-width: 300px;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+}
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+.btn-secondary {
+    background: #2ecc71;
+    color: white;
+}
+.btn-outline {
+    background: white;
+    border: 2px solid #ddd;
+    color: #666;
+}
+.btn-sm {
+    padding: 8px 15px;
+    font-size: 12px;
+}
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+.results-section {
+    margin-top: 20px;
+}
+.drug-card, .article-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.drug-header h4, .article-header h4 {
+    margin: 0 0 5px 0;
+    color: #2c3e50;
+}
+.generic-name {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+.drug-details p, .article-meta p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+.drug-label {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+.label-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+.label-section h4 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+.label-section.warning {
+    background: #fff3cd;
+    padding: 15px;
+    border-radius: 5px;
+}
+.label-section.danger {
+    background: #f8d7da;
+    padding: 15px;
+    border-radius: 5px;
+}
+</style>

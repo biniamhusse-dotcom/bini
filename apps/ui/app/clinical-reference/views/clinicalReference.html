@@ -1,0 +1,65 @@
+<div class="clinical-reference-container">
+    <div class="dashboard-header">
+        <h2>Clinical Reference Tools</h2>
+        <p class="subtitle">Evidence-based clinical decision support for healthcare professionals</p>
+    </div>
+    
+    <div class="menu-grid">
+        <div class="menu-card" ng-repeat="item in menuItems" ng-click="navigateTo(item.state)">
+            <div class="menu-icon">
+                <i class="fa" ng-class="item.icon"></i>
+            </div>
+            <div class="menu-label">{{item.label}}</div>
+        </div>
+    </div>
+</div>
+
+<style>
+.clinical-reference-container {
+    padding: 20px;
+}
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.dashboard-header h2 {
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+.subtitle {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.menu-card {
+    background: white;
+    border-radius: 10px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+.menu-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    border-color: #3498db;
+}
+.menu-icon {
+    font-size: 40px;
+    color: #3498db;
+    margin-bottom: 15px;
+}
+.menu-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+</style>

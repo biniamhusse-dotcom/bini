@@ -201,6 +201,16 @@
     "icon": "fa fa-bar-chart",
     "order": 9,
     "requiredPrivilege": "app:hmis"
+  },
+  "clinicalReference": {
+    "id": "bahmni.clinicalReference",
+    "extensionPointId": "org.bahmni.home.dashboard",
+    "type": "link",
+    "translationKey": "Clinical Reference",
+    "url": "../clinical-reference/index.html#/dashboard/clinicalReference",
+    "icon": "fa-book",
+    "order": 14,
+    "requiredPrivilege": "app:clinical"
   }
 
 }
