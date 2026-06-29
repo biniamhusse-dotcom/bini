@@ -109,8 +109,8 @@ FROM (
     CAST(v.date_created AS DATE) BETWEEN '#startDate#' AND '#endDate#'
     AND v.voided = 0
     
-  UNION ALL
-  
+UNION ALL
+   
   -- =========================================================
   -- 3. SUBTOTAL ROWS PER LOCATION AND PAYMENT METHOD
   -- =========================================================
@@ -138,6 +138,28 @@ FROM (
   GROUP BY 
     l.name, 
     cn.name
+  
+  UNION ALL
+
+  -- =========================================================
+  -- 4. COLUMN HEADERS (shown only when no data exists)
+  -- =========================================================
+  SELECT 
+    NULL                                                                     AS "Visit Location",
+    NULL                                                                     AS "Payment Method",
+    NULL                                                                     AS "Type of Credit",
+    NULL                                                                     AS "Patient Identifier",
+    CONCAT('No records found for the selected date range (', '#startDate#', ' to ', '#endDate#', ')') AS "Patient Name",
+    NULL                                                                     AS "Gender",
+    NULL                                                                     AS "Age",
+    NULL                                                                     AS "Address",
+    NULL                                                                     AS "Visit Date",
+    0                                                                        AS sort_order
+  WHERE NOT EXISTS (
+    SELECT 1 FROM visit v 
+    WHERE CAST(v.date_created AS DATE) BETWEEN '#startDate#' AND '#endDate#' 
+    AND v.voided = 0
+  )
     
 ) AS combined_report
 
@@ -145,8 +167,12 @@ FROM (
 -- MASTER SORTING LOGIC
 -- =========================================================
 ORDER BY 
-  -- Force Grand Total (0) and Summary Breakdown (1) to the very top.
-  CASE WHEN sort_order IN (0, 1) THEN sort_order ELSE 2 END,
+  -- Force Grand Total (0) and Summary Breakdown (1) to the very top, no-data header first
+  CASE 
+    WHEN `Patient Identifier` IS NULL AND `Patient Name` LIKE 'No records%' THEN 0
+    WHEN sort_order IN (0, 1) THEN sort_order 
+    ELSE 2 
+  END,
   
   -- Group the details and subtotals by Location and Payment Method
   `Visit Location` ASC, 

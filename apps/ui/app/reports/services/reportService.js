@@ -65,11 +65,41 @@ angular.module('bahmni.reports')
 
         var generateReport = function (report) {
             var url = Bahmni.Common.Constants.reportsUrl + "/report";
-            url = (url + "?name={0}&startDate={1}&endDate={2}&responseType={3}&paperSize={4}&appName={5}").format(report.name, report.startDate, report.stopDate, report.responseType, paperSize, appName);
+            url = (url + "?name={0}&startDate={1}&endDate={2}&responseType={3}&paperSize={4}&appName={5}&userName={6}").format(report.name, report.startDate, report.stopDate, report.responseType, paperSize, appName, currentUser());
             if (report.reportTemplateLocation && report.responseType == 'application/vnd.ms-excel-custom') {
                 url = (url + "&macroTemplateLocation=" + report.reportTemplateLocation);
             }
-            window.open(url);
+            var mimeType = report.responseType || "text/html";
+            $http.get(url, {responseType: 'blob', withCredentials: true}).then(function (response) {
+                if (response.data.size === 0) {
+                    alert("Empty response from server");
+                    return;
+                }
+                var blob = new Blob([response.data], {type: mimeType});
+                var blobUrl = URL.createObjectURL(blob);
+                if (mimeType === "text/html") {
+                    var newWindow = window.open(blobUrl);
+                    if (!newWindow) {
+                        alert("Please allow pop-ups for this site to view reports.");
+                    }
+                } else {
+                    var fileName = report.name ? report.name.replace(/[^a-zA-Z0-9]/g, '_') : "report";
+                    var link = document.createElement('a');
+                    link.href = blobUrl;
+                    var ext = "csv";
+                    if (mimeType === "application/vnd.ms-excel") { ext = "xls"; }
+                    else if (mimeType === "application/pdf") { ext = "pdf"; }
+                    else if (mimeType === "application/vnd.oasis.opendocument.spreadsheet") { ext = "ods"; }
+                    else if (mimeType === "application/vnd.ms-excel-custom") { ext = "xlsm"; }
+                    link.download = fileName + "." + ext;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+                setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 10000);
+            }, function (error) {
+                alert("Failed to generate report. Status: " + (error.status || 'unknown'));
+            });
         };
 
         return {

@@ -106,7 +106,11 @@ angular.module('bahmni.home')
             var redirectToLandingPageIfAlreadyAuthenticated = function () {
                 sessionService.get().then(function (data) {
                     if (data.authenticated) {
-                        $location.path(landingPagePath);
+                        if (redirectUrl) {
+                            $window.location = redirectUrl;
+                        } else {
+                            $location.path(landingPagePath);
+                        }
                     }
                 });
             };
@@ -147,19 +151,8 @@ angular.module('bahmni.home')
                 $scope.errorMessageTranslateKey = null;
                 var deferrable = $q.defer();
 
-                var ensureNoSessionIdInRoot = function () {
-                    // See https://bahmni.mingle.thoughtworks.com/projects/bahmni_emr/cards/2934
-                    // The cookie should ideally not be set at root, and is interfering with
-                    // authentication for reporting. This seems to be one of the best places to remove it.
-                    $bahmniCookieStore.remove(Bahmni.Common.Constants.JSESSIONID, {
-                        path: '/',
-                        expires: 1
-                    });
-                };
-
                 sessionService.loginUser($scope.loginInfo.username, $scope.loginInfo.password, $scope.loginInfo.currentLocation, $scope.loginInfo.otp).then(
                     function (data) {
-                        ensureNoSessionIdInRoot();
                         if (data && data.firstFactAuthorization) {
                             $scope.showOTP = true;
                             deferrable.resolve(data);
