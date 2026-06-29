@@ -922,6 +922,40 @@ The HMIS module provides hospital-level reporting dashboards accessible from the
 | **HMIS Report** | `/bahmni/hmis/#/dashboard/hmis` | Observation-based report filtered by concept set and patient |
 | **OPD Register** | `/bahmni/hmis/#/dashboard/registration` | Auto-populated daily OPD encounter register with Ethiopian calendar |
 
+### Professional Report Output
+
+All HTML reports open in a new tab with a professional dashboard layout:
+
+- **Gradient header** with report name, date range, and generation timestamp
+- **Stat cards** showing Total Patients, Service Units, Locations, and Avg Per Unit
+- **Searchable table** with real-time text filtering
+- **Location and Service Unit dropdown filters**
+- **Sortable columns** (click any header to sort ascending/descending)
+- **Ethiopian calendar dates** — all date columns show both Gregorian and Ethiopian (E.C.) dates
+  - Example: `14 Jun 2026 (7 Sene 2018 E.C.)`
+- **CSV/Excel export** — formatted HTML table that opens in Excel with styled headers, alternating row colors, and proper column widths
+- **Print support** — optimized for landscape A4 printing
+
+### Report Configuration
+
+Reports are configured via SQL files in `config/openmrs/apps/reports/sql/`. Each report has:
+- A JSON definition in `reports.json` (name, parameters, output format)
+- A SQL file that returns the report data
+
+### Session Expiration Fix
+
+The proxy config includes `Cache-Control: no-cache, no-store, must-revalidate` headers on all OpenMRS responses to prevent stale session cookies. The report service uses `$http.get()` with `withCredentials: true` to send cookies with cross-origin requests to the reports server.
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `apps/ui/app/reports/services/reportService.js` | Report generation — CSV fetch, professional HTML template, Ethiopian calendar, Excel export |
+| `apps/ui/app/reports/controllers/reportsController.js` | Report list and download handler |
+| `config/openmrs/apps/reports/reports.json` | Report definitions (name, SQL file, output format) |
+| `config/openmrs/apps/reports/sql/*.sql` | Report SQL queries |
+| `bahmni-docker/bahmni-standard/bahmni-proxy-http.conf` | Apache proxy — session cookie fix, Cache-Control headers |
+
 ### OPD Register
 
 Displays all patients who had encounters on a selected date range, with their PRIMARY diagnosis from the patient chart.
