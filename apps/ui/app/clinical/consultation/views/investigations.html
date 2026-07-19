@@ -2,9 +2,20 @@
     <div id="tabButtonRow">
     	<button ng-repeat="tab in tabs" class="{{tab.klass}}" ng-click="activateTab(tab)">{{tab.name}} </button>
     </div>
-    <div ng-show="activeTab.name == 'Laboratory'" class="add-notes">
-        <button  name="notes" ng-click="toggleNote()" ng-disabled="!isValidInvestigation()" class="fa fa-pencil primary-btn"> {{ 'CLINICAL_ADD_NOTES'|translate }}</button>
-        <textarea ng-model="consultation.labOrderNote.value" ng-show="noteState" placeholder="{{'ENTER_NOTES_MESSAGE'|translate}}" ng-change="onNoteChanged()"></textarea>
+    <div ng-show="activeTab.name == 'Laboratory'" class="add-notes" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div>
+            <label style="font-weight:bold;">Lab Location <span style="color:red;">Required</span></label><br>
+            <select ng-model="locationData.selectedLabLocation"
+                    ng-options="loc.id as loc.name for loc in labLocations"
+                    ng-change="onLabLocationChange()"
+                    style="min-width:200px;padding:4px;border:1px solid #ccc;border-radius:3px;">
+                <option value="">-- Select Location --</option>
+            </select>
+        </div>
+        <div>
+            <button name="notes" ng-click="toggleNote()" ng-disabled="!isValidInvestigation()" class="fa fa-pencil primary-btn"> {{ 'CLINICAL_ADD_NOTES'|translate }}</button>
+            <textarea ng-model="consultation.labOrderNote.value" ng-show="noteState" placeholder="{{'ENTER_NOTES_MESSAGE'|translate}}" ng-change="onNoteChanged()"></textarea>
+        </div>
     </div>
     <div ng-switch="activeTab" class="investigation-selection">
         <div ng-switch-default>

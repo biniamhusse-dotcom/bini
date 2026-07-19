@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module configVersion="1.6">
+
+    <!-- Module Properties -->
+    <id>emrapi</id>
+    <name>EMR API Module</name>
+    <version>1.36.0</version>
+    <package>org.openmrs.module.emrapi</package>
+    <author>OpenMRS</author>
+    <description>
+        Higher-level APIs to support building EMR functionality in OpenMRS, to supplement the data-level APIs
+        in the OpenMRS core.
+    </description>
+    <updateURL>https://modules.openmrs.org/modules/download/emrapi/update.rdf</updateURL>
+	<require_version>1.11.3, 1.10.2 - 1.10.*, 1.9.9 - 1.9.*</require_version>
+    <!-- TRUNK-3751 prevents saying ${openmrsCoreVersion} when version is a SNAPSHOT-->
+    <!-- / Module Properties -->
+
+    <aware_of_modules>
+        <aware_of_module>org.openmrs.module.fhir2</aware_of_module>
+        <aware_of_module>org.openmrs.module.metadatasharing</aware_of_module>
+    </aware_of_modules>
+    <!-- Required Modules -->
+    <require_modules>
+        <require_module version="${providermanagementModuleVersion}">org.openmrs.module.providermanagement</require_module>
+        <require_module version="1.2.1">org.openmrs.module.metadatamapping</require_module>
+        <require_module version="2.8.0">org.openmrs.event</require_module>
+        <require_module version="${webservicesRestModuleVersion}">org.openmrs.module.webservices.rest</require_module>
+    </require_modules>
+    <!-- / Required Modules -->
+
+    <!-- Conditional Resources -->
+    <conditionalResources>
+    	<conditionalResource>
+            <path>/lib/emrapi-api-1.12-1.36.0.jar</path>
+            <openmrsVersion>1.12.0 - 2.*</openmrsVersion>
+        </conditionalResource>
+        <conditionalResource>
+            <path>/lib/emrapi-api-1.11-1.36.0.jar</path>
+            <openmrsVersion>1.11.*</openmrsVersion>
+        </conditionalResource>
+        <conditionalResource>
+            <path>/lib/emrapi-api-1.10-1.36.0.jar</path>
+            <openmrsVersion>1.10.*</openmrsVersion>
+        </conditionalResource>
+        <conditionalResource>
+            <path>/lib/emrapi-api-1.9-1.36.0.jar</path>
+            <openmrsVersion>1.9.*</openmrsVersion>
+        </conditionalResource>
+        <conditionalResource>
+            <path>/lib/emrapi-api-2.2-1.36.0.jar</path>
+            <openmrsVersion>2.2.* - 2.*</openmrsVersion>
+        </conditionalResource>
+        <conditionalResource>
+            <path>/lib/emrapi-api-pre2.2-1.36.0.jar</path>
+            <openmrsVersion>1.9.* - 2.1.*</openmrsVersion>
+        </conditionalResource>
+        <conditionalResource>
+            <path>/lib/emrapi-web-pre2.2-1.36.0.jar</path>
+            <openmrsVersion>1.9.* - 2.1.*</openmrsVersion>
+        </conditionalResource>
+        <conditionalResource>
+            <path>/lib/emrapi-web-2.2-1.36.0.jar</path>
+            <openmrsVersion>2.2.* - 2.*</openmrsVersion>
+        </conditionalResource>
+        <conditionalResource>
+            <path>/lib/emrapi-fhir-condition-1.36.0.jar</path>
+            <loadIfModulesPresent>
+                <openmrsModule>
+                    <moduleId>fhir2</moduleId>
+                    <version>1.*</version>
+                </openmrsModule>
+            </loadIfModulesPresent>
+            <openmrsVersion>2.0.5 - 2.1.*</openmrsVersion>
+        </conditionalResource>
+    </conditionalResources>
+    <!-- / Conditional Resources -->
+
+    <!-- Module Activator -->
+    <activator>org.openmrs.module.emrapi.EmrApiActivator</activator>
+
+
+    <!-- Maps hibernate files, if present -->
+    <mappingFiles>
+        Condition.hbm.xml
+    </mappingFiles>
+
+    <!-- Internationalization -->
+    <!-- All message codes should start with emrapi. -->
+    <messages>
+        <lang>en</lang>
+        <file>messages.properties</file>
+    </messages>
+    <messages>
+        <lang>fr</lang>
+        <file>messages_fr.properties</file>
+    </messages>
+    <messages>
+        <lang>de</lang>
+        <file>messages_de.properties</file>
+    </messages>
+    <!-- /Internationalization -->
+
+	<!-- Extensions -->
+	<extension>
+		<point>org.openmrs.admin.list</point>
+		<class>org.openmrs.module.emrapi.extension.html.AdminList</class>
+	</extension>
+	
+    <globalProperty>
+        <property>emr.encounterMatcher</property>
+        <defaultValue></defaultValue>
+        <description>
+            Class name of a custom encounter matcher (e.g. org.openmrs.module.example.customEncounterMatcher)
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>emrapi.suppressedDiagnosisConcepts</property>
+        <defaultValue></defaultValue>
+        <description>
+            UUIDs or mappings of suppressed diagnosis concepts
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>emrapi.nonDiagnosisConceptSets</property>
+        <defaultValue></defaultValue>
+        <description>
+            UUIDs or mapping of non diagnosis concept sets
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>emrapi.lastViewedPatientSizeLimit</property>
+        <defaultValue>50</defaultValue>
+        <description>
+            Specifies the system wide number of patients to store as last viewed for a single user,
+            defaults to 50 if not specified
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>conditionList.endReasonConceptSetUuid</property>
+        <defaultValue></defaultValue>
+        <description>
+            UUID of end reason concept set
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>conditionList.nonCodedUuid</property>
+        <defaultValue></defaultValue>
+        <description>
+            UUID of non coded concept
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>emrapi.EmrApiVisitAssignmentHandler.encounterTypeToNewVisitTypeMap</property>
+        <defaultValue></defaultValue>
+        <description>
+            Specifies the mapping of encounter types to new visit types for more see https://wiki.openmrs.org/x/vgF4Aw
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>emrapi.EmrApiVisitAssignmentHandler.adjustEncounterTimeOfDayIfNecessary</property>
+        <defaultValue>false</defaultValue>
+        <description>
+            If true, and a visit is found on the same day but the encounter is not within that timeframe will adjust the encounter time as needed
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>emrapi.conceptSourcesForDiagnosisSearch</property>
+        <defaultValue>ICD-10-WHO</defaultValue>
+        <description>
+            Specifies comma separated list of reference term source names to be used for diagnosis and condition search
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>emrapi.useLegacyDiagnosisService</property>
+        <defaultValue>false</defaultValue>
+        <description>
+            When running Core 2.2+, use the legacy diagnosis service instead of the new one provided to work with the new diagnosis model
+        </description>
+    </globalProperty>
+
+    <!-- privileges for conditions, see  org.openmrs.module.emrapi.conditionslist.PrivilegeConstants -->
+    <privilege>
+        <name>Edit conditions</name>
+        <description>Able to edit conditions</description>
+    </privilege>
+
+    <privilege>
+        <name>Get conditions</name>
+        <description>Able to get conditions</description>
+    </privilege>
+
+</module>
+

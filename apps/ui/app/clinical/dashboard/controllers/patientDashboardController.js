@@ -1,12 +1,24 @@
 'use strict';
 
 angular.module('bahmni.clinical')
-    .controller('PatientDashboardController', ['$scope', 'clinicalAppConfigService', 'clinicalDashboardConfig', 'printer',
-        '$state', 'spinner', 'visitSummary', 'appService', '$stateParams', 'diseaseTemplateService', 'patientContext', '$location', '$filter',
-        function ($scope, clinicalAppConfigService, clinicalDashboardConfig, printer,
-                  $state, spinner, visitSummary, appService, $stateParams, diseaseTemplateService, patientContext, $location, $filter) {
+    .controller('PatientDashboardController', ['$scope', '$rootScope', 'clinicalAppConfigService', 'clinicalDashboardConfig', 'printer',
+        '$state', 'spinner', 'visitSummary', 'appService', '$stateParams', 'diseaseTemplateService', 'patientContext', '$location', '$filter', '$http', 'paymentStatusService',
+        function ($scope, $rootScope, clinicalAppConfigService, clinicalDashboardConfig, printer,
+                  $state, spinner, visitSummary, appService, $stateParams, diseaseTemplateService, patientContext, $location, $filter, $http, paymentStatusService) {
             $scope.patient = patientContext.patient;
             $scope.patient.paymentStatus = false;
+            $scope.buttonShow = false;
+            var payment_config = appService.getAppDescriptor().getConfigValue("paymentConfig") || {};
+            $scope.consultationTabPriv = false;
+            $scope.isSuperAdmin = false;
+            $rootScope.currentUser.privileges.forEach(function (priv) {
+                if (priv.name === "Patient Dashboard - Consultation tab") {
+                    $scope.consultationTabPriv = true;
+                }
+                if (priv.name === "SuperAdmin") {
+                    $scope.isSuperAdmin = true;
+                }
+            });
             $scope.activeVisit = $scope.visitHistory.activeVisit;
             $scope.activeVisitData = {};
             $scope.obsIgnoreList = clinicalAppConfigService.getObsIgnoreList();
@@ -16,6 +28,35 @@ angular.module('bahmni.clinical')
             $scope.isDashboardPrinting = false;
             var programConfig = appService.getAppDescriptor().getConfigValue("program") || {};
             $state.discardChanges = false;
+
+            $scope.paymentStatus = function () {
+                if (!payment_config["disable checking"]) {
+                    paymentStatusService.getPaymentStatus($scope.patient.identifier).then(function (response) {
+                        var isPaid = response.data && response.data.status === "PAID";
+                        $scope.buttonShow = isPaid;
+                        $scope.patient.paymentStatus = isPaid;
+                    }).catch(function () {
+                        $scope.buttonShow = false;
+                        $scope.patient.paymentStatus = false;
+                    });
+                } else {
+                    $scope.buttonShow = true;
+                }
+            };
+
+            $scope.markAsPaid = function () {
+                paymentStatusService.markAsPaid($scope.patient.identifier).then(function () {
+                    $scope.buttonShow = true;
+                    $scope.patient.paymentStatus = true;
+                });
+            };
+
+            $scope.markAsUnpaid = function () {
+                paymentStatusService.markAsUnpaid($scope.patient.identifier).then(function () {
+                    $scope.buttonShow = false;
+                    $scope.patient.paymentStatus = false;
+                });
+            };
 
             $scope.ipdDashboard = {
                 hostData: {
@@ -106,4 +147,6 @@ angular.module('bahmni.clinical')
             };
 
             $scope.init(getCurrentTab());
+
+            $scope.paymentStatus();
         }]);

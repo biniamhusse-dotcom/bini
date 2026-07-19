@@ -44,19 +44,37 @@ angular.module('bahmni.clinical')
                 });
             };
             
-            $scope.buttonShow = true;
+            $scope.buttonShow = false;
 
             $scope.paymentStatus = function(){
                 if(!payment_config["disable checking"]){
-                    getOrderUuid().then(resp => {
-                        if (resp.data[0]) {
-                            paymentStatusService.getPaymentStatus(resp.data[0].uuid).then(function (response) {
-                                $scope.buttonShow = response.data === "INVOICED";
-                            })
-                        }
-                    })
+                    paymentStatusService.getPaymentStatus($scope.patient.identifier).then(function (response) {
+                        $scope.buttonShow = response.data && response.data.status === "PAID";
+                    }).catch(function () {
+                        $scope.buttonShow = true;
+                    });
                 }
             }
+
+            $scope.markAsPaid = function () {
+                paymentStatusService.markAsPaid($scope.patient.identifier).then(function () {
+                    $scope.buttonShow = true;
+                    $scope.patient.paymentStatus = true;
+                });
+            };
+
+            $scope.markAsUnpaid = function () {
+                paymentStatusService.markAsUnpaid($scope.patient.identifier).then(function () {
+            $scope.buttonShow = false;
+            $scope.isSuperAdmin = false;
+            $rootScope.currentUser.privileges.forEach(function (priv) {
+                if (priv.name === "SuperAdmin") {
+                    $scope.isSuperAdmin = true;
+                }
+            });
+                    $scope.patient.paymentStatus = false;
+                });
+            };
             
 
             $scope.openConsultation = function () {
@@ -96,4 +114,6 @@ angular.module('bahmni.clinical')
             $scope.showPrint = function () {
                 return $scope.visitTabConfig.showPrint();
             };
+
+            $scope.paymentStatus();
         }]);

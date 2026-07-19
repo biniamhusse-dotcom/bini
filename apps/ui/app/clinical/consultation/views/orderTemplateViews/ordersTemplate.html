@@ -1,66 +1,371 @@
-<div class="form search-container">
-    <section class="form-field fr">
-        <div class="field-attribute">
-            <label><h5 style="margin-left: -150%; color: brown; font-weight: bold; font-size: medium;"><i>Tests Marked as red are not available temporarly in our Hospital</i> </h5> </label>
-            <label>{{ 'SEARCH_KEY'|translate }}:</label>
+<style>
+/* ===== ORDER PAGE ENHANCED STYLES ===== */
+.order-page-enhanced *{box-sizing:border-box}
+.order-page-enhanced{overflow:hidden;max-height:calc(100vh - 160px);display:flex;flex-direction:column}
+
+/* Top Bar */
+.order-top-bar{display:flex;align-items:center;gap:16px;padding:10px 16px;background:#fff;border:1px solid #ddd;border-radius:6px;margin-bottom:6px;flex-wrap:wrap;flex-shrink:0}
+.order-top-bar__location{display:flex;align-items:center;gap:8px}
+.order-top-bar__label{font-weight:600;font-size:13px;color:#333;white-space:nowrap}
+.order-top-bar__label .required{color:#c0392b}
+.order-top-bar__select-wrap{position:relative;display:inline-block}
+.order-select{padding:6px 30px 6px 10px;font-size:13px;border:1px solid #bbb;border-radius:4px;background:#fff;min-width:200px;appearance:none;-webkit-appearance:none;cursor:pointer}
+.order-top-bar__icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#888;pointer-events:none;font-size:12px}
+.order-top-bar__warning{color:#c0392b;font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px}
+.order-top-bar__search{flex:1;min-width:180px}
+
+/* Search Box */
+.order-search-box{position:relative;display:flex;align-items:center}
+.order-search-box__icon{position:absolute;left:10px;color:#999;font-size:14px}
+.order-search-box__input{width:100%;padding:7px 30px 7px 32px;font-size:13px;border:1px solid #bbb;border-radius:4px;outline:none;transition:border-color .2s}
+.order-search-box__input:focus{border-color:#486086;box-shadow:0 0 0 2px rgba(72,96,134,.15)}
+.order-search-box__clear{position:absolute;right:10px;color:#999;cursor:pointer;font-size:14px}
+.order-search-box__clear:hover{color:#c0392b}
+
+/* Filter Toggle Button */
+.order-top-bar__actions{display:flex;align-items:center;gap:8px}
+.order-toggle-filter-btn{padding:6px 12px;font-size:12px;font-weight:600;border:1px solid #bbb;border-radius:4px;background:#f8f8f8;color:#555;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s}
+.order-toggle-filter-btn:hover{background:#e8e8e8}
+.order-toggle-filter-btn.active{background:#486086;color:#fff;border-color:#486086}
+
+/* Advanced Filter */
+.order-advanced-filter{padding:8px 16px;background:#f4f7fa;border:1px solid #ddd;border-radius:6px;margin-bottom:6px;flex-shrink:0}
+.order-advanced-filter__inner{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.order-advanced-filter__title{font-size:12px;font-weight:600;color:#666;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.order-advanced-filter__info{margin-top:6px;font-size:12px;color:#555;padding:5px 10px;background:#e8f4fd;border-radius:4px;border:1px solid #b3d9f2}
+
+/* Filter Chips */
+.order-filter-chips{display:flex;gap:6px;flex-wrap:wrap}
+.order-chip{padding:4px 12px;font-size:12px;border:1px solid #ccc;border-radius:16px;background:#fff;color:#555;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;white-space:nowrap}
+.order-chip:hover{background:#e8e8e8;border-color:#999}
+.order-chip.active{background:#486086;color:#fff;border-color:#486086}
+.order-chip__count{font-size:10px;background:rgba(0,0,0,.1);padding:1px 6px;border-radius:8px;min-width:18px;text-align:center}
+.order-chip.active .order-chip__count{background:rgba(255,255,255,.25)}
+
+/* Legend */
+.order-legend{padding:5px 16px;font-size:12px;color:#666;background:#fff8f8;border:1px solid #f5d5d5;border-radius:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.order-legend__red{color:#c0392b;font-weight:700}
+
+/* Main Layout - FIXED: contains everything */
+.order-main{display:flex;gap:12px;flex:1;min-height:0;overflow:hidden}
+
+/* Sidebar */
+.order-sidebar{width:260px;min-width:220px;max-width:300px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;overflow:hidden}
+
+/* Selected Orders Panel */
+.order-selected-panel{background:#fff;border:1px solid #ddd;border-radius:6px;overflow:hidden;flex-shrink:0}
+.order-selected-panel__header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#486086;color:#fff}
+.order-selected-panel__header h3{margin:0;font-size:13px;font-weight:600}
+.order-badge{background:#fff;color:#486086;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;text-align:center}
+.order-selected-panel__body{max-height:150px;overflow-y:auto;padding:4px 0}
+.order-empty-msg{text-align:center;color:#999;font-size:12px;padding:15px 10px;line-height:1.6}
+.order-selected-list{list-style:none;margin:0;padding:0}
+.order-selected-item{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;border-bottom:1px solid #f0f0f0;transition:background .15s}
+.order-selected-item:last-child{border-bottom:none}
+.order-selected-item:hover{background:#f5f8fc}
+.order-selected-item.voided .order-selected-item__name{text-decoration:line-through;color:#999}
+.order-selected-item__name{font-size:12px;color:#333;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.order-selected-item__actions{display:flex;gap:2px;margin-left:6px}
+
+/* Action Buttons in Selected List */
+.order-action-btn{background:none;border:none;padding:3px 5px;cursor:pointer;border-radius:3px;color:#888;font-size:12px;transition:all .15s}
+.order-action-btn:hover{background:#f0f0f0}
+.order-action-btn--urgent:hover,.order-action-btn--urgent.active{color:#e67e22}
+.order-action-btn--notes:hover,.order-action-btn--notes.has-notes{color:#2980b9}
+.order-action-btn--remove:hover{color:#c0392b}
+.order-action-btn--labnote{color:#999}
+.order-action-btn--labnote:hover{color:#c0392b}
+.order-action-btn--labnote.has-notes{color:#c0392b;font-weight:bold}
+.order-action-btn--labnote.has-notes i{animation:pulse-flag 1.5s infinite}
+@keyframes pulse-flag{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Category Sidebar */
+.order-categories{background:#fff;border:1px solid #ddd;border-radius:6px;overflow:hidden;flex:1;min-height:0;display:flex;flex-direction:column}
+.order-categories__header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#3d7474;color:#fff;flex-shrink:0}
+.order-categories__header h3{margin:0;font-size:13px;font-weight:600}
+.order-categories__count{background:rgba(255,255,255,.25);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.order-category-list{list-style:none;margin:0;padding:0;overflow-y:auto;flex:1;min-height:0}
+.order-category-item{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;cursor:pointer;border-bottom:1px solid #f0f0f0;transition:all .15s;font-size:13px;color:#333}
+.order-category-item:hover{background:#e8f4f4}
+.order-category-item.active{background:#3d7474;color:#fff}
+.order-category-item__name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.order-category-item__count{font-size:11px;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.08);min-width:18px;text-align:center}
+.order-category-item.active .order-category-item__count{background:rgba(255,255,255,.25)}
+.order-categories__toggle{width:100%;padding:5px;font-size:12px;border:none;background:#f0f4f4;color:#3d7474;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;border-top:1px solid #ddd;flex-shrink:0}
+.order-categories__toggle:hover{background:#e0eaea}
+
+/* Test Area - FIXED: constrained height with scroll */
+.order-test-area{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.order-test-area__empty{display:flex;align-items:center;justify-content:center;height:200px;color:#999;font-size:14px;gap:8px}
+
+/* Test Type Tabs */
+.order-type-tabs{display:flex;gap:0;border-bottom:2px solid #e0e0e0;margin-bottom:4px;flex-shrink:0;background:#f8fafb;border-radius:6px 6px 0 0;padding:0 10px}
+.order-type-tab{padding:8px 16px;font-size:13px;font-weight:600;color:#666;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.order-type-tab:hover{color:#333;background:rgba(0,0,0,.03)}
+.order-type-tab.active{color:#486086;border-bottom-color:#486086;background:#fff}
+.order-type-tab__badge{font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(0,0,0,.08);font-weight:700}
+.order-type-tab.active .order-type-tab__badge{background:#486086;color:#fff}
+
+/* Scrollable test content - KEY FIX */
+.order-test-scroll{flex:1;overflow-y:auto;min-height:0;padding-right:4px}
+.order-test-scroll::-webkit-scrollbar{width:6px}
+.order-test-scroll::-webkit-scrollbar-track{background:#f1f1f1;border-radius:3px}
+.order-test-scroll::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:3px}
+.order-test-scroll::-webkit-scrollbar-thumb:hover{background:#a1a1a1}
+
+/* Test Group */
+.order-test-group{background:#fff;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;overflow:hidden}
+.order-test-group__header{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;background:#f4f7fa;border-bottom:1px solid #e0e0e0}
+.order-test-group__title{margin:0;font-size:13px;font-weight:600;color:#444}
+.order-test-group__badge{background:#486086;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+
+/* Test Grid */
+.order-test-grid{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px}
+
+/* Test Cards */
+.order-test-card{position:relative;padding:7px 10px;border:1px solid #d0d0d0;border-radius:4px;cursor:pointer;font-size:12px;color:#333;background:#fff;transition:all .15s;flex:1 1 calc(33.333% - 8px);min-width:100px;max-width:calc(33.333% - 8px);display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.order-test-card:hover{border-color:#486086;background:#f0f5ff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.order-test-card.active{background:#486086;color:#fff;border-color:#486086}
+.order-test-card.active:hover{background:#3d5575}
+.order-test-card.noteditable{background:#f2f8ff;border-color:#c0d8f0;color:#888;cursor:not-allowed}
+.order-test-card.unavailable{color:#c0392b;border-color:#e8c0c0}
+.order-test-card.unavailable.active{color:#fff}
+.order-test-card__check{font-size:11px}
+.order-test-card__name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Responsive: Tablet */
+@media (max-width:1024px){
+    .order-page-enhanced{max-height:none;overflow:visible}
+    .order-main{flex-direction:column;height:auto;overflow:visible}
+    .order-sidebar{width:100%;max-width:none;flex-direction:row;flex-wrap:wrap;overflow:visible}
+    .order-selected-panel,.order-categories{flex:1;min-width:200px}
+    .order-selected-panel__body{max-height:120px}
+    .order-categories__list-wrap{max-height:150px}
+    .order-test-area{height:auto;overflow:visible}
+    .order-test-scroll{max-height:none;overflow:visible}
+    .order-test-card{flex:1 1 calc(50% - 8px);max-width:calc(50% - 8px)}
+}
+
+/* Responsive: Mobile */
+@media (max-width:768px){
+    .order-page-enhanced{max-height:none;overflow:visible}
+    .order-top-bar{flex-direction:column;align-items:stretch;gap:10px}
+    .order-top-bar__location{flex-wrap:wrap}
+    .order-select{min-width:160px;width:100%}
+    .order-main{flex-direction:column;height:auto;overflow:visible}
+    .order-sidebar{width:100%;flex-direction:column;overflow:visible}
+    .order-selected-panel__body{max-height:100px}
+    .order-test-card{flex:1 1 100%;max-width:100%}
+    .order-type-tab{padding:8px 10px;font-size:12px}
+    .order-type-tabs{overflow-x:auto;flex-wrap:nowrap}
+}
+</style>
+
+<div class="order-page-enhanced">
+
+    <!-- Top Bar: Location + Search + Filter Toggle -->
+    <div class="order-top-bar" ng-if="activeTab.name == 'Laboratory'">
+        <div class="order-top-bar__location">
+            <label class="order-top-bar__label">Lab Location <span class="required">*</span></label>
+            <div class="order-top-bar__select-wrap">
+                <select ng-model="locationData.selectedLabLocation"
+                        ng-options="loc.id as loc.name for loc in labLocations"
+                        ng-change="onLabLocationChange()"
+                        class="order-select">
+                    <option value="">-- Select Location --</option>
+                </select>
+                <i class="fa fa-map-marker order-top-bar__icon"></i>
+            </div>
+            <span ng-if="!locationData.selectedLabLocation" class="order-top-bar__warning">
+                <i class="fa fa-exclamation-circle"></i> Required for lab orders
+            </span>
         </div>
-        <div class="field-value">
-            <input type="text" ng-model="search.string" autofocus class="order_search_desktop">
-            <input type="text" ng-model="search.string" class="order_search_mobile">
-            <label ng-if="search.string.length > 0" class="fa fa-remove fl cross-button" ng-click="resetSearchString()"></label>
+        <div class="order-top-bar__search">
+            <div class="order-search-box">
+                <i class="fa fa-search order-search-box__icon"></i>
+                <input type="text"
+                       ng-model="search.string"
+                       placeholder="Search tests by name..."
+                       autofocus
+                       class="order-search-box__input">
+                <i ng-if="search.string.length > 0"
+                   class="fa fa-times-circle order-search-box__clear"
+                   ng-click="resetSearchString()"></i>
+            </div>
         </div>
-    </section>
-</div>
-<section class="orders-section-left" xmlns="http://www.w3.org/1999/html">
-        <div class="order-section-container">
-            <div class="block consultation-notes">
-                <h2 class="section-title">{{ 'SELECTED_ORDERS_LABEL'|translate }}</h2>
-                <div id="selected-orders" class="selected-orders">
-                    <p class="null-data-message" ng-hide="selectedOrders.length">{{ 'SELECTED_ORDERS_EMPTY_MESSAGE'|translate }}</p>
-                    <ul class="selected-items">
-                        <li ng-repeat="order in selectedOrders" >
-                            <div class="grid-row-element">
-                                <div ng-class="{'voided': order.isDiscontinued}">
-                                    {{::order.concept.displayName || order.concept.shortName || order.concept.name}}
-                                </div>
-                                <button class="toggle-buttons urgent-button" ng-class="{active: order.isUrgent}" toggle="order.isUrgent" ng-if="isUrgent()"  title="Urgent" ng-disabled="order.uuid">
-                                    <i class="fa fa-exclamation-triangle fa-grey show-before-active"></i>
-                                    <i class="fa fa-exclamation-triangle fa-orange show-after-active"></i>
+        <div class="order-top-bar__actions">
+            <button class="order-toggle-filter-btn"
+                    ng-class="{'active': advancedFilterVisible}"
+                    ng-click="advancedFilterVisible = !advancedFilterVisible"
+                    title="Advanced Filters">
+                <i class="fa fa-sliders"></i> Filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Advanced Filter Bar (collapsible) -->
+    <div class="order-advanced-filter" ng-show="advancedFilterVisible" ng-if="activeTab.name == 'Laboratory'">
+        <div class="order-advanced-filter__inner">
+            <span class="order-advanced-filter__title"><i class="fa fa-filter"></i> Filter by Concept Class:</span>
+            <div class="order-filter-chips">
+                <button class="order-chip"
+                        ng-class="{'active': !activeFilterCategory}"
+                        ng-click="setFilterCategory(null)">
+                    All
+                    <span class="order-chip__count">{{getTotalTestCount()}}</span>
+                </button>
+                <button class="order-chip"
+                        ng-repeat="cat in allCategories"
+                        ng-class="{'active': activeFilterCategory === cat.name}"
+                        ng-click="setFilterCategory(cat.name)">
+                    {{cat.name}}
+                    <span class="order-chip__count">{{getCategoryTestCount(cat.name)}}</span>
+                </button>
+            </div>
+        </div>
+        <div class="order-advanced-filter__info" ng-if="search.string">
+            <i class="fa fa-info-circle"></i>
+            Showing results for "<strong>{{search.string}}</strong>"
+            <span ng-if="getSearchResultCount() > 0"> &mdash; {{getSearchResultCount()}} test(s) found</span>
+            <span ng-if="getSearchResultCount() === 0"> &mdash; No tests found</span>
+        </div>
+    </div>
+
+    <!-- Unavailability Legend -->
+    <div class="order-legend" ng-if="hasUnavailableTests()">
+        <i class="fa fa-info-circle"></i>
+        <span class="order-legend__red">Red</span> tests are currently unavailable in our Hospital
+    </div>
+
+    <!-- Main Content: Sidebar + Test Grid -->
+    <div class="order-main">
+
+        <!-- Left Sidebar -->
+        <div class="order-sidebar">
+            <!-- Selected Orders -->
+            <div class="order-selected-panel">
+                <div class="order-selected-panel__header">
+                    <h3>Selected Orders</h3>
+                    <span class="order-badge" ng-if="selectedOrders.length > 0">{{selectedOrders.length}}</span>
+                </div>
+                <div class="order-selected-panel__body">
+                    <p class="order-empty-msg" ng-hide="selectedOrders.length">
+                        <i class="fa fa-inbox"></i><br>No orders selected
+                    </p>
+                    <ul class="order-selected-list">
+                        <li ng-repeat="order in selectedOrders" class="order-selected-item" ng-class="{'voided': order.isDiscontinued}">
+                            <div class="order-selected-item__name" title="{{::order.concept.displayName || order.concept.shortName || order.concept.name}}">
+                                {{::order.concept.displayName || order.concept.shortName || order.concept.name}}
+                            </div>
+                            <div class="order-selected-item__actions">
+                                <button class="order-action-btn order-action-btn--labnote"
+                                        ng-class="{'has-notes': order.labNote}"
+                                        ng-click="openLabNotePopup(order)"
+                                        title="{{order.labNote ? 'Edit Lab Note' : 'Add Lab Note (red flag for collection)'}}">
+                                    <i ng-class="{'fa fa-flag': order.labNote, 'fa fa-flag-o': !order.labNote}"></i>
                                 </button>
-                                <span>
-                                    <i ng-class="{'has-notes': order.commentToFulfiller }" class="fa fa-file-text-o" ng-click="openNotesPopup(order)"></i>
-                                </span>
-                                <span>
-                                    <i ng-class="{'fa fa-remove': !order.isDiscontinued, 'fa fa-undo': order.isDiscontinued && !isOrderNotEditable(order) }" ng-click="handleOrderClick(order)"></i>
-                                </span>
+                                <button class="order-action-btn order-action-btn--urgent"
+                                        ng-class="{active: order.isUrgent}"
+                                        toggle="order.isUrgent"
+                                        ng-if="isUrgent()"
+                                        ng-disabled="order.uuid"
+                                        title="Mark as Urgent">
+                                    <i class="fa fa-exclamation-triangle"></i>
+                                </button>
+                                <button class="order-action-btn order-action-btn--notes"
+                                        ng-class="{'has-notes': order.commentToFulfiller}"
+                                        ng-click="openNotesPopup(order)"
+                                        title="Add Notes">
+                                    <i class="fa fa-sticky-note-o"></i>
+                                </button>
+                                <button class="order-action-btn order-action-btn--remove"
+                                        ng-click="handleOrderClick(order)"
+                                        title="{{order.isDiscontinued ? 'Restore' : 'Remove'}}">
+                                    <i ng-class="{'fa fa-trash-o': !order.isDiscontinued, 'fa fa-undo': order.isDiscontinued && !isOrderNotEditable(order)}"></i>
+                                </button>
                             </div>
                         </li>
                     </ul>
                 </div>
             </div>
-            <!-- <span class="order-title">{{tab.topLevelConcept}}</span> -->
-            <div class="multi-select-lab-tests">
-                <ul ng-class="{'show-fewer-tests': hideLabTests}">
-                    <li ng-repeat="sample in getOrderTemplate(activeTab.name).setMembers" ng-class='sample.klass'>
-                        <a ng-click="showLeftCategoryTests(sample)">
-                            {{getName(sample)}}
-                        </a>
-                    </li>
-                    <li class="toggle-complete-list" ng-show="getOrderTemplate(activeTab.name).setMembers && getOrderTemplate(activeTab.name).setMembers.length > 3">
-                        <button class="toggle-list-arrow" type="button" ng-click="toggleLabTests()" ng-show="hideLabTests">
-                            <i class="fa fa-caret-down"></i>
-                        </button>
-                        <button class="toggle-list-arrow" type="button" ng-click="toggleLabTests()" ng-show="!hideLabTests">
-                            <i class="fa fa-caret-up"></i>
-                        </button>
+
+            <!-- Category Sidebar -->
+            <div class="order-categories">
+                <div class="order-categories__header">
+                    <h3>Categories</h3>
+                    <span class="order-categories__count" ng-if="getOrderTemplate(activeTab.name).setMembers">
+                        {{getOrderTemplate(activeTab.name).setMembers.length}}
+                    </span>
+                </div>
+                <ul class="order-category-list">
+                    <li ng-repeat="sample in getOrderTemplate(activeTab.name).setMembers"
+                        class="order-category-item"
+                        ng-class="{'active': sample.klass === 'active'}"
+                        ng-click="showLeftCategoryTests(sample)">
+                        <span class="order-category-item__name">{{getName(sample)}}</span>
+                        <span class="order-category-item__count" ng-if="sample.setMembers">{{sample.setMembers.length}}</span>
                     </li>
                 </ul>
+                <button class="order-categories__toggle"
+                        ng-show="getOrderTemplate(activeTab.name).setMembers && getOrderTemplate(activeTab.name).setMembers.length > 5"
+                        ng-click="toggleLabTests()">
+                    <i ng-class="{'fa fa-chevron-down': hideLabTests, 'fa fa-chevron-up': !hideLabTests}"></i>
+                    {{hideLabTests ? 'Show All' : 'Show Less'}}
+                </button>
             </div>
         </div>
-</section>
 
-<section class="orders-section-right">     
-     <section class="order-section-container" ng-repeat="group in tab.leftCategory.groups" ng-if="tab.leftCategory">
-        <order-selector></order-selector>
-    </section>
-</section>
+        <!-- Right: Test Grid -->
+        <div class="order-test-area">
+            <div class="order-test-area__empty" ng-if="!activeTab.leftCategory">
+                <i class="fa fa-arrow-left"></i> Select a category from the left panel to view tests
+            </div>
+
+            <!-- Type Tabs: Panels / Lab Tests / Others -->
+            <div class="order-type-tabs" ng-if="tab.leftCategory">
+                <div class="order-type-tab"
+                     ng-class="{'active': !activeTypeFilter || activeTypeFilter === 'panels'}"
+                     ng-click="setTypeFilter('panels')">
+                    <i class="fa fa-layer-group"></i> Panels
+                    <span class="order-type-tab__badge">{{getTypeCount('panels')}}</span>
+                </div>
+                <div class="order-type-tab"
+                     ng-class="{'active': activeTypeFilter === 'labtest'}"
+                     ng-click="setTypeFilter('labtest')">
+                    <i class="fa fa-flask"></i> Lab Tests
+                    <span class="order-type-tab__badge">{{getTypeCount('labtest')}}</span>
+                </div>
+                <div class="order-type-tab"
+                     ng-class="{'active': activeTypeFilter === 'other'}"
+                     ng-click="setTypeFilter('other')">
+                    <i class="fa fa-ellipsis-h"></i> Other
+                    <span class="order-type-tab__badge">{{getTypeCount('other')}}</span>
+                </div>
+            </div>
+
+            <!-- Scrollable test content -->
+            <div class="order-test-scroll">
+                <section class="order-test-group" ng-repeat="group in tab.leftCategory.groups" ng-if="tab.leftCategory">
+                    <div class="order-test-group__header" ng-show="hasVisibleTestsInGroup(group.name)">
+                        <h4 class="order-test-group__title">{{group.description}}</h4>
+                        <span class="order-test-group__badge">{{getVisibleTestCount(group.name)}}</span>
+                    </div>
+                    <div class="order-test-grid" ng-show="hasVisibleTestsInGroup(group.name)">
+                        <div class="order-test-card"
+                             ng-repeat="test in (tab.leftCategory.setMembers | filter:filterByConceptClass | filter:filterBySearchString)"
+                             ng-click="toggleOrderSelection(test)"
+                             ng-class="{
+                                'active': isActiveOrderPresent(test),
+                                'noteditable': isTestIndirectlyPresent(test),
+                                'unavailable': isTestUnavailable(test)
+                             }"
+                             ng-disabled="isTestIndirectlyPresent(test)">
+                            <i class="fa fa-check-circle order-test-card__check" ng-show="isActiveOrderPresent(test)"></i>
+                            <span class="order-test-card__name">{{getName(test)}}</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>

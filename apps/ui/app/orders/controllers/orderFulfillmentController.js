@@ -114,9 +114,9 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
         };
 
         var getOrderPaymentStatus = function (order) {
-            paymentStatusService.getPaymentStatus(order.orderUuid).then(function (response) {
+            paymentStatusService.getPaymentStatus(patientContext.patient.identifier).then(function (response) {
                 if (!payment_config["disable checking"]) {
-                    order.paymentStatus = response.data === "INVOICED";
+                    order.paymentStatus = response.data && response.data.status === "PAID";
                 }
                 else {
                     order.paymentStatus = true

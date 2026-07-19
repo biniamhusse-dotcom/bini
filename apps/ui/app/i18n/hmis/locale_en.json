@@ -1,4 +1,5 @@
 {
+    "MESSAGE_DIALOG_OPTION_OKAY": "OK",
     "MODULE_LABEL_HMIS_KEY": "HMIS",
     "HMIS_REPORT_TITLE": "HMIS Observation Report",
     "HMIS_SELECT_CONCEPT_SET": "-- Select Concept Set --",

@@ -105,14 +105,25 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
             });
             var tempOrders = modifiedOrders.map(function (order) {
                 order.urgency = order.isUrgent ? "STAT" : undefined;
+                var comment = order.commentToFulfiller || '';
+                if (consultation.labLocationId && consultation.labLocationName) {
+                    var locationTag = '[LAB_LOCATION:' + consultation.labLocationName + ']';
+                    if (comment.indexOf('[LAB_LOCATION:') === -1) {
+                        comment = locationTag + (comment ? ' ' + comment : '');
+                    } else {
+                        comment = comment.replace(/\[LAB_LOCATION:[^\]]*\]/, locationTag);
+                    }
+                }
 
                 if (order.hasBeenModified && !order.isDiscontinued) {
-                    return Bahmni.Clinical.Order.revise(order);
+                    var revised = Bahmni.Clinical.Order.revise(order);
+                    revised.commentToFulfiller = comment;
+                    return revised;
                 } else if (order.isDiscontinued) {
                     return Bahmni.Clinical.Order.discontinue(order);
                 }
                 return { uuid: order.uuid, concept: {name: order.concept.name, uuid: order.concept.uuid },
-                    commentToFulfiller: order.commentToFulfiller, urgency: order.urgency};
+                    commentToFulfiller: comment, urgency: order.urgency};
             });
             encounterData.orders = encounterData.orders.concat(tempOrders);
         };

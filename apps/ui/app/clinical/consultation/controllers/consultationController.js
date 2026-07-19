@@ -139,24 +139,36 @@ angular.module('bahmni.clinical').controller('ConsultationController',
                 });
             };
 
-            $scope.buttonShow = true;
+            $scope.buttonShow = false;
 
             $scope.paymentStatus = function () {
                 if (!payment_config["disable checking"]) {
-                    getOrderUuid().then(resp => {
-                                    if (resp.data[0]) {
-                                        paymentStatusService.getPaymentStatus(resp.data[0].uuid).then(function (response) {
-                                $scope.buttonShow = response.data === "INVOICED";
-                                $scope.patient.paymentStatus = response.data === "INVOICED";
-                            })
-                        }
-                        else {
-                            $scope.patient.paymentStatus = false;
-                        }
-
-                    })
+                    paymentStatusService.getPaymentStatus($scope.patient.identifier).then(function (response) {
+                        var isPaid = response.data && response.data.status === "PAID";
+                        $scope.buttonShow = isPaid;
+                        $scope.patient.paymentStatus = isPaid;
+                    }).catch(function () {
+                        $scope.buttonShow = false;
+                        $scope.patient.paymentStatus = false;
+                    });
+                } else {
+                    $scope.buttonShow = true;
                 }
             }
+
+            $scope.markAsPaid = function () {
+                paymentStatusService.markAsPaid($scope.patient.identifier).then(function () {
+                    $scope.buttonShow = true;
+                    $scope.patient.paymentStatus = true;
+                });
+            };
+
+            $scope.markAsUnpaid = function () {
+                paymentStatusService.markAsUnpaid($scope.patient.identifier).then(function () {
+                    $scope.buttonShow = false;
+                    $scope.patient.paymentStatus = false;
+                });
+            };
 
             // async function paymentStatusFromObs() {
             //     const { url, queryParams } = {
@@ -181,6 +193,15 @@ angular.module('bahmni.clinical').controller('ConsultationController',
             //     }
             // }
             // paymentStatusFromObs();
+
+            $scope.paymentStatus();
+
+            $scope.isSuperAdmin = false;
+            $rootScope.currentUser.privileges.forEach(function (priv) {
+                if (priv.name === "SuperAdmin") {
+                    $scope.isSuperAdmin = true;
+                }
+            });
 
             $scope.allowConsultation = function () {
                 return appService.getAppDescriptor().getConfigValue('allowConsultationWhenNoOpenVisit');
@@ -697,6 +718,13 @@ angular.module('bahmni.clinical').controller('ConsultationController',
                 if (!isFormValid() || storedMessages.length > 0) {
                     if (isFormValid() && storedMessages.length > 0) { messagingService.showMessage("error", "Please correct invalid insertions first!") }
                     $scope.$parent.$parent.$broadcast("event:errorsOnForm");
+                    return $q.when({});
+                }
+                var hasNonDrugOrders = $scope.consultation.orders && $scope.consultation.orders.some(function (o) {
+                    return !o.isDiscontinued;
+                });
+                if (hasNonDrugOrders && !$scope.consultation.labLocationId) {
+                    messagingService.showMessage("error", "Please select a Lab Location before saving orders.");
                     return $q.when({});
                 }
                 try {

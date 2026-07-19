@@ -34,10 +34,22 @@
             <button class="dialog-button-group" ng-if="showPrint()" ng-click="print()" accesskey="{{'CLINICAL_PRINT_ACCESS_KEY'| translate}}" ng-bind-html="'CLINICAL_PRINT_TRANSLATION_KEY'|translate">
                 <i class="fa fa-print"></i>
             </button>
-            <span class="grouped-buttons" ng-init="paymentStatus()" ng-if="((visitHistory.activeVisit && buttonShow) || retrospectiveEntry) && (consultationTabPriv && paymentStatus)">
+            <span class="grouped-buttons" ng-if="((visitHistory.activeVisit && buttonShow) || retrospectiveEntry)">
                 <a class=" btn--left btn--success " ng-click="openConsultation()" ng-bind-html="'CONSULTATION_TAB_KEY' | translate"></a>
                 <a class="btn--right btn--success " title="{{'OPEN_IN_NEW_WINDOW'|translate}}" ng-click="collapseControlPanel()" ui-sref="patient.dashboard.show.observations({patientUuid: patient.uuid,programUuid: programUuid,conceptSetGroupName: 'observations'})" target="_blank"><i class="fa fa-external-link"></i></a>
            </span>
+
+            <span ng-if="!buttonShow && (visitHistory.activeVisit || retrospectiveEntry) && isSuperAdmin" style="margin-left:10px">
+                <button class="btn btn-success" ng-click="markAsPaid()" style="background:#27ae60;border-color:#27ae60;padding:6px 16px;font-size:13px">
+                    <i class="fa fa-money"></i> Mark as Paid
+                </button>
+            </span>
+
+            <span ng-if="buttonShow && (visitHistory.activeVisit || retrospectiveEntry) && isSuperAdmin" style="margin-left:10px">
+                <button class="btn btn-warning" ng-click="markAsUnpaid()" style="background:#f39c12;border-color:#f39c12;padding:6px 16px;font-size:13px;color:#fff">
+                    <i class="fa fa-undo"></i> Undo Payment
+                </button>
+            </span>
            <button class="toggle-patient" ng-click="toggleControlPanel()" ng-class="{'shift': showControlPanel}">
                <i class="fa fa-bars fa-white fa-large"></i>
            </button>

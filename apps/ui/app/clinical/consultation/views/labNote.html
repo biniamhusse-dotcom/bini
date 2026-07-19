@@ -1,0 +1,12 @@
+<div class="lab-note-dialog">
+    <h3 style="margin:0 0 10px;color:#c0392b"><i class="fa fa-flag"></i> Lab Collection Note</h3>
+    <p style="font-size:12px;color:#666;margin-bottom:8px">This note will be flagged in red during sample collection at the lab.</p>
+    <textarea ng-model="labNoteData.text"
+              placeholder="Enter note for lab collection (e.g., fasting required, special handling...)"
+              style="width:100%;min-height:80px;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:13px;box-sizing:border-box"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button ng-click="saveLabNote()" style="padding:6px 16px;background:#c0392b;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px">Save Note</button>
+        <button ng-click="clearLabNote()" style="padding:6px 16px;background:#f0f0f0;color:#333;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:13px" ng-if="labNoteData.text">Clear</button>
+        <button ng-click="closePopup()" style="padding:6px 16px;background:#f0f0f0;color:#333;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:13px">Cancel</button>
+    </div>
+</div>

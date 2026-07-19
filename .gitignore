@@ -17,10 +17,42 @@ Desktop.ini
 
 # Logs
 logs/
+openmrs-fulllogs.txt
 
 # Database backups
 *.sql
 
 # Temp files
+temp/
 temp_*
 sentEncounters.json
+
+# Scratch/debug files
+*_decompiled.txt
+*_bytecode.txt
+*_full.txt
+*_fixed.txt
+*_test.txt
+test_login*.sh
+raw_report*.html
+report_result.html
+page.html
+analyzer_page.html
+banner*.txt
+cookies_*.txt
+execute_method.txt
+postAction*.txt
+tabs*.txt
+utilities*.txt
+formTemplate*.txt
+homeMenuContents.txt
+typeOfSample.txt
+setFormAttributes.txt
+find_all_switches.py
+find_tableswitch.py
+fix_menuTemplate.py
+fix_struts.py
+patch_bytecode.py
+MessageResources.properties
+analyzerTestName.txt
+openelis-jsp/

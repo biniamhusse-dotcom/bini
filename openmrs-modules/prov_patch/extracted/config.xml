@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module configVersion="1.2">
+
+	<!-- Module Properties -->
+	<id>providermanagement</id>
+	<name>Provider Management Module</name>
+	<version>2.14.0</version>
+	<package>org.openmrs.module.providermanagement</package>
+	<author>Mark Goodrich</author>
+	<description>
+		Allows for the creation of provider roles, as well as the management of provider/provider and provider/patient relationships.
+	</description>
+	<updateURL>https://dev.openmrs.org/modules/download/providermanagement/update.rdf</updateURL>
+	<require_version>1.11.3, 1.10.2 - 1.10.*, 1.9.9 - 1.9.*</require_version>
+	<!-- / Module Properties -->
+
+	<aware_of_modules>
+	    <aware_of_module>org.openmrs.module.legacyui</aware_of_module>
+	</aware_of_modules>
+	
+	<!-- Module Activator -->
+	<activator>org.openmrs.module.providermanagement.ProviderManagementActivator</activator>
+	
+
+    <!-- Required Modules -->
+    <require_modules>
+        <require_module version="3.4">org.openmrs.module.uiframework</require_module>
+        <require_module version="1.5">org.openmrs.module.uilibrary</require_module>
+    </require_modules>
+
+    <!-- Aware Modules -->
+    <!-- In Openmrs 1.9.x and earlier we rely on the logic module to get the groovy jar, which is used for processing suggestion rules;
+         in Openmrs 1.10.x the groovy jar is provided with core, and so the logic module is no longer required-->
+    <aware_of_modules>
+        <aware_of_module>org.openmrs.logic</aware_of_module>
+    </aware_of_modules>
+
+
+	<!-- Adds link to admin page -->
+	<extension>
+		<point>org.openmrs.admin.list</point>
+		<class>org.openmrs.module.providermanagement.extension.html.AdminList</class>
+	</extension>
+	
+	<!-- Maps hibernate files, if present -->
+	<mappingFiles>
+		Provider.hbm.xml
+        ProviderRole.hbm.xml
+        ProviderSuggestion.hbm.xml
+		SupervisionSuggestion.hbm.xml
+	</mappingFiles>
+
+    <!-- Required Global Properties -->
+    <globalProperty>
+        <property>providermanagement.personAttributeTypes</property>
+        <defaultValue></defaultValue>
+        <description>
+            Person attributes to display on the provider dashboard; specified as a pipe-delimited list of person attribute type uuids
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.providerSearchDisplayFields</property>
+        <defaultValue>Identifier:provider.identifier|Given Name:provider.person.personName.givenName|Family Name:provider.person.personName.familyName|Role:provider.providerRole|Gender:provider.person.gender</defaultValue>
+        <description>
+            Fields to display in the provider search results; specified as a pipe-delimited list of label/field pairs
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.providerListDisplayFields</property>
+        <defaultValue>Identifier:provider.identifier|Given Name:provider.person.personName.givenName|Family Name:provider.person.personName.familyName|Role:provider.providerRole|Gender:provider.person.gender|Start Date:relationship.startDate</defaultValue>
+        <description>
+            Fields to display in the provider lists; specified as a pipe-delimited list of label/field pairs
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.historicalProviderListDisplayFields</property>
+        <defaultValue>Identifier:provider.identifier|Given Name:provider.person.personName.givenName|Family Name:provider.person.personName.familyName|Role:provider.providerRole|Gender:provider.person.gender|Start Date:relationship.startDate|End Date:relationship.endDate</defaultValue>
+        <description>
+            Fields to display in the historical provider lists; specified as a pipe-delimited list of label/field pairs
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.patientSearchDisplayFields</property>
+        <defaultValue>Identifier:patient.patientIdentifier.identifier|Given Name:patient.personName.givenName|Family Name:patient.personName.familyName|Age:patient.age|Gender:patient.gender</defaultValue>
+        <description>
+            Fields to display in the patient search results; specified as a pipe-delimited list of label/field pairs
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.patientListDisplayFields</property>
+        <defaultValue>Identifier:patient.patientIdentifier.identifier|Given Name:patient.personName.givenName|Family Name:patient.personName.familyName|Age:patient.age|Gender:patient.gender|Start Date:relationship.startDate</defaultValue>
+        <description>
+            Fields to display in the patient lists; specified as a pipe-delimited list of label/field pairs
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.historicalPatientListDisplayFields</property>
+        <defaultValue>Identifier:patient.patientIdentifier.identifier|Given Name:patient.personName.givenName|Family Name:patient.personName.familyName|Age:patient.age|Gender:patient.gender|Start Date:relationship.startDate|End Date:relationship.endDate</defaultValue>
+        <description>
+            Fields to display in the historical patient lists; specified as a pipe-delimited list of label/field pairs
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.personSearchDisplayFields</property>
+        <defaultValue>Given Name:person.personName.givenName|Family Name:person.personName.familyName|Age:person.age|Gender:person.gender</defaultValue>
+        <description>
+            Fields to display in the person search results; specified as a pipe-delimited list of label/field pairs
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.advancedSearchPersonAttributeType</property>
+        <defaultValue></defaultValue>
+        <description>
+            Person attribute type, specified by uuid, to use as a search field on the advanced search page
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.addressWidget</property>
+        <defaultValue>personAddress</defaultValue>
+        <description>
+            Address widget to use throughout the module
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.restrictSearchToProvidersWithProviderRoles</property>
+        <defaultValue>false</defaultValue>
+        <description>
+            True/false whether to restrict providers to those with roles
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.locationTag</property>
+        <defaultValue></defaultValue>
+        <description>
+            Indicates the Health Facility location to which a provider could be assigned to.
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>providermanagement.restrictedRoles</property>
+        <defaultValue></defaultValue>
+        <description>
+            Comma delimited list of UUIDs indicating the only Provider Roles to be available via the UI.
+        </description>
+    </globalProperty>
+
+    <!--  Extension Points -->
+    <!-- we are not overridding the patient dashboard at this point -->
+    <!--
+     <extension>
+         <point>org.openmrs.patientDashboard.overviewBox</point>
+         <class>org.openmrs.module.providermanagement.extension.html.PatientDashboardOverviewExt</class>
+     </extension>
+    -->
+
+    <!-- Internationalization -->
+	<!-- All message codes should start with providermanagement. -->
+	<messages>
+		<lang>en</lang>
+		<file>messages.properties</file>
+	</messages>
+	<messages>
+		<lang>fr</lang>
+		<file>messages_fr.properties</file>
+	</messages>
+	<messages>
+		<lang>es</lang>
+		<file>messages_es.properties</file>
+	</messages>
+	<!-- /Internationalization -->
+
+
+    <!-- Required Privileges -->
+    <privilege>
+        <name>Provider Management API</name>
+        <description>Allows access to all provider management service and provider suggestion service API method</description>
+    </privilege>
+
+    <privilege>
+        <name>Provider Management API - Read-only</name>
+        <description>Allows access to all provider management service and provider suggestion service API methods that are read-only</description>
+    </privilege>
+
+    <privilege>
+        <name>Provider Management Dashboard - View Providers</name>
+        <description>Allows access to viewing provider information on the provider management dashboard</description>
+    </privilege>
+
+    <privilege>
+        <name>Provider Management Dashboard - Edit Providers</name>
+        <description>Allows access to editing provider information on the provider management dashboard</description>
+    </privilege>
+
+    <privilege>
+        <name>Provider Management Dashboard - View Patients</name>
+        <description>Allows access to viewing patient information on the provider management dashboard</description>
+    </privilege>
+
+    <privilege>
+        <name>Provider Management Dashboard - Edit Patients</name>
+        <description>Allows access to editing patient information on the provider management dashboard</description>
+    </privilege>
+
+    <privilege>
+        <name>Provider Management Dashboard - View Historical</name>
+        <description>Allows access to viewing historical patient (if user has view patients right) and supervisee information on the provider management dashboard</description>
+    </privilege>
+
+    <privilege>
+        <name>Provider Management - Admin</name>
+        <description>Allows access to admin pages of the provider management module</description>
+    </privilege>
+
+</module>
+

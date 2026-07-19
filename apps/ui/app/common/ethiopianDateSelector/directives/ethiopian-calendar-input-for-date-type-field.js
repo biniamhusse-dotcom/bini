@@ -29,12 +29,14 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianCalend
             
             $(element[0].childNodes[0].childNodes[0]).calendarsPicker({
                 calendar: calendar,
-                onSelect: function () {
-                    var eth = $(element[0].childNodes[0].childNodes[0]).val();
+                onSelect: function (dates) {
+                    if (!dates || !dates[0]) return;
+                    var ethDate = dates[0];
+                    var eth = ethDate.day() + "/" + ethDate.month() + "/" + ethDate.year();
+                    $(element[0].childNodes[0].childNodes[0]).val(eth);
                     var greg = DateUtil.parse(ethiopianGregorianService.ethToGreg(eth));
                     scope.date = greg;
                     scope.model = greg.getFullYear() + "-" + (greg.getMonth() + 1) + "-" +  greg.getDate();
-                    scope.$apply();
                     scope.handler();
                     scope.$apply();
                 },

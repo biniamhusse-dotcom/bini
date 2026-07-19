@@ -9,7 +9,16 @@ angular.module('bahmni.clinical')
             };
 
             $scope.filterByConceptClass = function (test) {
-                return test.conceptClass.name === $scope.group.name;
+                if (test.conceptClass.name !== $scope.group.name) {
+                    return false;
+                }
+                if ($scope.activeFilterCategory && test.conceptClass.name !== $scope.activeFilterCategory) {
+                    return false;
+                }
+                if ($scope.matchesTypeFilter && !$scope.matchesTypeFilter(test)) {
+                    return false;
+                }
+                return true;
             };
 
             var filterBySearchString = function (testName) {

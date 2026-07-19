@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+  		    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean id="accountService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.account.AccountServiceImpl">
+                <property name="userService" ref="userService"/>
+                <property name="personService" ref="personService"/>
+                <property name="providerService" ref="providerService"/>
+                <property name="providerManagementService" ref="providerManagementService"/>
+                <property name="domainWrapperFactory" ref="domainWrapperFactory"/>
+                <property name="emrApiProperties" ref="emrApiProperties"/>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.account.AccountService</value>
+                <ref bean="accountService"/>
+            </list>
+        </property>
+    </bean>
+
+
+
+    <bean id="adtService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.adt.AdtServiceImpl">
+                <property name="emrApiProperties" ref="emrApiProperties"/>
+                <property name="encounterService" ref="encounterService"/>
+                <property name="visitService" ref="visitService"/>
+                <property name="locationService" ref="locationService"/>
+                <property name="providerService" ref="providerService"/>
+                <property name="patientService" ref="patientService"/>
+                <property name="domainWrapperFactory" ref="domainWrapperFactory"/>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.adt.AdtService</value>
+                <ref bean="adtService"/>
+            </list>
+        </property>
+    </bean>
+
+   <bean id="exitFromCareService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.exitfromcare.ExitFromCareServiceImpl">
+                <property name="emrApiProperties" ref="emrApiProperties"/>
+                <property name="visitService" ref="visitService"/>
+                <property name="patientService" ref="patientService"/>
+                <property name="programWorkflowService" ref="programWorkflowService"/>
+                <property name="adtService" ref="adtService"/>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.exitfromcare.ExitFromCareService</value>
+                <ref bean="exitFromCareService"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="emrConceptService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.concept.EmrConceptServiceImpl">
+                <property name="dao">
+                    <bean class="org.openmrs.module.emrapi.concept.HibernateEmrConceptDAO">
+                        <property name="sessionFactory">
+                            <ref bean="dbSessionFactory"/>
+                        </property>
+                    </bean>
+                </property>
+                <property name="emrApiProperties" ref="emrApiProperties"/>
+                <property name="conceptService" ref="conceptService"/>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+     <bean id="emrPatientService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.patient.EmrPatientServiceImpl">
+                <property name="dao">
+                    <bean class="org.openmrs.module.emrapi.patient.HibernateEmrPatientDAO">
+                        <property name="sessionFactory">
+                            <ref bean="dbSessionFactory"/>
+                        </property>
+                    </bean>
+                </property>
+                <property name="emrApiProperties" ref="emrApiProperties"/>
+                <property name="patientService" ref="patientService"/>
+                <property name="adtService" ref="adtService"/>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean id="applicationEventService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.event.ApplicationEventServiceImpl" />
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean id="emrPersonImageService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.person.image.EmrPersonImageServiceImpl">
+                <property name="emrApiProperties" ref="emrApiProperties"/>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean id="emrPatientProfileService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.patient.EmrPatientProfileServiceImpl">
+                <property name="patientService" ref="patientService"/>
+                <property name="emrPersonImageService" ref="emrPersonImageService"/>
+                <property name="personService" ref="personService"/>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean id="dispositionService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.emrapi.disposition.DispositionServiceImpl">
+                <constructor-arg ref="emrConceptService"/>
+                <constructor-arg ref="conceptService"/>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean id="emrEncounterService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target" ref="emrEncounterServiceTarget"/>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean name="emrEncounterServiceTarget" class="org.openmrs.module.emrapi.encounter.EmrEncounterServiceImpl">
+        <constructor-arg name="administrationService" ref="adminService"/>
+        <constructor-arg name="encounterDispositionServiceHelper" ref="encounterDispositionServiceHelper"/>
+        <constructor-arg name="encounterObservationServiceHelper" ref="encounterObservationServiceHelper"/>
+        <constructor-arg name="encounterProviderServiceHelper" ref="encounterProviderServiceHelper"/>
+        <constructor-arg name="encounterService" ref="encounterService"/>
+        <constructor-arg name="encounterTransactionMapper" ref="encounterTransactionMapper"/>
+        <constructor-arg name="locationService" ref="locationService"/>
+        <constructor-arg name="patientService" ref="patientService"/>
+        <constructor-arg name="providerService" ref="providerService"/>
+        <constructor-arg name="visitService" ref="visitService"/>
+        <constructor-arg name="emrOrderService" ref="emrOrderService"/>
+    </bean>
+
+    <bean id="encounterObservationServiceHelper" class="org.openmrs.module.emrapi.encounter.EncounterObservationServiceHelper">
+        <constructor-arg name="conceptService" ref="conceptService"/>
+        <constructor-arg name="emrApiProperties" ref="emrApiProperties"/>
+        <constructor-arg name="obsService" ref="obsService"/>
+        <constructor-arg name="orderService" ref="orderService"/>
+        <constructor-arg name="obsMapper" ref="obsMapper"/>
+    </bean>
+
+    <bean id="encounterDispositionServiceHelper" class="org.openmrs.module.emrapi.encounter.EncounterDispositionServiceHelper">
+        <constructor-arg ref="conceptService"/>
+    </bean>
+
+    <bean id="encounterProviderServiceHelper" class="org.openmrs.module.emrapi.encounter.EncounterProviderServiceHelper">
+        <constructor-arg ref="providerService"/>
+        <constructor-arg ref="encounterService"/>
+    </bean>
+
+    <bean id="emrVisitDAOImpl" class="org.openmrs.module.emrapi.db.EmrVisitDAOImpl">
+        <property name="sessionFactory">
+            <ref bean="dbSessionFactory"/>
+        </property>
+    </bean>
+
+    <bean id="emrVisitService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <ref bean="emrVisitServiceImpl"/>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
+
+    <bean id="visitResponseMapper" class="org.openmrs.module.emrapi.visit.VisitResponseMapper">
+        <constructor-arg name="encounterTransactionMapper" ref="encounterTransactionMapper"/>
+    </bean>
+
+    <bean id="encounterProviderMapper" class="org.openmrs.module.emrapi.encounter.EncounterProviderMapper">
+    </bean>
+
+    <bean id="encounterObservationsMapper" class="org.openmrs.module.emrapi.encounter.EncounterObservationsMapper">
+        <constructor-arg name="observationMapper" ref="observationMapper"/>
+        <constructor-arg name="diagnosisMapper" ref="diagnosisMapper"/>
+        <constructor-arg name="dispositionMapper" ref="dispositionMapper"/>
+        <constructor-arg name="emrApiProperties" ref="emrApiProperties"/>
+        <constructor-arg name="observationTypeMatcher" ref="observationTypeMatcher"/>
+    </bean>
+
+    <bean id="conceptMapper" class="org.openmrs.module.emrapi.encounter.ConceptMapper"/>
+
+    <bean id="diagnosisMapper" class="org.openmrs.module.emrapi.encounter.DiagnosisMapper">
+    </bean>
+
+    <bean id="dispositionMapper" class="org.openmrs.module.emrapi.encounter.DispositionMapper">
+        <constructor-arg name="conceptService" ref="conceptService"/>
+        <constructor-arg name="userMapper" ref="userMapper"/>
+    </bean>
+
+    <bean id="observationTypeMatcher" class="org.openmrs.module.emrapi.encounter.matcher.ObservationTypeMatcher">
+        <constructor-arg name="emrApiProperties" ref="emrApiProperties"/>
+        <constructor-arg name="conceptService" ref="conceptService"/>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.encounter.EmrEncounterService</value>
+                <ref bean="emrEncounterService"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.concept.EmrConceptService</value>
+                <ref bean="emrConceptService"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.patient.EmrPatientService</value>
+                <ref bean="emrPatientService"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.event.ApplicationEventService</value>
+                <ref bean="applicationEventService"/>
+            </list>
+        </property>
+    </bean>
+
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.person.image.EmrPersonImageService</value>
+                <ref bean="emrPersonImageService"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.disposition.DispositionService</value>
+                <ref bean="dispositionService"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.module.emrapi.visit.EmrVisitService</value>
+                <ref bean="emrVisitService"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="emrEncounterDAO" class="org.openmrs.module.emrapi.db.HibernateEmrEncounterDAO">
+        <property name="sessionFactory">
+            <ref bean="dbSessionFactory"/>
+        </property>
+    </bean>
+
+    <bean id="dbSessionDAO" class="org.openmrs.module.emrapi.db.DbSessionDAOImpl">
+        <property name="sessionFactory"><ref bean="dbSessionFactory"/></property>
+    </bean>
+    <bean id="dbSessionUtil" class="org.openmrs.module.emrapi.db.DbSessionUtil">
+        <property name="dbSessionDAO"><ref bean="dbSessionDAO"/></property>
+    </bean>
+
+    <bean id="encounterTypetoVisitTypeMapper" class="org.openmrs.module.emrapi.adt.EncounterTypetoVisitTypeMapper">
+        <property name="adminService">
+            <ref bean="adminService"/>
+        </property>
+        <property name="visitService">
+            <ref bean="visitService"/>
+        </property>
+    </bean>
+
+</beans>

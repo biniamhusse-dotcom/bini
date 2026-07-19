@@ -1,12 +1,49 @@
 'use strict';
 
 angular.module('bahmni.clinical')
-.controller('InvestigationController', ['$scope', 'labTestsProvider', 'otherTestsProvider',
-    function ($scope, labTestsProvider, otherTestsProvider) {
+.controller('InvestigationController', ['$scope', '$http', 'labTestsProvider', 'otherTestsProvider',
+    function ($scope, $http, labTestsProvider, otherTestsProvider) {
         $scope.tabs = [
         {name: 'Laboratory', testsProvider: labTestsProvider, filterColumn: "sample", filterHeader: "Sample", categoryColumn: "department"},
         {name: 'Other', testsProvider: otherTestsProvider, filterColumn: "type", filterHeader: "Investigation", categoryColumn: "category"}
         ];
+
+        $scope.labLocations = [];
+        $scope.locationData = { selectedLabLocation: null };
+
+        $scope.fetchLabLocations = function () {
+            $http.get('/openelis/LabLocationList.do').then(function (response) {
+                $scope.labLocations = (response.data && response.data.locations) || [];
+                var savedId = localStorage.getItem('selectedLabLocationId');
+                if (savedId && $scope.labLocations.length > 0) {
+                    var exists = $scope.labLocations.some(function (l) { return l.id === parseInt(savedId); });
+                    if (exists) {
+                        $scope.locationData.selectedLabLocation = parseInt(savedId);
+                        $scope.consultation.labLocationId = $scope.locationData.selectedLabLocation;
+                        $scope.consultation.labLocationName = localStorage.getItem('selectedLabLocationName');
+                    }
+                }
+            }).catch(function (err) {
+                console.error('Failed to load lab locations', err);
+            });
+        };
+
+        $scope.onLabLocationChange = function () {
+            if ($scope.locationData.selectedLabLocation) {
+                var loc = _.find($scope.labLocations, {id: $scope.locationData.selectedLabLocation});
+                if (loc) {
+                    $scope.consultation.labLocationId = $scope.locationData.selectedLabLocation;
+                    $scope.consultation.labLocationName = loc.name;
+                    localStorage.setItem('selectedLabLocationId', $scope.locationData.selectedLabLocation);
+                    localStorage.setItem('selectedLabLocationName', loc.name);
+                }
+            } else {
+                $scope.consultation.labLocationId = null;
+                $scope.consultation.labLocationName = null;
+            }
+        };
+
+        $scope.fetchLabLocations();
 
         $scope.activateTab = function (tab) {
             if ($scope.activeTab) {

@@ -83,7 +83,8 @@ services:
       - "${CONFIG_VOLUME:?}:/etc/bahmni_config/:ro"
       - "bahmni-lab-results:/home/bahmni/uploaded_results"
       - "bahmni-uploaded-files:/home/bahmni/uploaded-files"
-      # - "${BAHMNI_OPENMRS_MODULES_PATH:?}/:/openmrs/data/modules/"
+      # DHIS2 modules: upload .omod files via OpenMRS Admin > Manage Modules
+      # Or mount individual files to /openmrs/data/modules/ (DO NOT mount directory - it overwrites built-in modules)
       - 'bahmni-patient-images:/home/bahmni/patient_images'
       - 'bahmni-document-images:/home/bahmni/document_images'
       - 'bahmni-clinical-forms:/home/bahmni/clinical_forms'

@@ -47,6 +47,27 @@ services:
       - "${CONFIG_VOLUME:?}:/etc/bahmni_config/:ro"
       - "bahmni-lab-results:/home/bahmni/uploaded_results"
       - "bahmni-uploaded-files:/home/bahmni/uploaded-files"
+      - "../../openelis-jsp/common/menuSelectListTemplate.jsp:/run/bahmni-lab/bahmni-lab/pages/common/menuSelectListTemplate.jsp"
+      - "../../openelis-jsp/analyzertestname/analyzerTestNameMenu.jsp:/run/bahmni-lab/bahmni-lab/pages/analyzertestname/analyzerTestNameMenu.jsp"
+      - "../../openelis-jsp/analyzertestname/analyzerTestName.jsp:/run/bahmni-lab/bahmni-lab/pages/analyzertestname/analyzerTestName.jsp"
+      - "../../openelis-jsp/analyzertestname/analyzerConfig.jsp:/run/bahmni-lab/bahmni-lab/pages/analyzertestname/analyzerConfig.jsp"
+      - "../../openelis-jsp/menu/masterListsTab/masterListsPageLeft.jsp:/run/bahmni-lab/bahmni-lab/pages/menu/masterListsTab/masterListsPageLeft.jsp"
+      - "../../openelis-jsp/tiles-defs.xml:/run/bahmni-lab/bahmni-lab/WEB-INF/tiles-defs.xml"
+      - "../../openelis-jsp/struts-globalOpenELIS.xml:/run/bahmni-lab/bahmni-lab/WEB-INF/struts-globalOpenELIS.xml"
+      - "../../openelis-jsp/common/menuTemplate.jsp:/run/bahmni-lab/bahmni-lab/pages/common/menuTemplate.jsp"
+      - "../../openelis-jsp/common/banner.jsp:/run/bahmni-lab/bahmni-lab/pages/common/banner.jsp"
+      - "../../openelis-jsp/MessageResources.properties:/run/bahmni-lab/bahmni-lab/WEB-INF/classes/MessageResources.properties"
+      - "../../openelis-jsp/test/testMenuAdvanced.jsp:/run/bahmni-lab/bahmni-lab/pages/test/testMenuAdvanced.jsp"
+      - "../../openelis-jsp/location/labLocationAdmin.jsp:/run/bahmni-lab/bahmni-lab/pages/location/labLocationAdmin.jsp"
+      - "../../openelis-jsp/location/locationSelect.jsp:/run/bahmni-lab/bahmni-lab/pages/location/locationSelect.jsp"
+      - "../../openelis-jsp/location/labLocationList.jsp:/run/bahmni-lab/bahmni-lab/pages/location/labLocationList.jsp"
+      - "../../openelis-jsp/transfer/sampleTransfer.jsp:/run/bahmni-lab/bahmni-lab/pages/transfer/sampleTransfer.jsp"
+      - "../../openelis-jsp/payment/paymentStatus.jsp:/run/bahmni-lab/bahmni-lab/pages/payment/paymentStatus.jsp"
+      - "../../openelis-jsp/dashboard/dashboardMaster.jsp:/run/bahmni-lab/bahmni-lab/pages/dashboard/dashboardMaster.jsp"
+      - "../../openelis-jsp/dashboard/samplesCollected.jsp:/run/bahmni-lab/bahmni-lab/pages/dashboard/samplesCollected.jsp"
+      - "../../openelis-jsp/dashboard/samplesToCollect.jsp:/run/bahmni-lab/bahmni-lab/pages/dashboard/samplesToCollect.jsp"
+      - "../../openelis-jsp/dashboard/labDashboard.jsp:/run/bahmni-lab/bahmni-lab/pages/dashboard/labDashboard.jsp"
+      - "../../openelis-jsp/dashboard/orders.js:/run/bahmni-lab/bahmni-lab/scripts/dashBoard/orders.js"
     environment:
       TZ: ${TZ}
       OPENMRS_HOST: ${OPENMRS_HOST}
@@ -218,7 +239,7 @@ services:
 
   openmrs:
     profiles: ["emr","bahmni-standard", "bahmni-mart"]
-    image: selamsew/openmrs:${OPENMRS_IMAGE_TAG:?}
+    image: bahmni/openmrs:${OPENMRS_IMAGE_TAG:?}
     environment:
       TZ: ${TZ}
       OMRS_DB_NAME: ${OPENMRS_DB_NAME:?}
@@ -260,7 +281,8 @@ services:
       - "${CONFIG_VOLUME:?}:/etc/bahmni_config/:ro"
       - "bahmni-lab-results:/home/bahmni/uploaded_results"
       - "bahmni-uploaded-files:/home/bahmni/uploaded-files"
-      # - "${BAHMNI_OPENMRS_MODULES_PATH:?}/:/openmrs/data/modules/"
+      # DHIS2 modules: upload .omod files via OpenMRS Admin > Manage Modules
+      # Or mount individual files to /openmrs/data/modules/ (DO NOT mount directory - it overwrites built-in modules)
       - 'bahmni-patient-images:/home/bahmni/patient_images'
       - 'bahmni-document-images:/home/bahmni/document_images'
       - 'bahmni-clinical-forms:/home/bahmni/clinical_forms'
@@ -623,6 +645,63 @@ services:
       JAVA_OPTS: ${CDSS_JAVA_SERVER_OPTS}
     logging: *log-config
 
+  # ──────────────────────────────────────────────────────────────
+  #  Ollama (Local LLM Server) — runs inside Docker
+  # ──────────────────────────────────────────────────────────────
+  ollama:
+    profiles: ["bahmni-standard"]
+    image: ollama/ollama:latest
+    ports:
+      - '11434:11434'
+    volumes:
+      - 'ollama-data:/root/.ollama'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    logging: *log-config
+    restart: ${RESTART_POLICY}
+
+  ollama-init:
+    profiles: ["bahmni-standard"]
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    entrypoint: ["sh", "-c", "sleep 15 && ollama pull ${LOCAL_AI_MODEL:-llama3.2:3b} && echo 'Model downloaded'"]
+    logging: *log-config
+    restart: "no"
+
+  # ──────────────────────────────────────────────────────────────
+  #  AI Clinical Assistant (Bahmni-OpenAI Middleware)
+  #  Works with either Docker Ollama or host Ollama.
+  # ──────────────────────────────────────────────────────────────
+  assistant:
+    profiles: ["bahmni-standard"]
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    ports:
+      - '5050:5050'
+    environment:
+      TZ: ${TZ}
+      USE_LOCAL_AI: "true"
+      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://ollama:11434/v1}
+      LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-llama3.2:3b}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_ASSISTANT_ID: ${OPENAI_ASSISTANT_ID}
+      OPENMRS_BASE_URL: http://openmrs:8080/openmrs/ws/rest/v1
+      OPENMRS_USER: ${OPENMRS_ATOMFEED_USER:-admin}
+      OPENMRS_PASSWORD: ${OPENMRS_ATOMFEED_PASSWORD:-Admin123}
+      POLL_INTERVAL: ${ASSISTANT_POLL_INTERVAL:-2}
+      MAX_POLL_ATTEMPTS: ${ASSISTANT_MAX_POLL_ATTEMPTS:-300}
+      ASSISTANT_PORT: "5050"
+      ASSISTANT_HOST: "0.0.0.0"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      openmrs:
+        condition: service_started
+    logging: *log-config
+    restart: ${RESTART_POLICY}
+
   prescription-sync:
     profiles: ["bahmni-standard"]
     build:
@@ -719,6 +798,7 @@ volumes:
   openmrsdbdata:
   metabase-data:
   mart-data:
+  ollama-data:
   bahmni-patient-images:
   bahmni-document-images:
   bahmni-clinical-forms:

@@ -1,9 +1,109 @@
+<style>
+    .dashboard-header {
+        display: flex;
+        align-items: center;
+        height: 52px;
+        background: #669999;
+        padding: 0 15px;
+        box-sizing: border-box;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    .dashboard-header .header-title {
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+        flex-shrink: 0;
+    }
+    .dashboard-header .header-title a {
+        text-decoration: none;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .dashboard-header .header-title a:hover {
+        color: #ddd;
+    }
+    .dashboard-header .header-title .separator {
+        margin: 0 12px;
+        color: rgba(255,255,255,0.5);
+    }
+    .dashboard-header .header-tabs {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-shrink: 0;
+    }
+    .dashboard-header .header-tabs .tab-link {
+        text-decoration: none;
+        color: rgba(255,255,255,0.85);
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 3px;
+        transition: background 0.2s;
+    }
+    .dashboard-header .header-tabs .tab-link:hover {
+        background: rgba(255,255,255,0.15);
+    }
+    .dashboard-header .header-tabs .tab-link.active {
+        background: rgba(255,255,255,0.25);
+        color: #fff;
+        font-weight: 600;
+    }
+    .dashboard-header .sub-tabs-bar {
+        display: flex;
+        align-items: center;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid rgba(255,255,255,0.3);
+        flex-shrink: 0;
+    }
+    .dashboard-header .sub-tabs-bar .sub-tab-link {
+        text-decoration: none;
+        color: rgba(255,255,255,0.85);
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 3px;
+        transition: background 0.2s;
+    }
+    .dashboard-header .sub-tabs-bar .sub-tab-link:hover {
+        background: rgba(255,255,255,0.15);
+    }
+    .dashboard-header .sub-tabs-bar .sub-tab-link.active {
+        background: rgba(255,255,255,0.25);
+        color: #fff;
+        font-weight: 600;
+    }
+    @media screen and (max-width: 768px) {
+        .dashboard-header {
+            flex-wrap: wrap;
+            height: auto;
+            padding: 8px 10px;
+        }
+        .dashboard-header .header-title {
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .dashboard-header .header-tabs {
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .dashboard-header .sub-tabs-bar {
+            width: 100%;
+            margin-left: 0;
+            padding-left: 0;
+            border-left: none;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 6px;
+        }
+    }
+</style>
 <div class="dashboard-header">
     <div class="header-title">
-        <a href="../home/" style="text-decoration:none;color:#333;">
+        <a href="../home/">
             <i class="fa fa-chevron-left" style="margin-right:5px;"></i> Back to Home
         </a>
-        <span style="margin:0 10px;color:#ccc;">|</span>
+        <span class="separator">|</span>
     </div>
     <div class="header-tabs">
         <a ui-sref="dashboard.hmis" ui-sref-active="active" class="tab-link">
