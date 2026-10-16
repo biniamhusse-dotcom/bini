@@ -37,6 +37,7 @@ UI_FILES = [
     "common/displaycontrols/referralHistory/directives/referralHistory.js",
     "common/displaycontrols/referralHistory/views/referralHistory.html",
     "common/displaycontrols/dashboard/models/dashboardSection.js",
+    "common/displaycontrols/dashboard/views/sections/disposition.html",
     "common/displaycontrols/dashboard/views/sections/referralHistory.html",
     "common/patient-search/controllers/patientsListController.js",
     "common/patient-search/views/patientsList.html",
