@@ -112,7 +112,7 @@ Bahmni.Common = Bahmni.Common || {};
         endVisitAndCreateEncounterUrl: BAHMNI_CORE + "/visit/endVisitAndCreateEncounter",
         visitTypeUrl: RESTWS_V1 + "/visittype",
         admissionLocationUrl: RESTWS_V1 + "/admissionLocation/",
-        getAllSpecialitiesUrl: spHostURL + '/speciality/all',
+        getAllSpecialitiesUrl: '/openmrs/ws/appointmentsApi/speciality/all',
         patientImageUrlByPatientUuid: RESTWS_V1 + "/patientImage?patientUuid=",
         labResultUploadedFileNameUrl: "/uploaded_results/",
         visitSummaryUrl: BAHMNI_CORE + "/visit/summary",
@@ -332,7 +332,8 @@ Bahmni.Common = Bahmni.Common || {};
         eaptsDrugSyncUrl: "http://localhost:3005/drugSync",
         eaptsDtpUrl: "http://localhost:3005/dtpCase",
         eaptsDispenseUrl: "http://localhost:3005/drugDispense",
-        eaptsAddressSyncUrl: "http://localhost:3005/addressSync"
+        eaptsAddressSyncUrl: "http://localhost:3005/addressSync",
+        daguIntegrationBaseUrl: "http://localhost:3005/dagu"
     };
 })();
 

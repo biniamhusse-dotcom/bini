@@ -137,7 +137,7 @@ angular
                 // template: '<h1>This is Info</h1>',
                 views: {
                     'layout': { templateUrl: 'views/prescriptionLayout.html', controller: 'SearchPatientController' },
-                    'content@prescriptionSearch': { templateUrl: 'views/prescriptionSearch.html' }
+                    'content@prescriptionSearch': { templateUrl: 'views/prescriptionSearch.html?v=3' }
 
                 },
                 data: {
@@ -229,7 +229,7 @@ angular
                 url: '/prescription',
                 views: {
                     'layout': { templateUrl: 'views/prescriptionLayout.html', controller: 'prescriptionController' },
-                    'content@patient.prescription': { templateUrl: 'views/prescription.html' },
+                    'content@patient.prescription': { templateUrl: 'views/prescription.html?v=2' },
                     'headerExtension@patient.prescription': { template: '<div print-options></div>' }
                 },
                 data: {

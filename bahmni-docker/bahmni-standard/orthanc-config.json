@@ -1,0 +1,36 @@
+{
+  "Name": "Orthanc - Bahmni PACS",
+  "StorageDirectory": "/var/lib/orthanc/db",
+  "IndexDirectory": "/var/lib/orthanc/db",
+  "DicomAet": "ORTHANC",
+  "DicomPort": 4242,
+  "HttpPort": 8042,
+  "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": false,
+  "DicomAlwaysAllowEcho": true,
+  "DicomAlwaysAllowStore": true,
+  "DicomAlwaysAllowFind": true,
+  "DicomCheckCalledAet": false,
+  "DicomCheckModalityHost": false,
+  "DicomModalitiesInDatabase": false,
+  "DicomModalities": {
+    "DCM4CHEE": ["DCM4CHEE", "dcm4chee", 11112]
+  },
+  "OrthancExplorerEnabled": true,
+  "DicomServerEnabled": true,
+  "HttpServerEnabled": true,
+  "SslEnabled": false,
+  "StoreDicom": true,
+  "MaximumStorageSize": 0,
+  "MaximumPatientCount": 0,
+  "StableAge": 60,
+  "OverwriteInstances": false,
+  "MediaArchiveSize": 1,
+  "Plugins": [
+    "/usr/local/share/orthanc/plugins"
+  ],
+  "DicomWeb": {
+    "Enable": true,
+    "Root": "/dicom-web/"
+  }
+}

@@ -166,7 +166,7 @@
     <!-- Top Bar: Location + Search + Filter Toggle -->
     <div class="order-top-bar" ng-if="activeTab.name == 'Laboratory'">
         <div class="order-top-bar__location">
-            <label class="order-top-bar__label">Lab Location <span class="required">*</span></label>
+            <label class="order-top-bar__label">Lab Location <span class="required" ng-if="selectedOrders.length > 0">*</span></label>
             <div class="order-top-bar__select-wrap">
                 <select ng-model="locationData.selectedLabLocation"
                         ng-options="loc.id as loc.name for loc in labLocations"

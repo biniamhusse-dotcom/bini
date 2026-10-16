@@ -97,11 +97,39 @@ angular.module('bahmni.common.domain')
             });
         };
 
+        var personUrl = Bahmni.Common.Constants.RESTWS_V1 + "/person";
+
+        var createProvider = function (provider) {
+            return $http.post(Bahmni.Common.Constants.providerUrl, provider, {
+                withCredentials: true,
+                headers: {"Accept": "application/json", "Content-Type": "application/json"}
+            });
+        };
+
+        var saveAttribute = function (personUuid, attributeUuid, payload) {
+            var url = personUrl + "/" + personUuid + "/attribute/" + attributeUuid;
+            return $http.post(url, payload, {
+                withCredentials: true,
+                headers: {"Accept": "application/json", "Content-Type": "application/json"}
+            });
+        };
+
+        var addAttribute = function (personUuid, payload) {
+            var url = personUrl + "/" + personUuid + "/attribute";
+            return $http.post(url, payload, {
+                withCredentials: true,
+                headers: {"Accept": "application/json", "Content-Type": "application/json"}
+            });
+        };
+
         return {
             search: search,
             searchByUuid: searchByUuid,
             list: list,
             getAttributesForProvider: getAttributesForProvider,
+            createProvider: createProvider,
+            saveAttribute: saveAttribute,
+            addAttribute: addAttribute,
             searchSurgeons: searchSurgeons,
             searchNurses: searchNurses,
             searchAnesthesia: searchAnesthesia,

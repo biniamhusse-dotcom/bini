@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="bahmni.emr.eapts">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMR-eAPTs Integration</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        body { font-family: 'Open Sans', sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        .navbar { background: #333; color: #fff; padding: 10px 20px; margin-bottom: 20px; }
+        .navbar-brand { color: #fff !important; font-size: 18px; font-weight: 600; }
+        .navbar-brand:hover { color: #fff !important; }
+        .nav-link { color: #ccc !important; margin-left: 15px; }
+        .nav-link:hover { color: #fff !important; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .card { background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); margin-bottom: 20px; }
+        .card-header { background: #fff; border-bottom: 1px solid #eee; padding: 15px 20px; font-weight: 600; }
+        .card-body { padding: 20px; }
+        .stat-card { text-align: center; padding: 20px; }
+        .stat-card .stat-value { font-size: 32px; font-weight: 700; color: #337ab7; }
+        .stat-card .stat-label { font-size: 14px; color: #666; margin-top: 5px; }
+        .btn-sync { margin-right: 10px; }
+        .status-ok { color: #5cb85c; }
+        .status-error { color: #d9534f; }
+        .status-pending { color: #f0ad4e; }
+        .table th { background: #f9f9f9; }
+        .config-section { margin-bottom: 30px; }
+        .config-section h3 { border-bottom: 2px solid #337ab7; padding-bottom: 10px; margin-bottom: 20px; }
+        .form-group label { font-weight: 600; }
+        .log-entry { padding: 8px 12px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 13px; }
+        .log-entry:last-child { border-bottom: none; }
+        .log-success { border-left: 3px solid #5cb85c; }
+        .log-error { border-left: 3px solid #d9534f; }
+        .log-info { border-left: 3px solid #337ab7; }
+        .tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .tile { background: #fff; border-radius: 4px; padding: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.12); cursor: pointer; transition: transform 0.2s; }
+        .tile:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .tile i { font-size: 36px; color: #337ab7; margin-bottom: 10px; display: block; }
+        .tile .tile-label { font-size: 14px; font-weight: 600; color: #333; }
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .alert { margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <span class="navbar-brand"><i class="fa fa-exchange"></i> EMR-eAPTs Integration</span>
+            <a ui-sref="dashboard" class="nav-link">Dashboard</a>
+            <a ui-sref="institutionConfig" class="nav-link">Config</a>
+            <a ui-sref="daguApi" class="nav-link">Dagu API</a>
+            <a ui-sref="logs" class="nav-link">Logs</a>
+            <a href="/home" class="nav-link"><i class="fa fa-home"></i> Home</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div ui-view></div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@uirouter/angularjs@1.0.30/release/angular-ui-router.min.js"></script>
+    <script src="app.js"></script>
+    <script src="services/eaptsConfigService.js"></script>
+    <script src="controllers/dashboardController.js"></script>
+    <script src="controllers/prescriptionSyncController.js"></script>
+    <script src="controllers/dispenseSyncController.js"></script>
+    <script src="controllers/drugSyncController.js"></script>
+    <script src="controllers/institutionConfigController.js"></script>
+    <script src="controllers/daguApiController.js"></script>
+    <script src="controllers/logsController.js"></script>
+</body>
+</html>

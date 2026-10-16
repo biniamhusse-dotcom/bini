@@ -17,8 +17,8 @@ function post(url, body) {
       body: body,
 
       // The below parameters are specific to request-retry
-      maxAttempts: 5,   // (default) try 5 times
-      retryDelay: 5000,  // (default) wait for 5s before trying again
+      maxAttempts: 2,
+      retryDelay: 2000,
       retryStrategy: request.RetryStrategies.HTTPOrNetworkError // (default) retry on 5xx or network errors
     }, function (err, response, body) {
       if (response) {
@@ -54,8 +54,8 @@ function postFile(url, cookie) {
       },
 
       // The below parameters are specific to request-retry
-      maxAttempts: 5,   // (default) try 5 times
-      retryDelay: 5000,  // (default) wait for 5s before trying again
+      maxAttempts: 2,
+      retryDelay: 2000,
       retryStrategy: request.RetryStrategies.HTTPOrNetworkError // (default) retry on 5xx or network errors
     }, function (err, response, body) {
       if (response) {
@@ -84,8 +84,8 @@ function get(url) {
       },
 
       // The below parameters are specific to request-retry
-      maxAttempts: 5,   // (default) try 5 times
-      retryDelay: 5000,  // (default) wait for 5s before trying again
+      maxAttempts: 2,
+      retryDelay: 2000,
       retryStrategy: request.RetryStrategies.HTTPOrNetworkError // (default) retry on 5xx or network errors
     }, function (err, response, body) {
       if (response) {

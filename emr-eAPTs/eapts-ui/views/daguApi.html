@@ -1,0 +1,106 @@
+<div class="loading" ng-if="loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+
+<div ng-if="!loading">
+    <h2><i class="fa fa-server"></i> Dagu API Explorer</h2>
+    <p class="text-muted">Configure connection and explore Dagu EPTS API endpoints</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><i class="fa fa-cog"></i> Dagu Server Configuration</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Dagu API URL</label>
+                        <input type="text" class="form-control" ng-model="daguConfig.apiUrl" placeholder="http://host.docker.internal:8080">
+                        <p class="help-block">URL of the Dagu EPTS server (use <code>host.docker.internal</code> for host machine)</p>
+                    </div>
+                    <div class="form-group">
+                        <label>JWT Secret</label>
+                        <input type="text" class="form-control" ng-model="daguConfig.jwtSecret" placeholder="CodeForaEPTsCodeForaEPTsCodeForaEPTs">
+                        <p class="help-block">Shared secret for JWT token generation</p>
+                    </div>
+                    <button class="btn btn-primary" ng-click="saveConfig()">
+                        <i class="fa fa-save"></i> Save & Test
+                    </button>
+                    <span ng-if="configMessage" class="label" ng-class="{'label-success': configMessage.indexOf('saved') > -1, 'label-danger': configMessage.indexOf('Error') > -1}" style="margin-left: 10px;">{{configMessage}}</span>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 15px;">
+                <div class="card-header">Connection Status</div>
+                <div class="card-body">
+                    <p>
+                        <span ng-if="tokenStatus === 'ok'" class="status-ok">
+                            <i class="fa fa-check-circle"></i> Connected to Dagu API
+                        </span>
+                        <span ng-if="tokenStatus === 'error'" class="status-error">
+                            <i class="fa fa-times-circle"></i> Connection Failed
+                        </span>
+                        <span ng-if="tokenStatus === 'pending'" class="status-pending">
+                            <i class="fa fa-spinner fa-spin"></i> Testing...
+                        </span>
+                        <span ng-if="tokenStatus === 'unknown'">
+                            <i class="fa fa-question-circle"></i> Not tested
+                        </span>
+                    </p>
+                    <pre ng-if="jwtToken" style="font-size: 12px; white-space: pre-wrap;">{{jwtToken}}</pre>
+                    <button class="btn btn-default" ng-click="testConnection()" ng-disabled="tokenStatus === 'pending'">
+                        <i class="fa fa-refresh" ng-class="{'fa-spin': tokenStatus === 'pending'}"></i> Test Connection
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 15px;">
+                <div class="card-header">Dagu API Info</div>
+                <div class="card-body">
+                    <p><strong>Auth Method:</strong> JWT (HMAC-SHA256)</p>
+                    <p><strong>API Base:</strong> <code>{{daguConfig.apiUrl || 'Not configured'}}</code></p>
+                    <p><strong>Token:</strong> Auto-generated per request</p>
+                    <p class="text-muted" style="font-size: 12px;">The Dagu API uses pre-shared JWT tokens. Tokens are generated automatically using the secret above.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">API Endpoint Test</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Select Endpoint</label>
+                        <select class="form-control" ng-model="selectedEndpoint">
+                            <option value="">-- Select Endpoint --</option>
+                            <option ng-repeat="ep in endpoints" value="{{ep.path}}">{{ep.name}} ({{ep.path}})</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-default" ng-click="testEndpoint()" ng-disabled="!selectedEndpoint || apiLoading">
+                        <i class="fa fa-play" ng-class="{'fa-spin': apiLoading}"></i>
+                        {{apiLoading ? 'Loading...' : 'Test Endpoint'}}
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 15px;" ng-if="apiResponse && !apiLoading">
+                <div class="card-header">Response</div>
+                <div class="card-body">
+                    <div ng-if="apiResponse.success" class="alert alert-success">
+                        <strong>200 OK</strong>
+                        <span ng-if="apiResponse.data">
+                            - {{Array.isArray(apiResponse.data) ? apiResponse.data.length + ' items' : 'Success'}}
+                        </span>
+                    </div>
+                    <div ng-if="!apiResponse.success" class="alert alert-danger">
+                        <strong>Error:</strong> {{apiResponse.error}}
+                    </div>
+                    <pre style="max-height: 300px; overflow: auto; font-size: 12px;">{{(apiResponse.data || apiResponse.raw || apiResponse) | json}}</pre>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 15px;" ng-if="apiLoading">
+                <div class="card-body text-center">
+                    <i class="fa fa-spinner fa-spin fa-2x"></i>
+                    <p>Requesting...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

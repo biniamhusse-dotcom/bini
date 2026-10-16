@@ -147,7 +147,8 @@ angular.module('bahmni.clinical')
                 if (discontinuedOrder) {
                     discontinuedOrder.isDiscontinued = false;
                 } else {
-                    var createdOrder = Bahmni.Clinical.Order.create(test);
+                    var activeTabName = $scope.activeTab ? $scope.activeTab.name : null;
+                    var createdOrder = Bahmni.Clinical.Order.create(test, activeTabName);
                     $scope.consultation.orders.push(createdOrder);
                     $state.orderCreated = true;
                     if (test.automatic !== undefined) {
@@ -570,15 +571,17 @@ angular.module('bahmni.clinical')
                 }
             };
             $scope.appendClinicalData = function (order) {
-                diagnosisService.getDiagnoses($scope.patient.uuid, $scope.visitHistory.activeVisit.uuid).then(function (response) {
+                var visitUuid = ($scope.visitHistory && $scope.visitHistory.activeVisit) ? $scope.visitHistory.activeVisit.uuid : null;
+                diagnosisService.getDiagnoses($scope.patient.uuid, visitUuid).then(function (response) {
                     var data = response.data;
-                    if (data.length > 0) {
+                    var printDiagnosis = "";
+                    if (data && data.length > 0) {
                         var all_diag = data.reduce(function (element, all) {
                             return element + '\n' + "# " + all.codedAnswer.name + ", ";
                         }, " ");
-                        var printDiagnosis = $translate.instant("Diagnoses:" + all_diag);
+                        printDiagnosis = $translate.instant("Diagnoses:" + all_diag);
                     } else {
-                        var printDiagnosis = $translate.instant("No diagnosis yet,");
+                        printDiagnosis = $translate.instant("No diagnosis yet,");
                     }
                     if (order.previousNote && order.previousNote.indexOf(printDiagnosis) == -1) {
                         $scope.orderNoteText = (order.previousNote || '') + printDiagnosis;

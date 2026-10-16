@@ -4,8 +4,7 @@ angular.module('bahmni.registration')
     .factory('prescriptionService', ['$http', '$q', 'messagingService', 'pharmacyIntegrationService', function ($http, $q, messagingService, pharmacyIntegrationService) {
 
 
-        const baseURL = `${window.location.protocol}//${window.location.hostname}`;
-        const obs_endpoint = baseURL + Bahmni.Common.Constants.openmrsObsUrl;
+        const obs_endpoint = Bahmni.Common.Constants.openmrsObsUrl;
 
         var getDrugPrescriptions = function (uuid) {
             var params = {
@@ -391,8 +390,67 @@ angular.module('bahmni.registration')
             return $q.reject("Invalid data or action");
         };
 
+        var getAllPrescribedPatients = function () {
+            return $http.get("/openmrs/ws/rest/v1/bahmnicore/sql", {
+                method: "GET",
+                params: { q: "emr.prescription.listAll" },
+                withCredentials: true
+            }).then(function (response) {
+                var rows = response.data || [];
+                var patientMap = {};
+
+                rows.forEach(function (row) {
+                    var patientId = row.patient_uuid;
+                    if (!patientMap[patientId]) {
+                        patientMap[patientId] = {
+                            patient_uuid: patientId,
+                            patient_identifier: row.patient_identifier || "N/A",
+                            first_name: row.first_name || "",
+                            father_name: row.father_name || "",
+                            grandfather_name: row.grandfather_name || "",
+                            gender: row.gender || "",
+                            age: row.age || 0,
+                            phone_number: row.phone_number || "",
+                            prescriptions: []
+                        };
+                    }
+
+                    patientMap[patientId].prescriptions.push({
+                        order_uuid: row.order_uuid || "",
+                        encounter_uuid: row.encounter_uuid || "",
+                        drug_name: row.drug_name || "",
+                        dose: row.dose || "",
+                        dose_units: row.dose_units || "",
+                        frequency: row.frequency || "",
+                        duration: row.duration || "",
+                        duration_units: row.duration_units || "",
+                        quantity: row.quantity || "",
+                        quantity_units: row.quantity_units || "",
+                        route: row.route_name || "",
+                        instructions: row.instructions || "",
+                        prescription_date: row.prescription_date || "",
+                        provider_name: row.provider_name || ""
+                    });
+                });
+
+                var result = [];
+                Object.keys(patientMap).forEach(function (key) {
+                    result.push(patientMap[key]);
+                });
+
+                result.sort(function (a, b) {
+                    var dateA = a.prescriptions.length > 0 ? a.prescriptions[0].prescription_date : "";
+                    var dateB = b.prescriptions.length > 0 ? b.prescriptions[0].prescription_date : "";
+                    return String(dateB).localeCompare(String(dateA));
+                });
+
+                return { data: result };
+            });
+        };
+
         return {
             getDrugPrescriptions: getDrugPrescriptions,
-            handlePrescriptionAction: handlePrescriptionAction
+            handlePrescriptionAction: handlePrescriptionAction,
+            getAllPrescribedPatients: getAllPrescribedPatients
         };
     }]);

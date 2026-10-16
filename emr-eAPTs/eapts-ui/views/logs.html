@@ -1,0 +1,62 @@
+<div class="loading" ng-if="loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+
+<div ng-if="!loading">
+    <h2><i class="fa fa-file-text-o"></i> Sync Logs</h2>
+    <p class="text-muted">View synchronization activity and trigger manual syncs</p>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    Activity Log
+                    <div class="pull-right">
+                        <button class="btn btn-xs btn-default" ng-click="clearLogs()">
+                            <i class="fa fa-trash"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    <div ng-if="logs.length === 0" class="text-muted" style="padding: 20px; text-align: center;">
+                        No log entries
+                    </div>
+                    <div ng-repeat="log in filteredLogs()" class="log-entry log-{{log.type}}">
+                        <span class="text-muted">{{log.time | date:'yyyy-MM-dd HH:mm:ss'}}</span>
+                        <span ng-if="log.type === 'success'" class="status-ok"><i class="fa fa-check"></i></span>
+                        <span ng-if="log.type === 'error'" class="status-error"><i class="fa fa-times"></i></span>
+                        <span ng-if="log.type === 'info'" class="status-pending"><i class="fa fa-info-circle"></i></span>
+                        {{log.message}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Filter</div>
+                <div class="card-body">
+                    <div class="btn-group-vertical" style="width: 100%">
+                        <button class="btn btn-default" ng-class="{'active': filter === 'all'}" ng-click="filter = 'all'">All</button>
+                        <button class="btn btn-default" ng-class="{'active': filter === 'success'}" ng-click="filter = 'success'">
+                            <span class="status-ok">Success</span>
+                        </button>
+                        <button class="btn btn-default" ng-class="{'active': filter === 'error'}" ng-click="filter = 'error'">
+                            <span class="status-error">Errors</span>
+                        </button>
+                        <button class="btn btn-default" ng-class="{'active': filter === 'info'}" ng-click="filter = 'info'">
+                            <span class="status-pending">Info</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 15px;">
+                <div class="card-header">Manual Sync</div>
+                <div class="card-body">
+                    <button class="btn btn-default btn-block" ng-click="triggerAddressSync()">
+                        <i class="fa fa-map-marker"></i> Sync Addresses
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -31,9 +31,8 @@ WHERE NOT EXISTS (
 
 -- Verify
 SELECT 'EMERGENCY_KEEP mapping created successfully' AS result;
-SELECT rt.code, rs.name as source, c.name as concept_name 
+SELECT rt.code, rs.name as source, rm.concept_id as concept_id
 FROM concept_reference_map rm
 JOIN concept_reference_term rt ON rm.concept_reference_term_id = rt.concept_reference_term_id
 JOIN concept_reference_source rs ON rt.concept_source_id = rs.concept_source_id
-JOIN concept c ON rm.concept_id = c.concept_id
 WHERE rs.name = 'org.openmrs.module.emrapi' AND rt.code = 'EMERGENCY_KEEP';

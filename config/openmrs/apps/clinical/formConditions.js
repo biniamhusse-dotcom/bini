@@ -298,5 +298,198 @@ Bahmni.ConceptSet.FormConditions.rules = {
             }
         }
 
+    },
+    'WHO Trauma, Airway Status' : function (formName, formFieldValues) {
+        var airway = formFieldValues['WHO Trauma, Airway Status'];
+        if (airway && airway !== 'NML') {
+            return {
+                show: ["WHO Trauma, Airway Obstructed By", "WHO Trauma, Airway Management"],
+                enable: ["WHO Trauma, Airway Obstructed By", "WHO Trauma, Airway Management"]
+            }
+        } else {
+            return {
+                hide: ["WHO Trauma, Airway Obstructed By", "WHO Trauma, Airway Management"],
+                disable: ["WHO Trauma, Airway Obstructed By", "WHO Trauma, Airway Management"]
+            }
+        }
+    },
+    'WHO Trauma, Airway Obstructed By' : function (formName, formFieldValues) {
+        var obstructed = formFieldValues['WHO Trauma, Airway Obstructed By'];
+        if (obstructed) {
+            return {
+                show: ["WHO Trauma, Airway Management"],
+                enable: ["WHO Trauma, Airway Management"]
+            }
+        } else {
+            return {
+                hide: ["WHO Trauma, Airway Management"],
+                disable: ["WHO Trauma, Airway Management"]
+            }
+        }
+    },
+    'WHO Trauma, Chest Examination' : function (formName, formFieldValues) {
+        var chest = formFieldValues['WHO Trauma, Chest Examination'];
+        if (chest && chest !== 'Negative') {
+            return {
+                show: ["WHO Trauma, Pneumothorax Side", "WHO Trauma, Pleural Fluid Side", "WHO Trauma, Pericardial Effusion"],
+                enable: ["WHO Trauma, Pneumothorax Side", "WHO Trauma, Pleural Fluid Side", "WHO Trauma, Pericardial Effusion"]
+            }
+        } else {
+            return {
+                hide: ["WHO Trauma, Pneumothorax Side", "WHO Trauma, Pleural Fluid Side", "WHO Trauma, Pericardial Effusion"],
+                disable: ["WHO Trauma, Pneumothorax Side", "WHO Trauma, Pleural Fluid Side", "WHO Trauma, Pericardial Effusion"]
+            }
+        }
+    },
+    'WHO Trauma, FAST Performed' : function (formName, formFieldValues) {
+        var fast = formFieldValues['WHO Trauma, FAST Performed'];
+        if (fast && fast !== 'Not indicated' && fast !== 'NML') {
+            return {
+                show: ["WHO Trauma, Peritoneum", "WHO Trauma, Free Fluid"],
+                enable: ["WHO Trauma, Peritoneum", "WHO Trauma, Free Fluid"]
+            }
+        } else {
+            return {
+                hide: ["WHO Trauma, Peritoneum", "WHO Trauma, Free Fluid"],
+                disable: ["WHO Trauma, Peritoneum", "WHO Trauma, Free Fluid"]
+            }
+        }
+    },
+    'WHO Trauma, Peritoneum' : function (formName, formFieldValues) {
+        var peritoneum = formFieldValues['WHO Trauma, Peritoneum'];
+        if (peritoneum && peritoneum !== 'Negative') {
+            return {
+                show: ["WHO Trauma, Free Fluid"],
+                enable: ["WHO Trauma, Free Fluid"]
+            }
+        } else {
+            return {
+                hide: ["WHO Trauma, Free Fluid"],
+                disable: ["WHO Trauma, Free Fluid"]
+            }
+        }
+    },
+    'WHO Trauma, Condition Same' : function (formName, formFieldValues) {
+        var conditionSame = formFieldValues['WHO Trauma, Condition Same'];
+        if (conditionSame === false || conditionSame === 'false') {
+            return {
+                show: ["WHO Trauma, Condition Changes"],
+                enable: ["WHO Trauma, Condition Changes"]
+            }
+        } else {
+            return {
+                hide: ["WHO Trauma, Condition Changes"],
+                disable: ["WHO Trauma, Condition Changes"]
+            }
+        }
+    },
+    'WHO Trauma, Checklist Completed' : function (formName, formFieldValues) {
+        var checklist = formFieldValues['WHO Trauma, Checklist Completed'];
+        if (checklist) {
+            return {
+                show: ["WHO Trauma, ED Departure Date", "WHO Trauma, ED Departure Time", "WHO Trauma, Diagnoses List", "WHO Trauma, Serious Injuries Count"],
+                enable: ["WHO Trauma, ED Departure Date", "WHO Trauma, ED Departure Time", "WHO Trauma, Diagnoses List", "WHO Trauma, Serious Injuries Count"]
+            }
+        } else {
+            return {
+                hide: ["WHO Trauma, ED Departure Date", "WHO Trauma, ED Departure Time", "WHO Trauma, Diagnoses List", "WHO Trauma, Serious Injuries Count"],
+                disable: ["WHO Trauma, ED Departure Date", "WHO Trauma, ED Departure Time", "WHO Trauma, Diagnoses List", "WHO Trauma, Serious Injuries Count"]
+            }
+        }
+    },
+    'WHO Trauma, Serious Injuries Count' : function (formName, formFieldValues) {
+        var injuries = formFieldValues['WHO Trauma, Serious Injuries Count'];
+        if (injuries && injuries !== '0') {
+            return {
+                show: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"],
+                enable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"]
+            }
+        } else {
+            return {
+                show: ["WHO Trauma, Discharge Planned"],
+                enable: ["WHO Trauma, Discharge Planned"],
+                hide: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"],
+                disable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"]
+            }
+        }
+    },
+    'WHO Trauma, Discharge Planned' : function (formName, formFieldValues) {
+        var discharge = formFieldValues['WHO Trauma, Discharge Planned'];
+        if (discharge) {
+            return {
+                show: ["WHO Trauma, Discharge Discussion"],
+                enable: ["WHO Trauma, Discharge Discussion"]
+            }
+        } else {
+            return {
+                hide: ["WHO Trauma, Discharge Discussion"],
+                disable: ["WHO Trauma, Discharge Discussion"]
+            }
+        }
+    },
+    'WHO Trauma, Admit Ward' : function (formName, formFieldValues) {
+        var admitWard = formFieldValues['WHO Trauma, Admit Ward'];
+        if (admitWard) {
+            return {
+                hide: ["WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"],
+                disable: ["WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"]
+            }
+        } else {
+            return {
+                enable: ["WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"]
+            }
+        }
+    },
+    'WHO Trauma, Admit ICU' : function (formName, formFieldValues) {
+        var admitICU = formFieldValues['WHO Trauma, Admit ICU'];
+        if (admitICU) {
+            return {
+                hide: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"],
+                disable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"]
+            }
+        } else {
+            return {
+                enable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"]
+            }
+        }
+    },
+    'WHO Trauma, Admit OT' : function (formName, formFieldValues) {
+        var admitOT = formFieldValues['WHO Trauma, Admit OT'];
+        if (admitOT) {
+            return {
+                hide: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"],
+                disable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"]
+            }
+        } else {
+            return {
+                enable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To", "WHO Trauma, Left Without Treatment"]
+            }
+        }
+    },
+    'WHO Trauma, Transfer To' : function (formName, formFieldValues) {
+        var transfer = formFieldValues['WHO Trauma, Transfer To'];
+        if (transfer) {
+            return {
+                hide: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Left Without Treatment"],
+                disable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Left Without Treatment"]
+            }
+        } else {
+            return {
+                enable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Left Without Treatment"]
+            }
+        }
+    },
+    'WHO Trauma, Left Without Treatment' : function (formName, formFieldValues) {
+        var leftWithout = formFieldValues['WHO Trauma, Left Without Treatment'];
+        if (leftWithout) {
+            return {
+                hide: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To"],
+                disable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To"]
+            }
+        } else {
+            return {
+                enable: ["WHO Trauma, Admit Ward", "WHO Trauma, Admit ICU", "WHO Trauma, Admit OT", "WHO Trauma, Discharge Planned", "WHO Trauma, Transfer To"]
+            }
+        }
     }
 };

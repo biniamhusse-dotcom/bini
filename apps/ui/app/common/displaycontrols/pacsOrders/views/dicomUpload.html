@@ -1,0 +1,83 @@
+<section class="dicom-upload">
+    <h2 class="section-title">Import Images</h2>
+    <div class="upload-container">
+        <div class="upload-area" ng-class="{'drag-over': isDragOver}">
+            <div class="upload-icon">
+                <i class="fa fa-cloud-upload fa-3x"></i>
+            </div>
+            <p class="upload-text">Drag & drop files here</p>
+            <p class="upload-subtext">or</p>
+            <label class="btn btn-primary upload-btn">
+                <i class="fa fa-folder-open"></i> Browse Files
+                <input type="file" multiple
+                       accept=".dcm,application/dicom,image/*,application/pdf"
+                       style="display: none;"
+                       onchange="angular.element(this).scope().onFileInputChanged(this.files)">
+            </label>
+            <p class="upload-hint">Supports DICOM (.dcm), JPEG, PNG, TIFF, PDF</p>
+        </div>
+
+        <div class="upload-progress" ng-show="uploading">
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped active" style="width: {{uploadProgress}}%">
+                    {{uploadProgress}}%
+                </div>
+            </div>
+            <p class="progress-text">Uploading {{currentFile}} of {{totalFiles}} files...</p>
+        </div>
+
+        <div class="upload-results" ng-show="uploadResults.length > 0">
+            <h3>Upload Results</h3>
+            <div class="alert alert-success" ng-show="successCount > 0">
+                <i class="fa fa-check-circle"></i>
+                {{successCount}} file(s) uploaded successfully
+            </div>
+            <div class="alert alert-danger" ng-show="failureCount > 0">
+                <i class="fa fa-exclamation-circle"></i>
+                {{failureCount}} file(s) failed to upload
+            </div>
+            <table class="table table-striped" ng-show="uploadResults.length > 0">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="result in uploadResults"
+                        ng-class="{'success': result.success, 'danger': !result.success}">
+                        <td>{{result.file}}</td>
+                        <td>
+                            <span class="label label-info" ng-show="result.isDicom">DICOM</span>
+                            <span class="label label-default" ng-show="!result.isDicom">Image</span>
+                        </td>
+                        <td>
+                            <span ng-show="result.success" class="label label-success">
+                                <i class="fa fa-check"></i> Success
+                            </span>
+                            <span ng-show="!result.success" class="label label-danger">
+                                <i class="fa fa-times"></i> Failed
+                            </span>
+                        </td>
+                        <td>
+                            <span ng-show="result.success && result.isDicom && result.data">
+                                Study: {{result.data.ParentStudy || 'N/A'}}
+                            </span>
+                            <span ng-show="result.success && !result.isDicom">
+                                Saved as document
+                            </span>
+                            <span ng-show="!result.success" class="text-danger">
+                                {{result.error}}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-default" ng-click="clearResults()">
+                <i class="fa fa-refresh"></i> Clear Results
+            </button>
+        </div>
+    </div>
+</section>

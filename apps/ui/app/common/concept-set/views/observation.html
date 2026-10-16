@@ -374,6 +374,9 @@
                     <div ng-switch-when="contraction">
                         <contraction-table observation = "::observation" patient="::patient" roo="::rootObservation"></contraction-table>       
                     </div>
+                    <div ng-switch-when="bodyDiagram">
+                        <body-diagram observation="observation" patient="patient" root-observation="rootObservation"></body-diagram>
+                    </div>
                     <div ng-switch-when="time">
                         <time-select observation="::observation">
                         </time-select>

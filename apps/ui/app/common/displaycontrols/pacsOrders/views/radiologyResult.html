@@ -1,0 +1,79 @@
+<section class="radiology-result">
+    <h2 class="section-title">Write Radiology Result</h2>
+    <div class="result-container">
+        <div class="form-group">
+            <label for="patientInfo">Patient</label>
+            <div class="form-control-static">
+                <strong>{{patient.name}}</strong> ({{patient.identifier}})
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="orderSelect">Select Radiology Order</label>
+            <select class="form-control" ng-model="selectedOrder"
+                    ng-options="order as (order.concept.shortName || order.concept.name + ' - ' + (order.orderNumber || '')) for order in radiologyOrders">
+                <option value="">-- Select Order --</option>
+            </select>
+        </div>
+
+        <div ng-show="selectedOrder">
+            <div class="form-group">
+                <label for="studyInfo">Associated Study</label>
+                <div class="form-control-static" ng-show="selectedOrder.studyInstanceUID">
+                    <span class="label label-info">
+                        <i class="fa fa-database"></i>
+                        Study UID: {{selectedOrder.studyInstanceUID}}
+                    </span>
+                    <a href="/ohif/viewer?StudyInstanceUIDs={{selectedOrder.studyInstanceUID}}"
+                       target="_blank" class="btn btn-sm btn-primary" style="margin-left: 10px;">
+                        <i class="fa fa-eye"></i> View Images
+                    </a>
+                </div>
+                <div class="form-control-static text-muted" ng-hide="selectedOrder.studyInstanceUID">
+                    No PACS study found for this order
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="impression">Impression</label>
+                <textarea class="form-control" id="impression" rows="4"
+                          ng-model="impression"
+                          placeholder="Enter radiology impression/finding..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="findings">Detailed Findings</label>
+                <textarea class="form-control" id="findings" rows="6"
+                          ng-model="findings"
+                          placeholder="Enter detailed radiology findings..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" ng-click="saveResult()" ng-disabled="saving || !impression">
+                    <i class="fa fa-save" ng-hide="saving"></i>
+                    <i class="fa fa-spinner fa-spin" ng-show="saving"></i>
+                    {{saving ? 'Saving...' : 'Save Result'}}
+                </button>
+                <button class="btn btn-default" ng-click="clearForm()">
+                    <i class="fa fa-times"></i> Clear
+                </button>
+            </div>
+
+            <div class="alert alert-success" ng-show="saveSuccess">
+                <i class="fa fa-check-circle"></i>
+                Radiology result saved successfully
+                <button type="button" class="close" ng-click="saveSuccess = false">&times;</button>
+            </div>
+
+            <div class="alert alert-danger" ng-show="saveError">
+                <i class="fa fa-exclamation-circle"></i>
+                Error saving result: {{saveError}}
+                <button type="button" class="close" ng-click="saveError = null">&times;</button>
+            </div>
+        </div>
+
+        <div ng-hide="radiologyOrders.length > 0" class="text-muted">
+            <p>No radiology orders found for this patient.</p>
+        </div>
+    </div>
+</section>

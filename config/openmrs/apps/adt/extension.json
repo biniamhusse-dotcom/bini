@@ -157,7 +157,7 @@
       "extensionParams": {
         "searchHandler": "emrapi.sqlSearch.patientsToAppoint",
         "translationKey": "MODULE_LABEL_TO_APPOINT_KEY",
-        "forwardUrl" : "../appointments/#/home/manage/appointments/list/#/patient/{{patientUuid}}"
+        "forwardUrl" : "/appointments/#/home/manage/appointments/list/#/patient/{{patientUuid}}"
       },
       "label": "To Appoint",
       "order": 3,

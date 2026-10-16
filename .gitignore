@@ -18,9 +18,21 @@ Desktop.ini
 # Logs
 logs/
 openmrs-fulllogs.txt
+openmrs_logs.txt
+*.log
 
 # Database backups
 *.sql
+backups/
+
+# Cache & tools
+.freebuff/
+__pycache__/
+*.pyc
+openmrs-modules/*_extracted/
+openmrs-modules/*_original_extracted/
+openmrs-modules/*_patch/
+openmrs-modules/prov_patch/
 
 # Temp files
 temp/

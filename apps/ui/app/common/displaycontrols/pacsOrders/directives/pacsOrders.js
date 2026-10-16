@@ -4,8 +4,9 @@ angular.module('bahmni.common.displaycontrol.pacsOrders')
     .directive('pacsOrders', ['orderService', 'orderTypeService', 'spinner', 'messagingService', '$window', '$translate', 'pacsService',
         function (orderService, orderTypeService, spinner, messagingService, $window, $translate, pacsService) {
             var controller = function ($scope) {
+                $scope.activeTab = 'upload';
                 $scope.orderTypeUuid = orderTypeService.getOrderTypeUuid($scope.orderType);
-                const radiologyImageUrl = $scope.section.pacsStudyUrl || "/oviyam2/viewer.html?patientID={{patientID}}&studyUID={{studyUID}}";
+                const radiologyImageUrl = $scope.section.pacsStudyUrl || "/ohif/viewer?StudyInstanceUIDs={{studyUID}}";
                 var includeAllObs = true;
                 var getOrders = function () {
                     var params = {
@@ -87,9 +88,13 @@ angular.module('bahmni.common.displaycontrol.pacsOrders')
                 $scope.openImage = function (bahmniOrder) {
                     if (!bahmniOrder.pacsStudyUrl) {
                         messagingService.showMessage('info', "NO_PACS_STUDY_FOR_ORDER");
+                        return;
                     }
-                    var url = bahmniOrder.pacsStudyUrl || bahmniOrder.pacsImageUrl;
-                    $window.open(url, "_blank");
+                    if (bahmniOrder.pacsStudyUrl.indexOf('{{') !== -1) {
+                        messagingService.showMessage('info', "NO_PACS_STUDY_FOR_ORDER");
+                        return;
+                    }
+                    $window.open(bahmniOrder.pacsStudyUrl, "_blank");
                 };
 
                 $scope.initialization = init();

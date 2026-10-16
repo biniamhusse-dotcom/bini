@@ -177,7 +177,7 @@
     "extensionPointId": "org.bahmni.home.dashboard",
     "type": "link",
     "translationKey": "MODULE_LABEL_APPOINTMENT_SCHEDULING_KEY",
-    "url": "../appointments",
+    "url": "/appointments",
     "icon": "fa fa-calendar",
     "order": 7,
     "requiredPrivilege": "app:appointments"
@@ -187,7 +187,7 @@
     "extensionPointId": "org.bahmni.home.dashboard",
     "type": "link",
     "translationKey": "Liaison Scheduling",
-    "url": "../appointments/#/liaisonHome/manage/appointments/waitingList",
+    "url": "/appointments/#/liaisonHome/manage/appointments/waitingList",
     "icon": "fa fa-calendar-o",
     "order": 8,
     "requiredPrivilege": "app:appointments"
@@ -211,6 +211,16 @@
     "icon": "fa-book",
     "order": 14,
     "requiredPrivilege": "app:clinical"
+  },
+  "emrEapts": {
+    "id": "bahmni.emr.eapts",
+    "extensionPointId": "org.bahmni.home.dashboard",
+    "type": "link",
+    "label": "EMR eAPTs",
+    "url": "/eapts/#/dashboard",
+    "icon": "fa-exchange",
+    "order": 11,
+    "requiredPrivilege": "app:admin"
   }
 
 }

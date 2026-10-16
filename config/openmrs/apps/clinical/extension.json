@@ -705,6 +705,19 @@
     "order": 1,
     "requiredPrivilege": "app:clinical"
   },
+  "bahmniClinicalConceptSetGroupObservationsWHOTrauma": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.whoTrauma",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "BMH WHO EMERGENCY UNIT FORM TRAUMA",
+      "default": false,
+      "defaultLocation": "All",
+      "formUUID": "787486b1-fdae-40f8-b704-4aa241633468"
+    },
+    "order": 30,
+    "requiredPrivilege": "app:clinical"
+  },
   "bahmniClinicalConceptSetGroupObservationsFingerprintpage": {
     "id": "bahmni.clinical.conceptSetGroup.observations.fingerprintpage",
     "extensionPointId": "org.bahmni.clinical.conceptSetGroup.fingerprintPage",

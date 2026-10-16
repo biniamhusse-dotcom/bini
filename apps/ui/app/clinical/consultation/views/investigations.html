@@ -4,7 +4,7 @@
     </div>
     <div ng-show="activeTab.name == 'Laboratory'" class="add-notes" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
         <div>
-            <label style="font-weight:bold;">Lab Location <span style="color:red;">Required</span></label><br>
+            <label style="font-weight:bold;">Lab Location <span style="color:red;" ng-if="consultation.investigations.length > 0">Required</span></label><br>
             <select ng-model="locationData.selectedLabLocation"
                     ng-options="loc.id as loc.name for loc in labLocations"
                     ng-change="onLabLocationChange()"

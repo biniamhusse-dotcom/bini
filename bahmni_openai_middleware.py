@@ -344,8 +344,15 @@ LOCAL_AI_SYSTEM_PROMPT = (
     "2. Providing clinical decision support summaries\n"
     "3. Highlighting abnormal values and potential concerns\n"
     "4. Suggesting follow-up actions based on clinical guidelines\n\n"
-    "When the user asks you to analyze a specific encounter, call the get_encounter_data "
-    "function with the encounter UUID they provide.\n\n"
+    "CRITICAL RULES:\n"
+    "- ONLY call the get_encounter_data function when the user has explicitly provided "
+    "a valid encounter UUID in their message (a UUID looks like: a1b2c3d4-e5f6-7890-abcd-ef1234567890).\n"
+    "- NEVER make up or guess encounter UUIDs. NEVER call get_encounter_data with a UUID "
+    "that the user did not provide.\n"
+    "- If the user sends a greeting (hi, hello, hey) or asks a general question without "
+    "providing a UUID, respond conversationally and ask them to provide an encounter UUID.\n"
+    "- If the user asks to analyze a patient but does not provide a UUID, ask them to "
+    "provide the encounter UUID.\n\n"
     "Always base your recommendations on the data provided. If the data is insufficient, "
     "state what additional information is needed.\n\n"
     "Important: You are a clinical decision support tool, not a replacement for clinical "
@@ -412,7 +419,24 @@ class LocalAIAssistant:
             choice = response.choices[0]
 
             if not choice.message.tool_calls:
-                return choice.message.content or "No response from local AI."
+                content = choice.message.content or "No response from local AI."
+                # Check if LLM hallucinated a tool call as text content
+                import re
+                uuid_pattern = r'"encounter_uuid"\s*:\s*"([0-9a-fA-F-]{36})"'
+                match = re.search(uuid_pattern, content)
+                if match:
+                    fake_uuid = match.group(1)
+                    if not self._is_valid_uuid(fake_uuid):
+                        return (
+                            "I need a valid encounter UUID to analyze patient data. "
+                            "Please provide a proper UUID (e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890). "
+                            "You can find encounter UUIDs in the Bahmni patient encounter page."
+                        )
+                    messages.append({"role": "assistant", "content": content})
+                    result = self._fetch_encounter(fake_uuid, openmrs, mapper, anonymizer)
+                    messages.append({"role": "user", "content": "System: Function get_encounter_data returned:\n" + result})
+                    continue
+                return content
 
             messages.append(choice.message.model_dump())
 
@@ -432,6 +456,12 @@ class LocalAIAssistant:
         return "Analysis completed but response was incomplete."
 
     @staticmethod
+    def _is_valid_uuid(value: str) -> bool:
+        import re
+        pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        return bool(re.match(pattern, value))
+
+    @staticmethod
     def _fetch_encounter(
         encounter_uuid: str,
         openmrs: "OpenMRSClient",
@@ -439,6 +469,11 @@ class LocalAIAssistant:
         anonymizer: "Anonymizer",
     ) -> str:
         log.info("LocalAI: get_encounter_data(uuid=%s)", encounter_uuid)
+        if not encounter_uuid or not LocalAIAssistant._is_valid_uuid(encounter_uuid):
+            return json.dumps({
+                "error": f"Invalid encounter UUID format: '{encounter_uuid}'. "
+                "Please provide a valid UUID (e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890)."
+            })
         try:
             raw = openmrs.get_encounter(encounter_uuid)
             clean = anonymizer.anonymize_encounter(raw)
@@ -551,6 +586,13 @@ class Middleware:
 
     def _execute_get_encounter_data(self, encounter_uuid: str) -> str:
         log.info("Executing get_encounter_data(uuid=%s)", encounter_uuid)
+        import re
+        pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        if not encounter_uuid or not re.match(pattern, encounter_uuid):
+            return json.dumps({
+                "error": f"Invalid encounter UUID format: '{encounter_uuid}'. "
+                "Please provide a valid UUID (e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890)."
+            })
         try:
             raw = self._openmrs.get_encounter(encounter_uuid)
             clean = self._anonymizer.anonymize_encounter(raw)

@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -6,7 +7,6 @@ _logger = logging.getLogger(__name__)
 
 class ApiEventWorker(models.Model):
     _name = 'api.event.worker'
-    _description = 'API Event Worker'
     _auto = False
 
     @api.model
@@ -36,14 +36,84 @@ class ApiEventWorker(models.Model):
             elif category == "create.service.saleable":
                 self.env['reference.data.service'].create_or_update_ref_data(vals, 'Others')
                 return "The service saleable have been successfully created / updated."
-            elif category == "create.ophtha.test":
-                self.env['reference.data.service'].create_or_update_ref_data(vals, 'Ophthalmology')
-                return "The ophthalmology test have been successfully created / updated."
+            elif category == "cancel.order":
+                self._cancel_order(vals)
+                return "Order has been cancelled successfully."
+            elif category == "void.order":
+                self._void_order(vals)
+                return "Order has been voided successfully."
             else:
                 raise UserError("Integration process is not defined. Kindly contact ERP tech team for support.")
         except Exception as err:
             _logger.info("\n Processing event threw error: %s", err)
             raise
+
+    @api.model
+    def _cancel_order(self, vals):
+        """Handle order cancellation from OpenELIS/OpenMRS
+        Supports per-test cancellation via stockOutTestNames parameter.
+        If stockOutTestNames is provided, only those specific order lines are cancelled.
+        Otherwise, all lines in the order are cancelled.
+        """
+        order_uuid = vals.get("orderUuid")
+        accession_number = vals.get("accessionNumber")
+        cancel_reason = vals.get("cancelReason", "Reagent Stock Out")
+        stock_out_test_names = vals.get("stockOutTestNames", [])
+        
+        _logger.info("Processing order cancellation for order: %s, accession: %s, tests: %s", order_uuid, accession_number, stock_out_test_names)
+        
+        sale_order = None
+        if order_uuid:
+            sale_order = self.env['sale.order'].search([
+                ('origin', 'ilike', order_uuid),
+                ('state', '=', 'draft')
+            ], limit=1)
+        
+        if not sale_order and accession_number:
+            sale_order = self.env['sale.order'].search([
+                ('origin', 'ilike', accession_number),
+                ('state', '=', 'draft')
+            ], limit=1)
+        
+        if not sale_order:
+            _logger.warning("No draft sale order found for order: %s, accession: %s", order_uuid, accession_number)
+            return
+        
+        if stock_out_test_names:
+            for line in sale_order.order_line:
+                product_name = (line.product_id.name or '').lower()
+                for test_name in stock_out_test_names:
+                    if test_name.lower() in product_name or product_name.startswith(test_name.lower()):
+                        line.sudo().write({'price_subtotal': 0, 'price_unit': 0})
+                        line.sudo().unlink()
+                        _logger.info("Cancelled order line: %s for test: %s", line.id, test_name)
+                        break
+        else:
+            for line in sale_order.order_line:
+                line.sudo().unlink()
+            _logger.info("Cancelled all lines in sale order: %s (no specific tests)", sale_order.name)
+        
+        if not sale_order.order_line:
+            sale_order.action_cancel()
+            _logger.info("Cancelled entire sale order %s - all lines removed", sale_order.name)
+
+    @api.model
+    def _void_order(self, vals):
+        """Handle order void from OpenELIS
+        Similar to cancel but may have different business logic
+        """
+        order_uuid = vals.get("orderUuid")
+        accession_number = vals.get("accessionNumber")
+        void_reason = vals.get("voidReason", "Reagent Stock Out")
+        
+        _logger.info("Processing order void for order: %s, accession: %s", order_uuid, accession_number)
+        
+        # Reuse cancel logic with void reason
+        self._cancel_order({
+            'orderUuid': order_uuid,
+            'accessionNumber': accession_number,
+            'cancelReason': void_reason
+        })
 
     @api.model
     def _create_or_update_customer(self, vals):
@@ -81,7 +151,13 @@ class ApiEventWorker(models.Model):
         return res
 
     def _create_or_update_person_attributes(self, cust_id, vals):
-        attributes = vals.get("attributes", "{}")
+        attributes = vals.get("attributes", {})
+        if isinstance(attributes, str):
+            import json
+            try:
+                attributes = json.loads(attributes)
+            except Exception:
+                attributes = {}
         address_data = vals.get('preferredAddress')
 
         if attributes.get('email') and cust_id:

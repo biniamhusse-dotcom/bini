@@ -103,10 +103,15 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
             var modifiedOrders = _.filter(consultation.orders, function (order) {
                 return order.hasBeenModified || order.isDiscontinued || !order.uuid;
             });
+            var labConceptClasses = ["Test", "LabSet", "LabTest"];
             var tempOrders = modifiedOrders.map(function (order) {
                 order.urgency = order.isUrgent ? "STAT" : undefined;
                 var comment = order.commentToFulfiller || '';
-                if (consultation.labLocationId && consultation.labLocationName) {
+                var conceptClassName = order.conceptClassName || (order.concept && order.concept.conceptClass && order.concept.conceptClass.name);
+                var orderTypeName = order.orderTypeName || (order.orderType && order.orderType.name);
+                var isLabOrder = (conceptClassName && labConceptClasses.indexOf(conceptClassName) !== -1) ||
+                                 (orderTypeName && orderTypeName.toLowerCase().indexOf('lab') !== -1);
+                if (isLabOrder && consultation.labLocationId && consultation.labLocationName) {
                     var locationTag = '[LAB_LOCATION:' + consultation.labLocationName + ']';
                     if (comment.indexOf('[LAB_LOCATION:') === -1) {
                         comment = locationTag + (comment ? ' ' + comment : '');

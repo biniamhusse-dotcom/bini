@@ -1,0 +1,113 @@
+<div class="loading" ng-if="loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+
+<div ng-if="!loading">
+    <h2><i class="fa fa-hospital-o"></i> Institution Configuration</h2>
+    <p class="text-muted">Configure institution mapping between Bahmni locations and Dagu dispensing units</p>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">Location Hierarchy</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Region</label>
+                                <select class="form-control" ng-model="selectedRegion" ng-options="r.rowguid as r.name for r in regions" ng-change="loadZones(selectedRegion)">
+                                    <option value="">-- Select Region --</option>
+                                </select>
+                                <p ng-if="regionError" class="text-danger" style="font-size: 12px; margin-top: 5px;">{{regionError}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Zone</label>
+                                <select class="form-control" ng-model="selectedZone" ng-options="z.rowguid as z.name for z in zones" ng-change="loadWoredas(selectedZone)">
+                                    <option value="">-- Select Zone --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Woreda</label>
+                                <select class="form-control" ng-model="selectedWoreda" ng-options="w.rowguid as w.name for w in woredas" ng-change="loadFacilities(selectedWoreda)">
+                                    <option value="">-- Select Woreda --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Facility</label>
+                                <select class="form-control" ng-model="selectedFacility" ng-options="f.rowguid as f.name for f in facilities" ng-change="loadInstitutions(selectedFacility)">
+                                    <option value="">-- Select Facility --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Institutions (Dispensing Units)</div>
+                <div class="card-body">
+                    <div ng-if="institutions.length === 0" class="text-muted">No institutions found. Select a facility above.</div>
+                    <table class="table table-striped" ng-if="institutions.length > 0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>UUID</th>
+                                <th>Type</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="inst in institutions" ng-class="{'info': selectedInstitution.rowguid === inst.rowguid}">
+                                <td>{{inst.name}}</td>
+                                <td><code>{{inst.rowguid}}</code></td>
+                                <td>{{inst.institutionType || 'N/A'}}</td>
+                                <td>
+                                    <button class="btn btn-xs btn-default" ng-click="selectInstitution(inst)">
+                                        <i class="fa fa-check"></i> Select
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Current Mapping</div>
+                <div class="card-body">
+                    <div ng-if="!selectedInstitution" class="text-muted">No institution selected</div>
+                    <div ng-if="selectedInstitution">
+                        <p><strong>Name:</strong> {{selectedInstitution.name}}</p>
+                        <p><strong>UUID:</strong> <code>{{selectedInstitution.rowguid}}</code></p>
+                        <button class="btn btn-primary" ng-click="saveInstitutionMapping()">
+                            <i class="fa fa-save"></i> Save Mapping
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert" ng-if="saveResult" ng-class="{'alert-success': saveResult.success, 'alert-danger': !saveResult.success}" style="margin-top: 15px;">
+                {{saveResult.message}}
+            </div>
+
+            <div class="card" style="margin-top: 15px;">
+                <div class="card-header">Already Configured</div>
+                <div class="card-body">
+                    <div ng-if="institutions.length === 0" class="text-muted">No institutions loaded</div>
+                    <ul class="list-group">
+                        <li class="list-group-item" ng-repeat="inst in institutions">
+                            {{inst.name}}
+                            <span class="badge">{{inst.rowguid | limitTo:8}}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

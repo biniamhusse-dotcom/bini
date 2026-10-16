@@ -1,0 +1,501 @@
+<div class="body-diagram-container" style="font-family: Arial, sans-serif; padding: 10px;">
+    <style>
+        .body-diagram-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .body-diagram-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+        }
+        .view-toggle button {
+            padding: 8px 16px;
+            border: 2px solid #00897b;
+            background-color: white;
+            color: #00897b;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .view-toggle button.active {
+            background-color: #00897b;
+            color: white;
+        }
+        .view-toggle button:hover {
+            background-color: #00695c;
+            color: white;
+        }
+        .body-diagram-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .svg-container {
+            flex: 1;
+            min-width: 400px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            padding: 10px;
+        }
+        .svg-container svg {
+            width: 100%;
+            height: auto;
+        }
+        .body-region {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .body-region:hover {
+            fill: rgba(0, 150, 136, 0.3);
+            stroke: #00897b;
+            stroke-width: 3;
+        }
+        .body-region.injured {
+            fill: rgba(244, 67, 54, 0.5);
+            stroke: #F44336;
+            stroke-width: 3;
+        }
+        .injury-marker {
+            pointer-events: none;
+        }
+        .injury-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        .injury-list {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #fafafa;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .injury-list h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #00897b;
+            padding-bottom: 10px;
+        }
+        .injury-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: white;
+            border-radius: 5px;
+            border-left: 4px solid #00897b;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .injury-item.severe {
+            border-left-color: #F44336;
+        }
+        .injury-item.moderate {
+            border-left-color: #FF9800;
+        }
+        .injury-item.mild {
+            border-left-color: #FFC107;
+        }
+        .injury-item .region-name {
+            font-weight: bold;
+            flex: 1;
+        }
+        .injury-item .injury-type {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .injury-item .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .injury-item .actions button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .injury-item .actions .edit-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+        .injury-item .actions .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .injury-form {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            min-width: 350px;
+        }
+        .injury-form h4 {
+            margin-top: 0;
+            color: #00897b;
+        }
+        .injury-form .form-group {
+            margin-bottom: 15px;
+        }
+        .injury-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .injury-form select,
+        .injury-form textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .injury-form textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .injury-form .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .injury-form button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .injury-form .save-btn {
+            background-color: #00897b;
+            color: white;
+        }
+        .injury-form .cancel-btn {
+            background-color: #9e9e9e;
+            color: white;
+        }
+        .injury-count {
+            background-color: #00897b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .clear-all-btn {
+            padding: 8px 16px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .clear-all-btn:hover {
+            background-color: #d32f2f;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .legend {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .legend h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .legend-items {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
+
+    <div class="body-diagram-header">
+        <div class="view-toggle">
+            <button ng-class="{'active': selectedView === 'front'}" ng-click="switchView('front')">
+                FRONT VIEW
+            </button>
+            <button ng-class="{'active': selectedView === 'back'}" ng-click="switchView('back')">
+                BACK VIEW
+            </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span class="injury-count">Injuries: {{getInjuryCount()}}</span>
+            <button class="clear-all-btn" ng-click="clearAllInjuries()">Clear All</button>
+        </div>
+    </div>
+
+    <div class="body-diagram-content">
+        <div class="svg-container">
+            <!-- Front View SVG -->
+            <svg ng-if="selectedView === 'front'" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+                <!-- Body Outline - Front -->
+                <g id="body-outline-front">
+                    <!-- Head -->
+                    <ellipse cx="200" cy="45" rx="32" ry="38" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Neck -->
+                    <rect x="188" y="80" width="24" height="20" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Torso -->
+                    <path d="M150,100 L250,100 L265,180 L260,250 L250,270 L150,270 L140,250 L135,180 Z" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Left Arm -->
+                    <path d="M150,100 L135,110 L110,180 L105,230 L120,245 L130,235 L140,180 L155,120" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Right Arm -->
+                    <path d="M250,100 L265,110 L290,180 L295,230 L280,245 L270,235 L260,180 L245,120" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Left Hand -->
+                    <ellipse cx="115" cy="245" rx="12" ry="15" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Right Hand -->
+                    <ellipse cx="285" cy="245" rx="12" ry="15" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Left Leg -->
+                    <path d="M155,270 L145,350 L140,430 L155,460 L185,460 L190,430 L195,350 L200,270" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Right Leg -->
+                    <path d="M200,270 L205,350 L210,430 L215,460 L245,460 L260,430 L255,350 L245,270" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                </g>
+
+                <!-- Clickable Regions - Front -->
+                <g id="regions-front">
+                    <ellipse ng-repeat="region in bodyRegions.front" 
+                             ng-attr-cx="{{region.cx}}" 
+                             ng-attr-cy="{{region.cy}}"
+                             ng-attr-r="{{region.r}}"
+                             ng-attr-rx="{{region.rx}}" 
+                             ng-attr-ry="{{region.ry}}"
+                             class="body-region"
+                             ng-class="{'injured': isRegionInjured(region.id)}"
+                             ng-click="toggleRegion(region)"
+                             fill="transparent" 
+                             stroke="transparent" 
+                             stroke-width="1"/>
+                    
+                    <!-- Injury Markers -->
+                    <g ng-repeat="injury in injuries | filter:{selected: true}" 
+                       ng-if="injury.regionId.indexOf('_front') > -1 || (!injury.regionId.includes('back') && selectedView === 'front')">
+                        <circle ng-repeat="region in bodyRegions.front | filter:{id: injury.regionId}"
+                                ng-attr-cx="{{region.cx}}" 
+                                ng-attr-cy="{{region.cy}}"
+                                r="10" 
+                                ng-attr-fill="{{getInjuryColor(injury.severity)}}"
+                                class="injury-marker"
+                                opacity="0.8"/>
+                        <text ng-repeat="region in bodyRegions.front | filter:{id: injury.regionId}"
+                              ng-attr-x="{{region.cx}}" 
+                              ng-attr-y="{{region.cy + 4}}"
+                              text-anchor="middle" 
+                              fill="white" 
+                              font-size="10" 
+                              font-weight="bold"
+                              class="injury-marker">X</text>
+                    </g>
+                </g>
+
+                <!-- Labels -->
+                <text x="200" y="495" text-anchor="middle" fill="#666" font-size="12">ANTERIOR VIEW</text>
+            </svg>
+
+            <!-- Back View SVG -->
+            <svg ng-if="selectedView === 'back'" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+                <!-- Body Outline - Back -->
+                <g id="body-outline-back">
+                    <!-- Head -->
+                    <ellipse cx="200" cy="45" rx="32" ry="38" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Neck -->
+                    <rect x="188" y="80" width="24" height="20" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Torso -->
+                    <path d="M150,100 L250,100 L265,180 L260,250 L250,270 L150,270 L140,250 L135,180 Z" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Spine Line -->
+                    <line x1="200" y1="100" x2="200" y2="270" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+                    <!-- Left Arm -->
+                    <path d="M150,100 L135,110 L110,180 L105,230 L120,245 L130,235 L140,180 L155,120" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Right Arm -->
+                    <path d="M250,100 L265,110 L290,180 L295,230 L280,245 L270,235 L260,180 L245,120" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Left Hand -->
+                    <ellipse cx="115" cy="245" rx="12" ry="15" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Right Hand -->
+                    <ellipse cx="285" cy="245" rx="12" ry="15" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Left Leg -->
+                    <path d="M155,270 L145,350 L140,430 L155,460 L185,460 L190,430 L195,350 L200,270" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                    <!-- Right Leg -->
+                    <path d="M200,270 L205,350 L210,430 L215,460 L245,460 L260,430 L255,350 L245,270" 
+                          fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+                </g>
+
+                <!-- Clickable Regions - Back -->
+                <g id="regions-back">
+                    <ellipse ng-repeat="region in bodyRegions.back" 
+                             ng-attr-cx="{{region.cx}}" 
+                             ng-attr-cy="{{region.cy}}"
+                             ng-attr-r="{{region.r}}"
+                             ng-attr-rx="{{region.rx}}" 
+                             ng-attr-ry="{{region.ry}}"
+                             class="body-region"
+                             ng-class="{'injured': isRegionInjured(region.id)}"
+                             ng-click="toggleRegion(region)"
+                             fill="transparent" 
+                             stroke="transparent" 
+                             stroke-width="1"/>
+                    
+                    <!-- Injury Markers -->
+                    <g ng-repeat="injury in injuries | filter:{selected: true}" 
+                       ng-if="injury.regionId.indexOf('_back') > -1">
+                        <circle ng-repeat="region in bodyRegions.back | filter:{id: injury.regionId}"
+                                ng-attr-cx="{{region.cx}}" 
+                                ng-attr-cy="{{region.cy}}"
+                                r="10" 
+                                ng-attr-fill="{{getInjuryColor(injury.severity)}}"
+                                class="injury-marker"
+                                opacity="0.8"/>
+                        <text ng-repeat="region in bodyRegions.back | filter:{id: injury.regionId}"
+                              ng-attr-x="{{region.cx}}" 
+                              ng-attr-y="{{region.cy + 4}}"
+                              text-anchor="middle" 
+                              fill="white" 
+                              font-size="10" 
+                              font-weight="bold"
+                              class="injury-marker">X</text>
+                    </g>
+                </g>
+
+                <!-- Labels -->
+                <text x="200" y="495" text-anchor="middle" fill="#666" font-size="12">POSTERIOR VIEW</text>
+            </svg>
+        </div>
+
+        <div class="injury-panel">
+            <div class="injury-list">
+                <h3>Injury Markings</h3>
+                
+                <div ng-if="getInjuryCount() === 0" class="empty-state">
+                    <i class="fa fa-hand-pointer-o"></i>
+                    <p>Click on body regions to mark injuries</p>
+                    <p style="font-size: 0.9em;">Red markers indicate selected injury sites</p>
+                </div>
+
+                <div ng-repeat="injury in injuries | filter:{selected: true}" 
+                     class="injury-item"
+                     ng-class="injury.severity">
+                    <div style="flex: 1;">
+                        <div class="region-name">{{injury.regionName}}</div>
+                        <div class="injury-type" ng-if="injury.injuryType">
+                            Type: {{injury.injuryType}} | Severity: {{injury.severity || 'Not set'}}
+                        </div>
+                        <div class="injury-type" ng-if="!injury.injuryType">
+                            <em>Click edit to add details</em>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="edit-btn" ng-click="editInjury(injury)">
+                            <i class="fa fa-edit"></i> Edit
+                        </button>
+                        <button class="delete-btn" ng-click="removeInjury(injury)">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <h4>Severity Legend</h4>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #FFC107;"></div>
+                        <span>Mild</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #FF9800;"></div>
+                        <span>Moderate</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #F44336;"></div>
+                        <span>Severe</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Injury Form Modal -->
+    <div ng-if="showInjuryForm" class="overlay" ng-click="showInjuryForm = false"></div>
+    <div ng-if="showInjuryForm" class="injury-form">
+        <h4>Injury Details - {{currentInjury.regionName}}</h4>
+        
+        <div class="form-group">
+            <label>Injury Type:</label>
+            <select ng-model="currentInjury.injuryType" 
+                    ng-options="type.value as type.label for type in injuryTypes">
+                <option value="">-- Select Injury Type --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Severity:</label>
+            <select ng-model="currentInjury.severity" 
+                    ng-options="level.value as level.label for level in severityLevels">
+                <option value="">-- Select Severity --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Notes:</label>
+            <textarea ng-model="currentInjury.notes" 
+                      placeholder="Additional notes about the injury..."></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="cancel-btn" ng-click="showInjuryForm = false">Cancel</button>
+            <button class="save-btn" ng-click="saveInjuryDetails()">Save</button>
+        </div>
+    </div>
+</div>

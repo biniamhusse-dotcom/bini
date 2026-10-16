@@ -363,6 +363,139 @@
             },
             "Date of Operation" : {
                 "allowFutureDates": true
+            },
+            "WHO Trauma, Chief Complaint": {
+                "autocomplete": true,
+                "required": true
+            },
+            "WHO Trauma, Arrival Mode": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Triage Category": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Airway Status": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Airway Management": {
+                "multiSelect": true
+            },
+            "WHO Trauma, Oxygen Delivery": {
+                "multiSelect": true
+            },
+            "WHO Trauma, Skin Condition": {
+                "multiSelect": true
+            },
+            "WHO Trauma, Bleeding Control": {
+                "multiSelect": true
+            },
+            "WHO Trauma, Responsiveness": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Mechanism RTI": {
+                "multiSelect": true
+            },
+            "WHO Trauma, Intent": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, FAST Performed": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Past Medical HTN": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Past Medical DM": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Past Medical COPD": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Past Medical Psych": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Past Medical Renal": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam General": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam Neuro/Psych": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam HEENT": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam Neck": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam Respiratory": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam Cardiac": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam Abdominal": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam Pelvis": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam GU/Rectal": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam MSK": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Exam Skin": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Imaging Findings": {
+                "multiSelect": true
+            },
+            "WHO Trauma, IVF Type": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Procedure Intubation": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Procedure Chest Tube": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Procedure Splinting": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Procedure Pelvic Stabilization": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Procedure Laceration Repair": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Serious Injuries Count": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Admit Ward": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Admit ICU": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Admit OT": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Condition Same": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Checklist Completed": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Discharge Planned": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Discharge Discussion": {
+                "buttonSelect": true
+            },
+            "WHO Trauma, Left Without Treatment": {
+                "buttonSelect": true
             }
         },
         "visitPage": {

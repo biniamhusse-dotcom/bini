@@ -1,0 +1,102 @@
+<div class="loading" ng-if="loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+
+<div ng-if="!loading">
+    <h2><i class="fa fa-tachometer"></i> EMR-eAPTs Dashboard</h2>
+
+    <div class="tile-grid">
+        <a ng-repeat="tile in tiles" ui-sref="{{tile.state}}" class="tile">
+            <i class="fa {{tile.icon}}" style="color: {{tile.color}}"></i>
+            <div class="tile-label">{{tile.label}}</div>
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Connection Status</div>
+                <div class="card-body">
+                    <p>
+                        <span ng-if="connectionStatus === 'ok'" class="status-ok">
+                            <i class="fa fa-check-circle"></i> Connected
+                        </span>
+                        <span ng-if="connectionStatus === 'error'" class="status-error">
+                            <i class="fa fa-times-circle"></i> Disconnected
+                        </span>
+                        <span ng-if="connectionStatus === 'pending'" class="status-pending">
+                            <i class="fa fa-spinner fa-spin"></i> Checking...
+                        </span>
+                    </p>
+                    <button class="btn btn-sm btn-default" ng-click="testConnection()">
+                        <i class="fa fa-refresh"></i> Test Connection
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Last Sync</div>
+                <div class="card-body stat-card">
+                    <div class="stat-value">{{stats.lastSyncTime}}</div>
+                    <div class="stat-label">Last Prescription Sync</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Quick Actions</div>
+                <div class="card-body">
+                    <button class="btn btn-primary btn-sync" ng-click="triggerFullSync()" ng-disabled="syncing">
+                        <i class="fa fa-refresh" ng-class="{'fa-spin': syncing}"></i> Sync Now
+                    </button>
+                    <a ui-sref="institutionConfig" class="btn btn-default">
+                        <i class="fa fa-cog"></i> Configure
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Integration Summary</div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Last Run</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><i class="fa fa-exchange"></i> Prescription Sync</td>
+                        <td><span class="status-ok">Active</span></td>
+                        <td>{{stats.lastSyncTime}}</td>
+                        <td><a ui-sref="prescriptionSync" class="btn btn-xs btn-default">View</a></td>
+                    </tr>
+                    <tr>
+                        <td><i class="fa fa-medkit"></i> Dispense Sync</td>
+                        <td><span class="status-ok">Active</span></td>
+                        <td>{{stats.lastSyncTime}}</td>
+                        <td><a ui-sref="dispenseSync" class="btn btn-xs btn-default">View</a></td>
+                    </tr>
+                    <tr>
+                        <td><i class="fa fa-pills"></i> Drug Sync</td>
+                        <td><span class="status-ok">Active</span></td>
+                        <td>{{stats.lastSyncTime}}</td>
+                        <td><a ui-sref="drugSync" class="btn btn-xs btn-default">View</a></td>
+                    </tr>
+                    <tr>
+                        <td><i class="fa fa-map-marker"></i> Address Sync</td>
+                        <td><span class="status-ok">Active</span></td>
+                        <td>{{stats.lastSyncTime}}</td>
+                        <td><a ui-sref="logs" class="btn btn-xs btn-default">View</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

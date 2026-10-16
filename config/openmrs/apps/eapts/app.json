@@ -1,0 +1,19 @@
+{
+  "id": "bahmni.emr.eapts",
+  "description": "EMR-eAPTs Integration Configuration",
+  "extensionPoints": [
+    {
+      "id": "org.bahmni.emr.eapts.dashboard",
+      "description": "EMR-eAPTs Integration Dashboard"
+    }
+  ],
+  "config": {
+    "daguApiUrl": "http://localhost:3005/dagu",
+    "eaptsMediatorUrl": "http://localhost:3005",
+    "autoSyncInterval": 60,
+    "enablePrescriptionSync": true,
+    "enableDispenseSync": true,
+    "enableDrugSync": true,
+    "enableAddressSync": true
+  }
+}

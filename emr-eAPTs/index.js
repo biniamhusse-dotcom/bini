@@ -43,6 +43,34 @@ function setupApp() {
                 next()
         })
         app.use('/', require("./routes"))
+        app.use('/dagu', require("./routes/daguIntegration"))
+
+        // Suppress favicon 404
+        app.get('/favicon.ico', (req, res) => {
+                const faviconPath = path.join(__dirname, 'eapts-ui', 'favicon.ico')
+                res.sendFile(faviconPath, (err) => { if (err) res.status(204).end() })
+        })
+
+        // Serve eAPTs config UI static files
+        const eaptsUiPath = path.join(__dirname, 'eapts-ui')
+
+        // Mount mediator routes under /eapts prefix (for proxy access)
+        const eaptsRouter = require('./routes')
+        app.use('/eapts', eaptsRouter)
+
+        // SPA static files and catch-all (must be AFTER the API routes above)
+        app.use('/eapts', function noCache(req, res, next) {
+                res.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                res.header('Pragma', 'no-cache')
+                next()
+        }, express.static(eaptsUiPath))
+        app.get('/eapts', (req, res) => {
+                res.sendFile(path.join(eaptsUiPath, 'index.html'))
+        })
+        app.get('/eapts/*', (req, res) => {
+                res.sendFile(path.join(eaptsUiPath, 'index.html'))
+        })
+
         return app
 }
 

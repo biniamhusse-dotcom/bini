@@ -167,7 +167,9 @@
                         "Modality",
                         "Radiology Notes",
                         "Diagnostic Images",
-                        "Obstetric Ultrasound Result Report Form"					
+                        "Obstetric Ultrasound Result Report Form",
+                        "Radiology Result",
+                        "Impression"
                     ],
                     "numberOfVisits":10
                 },
@@ -176,7 +178,9 @@
                         "Modality",
                         "Radiology Notes",
                         "Diagnostic Images",
-                        "Obstetric Ultrasound Result Report Form"
+                        "Obstetric Ultrasound Result Report Form",
+                        "Radiology Result",
+                        "Impression"
                     ],
                     "numberOfVisits":10,
                     "showDetailsButton":true,
@@ -191,7 +195,7 @@
                 "translationKey":"DASHBOARD_TITLE_PACS_KEY",
                 "displayOrder":8,
                 "dashboardConfig":{  
-                    "pacsImageUrl":"/oviyam2/oviyam?patientID={{patientID}}&accessionNumber={{orderNumber}}",
+                    "pacsImageUrl":"/ohif/viewer?StudyInstanceUIDs={{studyUID}}",
                     "numberOfVisits":4
                 }
             },
@@ -621,6 +625,24 @@
                     "template": "<patient-appointments-dashboard section='config' patient='patient'></patient-appointments-dashboard>"
                 }
             },
+            "whoTraumaForm": {
+                "translationKey": "WHO Emergency Unit Form - Trauma",
+                "type": "vitals",
+                "isObservation": true,
+                "displayOrder": 25,
+                "dashboardConfig": {
+                    "conceptNames": ["WHO Trauma Form Templates"],
+                    "showDetailsButton": true,
+                    "numberOfVisits": 2
+                },
+                "expandedViewConfig": {
+                    "conceptNames": ["WHO Trauma Form Templates"],
+                    "numberOfVisits": 2,
+                    "scope": "latest",
+                    "showDetailsButton": true,
+                    "pivotTable": {}
+                }
+            },
             "formsDisplay": {
                 "type": "forms",
                 "displayOrder": 100,
@@ -788,6 +810,34 @@
                     "pivotTable":{
 
                     }
+                }
+            }
+        }
+    },
+    "whoTraumaFormFullPage": {
+        "title": "WHO Emergency Unit Form: Trauma",
+        "printing": {
+            "title": "WHO EMERGENCY UNIT FORM: TRAUMA",
+            "header": "WHO Emergency Unit Form - Trauma Assessment",
+            "logo": "../images/bahmniLogo.png"
+        },
+        "sections": {
+            "WHO Trauma Assessment": {
+                "translationKey": "WHO Emergency Unit Form - Trauma",
+                "type": "whoTraumaForm",
+                "isObservation": true,
+                "displayOrder": 1,
+                "dashboardConfig": {
+                    "conceptNames": ["WHO Trauma Form Templates"],
+                    "showDetailsButton": true,
+                    "numberOfVisits": 2
+                },
+                "expandedViewConfig": {
+                    "conceptNames": ["WHO Trauma Form Templates"],
+                    "numberOfVisits": 2,
+                    "scope": "latest",
+                    "showDetailsButton": true,
+                    "pivotTable": {}
                 }
             }
         }

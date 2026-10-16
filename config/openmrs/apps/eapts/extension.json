@@ -1,0 +1,72 @@
+{
+  "dashboard": {
+    "id": "bahmni.emr.eapts.dashboard",
+    "extensionPointId": "org.bahmni.emr.eapts.dashboard",
+    "type": "link",
+    "label": "eAPTs Dashboard",
+    "url": "#/dashboard",
+    "icon": "fa-tachometer",
+    "order": 1,
+    "requiredPrivilege": "app:admin"
+  },
+  "prescriptionSync": {
+    "id": "bahmni.emr.eapts.prescriptionSync",
+    "extensionPointId": "org.bahmni.emr.eapts.dashboard",
+    "type": "link",
+    "label": "Prescription Sync",
+    "url": "#/prescription-sync",
+    "icon": "fa-exchange",
+    "order": 2,
+    "requiredPrivilege": "app:admin"
+  },
+  "dispenseSync": {
+    "id": "bahmni.emr.eapts.dispenseSync",
+    "extensionPointId": "org.bahmni.emr.eapts.dashboard",
+    "type": "link",
+    "label": "Dispense Sync",
+    "url": "#/dispense-sync",
+    "icon": "fa-medkit",
+    "order": 3,
+    "requiredPrivilege": "app:admin"
+  },
+  "drugSync": {
+    "id": "bahmni.emr.eapts.drugSync",
+    "extensionPointId": "org.bahmni.emr.eapts.dashboard",
+    "type": "link",
+    "label": "Drug Sync",
+    "url": "#/drug-sync",
+    "icon": "fa-pills",
+    "order": 4,
+    "requiredPrivilege": "app:admin"
+  },
+  "institutionConfig": {
+    "id": "bahmni.emr.eapts.institutionConfig",
+    "extensionPointId": "org.bahmni.emr.eapts.dashboard",
+    "type": "link",
+    "label": "Institution Config",
+    "url": "#/institution-config",
+    "icon": "fa-hospital-o",
+    "order": 5,
+    "requiredPrivilege": "app:admin"
+  },
+  "daguApi": {
+    "id": "bahmni.emr.eapts.daguApi",
+    "extensionPointId": "org.bahmni.emr.eapts.dashboard",
+    "type": "link",
+    "label": "Dagu API",
+    "url": "#/dagu-api",
+    "icon": "fa-server",
+    "order": 6,
+    "requiredPrivilege": "app:admin"
+  },
+  "logs": {
+    "id": "bahmni.emr.eapts.logs",
+    "extensionPointId": "org.bahmni.emr.eapts.dashboard",
+    "type": "link",
+    "label": "Sync Logs",
+    "url": "#/logs",
+    "icon": "fa-file-text-o",
+    "order": 7,
+    "requiredPrivilege": "app:admin"
+  }
+}

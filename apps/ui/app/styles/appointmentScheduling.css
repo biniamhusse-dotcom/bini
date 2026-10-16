@@ -21361,3 +21361,36 @@ category: Components - Alerts
 .switch-input:checked + .switch-label .toggle--off {
   display: none;
 }
+
+/* Active Visit Badge Styles */
+.active-visit-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #4CAF50;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inactive-visit-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #999;
+}
+
+.active-visit-block {
+  margin-top: 10px;
+}
+
+.app-filter-select {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: #fff;
+}

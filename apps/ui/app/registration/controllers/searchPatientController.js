@@ -2,8 +2,8 @@
 
 angular.module('bahmni.registration')
     .controller('SearchPatientController', ['$http', '$rootScope', '$scope', '$location', '$window', 'spinner', 'patientService', 'appService', '$stateParams',
-        'messagingService', '$translate', '$filter', '$bahmniCookieStore', 'encounterService', 'visitService', 'auditLogService', 'ngDialog',
-        function ($http, $rootScope, $scope, $location, $window, spinner, patientService, appService, $stateParams, messagingService, $translate, $filter, $bahmniCookieStore, encounterService, visitService, auditLogService, ngDialog) {
+        'messagingService', '$translate', '$filter', '$bahmniCookieStore', 'encounterService', 'visitService', 'auditLogService', 'ngDialog', 'prescriptionService',
+        function ($http, $rootScope, $scope, $location, $window, spinner, patientService, appService, $stateParams, messagingService, $translate, $filter, $bahmniCookieStore, encounterService, visitService, auditLogService, ngDialog, prescriptionService) {
             $scope.results = [];
             $scope.extraIdentifierTypes = _.filter($rootScope.patientConfiguration.identifierTypes, function (identifierType) {
                 return !identifierType.primary;
@@ -631,5 +631,162 @@ angular.module('bahmni.registration')
                         }
                     });
                 spinner.forPromise(searchPromise);
+            };
+
+            // Prescribed Patients List functionality
+            $scope.showPrescribedList = false;
+            $scope.loadingPrescribedPatients = false;
+            $scope.prescribedPatients = [];
+            $scope.allPrescribedPatients = [];
+            $scope.sortColumn = 'prescription_date';
+            $scope.sortReverse = true;
+            $scope.totalPrescriptionCount = 0;
+
+            $scope.prescriptionFilters = {
+                searchText: '',
+                startDate: null,
+                endDate: null
+            };
+
+            $scope.loadAllPrescribedPatients = function () {
+                $scope.loadingPrescribedPatients = true;
+                $scope.showPrescribedList = true;
+
+                prescriptionService.getAllPrescribedPatients().then(function (response) {
+                    $scope.allPrescribedPatients = response.data || [];
+                    $scope.applyPrescriptionFilters();
+                    $scope.loadingPrescribedPatients = false;
+                }).catch(function (error) {
+                    console.error("Error loading prescribed patients:", error);
+                    messagingService.showMessage('error', "Failed to load prescribed patients!");
+                    $scope.loadingPrescribedPatients = false;
+                });
+            };
+
+            $scope.groupPrescriptionsByDate = function (prescriptions) {
+                if (!prescriptions || prescriptions.length === 0) return [];
+                var groups = {};
+                prescriptions.forEach(function (rx) {
+                    var encounterKey = rx.encounter_uuid || 'unknown';
+                    var dateKey = 'Unknown Date';
+                    var dateDisplay = 'Unknown Date';
+                    if (rx.prescription_date) {
+                        if (Array.isArray(rx.prescription_date)) {
+                            var y = rx.prescription_date[0];
+                            var m = String(rx.prescription_date[1]).padStart(2, '0');
+                            var d = String(rx.prescription_date[2]).padStart(2, '0');
+                            dateKey = y + '-' + m + '-' + d;
+                            dateDisplay = d + '/' + m + '/' + y;
+                        } else if (typeof rx.prescription_date === 'string') {
+                            var parts = rx.prescription_date.split('T')[0].split('-');
+                            dateKey = parts[0] + '-' + parts[1] + '-' + parts[2];
+                            dateDisplay = parts[2] + '/' + parts[1] + '/' + parts[0];
+                        }
+                    }
+                    var providerKey = rx.provider_name || 'Unknown Provider';
+                    if (!groups[encounterKey]) {
+                        groups[encounterKey] = {
+                            encounter_uuid: encounterKey,
+                            date: dateKey,
+                            dateDisplay: dateDisplay,
+                            provider: providerKey,
+                            drugs: []
+                        };
+                    }
+                    groups[encounterKey].drugs.push(rx);
+                });
+                var result = [];
+                Object.keys(groups).forEach(function (key) {
+                    result.push(groups[key]);
+                });
+                result.sort(function (a, b) {
+                    return String(b.date).localeCompare(String(a.date));
+                });
+                return result;
+            };
+
+            $scope.applyPrescriptionFilters = function () {
+                var searchText = ($scope.prescriptionFilters.searchText || '').toLowerCase();
+                var startDate = $scope.prescriptionFilters.startDate ? new Date($scope.prescriptionFilters.startDate) : null;
+                var endDate = $scope.prescriptionFilters.endDate ? new Date($scope.prescriptionFilters.endDate) : null;
+
+                if (startDate) startDate.setHours(0, 0, 0, 0);
+                if (endDate) endDate.setHours(23, 59, 59, 999);
+
+                var totalCount = 0;
+
+                $scope.prescribedPatients = $scope.allPrescribedPatients.filter(function (patient) {
+                    var matchesSearch = true;
+                    var matchesDate = true;
+
+                    if (searchText) {
+                        matchesSearch = (patient.patient_identifier && patient.patient_identifier.toLowerCase().indexOf(searchText) !== -1) ||
+                                        (patient.first_name && patient.first_name.toLowerCase().indexOf(searchText) !== -1) ||
+                                        (patient.father_name && patient.father_name.toLowerCase().indexOf(searchText) !== -1) ||
+                                        (patient.grandfather_name && patient.grandfather_name.toLowerCase().indexOf(searchText) !== -1) ||
+                                        (patient.phone_number && patient.phone_number.toLowerCase().indexOf(searchText) !== -1);
+
+                        if (!matchesSearch && patient.prescriptions) {
+                            matchesSearch = patient.prescriptions.some(function (rx) {
+                                return (rx.drug_name && rx.drug_name.toLowerCase().indexOf(searchText) !== -1);
+                            });
+                        }
+                    }
+
+                    if (startDate || endDate) {
+                        var matchingRx = (patient.prescriptions || []).filter(function (rx) {
+                            if (!rx.prescription_date) return false;
+                            var rxDate = new Date(rx.prescription_date);
+                            if (isNaN(rxDate.getTime())) return false;
+                            if (startDate && rxDate < startDate) return false;
+                            if (endDate && rxDate > endDate) return false;
+                            return true;
+                        });
+
+                        if (matchingRx.length === 0) {
+                            matchesDate = false;
+                        } else {
+                            patient.filteredPrescriptions = matchingRx;
+                        }
+                    } else {
+                        patient.filteredPrescriptions = patient.prescriptions;
+                    }
+
+                    if (matchesSearch && matchesDate) {
+                        var rxList = patient.filteredPrescriptions || patient.prescriptions || [];
+                        totalCount += rxList.length;
+                        patient._groupedPrescriptions = $scope.groupPrescriptionsByDate(rxList);
+                        return true;
+                    }
+                    return false;
+                });
+
+                $scope.totalPrescriptionCount = totalCount;
+            };
+
+            $scope.clearPrescriptionFilters = function () {
+                $scope.prescriptionFilters = {
+                    searchText: '',
+                    startDate: null,
+                    endDate: null
+                };
+                $scope.applyPrescriptionFilters();
+            };
+
+            $scope.sortPrescribedPatients = function (column) {
+                if ($scope.sortColumn === column) {
+                    $scope.sortReverse = !$scope.sortReverse;
+                } else {
+                    $scope.sortColumn = column;
+                    $scope.sortReverse = false;
+                }
+            };
+
+            $scope.goToPatientPrescription = function (patientUuid) {
+                $location.url("/patient/" + patientUuid + "/prescription");
+            };
+
+            $scope.goToHistoricalPrescription = function (patientUuid, encounterUuid) {
+                $location.url("/patient/" + patientUuid + "/prescription?encounter=" + encounterUuid);
             };
         }]);

@@ -44,6 +44,154 @@
         </article>
     </section>
 
+    <!-- Advanced Filter Section for Prescribed Patients -->
+    <section class="prescription-list-section" style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: #333;">
+                <i class="fa fa-list-alt"></i> All Prescribed Patients
+            </h3>
+            <button class="btn btn-primary" ng-click="loadAllPrescribedPatients()" ng-disabled="loadingPrescribedPatients">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loadingPrescribedPatients}"></i> 
+                {{ loadingPrescribedPatients ? 'Loading...' : 'Load All Prescriptions' }}
+            </button>
+        </div>
+
+        <!-- Advanced Filters -->
+        <div class="advanced-filters" ng-show="showPrescribedList" style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; padding: 10px; background-color: #fff; border-radius: 5px; border: 1px solid #ddd;">
+            <div class="filter-group">
+                <label><strong>Search:</strong></label>
+                <input type="text" ng-model="prescriptionFilters.searchText" 
+                       placeholder="Search by ID, Name, Drug..."
+                       ng-change="applyPrescriptionFilters()"
+                       style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 250px;">
+            </div>
+            
+            <div class="filter-group">
+                <label><strong>Start Date:</strong></label>
+                <input type="date" ng-model="prescriptionFilters.startDate" 
+                       ng-change="applyPrescriptionFilters()"
+                       style="padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+            </div>
+            
+            <div class="filter-group">
+                <label><strong>End Date:</strong></label>
+                <input type="date" ng-model="prescriptionFilters.endDate" 
+                       ng-change="applyPrescriptionFilters()"
+                       style="padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+            </div>
+            
+            <div class="filter-group" style="display: flex; align-items: flex-end;">
+                <button class="btn btn-default" ng-click="clearPrescriptionFilters()">
+                    <i class="fa fa-times"></i> Clear Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Prescribed Patients List -->
+        <div ng-show="showPrescribedList" class="prescribed-patients-list">
+            <div ng-if="prescribedPatients.length > 0" style="margin-bottom: 10px; color: #666;">
+                <strong>{{ prescribedPatients.length }} patient(s) | {{ totalPrescriptionCount }} prescription(s)</strong>
+            </div>
+            
+            <div ng-if="prescribedPatients.length === 0 && !loadingPrescribedPatients" class="note-container">
+                <div class="note warning">
+                    <div class="text">
+                        <p>No prescribed patients found.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div ng-if="prescribedPatients.length > 0" style="max-height: 600px; overflow-y: auto;">
+                <table class="table table-striped table-bordered">
+                    <thead style="background-color: #4a7ab5; color: white; position: sticky; top: 0;">
+                        <tr>
+                            <th style="cursor: pointer;" ng-click="sortPrescribedPatients('patient_identifier')">
+                                ID <i class="fa" ng-class="{'fa-sort-asc': sortColumn === 'patient_identifier' && !sortReverse, 'fa-sort-desc': sortColumn === 'patient_identifier' && sortReverse, 'fa-sort': sortColumn !== 'patient_identifier'}"></i>
+                            </th>
+                            <th style="cursor: pointer;" ng-click="sortPrescribedPatients('first_name')">
+                                Patient Name <i class="fa" ng-class="{'fa-sort-asc': sortColumn === 'first_name' && !sortReverse, 'fa-sort-desc': sortColumn === 'first_name' && sortReverse, 'fa-sort': sortColumn !== 'first_name'}"></i>
+                            </th>
+                            <th>Gender</th>
+                            <th>Age</th>
+                            <th>Phone</th>
+                            <th>Prescriptions</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat-start="patient in prescribedPatients" ng-click="patient._expanded = !patient._expanded" style="cursor: pointer;">
+                            <td>
+                                <a ng-click="goToPatientPrescription(patient.patient_uuid); $event.stopPropagation();" style="cursor: pointer; color: #4a7ab5; font-weight: bold;">
+                                    {{patient.patient_identifier || 'N/A'}}
+                                </a>
+                            </td>
+                            <td style="font-weight: bold;">{{patient.first_name}} {{patient.father_name}} {{patient.grandfather_name}}</td>
+                            <td>{{patient.gender}}</td>
+                            <td>{{patient.age}}</td>
+                            <td>{{patient.phone_number}}</td>
+                            <td>
+                                <span class="badge badge-info">{{patient._groupedPrescriptions.length || (patient.filteredPrescriptions || patient.prescriptions).length}} visit(s)</span>
+                                <i class="fa" ng-class="{'fa-chevron-down': patient._expanded, 'fa-chevron-right': !patient._expanded}" style="margin-left: 5px;"></i>
+                            </td>
+                            <td>
+                                <button class="btn btn-xs btn-primary" ng-click="goToPatientPrescription(patient.patient_uuid); $event.stopPropagation();">
+                                    <i class="fa fa-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                        <tr ng-repeat-end ng-show="patient._expanded">
+                            <td colspan="7" style="padding: 0;">
+                                <div style="background-color: #f0f7ff; padding: 8px;">
+                                    <div ng-repeat="group in patient._groupedPrescriptions" style="margin-bottom: 6px; border: 1px solid #d4e4f7; border-radius: 4px; overflow: hidden;">
+                                        <div ng-click="group._open = !group._open" style="background-color: #d4e4f7; padding: 6px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong style="color: #1a5276;">
+                                                    <i class="fa fa-calendar"></i> {{group.dateDisplay}}
+                                                </strong>
+                                                <span style="margin-left: 12px; color: #555;">
+                                                    <i class="fa fa-user-md"></i> {{group.provider}}
+                                                </span>
+                                                <span class="badge" style="background-color: #2e86c1; color: white; margin-left: 10px;">{{group.drugs.length}} drug(s)</span>
+                                            </div>
+                                            <div>
+                                                <button class="btn btn-xs btn-primary" ng-click="goToHistoricalPrescription(patient.patient_uuid, group.encounter_uuid); $event.stopPropagation();" style="margin-right: 8px;">
+                                                    <i class="fa fa-eye"></i> View
+                                                </button>
+                                                <i class="fa" ng-class="{'fa-chevron-down': group._open, 'fa-chevron-right': !group._open}"></i>
+                                            </div>
+                                        </div>
+                                        <table class="table table-condensed" style="margin: 0; background-color: #fff;" ng-show="group._open">
+                                            <thead style="background-color: #eaf2f8;">
+                                                <tr>
+                                                    <th style="font-size: 11px;">Drug Name</th>
+                                                    <th style="font-size: 11px;">Dose</th>
+                                                    <th style="font-size: 11px;">Frequency</th>
+                                                    <th style="font-size: 11px;">Duration</th>
+                                                    <th style="font-size: 11px;">Route</th>
+                                                    <th style="font-size: 11px;">Quantity</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="rx in group.drugs">
+                                                    <td style="font-size: 11px; font-weight: 600;">{{rx.drug_name}}</td>
+                                                    <td style="font-size: 11px;">{{rx.dose}} {{rx.dose_units}}</td>
+                                                    <td style="font-size: 11px;">{{rx.frequency}}</td>
+                                                    <td style="font-size: 11px;">{{rx.duration}} {{rx.duration_units}}</td>
+                                                    <td style="font-size: 11px;">{{rx.route}}</td>
+                                                    <td style="font-size: 11px;">{{rx.quantity}} {{rx.quantity_units}}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
     <div class="note-container no-search-results" ng-if="noResultsMessage">
         <div class="note warning">
             <div class="text">

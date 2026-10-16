@@ -1,0 +1,41 @@
+<div class="loading" ng-if="loading"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+
+<div ng-if="!loading">
+    <h2><i class="fa fa-exchange"></i> Prescription Sync</h2>
+    <p class="text-muted">Sync prescriptions from OpenMRS to Dagu eAPTs system</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Full Sync</div>
+                <div class="card-body">
+                    <p>Fetch all new prescriptions from OpenMRS and send them to Dagu.</p>
+                    <button class="btn btn-primary" ng-click="syncAll()" ng-disabled="syncing">
+                        <i class="fa fa-refresh" ng-class="{'fa-spin': syncing}"></i> Sync All Prescriptions
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Single Order Sync</div>
+                <div class="card-body">
+                    <p>Sync a specific order by encounter UUID.</p>
+                    <div class="form-group">
+                        <label>Encounter UUID</label>
+                        <input type="text" class="form-control" ng-model="encounterUuid" placeholder="Enter encounter UUID">
+                    </div>
+                    <button class="btn btn-default" ng-click="syncSingle()" ng-disabled="syncing || !encounterUuid">
+                        <i class="fa fa-send"></i> Sync Single
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert" ng-if="syncResult" ng-class="{'alert-success': syncResult.success, 'alert-danger': !syncResult.success}">
+        <strong>{{syncResult.success ? 'Success!' : 'Error!'}}</strong> {{syncResult.message}}
+        <pre ng-if="syncResult.data" style="margin-top: 10px; max-height: 200px; overflow: auto;">{{syncResult.data | json}}</pre>
+    </div>
+</div>

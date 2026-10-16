@@ -22,4 +22,29 @@
             <div class="placeholder-text" ><p translate="DISPLAY_CONTROL_ERROR_MESSAGE_KEY" translate-values="{displayControl : '{{noOrdersMessage}}'}"></p></div>
         </div>
     </div>
+
+    <div class="pacs-actions">
+        <h3>PACS Actions</h3>
+        <ul class="nav nav-tabs">
+            <li ng-class="{'active': activeTab === 'upload'}">
+                <a ng-click="activeTab = 'upload'">
+                    <i class="fa fa-upload"></i> Import DICOM
+                </a>
+            </li>
+            <li ng-class="{'active': activeTab === 'result'}">
+                <a ng-click="activeTab = 'result'">
+                    <i class="fa fa-file-text-o"></i> Write Result
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div ng-show="activeTab === 'upload'">
+                <dicom-upload patient="patient"></dicom-upload>
+            </div>
+            <div ng-show="activeTab === 'result'">
+                <radiology-result patient="patient"></radiology-result>
+            </div>
+        </div>
+    </div>
 </section>

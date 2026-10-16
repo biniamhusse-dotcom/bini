@@ -53,7 +53,7 @@
 			"name": "dcm",
 			"title": "Radiology",
 			"logo": "/bahmni/images/pac.png",
-			"link": "/dcm4chee-web3"
+			"link": "/ohif/"
 		},
 		{
 			"enabled": false,

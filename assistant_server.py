@@ -140,6 +140,40 @@ def status():
     })
 
 
+@app.route("/api/encounter/recent", methods=["GET"])
+def get_recent_encounter():
+    """Get the most recent encounter UUID for a patient."""
+    patient_uuid = request.args.get("patient_uuid")
+    if not patient_uuid:
+        return jsonify({"error": "Missing patient_uuid parameter"}), 400
+
+    try:
+        mw = get_middleware()
+        url = f"{OPENMRS_BASE_URL}/encounter"
+        params = {
+            "patient": patient_uuid,
+            "v": "custom:(uuid,encounterDatetime,encounterType:(display),location:(display))",
+            "order": "desc",
+            "limit": 1,
+        }
+        resp = mw._openmrs._session.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        results = data.get("results", [])
+        if not results:
+            return jsonify({"error": "No encounters found for this patient", "patient_uuid": patient_uuid}), 404
+        encounter = results[0]
+        return jsonify({
+            "encounter_uuid": encounter["uuid"],
+            "encounter_datetime": encounter.get("encounterDatetime", ""),
+            "encounter_type": (encounter.get("encounterType") or {}).get("display", ""),
+            "location": (encounter.get("location") or {}).get("display", ""),
+        })
+    except Exception as e:
+        log.error("Error fetching recent encounter: %s", e)
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/thread", methods=["POST"])
 def create_thread():
     """Create a new conversation thread. Returns session_id."""
@@ -497,7 +531,21 @@ function pasteUuid(uuid) {
 }
 
 // Auto-connect on load — try multiple URLs to find the assistant backend
+// Detect patient context from URL params OR from the opener window (Bahmni)
 (function init() {
+  const params = new URLSearchParams(window.location.search);
+  var patientUuid = params.get("patient_uuid");
+  var encounterUuid = params.get("encounter_uuid");
+
+  // If no URL params, try to read from opener window (Bahmni)
+  if (!patientUuid && window.opener) {
+    try {
+      var openerUrl = window.opener.location.href;
+      var m = openerUrl.match(/patient\/([a-f0-9A-F]{8}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{12})/);
+      if (m) patientUuid = m[1];
+    } catch(e) { /* cross-origin or other error */ }
+  }
+
   // Build candidate URLs: try direct port, proxy /assistant, then current origin
   const candidates = [
     "http://localhost:5050",                  // Direct Flask server
@@ -512,13 +560,64 @@ function pasteUuid(uuid) {
         const resp = await fetch(url + "/api/status", { signal: AbortSignal.timeout(3000) });
         const data = await resp.json();
         if (data.ok) {
-          connect();
+          await connect();
+          // If we have patient context, auto-load it
+          if (patientUuid || encounterUuid) {
+            await loadPatientContext(url, patientUuid, encounterUuid);
+          }
           return;
         }
       } catch(e) { /* try next */ }
     }
     // All failed — leave UI ready for manual connect
   }
+
+  async function loadPatientContext(baseUrl, patientUuid, encounterUuid) {
+    try {
+      let encUuid = encounterUuid;
+      let patientInfo = "";
+
+      // If no encounter UUID but have patient UUID, fetch recent encounter
+      if (!encUuid && patientUuid) {
+        addSystemMessage("Fetching recent encounter for patient...");
+        const resp = await fetch(baseUrl + "/api/encounter/recent?patient_uuid=" + patientUuid);
+        const data = await resp.json();
+        if (data.encounter_uuid) {
+          encUuid = data.encounter_uuid;
+          patientInfo = "Patient: " + patientUuid.substring(0, 8) + "...";
+          addSystemMessage("Found encounter: " + data.encounter_type + " (" + data.encounter_datetime + ")");
+        } else {
+          addSystemMessage("No encounters found for this patient. You can provide an encounter UUID manually.");
+          return;
+        }
+      } else if (encUuid) {
+        patientInfo = "Encounter: " + encUuid.substring(0, 8) + "...";
+      }
+
+      // Auto-analyze the encounter
+      if (encUuid) {
+        addSystemMessage("Auto-loading encounter data...");
+        const chatResp = await fetch(baseUrl + "/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: "Analyze encounter " + encUuid,
+            session_id: sessionId
+          }),
+        });
+        const chatData = await chatResp.json();
+        if (chatData.response) {
+          addMessage("assistant", chatData.response);
+        } else if (chatData.error) {
+          addSystemMessage("Error: " + chatData.error);
+        }
+        if (chatData.session_id) sessionId = chatData.session_id;
+      }
+    } catch (e) {
+      addSystemMessage("Error loading patient context: " + e.message);
+    }
+  }
+
   setTimeout(tryAutoConnect, 500);
 })();
 </script>

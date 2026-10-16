@@ -1,0 +1,417 @@
+/* PACS Orders Styles */
+.pacs-orders {
+    margin-top: 15px;
+}
+
+.pacs-actions {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.pacs-actions h3 {
+    margin-bottom: 15px;
+    font-size: 15px;
+    color: #374151;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* Tab Styles */
+.pacs-actions .nav-tabs {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    width: 100%;
+    background: #f0f4f8;
+    border: 1px solid #d7dee6;
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 0;
+}
+
+.pacs-actions .nav-tabs > li {
+    margin: 0;
+    float: none;
+    border-bottom: none;
+    flex: 1 1 0;
+    min-width: 0;
+    display: block;
+}
+
+.pacs-actions .nav-tabs > li > a {
+    color: #5a6b7b;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    margin: 0;
+    background: transparent;
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    transition: all 0.18s ease;
+}
+
+.pacs-actions .nav-tabs > li > a:hover,
+.pacs-actions .nav-tabs > li > a:focus {
+    background: rgba(44, 111, 170, 0.08);
+    color: #2c6faa;
+    border: none;
+}
+
+.pacs-actions .nav-tabs > li.active > a,
+.pacs-actions .nav-tabs > li.active > a:hover,
+.pacs-actions .nav-tabs > li.active > a:focus {
+    color: #fff;
+    background: #2c6faa;
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(44, 111, 170, 0.4);
+}
+
+.pacs-actions .nav-tabs > li.active > a i,
+.pacs-actions .nav-tabs > li > a i {
+    color: inherit;
+    margin-right: 7px;
+}
+
+.pacs-actions .tab-content {
+    position: relative;
+    z-index: 1;
+    border: 1px solid #e3e6ea;
+    background: #fff;
+    border-radius: 8px;
+    padding: 4px;
+    margin-top: 12px;
+}
+
+/* Professional Button Styles */
+.pacs-orders .btn,
+.dicom-upload .btn,
+.radiology-result .btn {
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+
+.pacs-orders .btn i,
+.dicom-upload .btn i,
+.radiology-result .btn i {
+    margin-right: 6px;
+}
+
+.pacs-orders .btn.btn-primary,
+.dicom-upload .btn.btn-primary,
+.radiology-result .btn.btn-primary {
+    background: #2c6faa;
+    border-color: #2c6faa;
+    color: #fff;
+}
+
+.pacs-orders .btn.btn-primary:hover,
+.dicom-upload .btn.btn-primary:hover,
+.radiology-result .btn.btn-primary:hover {
+    background: #235d8f;
+    border-color: #235d8f;
+    box-shadow: 0 2px 6px rgba(44, 111, 170, 0.3);
+}
+
+.pacs-orders .btn.btn-primary:active,
+.dicom-upload .btn.btn-primary:active,
+.radiology-result .btn.btn-primary:active {
+    background: #1c4f7b;
+    box-shadow: none;
+}
+
+.pacs-orders .btn.btn-primary:disabled,
+.dicom-upload .btn.btn-primary:disabled,
+.radiology-result .btn.btn-primary:disabled {
+    background: #9bb8d2;
+    border-color: #9bb8d2;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.pacs-orders .btn.btn-default,
+.dicom-upload .btn.btn-default,
+.radiology-result .btn.btn-default {
+    background: #fff;
+    border-color: #cbd2da;
+    color: #374151;
+}
+
+.pacs-orders .btn.btn-default:hover,
+.dicom-upload .btn.btn-default:hover,
+.radiology-result .btn.btn-default:hover {
+    background: #f3f6f9;
+    border-color: #b3bdc8;
+}
+
+.pacs-orders .btn.btn-default:active,
+.dicom-upload .btn.btn-default:active,
+.radiology-result .btn.btn-default:active {
+    background: #e6ebf1;
+}
+
+.pacs-orders .btn.btn-sm,
+.dicom-upload .btn.btn-sm,
+.radiology-result .btn.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.pacs-orders .btn:focus,
+.dicom-upload .btn:focus,
+.radiology-result .btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(44, 111, 170, 0.2);
+}
+
+/* Upload Styles */
+.dicom-upload .upload-container {
+    padding: 20px;
+}
+
+.dicom-upload .upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #f9f9f9;
+    transition: all 0.3s ease;
+}
+
+.dicom-upload .upload-area:hover,
+.dicom-upload .upload-area.drag-over {
+    border-color: #337ab7;
+    background: #f0f7ff;
+}
+
+.dicom-upload .upload-icon {
+    color: #337ab7;
+    margin-bottom: 15px;
+}
+
+.dicom-upload .upload-text {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.dicom-upload .upload-subtext {
+    color: #999;
+    margin-bottom: 15px;
+}
+
+.dicom-upload .upload-btn {
+    cursor: pointer;
+    padding: 12px 26px;
+    font-size: 14px;
+    border-radius: 6px;
+    display: inline-block;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1);
+}
+
+.dicom-upload .upload-btn:hover {
+    box-shadow: 0 3px 8px rgba(44, 111, 170, 0.35);
+}
+
+.dicom-upload .upload-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.1);
+}
+
+.dicom-upload .upload-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 15px;
+}
+
+.dicom-upload .upload-options {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.dicom-upload .upload-options .form-group {
+    margin-bottom: 10px;
+}
+
+.dicom-upload .upload-options label {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.dicom-upload .upload-progress {
+    margin-top: 20px;
+}
+
+.dicom-upload .progress {
+    height: 20px;
+    border-radius: 10px;
+}
+
+.dicom-upload .progress-bar {
+    line-height: 20px;
+    font-size: 12px;
+}
+
+.dicom-upload .progress-text {
+    text-align: center;
+    margin-top: 10px;
+    color: #666;
+}
+
+.dicom-upload .upload-results {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e3e6ea;
+}
+
+.dicom-upload .upload-results h3 {
+    font-size: 14px;
+    margin-bottom: 15px;
+    color: #374151;
+    font-weight: 600;
+}
+
+.dicom-upload .upload-results .btn {
+    margin-top: 12px;
+}
+
+.dicom-upload .table {
+    font-size: 13px;
+}
+
+.dicom-upload .label {
+    font-size: 11px;
+    padding: 3px 6px;
+}
+
+/* Result Styles */
+.radiology-result .result-container {
+    padding: 20px;
+}
+
+.radiology-result .form-group {
+    margin-bottom: 15px;
+}
+
+.radiology-result .form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.radiology-result .form-control {
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.radiology-result .form-control:focus {
+    border-color: #337ab7;
+    box-shadow: 0 0 0 0.2rem rgba(51, 122, 183, 0.25);
+}
+
+.radiology-result textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.radiology-result .form-actions {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e3e6ea;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.radiology-result .form-actions .btn {
+    margin-right: 0;
+}
+
+.radiology-result .alert {
+    margin-top: 15px;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.radiology-result .alert-success {
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+    color: #3c763d;
+}
+
+.radiology-result .alert-danger {
+    background-color: #f2dede;
+    border-color: #ebccd1;
+    color: #a94442;
+}
+
+.radiology-result .label-info {
+    background-color: #5bc0de;
+}
+
+.radiology-result .text-muted {
+    color: #999;
+    font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dicom-upload .upload-area {
+        padding: 20px 10px;
+    }
+
+    .pacs-actions .nav-tabs {
+        flex-direction: column;
+    }
+
+    .pacs-actions .nav-tabs > li > a {
+        white-space: normal;
+        padding: 10px 14px;
+    }
+
+    .radiology-result .form-actions .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dicom-upload .upload-container,
+    .radiology-result .result-container {
+        padding: 12px;
+    }
+
+    .dicom-upload .upload-text {
+        font-size: 14px;
+    }
+
+    .dicom-upload .upload-btn {
+        padding: 10px 18px;
+        font-size: 13px;
+    }
+
+    .pacs-actions .nav-tabs > li > a {
+        font-size: 12px;
+    }
+}

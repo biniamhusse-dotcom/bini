@@ -19,11 +19,23 @@ NOCOLOR='\033[0m'
 SUCCESS=0
 FAILED=0
 
+# Section selector: ./sync_openmrs_to_odoo.sh [all|patients|drugs|lab|tests|panels|radiology|ophtha]
+SECTIONS="${1:-all}"
+
+should_run() {
+  [ "$SECTIONS" = "all" ] && return 0
+  case "$SECTIONS" in
+    lab) [ "$1" = "tests" ] || [ "$1" = "panels" ] && return 0 ;;
+    *)   [ "$SECTIONS" = "$1" ] && return 0 ;;
+  esac
+  return 1
+}
+
 TMPDIR=$(mktemp -d)
 COOKIE_FILE="$TMPDIR/odoo_cookie.txt"
 trap "rm -rf $TMPDIR" EXIT
 
-# ── Get Odoo auth cookie ──────────────────────────────────────────────────────
+# â”€â”€ Get Odoo auth cookie â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 echo -e "${CYAN}Authenticating with Odoo...${NOCOLOR}"
 curl.exe -s -c "$COOKIE_FILE" -X POST "$ODOO_URL/web/session/authenticate" \
@@ -38,13 +50,13 @@ fi
 echo -e "${GREEN}Odoo authenticated${NOCOLOR}"
 echo ""
 
-# ── Helper: query OpenMRS MySQL ───────────────────────────────────────────────
+# â”€â”€ Helper: query OpenMRS MySQL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 mysql_query() {
-  docker exec "$OPENMRS_DB" mysql -uroot -p"$OPENMRS_MYSQL_PASS" openmrs -N -e "$1" 2>/dev/null
+  docker exec "$OPENMRS_DB" mysql -uroot -p"$OPENMRS_MYSQL_PASS" openmrs --default-character-set=utf8mb4 -N -e "$1" 2>/dev/null
 }
 
-# ── Helper: post to Odoo ──────────────────────────────────────────────────────
+# â”€â”€ Helper: post to Odoo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 post_to_odoo() {
   local endpoint="$1"
@@ -61,8 +73,9 @@ post_to_odoo() {
   fi
 }
 
-# ── 1. Sync Patients ─────────────────────────────────────────────────────────
+# â”€â”€ 1. Sync Patients â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+if should_run patients; then
 echo -e "${CYAN}=== Syncing Patients ===${NOCOLOR}"
 
 PATIENT_IDS=$(mysql_query "SELECT patient_id FROM patient WHERE voided = 0 ORDER BY patient_id;")
@@ -116,9 +129,11 @@ done
 echo ""
 echo -e "  ${GREEN}Patients done: $SUCCESS synced, $FAILED failed${NOCOLOR}"
 echo ""
+fi
 
-# ── 2. Sync Drugs ────────────────────────────────────────────────────────────
+# â”€â”€ 2. Sync Drugs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+if should_run drugs; then
 echo -e "${CYAN}=== Syncing Drugs ===${NOCOLOR}"
 
 DRUG_IDS=$(mysql_query "SELECT drug_id FROM drug WHERE retired = 0 ORDER BY drug_id;")
@@ -168,9 +183,11 @@ done
 echo ""
 echo -e "  ${GREEN}Drugs done: $SUCCESS synced, $FAILED failed${NOCOLOR}"
 echo ""
+fi
 
-# ── 3. Sync Lab Tests ────────────────────────────────────────────────────────
+# â”€â”€ 3. Sync Lab Tests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+if should_run tests; then
 echo -e "${CYAN}=== Syncing Lab Tests ===${NOCOLOR}"
 
 TEST_UUIDS=$(mysql_query "
@@ -190,11 +207,14 @@ for TUUID in $TEST_UUIDS; do
   TEST_DATA=$(mysql_query "
     SELECT
       c.uuid,
-      cn.name,
+      COALESCE(
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.locale_preferred = 1 LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1)
+      ) AS name,
       c.retired
     FROM concept c
-    JOIN concept_name cn ON c.concept_id = cn.concept_id
-      AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
     WHERE c.uuid = '$TUUID'
     LIMIT 1;
   ")
@@ -204,7 +224,7 @@ for TUUID in $TEST_UUIDS; do
     continue
   fi
 
-  NAME=$(echo "$TEST_DATA" | cut -f2 | sed 's/"/\\"/g')
+  NAME=$(echo "$TEST_DATA" | cut -f2 | sed 's/"/\\"/g; s/\xef[\x80-\xbf][\x80-\xbf]/->/g')
   RETIRED=$(echo "$TEST_DATA" | cut -f3)
 
   if [ "$RETIRED" = "1" ]; then IS_ACTIVE="false"; else IS_ACTIVE="true"; fi
@@ -223,9 +243,11 @@ done
 echo ""
 echo -e "  ${GREEN}Lab Tests done: $SUCCESS synced, $FAILED failed${NOCOLOR}"
 echo ""
+fi
 
-# ── 4. Sync Lab Panels ───────────────────────────────────────────────────────
+# â”€â”€ 4. Sync Lab Panels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+if should_run panels; then
 echo -e "${CYAN}=== Syncing Lab Panels ===${NOCOLOR}"
 
 PANEL_UUIDS=$(mysql_query "
@@ -245,11 +267,14 @@ for PUUID in $PANEL_UUIDS; do
   PANEL_DATA=$(mysql_query "
     SELECT
       c.uuid,
-      cn.name,
+      COALESCE(
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.locale_preferred = 1 LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1)
+      ) AS name,
       c.retired
     FROM concept c
-    JOIN concept_name cn ON c.concept_id = cn.concept_id
-      AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
     WHERE c.uuid = '$PUUID'
     LIMIT 1;
   ")
@@ -259,7 +284,7 @@ for PUUID in $PANEL_UUIDS; do
     continue
   fi
 
-  NAME=$(echo "$PANEL_DATA" | cut -f2 | sed 's/"/\\"/g')
+  NAME=$(echo "$PANEL_DATA" | cut -f2 | sed 's/"/\\"/g; s/\xef[\x80-\xbf][\x80-\xbf]/->/g')
   RETIRED=$(echo "$PANEL_DATA" | cut -f3)
 
   if [ "$RETIRED" = "1" ]; then IS_ACTIVE="false"; else IS_ACTIVE="true"; fi
@@ -278,9 +303,11 @@ done
 echo ""
 echo -e "  ${GREEN}Lab Panels done: $SUCCESS synced, $FAILED failed${NOCOLOR}"
 echo ""
+fi
 
-# ── 5. Sync Radiology Tests ──────────────────────────────────────────────────
+# â”€â”€ 5. Sync Radiology Tests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+if should_run radiology; then
 echo -e "${CYAN}=== Syncing Radiology Tests ===${NOCOLOR}"
 
 RAD_UUIDS=$(mysql_query "
@@ -300,11 +327,14 @@ for RUUID in $RAD_UUIDS; do
   RAD_DATA=$(mysql_query "
     SELECT
       c.uuid,
-      cn.name,
+      COALESCE(
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.locale_preferred = 1 LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1)
+      ) AS name,
       c.retired
     FROM concept c
-    JOIN concept_name cn ON c.concept_id = cn.concept_id
-      AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
     WHERE c.uuid = '$RUUID'
     LIMIT 1;
   ")
@@ -314,7 +344,7 @@ for RUUID in $RAD_UUIDS; do
     continue
   fi
 
-  NAME=$(echo "$RAD_DATA" | cut -f2 | sed 's/"/\\"/g')
+  NAME=$(echo "$RAD_DATA" | cut -f2 | sed 's/"/\\"/g; s/\xef[\x80-\xbf][\x80-\xbf]/->/g')
   RETIRED=$(echo "$RAD_DATA" | cut -f3)
 
   if [ "$RETIRED" = "1" ]; then IS_ACTIVE="false"; else IS_ACTIVE="true"; fi
@@ -333,9 +363,11 @@ done
 echo ""
 echo -e "  ${GREEN}Radiology done: $SUCCESS synced, $FAILED failed${NOCOLOR}"
 echo ""
+fi
 
-# ── 6. Sync Ophthalmology Tests ─────────────────────────────────────────────
+# â”€â”€ 6. Sync Ophthalmology Tests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+if should_run ophtha; then
 echo -e "${CYAN}=== Syncing Ophthalmology Tests ===${NOCOLOR}"
 
 OPH_UUIDS=$(mysql_query "
@@ -355,11 +387,14 @@ for OUUID in $OPH_UUIDS; do
   OPH_DATA=$(mysql_query "
     SELECT
       c.uuid,
-      cn.name,
+      COALESCE(
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.locale_preferred = 1 LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.locale = 'en' LIMIT 1),
+        (SELECT cn.name FROM concept_name cn WHERE cn.concept_id = c.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1)
+      ) AS name,
       c.retired
     FROM concept c
-    JOIN concept_name cn ON c.concept_id = cn.concept_id
-      AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
     WHERE c.uuid = '$OUUID'
     LIMIT 1;
   ")
@@ -369,7 +404,7 @@ for OUUID in $OPH_UUIDS; do
     continue
   fi
 
-  NAME=$(echo "$OPH_DATA" | cut -f2 | sed 's/"/\\"/g')
+  NAME=$(echo "$OPH_DATA" | cut -f2 | sed 's/"/\\"/g; s/\xef[\x80-\xbf][\x80-\xbf]/->/g')
   RETIRED=$(echo "$OPH_DATA" | cut -f3)
 
   if [ "$RETIRED" = "1" ]; then IS_ACTIVE="false"; else IS_ACTIVE="true"; fi
@@ -388,5 +423,6 @@ done
 echo ""
 echo -e "  ${GREEN}Ophthalmology done: $SUCCESS synced, $FAILED failed${NOCOLOR}"
 echo ""
+fi
 
 echo -e "${CYAN}==== ALL SYNC COMPLETE ====${NOCOLOR}"

@@ -2,9 +2,9 @@
 
 angular.module('bahmni.registration')
     .controller('prescriptionController', ['$window', '$scope', '$rootScope', '$state', '$bahmniCookieStore', 'patientService', 'encounterService', '$stateParams', 'spinner', '$timeout', '$q', 'appService', 'openmrsPatientMapper', 'contextChangeHandler', 'messagingService', 'sessionService', 'visitService', '$location', '$translate',
-        'auditLogService', 'formService', 'observationsService', 'ngDialog', '$http', 'paymentStatusService', 'prescriptionService', 'pharmacyIntegrationService',
+        'auditLogService', 'formService', 'observationsService', 'ngDialog', '$http', 'paymentStatusService', 'prescriptionService', 'pharmacyIntegrationService', 'localeService',
         function ($window, $scope, $rootScope, $state, $bahmniCookieStore, patientService, encounterService, $stateParams, spinner, $timeout, $q, appService, openmrsPatientMapper, contextChangeHandler, messagingService, sessionService, visitService, $location, $translate, auditLogService,
-            formService, observationsService, ngDialog, $http, paymentStatusService, prescriptionService, pharmacyIntegrationService) {
+            formService, observationsService, ngDialog, $http, paymentStatusService, prescriptionService, pharmacyIntegrationService, localeService) {
             var vm = this;
             var patientUuid = $stateParams.patientUuid;
             var extensions = appService.getAppDescriptor().getExtensions("org.bahmni.registration.conceptSetGroup.observations", "prescriptionconfig");
@@ -169,6 +169,20 @@ angular.module('bahmni.registration')
 
             $scope.pharmacyConfig = $scope.rx_config.pharmacy_integration || { enabled: false };
 
+            // Fetch hospital name from login page config
+            $scope.hospitalName = 'Hospital';
+            localeService.getLoginText().then(function (response) {
+                if (response.data && response.data.homePage && response.data.homePage.header_text) {
+                    var headerText = response.data.homePage.header_text;
+                    var temp = document.createElement('div');
+                    temp.innerHTML = headerText;
+                    var rawText = (temp.textContent || temp.innerText || 'Hospital').trim();
+                    // Remove common prefixes/suffixes to get clean hospital name
+                    rawText = rawText.replace(/^WELCOME\s*TO\s*/i, '').replace(/\s*EMR\s*System\s*/i, '').trim();
+                    $scope.hospitalName = rawText || 'Hospital';
+                }
+            });
+
             $scope.sendToPharmacy = function (prescription) {
                 if (!$scope.pharmacyConfig.enabled) {
                     messagingService.showMessage('warning', "Pharmacy integration is disabled.");
@@ -272,28 +286,37 @@ angular.module('bahmni.registration')
                     let prescriptions = response.data || [];
                     $scope.allPrescriptions = prescriptions;
 
-                    let paymentCheckEnabled = $scope.rx_config.enable_rx_payment_check;
-                    let enforceOdooCheck = $scope.rx_config.enforce_odoo_payment_confirmation;
+                    // If viewing a specific encounter, filter to only that encounter's prescriptions
+                    if ($scope.historicalEncounterUuid) {
+                        $scope.prescriptions = $scope.allPrescriptions.filter(function (p) {
+                            return p.encounter_uuid === $scope.historicalEncounterUuid;
+                        });
+                        $scope.historicalDate = $scope.prescriptions.length > 0 ? $scope.prescriptions[0].date : null;
+                        $scope.historicalProvider = $scope.prescriptions.length > 0 ? $scope.prescriptions[0].prescriber : null;
+                    } else {
+                        let paymentCheckEnabled = $scope.rx_config.enable_rx_payment_check;
+                        let enforceOdooCheck = $scope.rx_config.enforce_odoo_payment_confirmation;
 
-                    // Update paymentStatus and pre_* flags for all prescriptions
-                    await Promise.all($scope.allPrescriptions.map(async (prescription) => {
-                        if (paymentCheckEnabled && enforceOdooCheck) {
-                            const statusResponse = await paymentStatusService.getPaymentStatus($scope.patient.identifier);
-                            prescription.paymentStatus = statusResponse.data && statusResponse.data.status === "PAID";
-                        } else {
-                            prescription.paymentStatus = paymentCheckEnabled ? prescription.paymentStatus : false;
-                        }
-                        prescription.status = computePrescriptionStatus(prescription);
-                        prescription.evaluated = !!prescription.evaluated;
-                        prescription.paymentStatus = !!prescription.paymentStatus;
-                        if (prescription.status === "DISPENSED") {
-                            prescription.counseled = true;
-                        }
+                        // Update paymentStatus and pre_* flags for all prescriptions
+                        await Promise.all($scope.allPrescriptions.map(async (prescription) => {
+                            if (paymentCheckEnabled && enforceOdooCheck) {
+                                const statusResponse = await paymentStatusService.getPaymentStatus($scope.patient.identifier);
+                                prescription.paymentStatus = statusResponse.data && statusResponse.data.status === "PAID";
+                            } else {
+                                prescription.paymentStatus = paymentCheckEnabled ? prescription.paymentStatus : false;
+                            }
+                            prescription.status = computePrescriptionStatus(prescription);
+                            prescription.evaluated = !!prescription.evaluated;
+                            prescription.paymentStatus = !!prescription.paymentStatus;
+                            if (prescription.status === "DISPENSED") {
+                                prescription.counseled = true;
+                            }
 
-                        updatePrescriptionFlags(prescription);
-                    }));
+                            updatePrescriptionFlags(prescription);
+                        }));
 
-                    $scope.filterPrescriptions($scope.selectedDate);
+                        $scope.filterPrescriptions($scope.selectedDate);
+                    }
 
                 } catch (error) {
                     console.error("Error fetching drug prescriptions:", error);
@@ -339,6 +362,10 @@ angular.module('bahmni.registration')
 
 
             // Fetch prescriptions initially
+            var urlParams = $location.search();
+            $scope.historicalEncounterUuid = urlParams.encounter || null;
+            $scope.isHistoricalView = !!$scope.historicalEncounterUuid;
+
             $scope.fetchPrescriptions();
 
             $scope.handlePrescriptionAction = function (action, prescription) {
@@ -360,23 +387,41 @@ angular.module('bahmni.registration')
 
                 $scope.patientInfo = `Name: ${$scope.patient.name + "[" + $scope.patient.identifier + "]" || '---'} | Age: ${$scope.patient.age.years || '---'} | Gender: ${$scope.patient.gender || '---'}`;
 
+                // Format current date
+                var now = new Date();
+                var currentDateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+                // Format birthdate
+                var birthdateStr = '---';
+                if ($scope.patient.birthdate) {
+                    var bd = new Date($scope.patient.birthdate);
+                    birthdateStr = bd.getFullYear() + '-' + String(bd.getMonth() + 1).padStart(2, '0') + '-' + String(bd.getDate()).padStart(2, '0');
+                }
+
+                // Replace all Angular expressions with actual values
                 let content = template
-                    .replace('{{uuid}}', prescription.uuid ? prescription.uuid.substring(0, 4) + '...' : '---')
-                    .replace('{{patientInfo}}', $scope.patientInfo)
-                    .replace('{{prescriber}}', prescription.prescriber ? prescription.prescriber : '---')
-                    .replace('{{dispenser}}', $scope.providerName ? $scope.providerName : '---')
-                    .replace('{{drug_name}}', prescription.drug_name || prescription.non_coded_drug_name || '---')
-                    .replace('{{strength}}', prescription.strength || '---')
-                    .replace('{{dose}}', prescription.dose ? prescription.dose + ' ' + prescription.dose_units : '---')
-                    .replace('{{frequency}}', prescription.frequency || '---')
-                    .replace('{{duration}}', prescription.duration ? prescription.duration + ' ' + prescription.duration_units : '---')
-                    .replace('{{route}}', prescription.route || '---')
-                    .replace('{{quantity}}', prescription.quantity ? prescription.quantity + ' ' + prescription.quantity_units : '---')
-                    .replace('{{instructions}}', prescription.instructions || '---')
-                    .replace('{{unit_price}}', prescription.unit_price || '---')
-                    .replace('{{total_price}}', prescription.total_price || '---')
-                    .replace('{{status}}', action || prescription.status)
-                    .replace('{{paymentStatus}}', paymentStatus);
+                    .replace(/\{\{hospitalName\}\}/g, $scope.hospitalName)
+                    .replace(/\{\{uuid\}\}/g, prescription.uuid ? prescription.uuid.substring(0, 4) + '...' : '---')
+                    .replace(/\{\{currentDate\}\}/g, currentDateStr)
+                    .replace(/\{\{patientInfo\}\}/g, $scope.patientInfo)
+                    .replace(/\{\{patient\.birthdate \| bahmniDate\}\}/g, birthdateStr)
+                    .replace(/\{\{patient\.gender\}\}/g, $scope.patient.gender || '---')
+                    .replace(/\{\{patient\.identifier\}\}/g, $scope.patient.identifier || '---')
+                    .replace(/\{\{prescriber\}\}/g, prescription.prescriber ? prescription.prescriber : '---')
+                    .replace(/\{\{dispenser\}\}/g, $scope.providerName ? $scope.providerName : '---')
+                    .replace(/\{\{drug_name\}\}/g, prescription.drug_name || prescription.non_coded_drug_name || '---')
+                    .replace(/\{\{strength\}\}/g, prescription.strength || '---')
+                    .replace(/\{\{dose\}\}/g, prescription.dose ? prescription.dose + ' ' + prescription.dose_units : '---')
+                    .replace(/\{\{frequency\}\}/g, prescription.frequency || '---')
+                    .replace(/\{\{duration\}\}/g, prescription.duration ? prescription.duration + ' ' + prescription.duration_units : '---')
+                    .replace(/\{\{route\}\}/g, prescription.route || '---')
+                    .replace(/\{\{quantity\}\}/g, prescription.quantity ? prescription.quantity + ' ' + prescription.quantity_units : '---')
+                    .replace(/\{\{instructions \|\| '---'\}\}/g, prescription.instructions || '---')
+                    .replace(/\{\{instructions\}\}/g, prescription.instructions || '---')
+                    .replace(/\{\{unit_price\}\}/g, prescription.unit_price || '---')
+                    .replace(/\{\{total_price\}\}/g, prescription.total_price || '---')
+                    .replace(/\{\{status\}\}/g, action || prescription.status)
+                    .replace(/\{\{paymentStatus\}\}/g, paymentStatus);
 
                 let printWindow = window.open('', '', 'width=800,height=600');
                 printWindow.document.write(content);
@@ -394,44 +439,66 @@ angular.module('bahmni.registration')
             };
             var save = function () {
                 $rootScope.newCRPat = false;
-                $scope.encounter = {
-                    patientUuid: $scope.patient.uuid,
-                    locationUuid: locationUuid,
-                    encounterTypeUuid: regEncounterTypeUuid,
-                    orders: [],
-                    drugOrders: [],
-                    extensions: {}
-                };
 
-                $bahmniCookieStore.put(Bahmni.Common.Constants.grantProviderAccessDataCookieName, selectedProvider, {
-                    path: '/',
-                    expires: 1
-                });
+                var visitTypes = $rootScope.regEncounterConfiguration.getVisitTypesAsArray();
+                var matchedType = visitTypes.find(function (vt) { return vt.name === defaultVisitType; });
+                var visitTypeUuid = matchedType ? matchedType.uuid : null;
 
-                $scope.encounter.observations = $scope.observations;
-                $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
+                var createEncounter = function (visitUuid) {
+                    $scope.encounter = {
+                        patientUuid: $scope.patient.uuid,
+                        locationUuid: locationUuid,
+                        encounterTypeUuid: regEncounterTypeUuid,
+                        orders: [],
+                        drugOrders: [],
+                        extensions: {}
+                    };
+                    if (visitUuid) {
+                        $scope.encounter.visitUuid = visitUuid;
+                    }
 
+                    $bahmniCookieStore.put(Bahmni.Common.Constants.grantProviderAccessDataCookieName, selectedProvider, {
+                        path: '/',
+                        expires: 1
+                    });
 
-                addFormObservations($scope.encounter.observations);
-                var createPromise = encounterService.create($scope.encounter);
-                spinner.forPromise(createPromise);
-                return createPromise.then(function (response) {
-                    var messageParams = { encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType };
-                    auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
-                    var visitType, visitTypeUuid;
-                    visitTypeUuid = $scope.selectedVisitType.uuid;
-                    visitService.getVisitType().then(function (response) {
-                        visitType = _.find(response.data.results, function (type) {
-                            if (type.uuid === visitTypeUuid) {
-                                return type;
-                            }
-                            else {
-                                return $scope.selectedVisitType;
-                            }
+                    $scope.encounter.observations = $scope.observations;
+                    $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
+
+                    addFormObservations($scope.encounter.observations);
+                    var createPromise = encounterService.create($scope.encounter);
+                    spinner.forPromise(createPromise);
+                    return createPromise.then(function (response) {
+                        var messageParams = { encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType };
+                        auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
+                        var visitType, visitTypeUuid2;
+                        visitTypeUuid2 = $scope.selectedVisitType.uuid;
+                        visitService.getVisitType().then(function (response) {
+                            visitType = _.find(response.data.results, function (type) {
+                                if (type.uuid === visitTypeUuid2) {
+                                    return type;
+                                }
+                                else {
+                                    return $scope.selectedVisitType;
+                                }
+                            });
                         });
                     });
-                });
+                };
 
+                if (vm.visitUuid) {
+                    return createEncounter(vm.visitUuid);
+                } else if (visitTypeUuid) {
+                    var visitDetails = { patient: patientUuid, visitType: visitTypeUuid, location: visitLocationUuid };
+                    return visitService.createVisit(visitDetails).then(function (response) {
+                        var newVisitUuid = response.data.uuid;
+                        vm.visitUuid = newVisitUuid;
+                        return createEncounter(newVisitUuid);
+                    });
+                } else {
+                    messagingService.showMessage('error', "No active visit and no default visit type configured.");
+                    return $q.reject("No visit available");
+                }
             };
 
             var isUserPrivilegedToCloseVisit = function () {
@@ -665,25 +732,47 @@ angular.module('bahmni.registration')
             };
 
             $scope.changeVisits = function () {
-                $scope.encounter = {
-                    patientUuid: $scope.patient.uuid,
-                    locationUuid: locationUuid,
-                    encounterTypeUuid: regEncounterTypeUuid,
-                    orders: [],
-                    drugOrders: [],
-                    extensions: {}
-                };
-                $scope.encounter.observations = $scope.observations;
-                $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
-                addFormObservations($scope.encounter.observations);
-                var createPromise = encounterService.create($scope.encounter);
-                spinner.forPromise(createPromise);
-                return createPromise.then(function (response) {
-                    var messageParams = { encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType };
-                    auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
-                    afterSave();
-                });
+                var visitTypes = $rootScope.regEncounterConfiguration.getVisitTypesAsArray();
+                var matchedType = visitTypes.find(function (vt) { return vt.name === defaultVisitType; });
+                var visitTypeUuid = matchedType ? matchedType.uuid : null;
 
+                var createEncounter = function (visitUuid) {
+                    $scope.encounter = {
+                        patientUuid: $scope.patient.uuid,
+                        locationUuid: locationUuid,
+                        encounterTypeUuid: regEncounterTypeUuid,
+                        orders: [],
+                        drugOrders: [],
+                        extensions: {}
+                    };
+                    if (visitUuid) {
+                        $scope.encounter.visitUuid = visitUuid;
+                    }
+                    $scope.encounter.observations = $scope.observations;
+                    $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
+                    addFormObservations($scope.encounter.observations);
+                    var createPromise = encounterService.create($scope.encounter);
+                    spinner.forPromise(createPromise);
+                    return createPromise.then(function (response) {
+                        var messageParams = { encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType };
+                        auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
+                        afterSave();
+                    });
+                };
+
+                if (vm.visitUuid) {
+                    return createEncounter(vm.visitUuid);
+                } else if (visitTypeUuid) {
+                    var visitDetails = { patient: patientUuid, visitType: visitTypeUuid, location: visitLocationUuid };
+                    return visitService.createVisit(visitDetails).then(function (response) {
+                        var newVisitUuid = response.data.uuid;
+                        vm.visitUuid = newVisitUuid;
+                        return createEncounter(newVisitUuid);
+                    });
+                } else {
+                    messagingService.showMessage('error', "No active visit and no default visit type configured.");
+                    return $q.reject("No visit available");
+                }
             }
 
             $scope.enterVisitDetails = $rootScope.newCRPat;

@@ -248,6 +248,9 @@ Bahmni.ConceptSet.Observation.prototype = {
         if(this.concept.conceptClass=="Multi-Graph"){
             return "Multi-Graph"
         }
+        if(this.concept.conceptClass=="Body Diagram"){
+            return "bodyDiagram"
+        }
         if (this.hidden) {
             return "hidden";
         }

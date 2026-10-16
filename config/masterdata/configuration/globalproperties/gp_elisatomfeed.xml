@@ -2,7 +2,11 @@
   <globalProperties>
     <globalProperty>
       <property>elisatomfeedclient.discontinueCancelledOrders</property>
-      <value>false</value>
+      <value>true</value>
+    </globalProperty>
+    <globalProperty>
+      <property>elisatomfeedclient.voidReasonForStockOut</property>
+      <value>Reagent Stock Out</value>
     </globalProperty>
   </globalProperties>
 </config>

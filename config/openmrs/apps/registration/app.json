@@ -345,27 +345,23 @@
                     "lable": "temperature"
                 },
                 {
-                    "concept_name": "Respiratory Rate Numeric",
+                    "concept_name": "Systolic blood pressure",
                     "lable": "bp_systolic"
                 },
                 {
-                    "concept_name": "Systolic",
-                    "lable": "bp_systolic"
-                },
-                {
-                    "concept_name": "Diastolic",
+                    "concept_name": "Diastolic blood pressure",
                     "lable": "bp_diastolic"
                 },
                 {
-                    "concept_name": "Coded",
+                    "concept_name": "Coded Diagnosis",
                     "lable": "Diagnosis"
                 },
                 {
-                    "concept_name": "Weight",
+                    "concept_name": "Weight (kg)",
                     "lable": "weight"
                 },
                 {
-                    "concept_name": "HEIGHT",
+                    "concept_name": "Height",
                     "lable": "height"
                 }
             ],

@@ -27,8 +27,8 @@ function post(url, body) {
       },
       json: true,
       body: body,
-      maxAttempts: 5,
-      retryDelay: 5000,
+      maxAttempts: 2,
+      retryDelay: 2000,
       retryStrategy: request.RetryStrategies.HTTPOrNetworkError
     }, function (err, response, body) {
       if (response) {
@@ -54,8 +54,8 @@ function get(url) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token,
       },
-      maxAttempts: 5,
-      retryDelay: 5000,
+      maxAttempts: 2,
+      retryDelay: 2000,
       retryStrategy: request.RetryStrategies.HTTPOrNetworkError
     }, function (err, response, body) {
       if (response) {

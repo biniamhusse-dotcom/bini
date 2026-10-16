@@ -3,10 +3,31 @@ const eapts = require('../modules/eapts');
 const eaptsService = require("../services/index").eaptsService;
 var router = express.Router();
 
-// Auto-poll OpenMRS every 60 seconds for new prescriptions
+// Auto-poll all sync operations staggered
+const drugSync = require("../services/drugSync").drugSync;
+const dispenseService = require("../services/drugDispense").dispenseService;
+const dtpService = require("../services/dtpCase").dtpService;
+const addressService = require("../services/addressSync").addressService;
+
 setInterval(() => {
   eaptsService().catch(err => console.error('Auto-fetch error:', err));
+}, 30000);
+
+setInterval(() => {
+  drugSync().catch(err => console.error('Auto-drugSync error:', err));
 }, 60000);
+
+setInterval(() => {
+  dispenseService().catch(err => console.error('Auto-dispenseSync error:', err));
+}, 45000);
+
+setInterval(() => {
+  dtpService().catch(err => console.error('Auto-dtpSync error:', err));
+}, 50000);
+
+setInterval(() => {
+  addressService().catch(err => console.error('Auto-addressSync error:', err));
+}, 55000);
 
 // Route for handling the '/fetch' endpoint
 // Sends the request to the 'eaptsService' function in the 'services/index' module
@@ -33,52 +54,44 @@ router.post('/fetch-single', (req, res) => {
 });
 
 // Route for handling the '/dtpCase' endpoint
-// Sends the request to the 'dtpService' function in the 'services/dtpCase' module
 router.use('/dtpCase', (req, res) => {
-  try {
-    require("../services/dtpCase").dtpService().then(response => {
-      res.send(response);
-    });
-  } catch (error) {
-    res.send(error);
-  }
+  require("../services/dtpCase").dtpService().then(response => {
+    res.send(response);
+  }).catch(error => {
+    console.error('dtpCase error:', error.message || error);
+    res.status(500).json({ error: error.message || 'DTP sync failed' });
+  });
 });
 
 // Route for handling the '/drugSync' endpoint
-// Sends the request to the 'drugSync' function in the 'services/drugSync' module
 router.use('/drugSync', (req, res) => {
-  try {
-    require("../services/drugSync").drugSync().then(response => {
-      res.send(response);
-    });
-  } catch (error) {
-    res.send(error);
-  }
+  require("../services/drugSync").drugSync().then(response => {
+    res.send(response);
+  }).catch(error => {
+    console.error('drugSync error:', error.message || error);
+    res.status(500).json({ error: error.message || 'Drug sync failed' });
+  });
 });
 
 // Route for handling the '/drugDispense' endpoint
-// Sends the request to the 'dispenseService' function in the 'services/drugDispense' module
 router.use('/drugDispense', (req, res) => {
-  try {
-    require("../services/drugDispense").dispenseService().then(response => {
-      res.send(response);
-    });
-  } catch (error) {
-    res.send(error);
-  }
+  require("../services/drugDispense").dispenseService().then(response => {
+    res.send(response);
+  }).catch(error => {
+    console.error('drugDispense error:', error.message || error);
+    res.status(500).json({ error: error.message || 'Dispense sync failed' });
+  });
 });
 
 // Route for handling the '/addressSync' endpoint
-// Sends the request to the 'addressService' function in the 'services/addressSync' module
 router.use('/addressSync', (req, res) => {
-  try {
-    require("../services/addressSync").addressService().then(response => {
-      console.log(response);
-      res.send(response);
-    });
-  } catch (error) {
-    res.send(error);
-  }
+  require("../services/addressSync").addressService().then(response => {
+    console.log(response);
+    res.send(response);
+  }).catch(error => {
+    console.error('addressSync error:', error.message || error);
+    res.status(500).json({ error: error.message || 'Address sync failed' });
+  });
 });
 
 // GET /institutions - Proxy Dagu active Dispensing Units for Bahmni UI dropdown
@@ -115,8 +128,11 @@ router.post('/setInstitution', (req, res) => {
     const fs = require('fs');
     const path = require('path');
     const configPath = path.resolve(__dirname, '../location-mapping.json');
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    const daguInstitutionId = (config.locationInstitutionMap && config.locationInstitutionMap[name]) || config.defaultInstitutionId;
+    let config = {};
+    if (fs.existsSync(configPath)) {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+    const daguInstitutionId = (config.locationInstitutionMap && config.locationInstitutionMap[name]) || config.defaultInstitutionId || institutionId;
     const outPath = path.resolve(__dirname, '../selected-institution.json');
     fs.writeFileSync(outPath, JSON.stringify({ institutionId: daguInstitutionId, name: name }, null, 2));
     res.json({ success: true, daguInstitutionId });
