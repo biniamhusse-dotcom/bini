@@ -350,17 +350,13 @@ angular.module('bahmni.clinical')
                 }
             }
         }
-        var specialities = $http.get(Bahmni.Common.Constants.getAllSpecialitiesUrl, {
-            withCredentials: true,
-            headers: { "Accept": "application/json", "Content-Type": "application/json" }
-        })
-        var loadAllSpeciality = function () {
-            return specialities.then(function (specialitiesList) {
-                $scope.specialities = specialitiesList.data.map((e) => e.name);
-            });
-        };
-
-        loadAllSpeciality();
+        var defaultSpecialities = [
+            "Anesthesiology", "Dentistry", "Dermatovenerology", "EMCC", "ENT",
+            "Internal Medicine", "Neurology", "OBGYN", "Occupational Therapy",
+            "OMF Surgery", "Ophthalmology", "Optometry", "Orthopedic & Trauma",
+            "Pathology", "Pediatric", "Physiotherapy", "Psychiatric", "Radiology", "Surgery"
+        ];
+        $scope.specialities = defaultSpecialities;
 
         var getReferalHospitalAndDurationUniteConcepts = function () {
             return dispositionService.getDurationUniteConcept().then(function (response) {
@@ -1153,6 +1149,26 @@ angular.module('bahmni.clinical')
                 }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Treatment provided&v=custom:(uuid)").then(function (response) {
                     $scope.treatmentProvidedConceptUuid = response.data.results[0] ? response.data.results[0].uuid : null;
+                }),
+                $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Referral department&v=custom:(uuid)").then(function (response) {
+                    if (response.data.results && response.data.results[0]) {
+                        $scope.referralDepartmentConceptUuid = response.data.results[0].uuid;
+                    }
+                }),
+                $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Patient condition at referral&v=custom:(uuid)").then(function (response) {
+                    if (response.data.results && response.data.results[0]) {
+                        $scope.patientConditionConceptUuid = response.data.results[0].uuid;
+                    }
+                }),
+                $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Need ambulance&v=custom:(uuid)").then(function (response) {
+                    if (response.data.results && response.data.results[0]) {
+                        $scope.needAmbulanceConceptUuid = response.data.results[0].uuid;
+                    }
+                }),
+                $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Need escorting professionals&v=custom:(uuid)").then(function (response) {
+                    if (response.data.results && response.data.results[0]) {
+                        $scope.needEscortingConceptUuid = response.data.results[0].uuid;
+                    }
                 })
             ]);
         };

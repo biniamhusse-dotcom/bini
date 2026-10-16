@@ -28,6 +28,7 @@ UI_FILES = [
     "bedmanagement/views/referFormPrint.html",
     "bedmanagement/views/referralManagement.html",
     "common/constants.js",
+    "common/util/httpErrorInterceptor.js",
     "common/displaycontrols/disposition/init.js",
     "common/displaycontrols/disposition/directives/disposition.js",
     "common/displaycontrols/disposition/views/disposition.html",
@@ -52,6 +53,7 @@ CFG_FILES = [
     "masterdata/configuration/sql/register_referral_mgmt.sql",
     "masterdata/configuration/sql/register_referral_mgmt_v2.sql",
     "masterdata/configuration/sql/emrapi.sqlSearch.referralManagement.sql",
+    "masterdata/configuration/sql/create_referral_concepts.sql",
     "masterdata/configuration/bahmniforms/referral_letter.json",
     "openmrs/apps/clinical/dashboard.json",
     "openmrs/i18n/clinical/locale_en.json",
@@ -61,11 +63,13 @@ CFG_FILES = [
 ]
 
 SQL_FILES = [
+    "config/masterdata/configuration/sql/create_referral_concepts.sql",
     "config/masterdata/configuration/sql/add_emergency_keep_mapping.sql",
     "config/masterdata/configuration/sql/add_referral_management_sql.sql",
     "config/masterdata/configuration/sql/register_referral_mgmt.sql",
     "config/masterdata/configuration/sql/register_referral_mgmt_v2.sql",
 ]
+
 
 
 def manifest():
@@ -128,6 +132,9 @@ class Putty:
             pass
 
     def upload(self, local_path, remote_dir):
+        made = self.run("mkdir -p '%s'" % remote_dir, timeout=60)
+        if made.returncode != 0:
+            return made
         args = [self.pscp] + self.base + ["-batch", "-r", local_path, "%s:%s" % (self.target, remote_dir)]
         return subprocess.run(args, capture_output=True, timeout=600)
 
