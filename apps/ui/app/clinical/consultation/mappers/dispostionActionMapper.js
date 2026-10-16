@@ -6,7 +6,8 @@ Bahmni.Clinical.DispostionActionMapper = function () {
             concept.mappings.forEach(function (mapping) {
                 var mappingSource = mapping.display.split(":")[0];
                 if (mappingSource === Bahmni.Common.Constants.emrapiConceptMappingSource) {
-                    mappingCode = $.trim(mapping.display.split(":")[1]);
+                    var rawCode = $.trim(mapping.display.split(":")[1]);
+                    mappingCode = rawCode.split(/[\s(]/)[0];
                 }
             });
         }

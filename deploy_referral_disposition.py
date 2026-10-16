@@ -17,6 +17,7 @@ UI_FILES = [
     "clinical/index.html",
     "clinical/consultation/controllers/dispositionController.js",
     "clinical/consultation/controllers/consultationSummaryController.js",
+    "clinical/consultation/mappers/dispostionActionMapper.js",
     "clinical/consultation/views/disposition.html",
     "clinical/consultation/views/consultation.html",
     "bedmanagement/app.js",

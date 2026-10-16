@@ -7,11 +7,12 @@ SET @emrapi_source_id = (SELECT concept_source_id FROM concept_reference_source
 
 -- 2. Create reference term EMERGENCY_KEEP if not exists
 INSERT INTO concept_reference_term (concept_source_id, code, name, creator, date_created, uuid, retired)
-SELECT @emrapi_source_id, 'EMERGENCY_KEEP', 'Emergency keep', 1, NOW(), UUID(), 0
+SELECT @emrapi_source_id, 'EMERGENCY_KEEP', NULL, 1, NOW(), UUID(), 0
 WHERE NOT EXISTS (
     SELECT 1 FROM concept_reference_term 
     WHERE concept_source_id = @emrapi_source_id AND code = 'EMERGENCY_KEEP'
 );
+UPDATE concept_reference_term SET name = NULL WHERE code = 'EMERGENCY_KEEP';
 
 -- 3. Get the reference term ID
 SET @emergency_term_id = (SELECT concept_reference_term_id FROM concept_reference_term 
