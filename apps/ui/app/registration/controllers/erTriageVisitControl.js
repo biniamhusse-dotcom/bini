@@ -172,7 +172,7 @@ angular.module('bahmni.registration')
                         dispositionService.getDispositionByVisit(vm.visitUuid).then(function (dispResponse) {
                             var dispositions = dispResponse.data;
                             var hasEmergencyKeep = _.some(dispositions, function (d) {
-                                return d.conceptName === "Emergency keep" || d.preferredName === "Emergency keep";
+                                return d.code === "EMERGENCY_KEEP" || d.conceptName === "Emergency keep" || d.preferredName === "Emergency keep";
                             });
                             if (hasEmergencyKeep) {
                                 messagingService.showMessage("error", 'REGISTRATION_VISIT_CANNOT_BE_CLOSED');

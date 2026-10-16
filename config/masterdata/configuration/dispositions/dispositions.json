@@ -1,0 +1,66 @@
+[
+  {
+    "uuid": "d36dd2e4-5e07-11ef-8f7c-0242ac120002",
+    "name": "Admit Patient",
+    "conceptCode": "org.openmrs.module.emrapi:ADMIT",
+    "type": "ADMIT",
+    "keepsVisitOpen": true,
+    "actions": []
+  },
+  {
+    "uuid": "d5fe696d-5e07-11ef-8f7c-0242ac120002",
+    "name": "Undo Discharge",
+    "conceptCode": "org.openmrs.module.emrapi:UNDO_DISCHARGE",
+    "type": "ADMIT",
+    "keepsVisitOpen": true,
+    "actions": []
+  },
+  {
+    "uuid": "d36e564b-5e07-11ef-8f7c-0242ac120002",
+    "name": "Transfer Patient",
+    "conceptCode": "org.openmrs.module.emrapi:TRANSFER",
+    "type": "TRANSFER",
+    "keepsVisitOpen": true,
+    "actions": []
+  },
+  {
+    "uuid": "e14bd13f-a598-4584-b40a-37ed065365df",
+    "name": "Link Patient",
+    "conceptCode": "org.openmrs.module.emrapi:LINK",
+    "type": "TRANSFER",
+    "keepsVisitOpen": true,
+    "actions": []
+  },
+  {
+    "uuid": "90a101f4-c953-11f1-acb6-56dac44a4486",
+    "name": "Emergency keep",
+    "conceptCode": "org.openmrs.module.emrapi:EMERGENCY_KEEP",
+    "type": "ADMIT",
+    "keepsVisitOpen": true,
+    "actions": []
+  },
+  {
+    "uuid": "d36e1435-5e07-11ef-8f7c-0242ac120002",
+    "name": "Discharge Patient",
+    "conceptCode": "org.openmrs.module.emrapi:DISCHARGE",
+    "type": "DISCHARGE",
+    "keepsVisitOpen": false,
+    "actions": []
+  },
+  {
+    "uuid": "91c29645-5d3b-431c-a8dc-b6e7adc33040",
+    "name": "Refer Patient",
+    "conceptCode": "org.openmrs.module.emrapi:REFER",
+    "type": "DISCHARGE",
+    "keepsVisitOpen": false,
+    "actions": []
+  },
+  {
+    "uuid": "34ad2cfa-82e8-4ec1-b648-6d6a7b22e983",
+    "name": "Close Visit",
+    "conceptCode": "org.openmrs.module.emrapi:CLOSE_VISIT",
+    "type": "DISCHARGE",
+    "keepsVisitOpen": false,
+    "actions": []
+  }
+]

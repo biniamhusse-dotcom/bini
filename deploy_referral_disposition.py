@@ -57,6 +57,7 @@ CFG_FILES = [
     "masterdata/configuration/sql/emrapi.sqlSearch.referralManagement.sql",
     "masterdata/configuration/sql/create_referral_concepts.sql",
     "masterdata/configuration/bahmniforms/referral_letter.json",
+    "masterdata/configuration/dispositions/dispositions.json",
     "openmrs/apps/clinical/dashboard.json",
     "openmrs/i18n/clinical/locale_en.json",
     "openmrs/i18n/ipd/locale_en.json",
