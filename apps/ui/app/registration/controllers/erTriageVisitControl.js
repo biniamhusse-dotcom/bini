@@ -2,15 +2,15 @@
 
 angular.module('bahmni.registration')
     .controller('ERTriageVisitController', ['$window', '$scope', '$rootScope', '$state', '$bahmniCookieStore', 'patientService', 'encounterService', '$stateParams', 'spinner', '$timeout', '$q', 'appService', 'openmrsPatientMapper', 'contextChangeHandler', 'messagingService', 'sessionService', 'visitService', '$location', '$translate',
-        'auditLogService', 'formService', 'observationsService', '$http', 'dispositionService',
+        'auditLogService', 'formService', 'observationsService', '$http', 'dispositionService', 'erTriageConfigService',
         function ($window, $scope, $rootScope, $state, $bahmniCookieStore, patientService, encounterService, $stateParams, spinner, $timeout, $q, appService, openmrsPatientMapper, contextChangeHandler, messagingService, sessionService, visitService, $location, $translate, auditLogService,
-                  formService, observationsService, $http, dispositionService) {
+                  formService, observationsService, $http, dispositionService, erTriageConfigService) {
             var vm = this;
             var patientUuid = $stateParams.patientUuid;
             var triageType = $stateParams.triageType;
-            var erTriageForms = appService.getAppDescriptor().getConfigValue("erTriageFormLookup")
-            var extensions = appService.getAppDescriptor().getExtensions("org.bahmni.registration.conceptSetGroup.observations", erTriageForms[triageType][0]);
-            var formExtensions = appService.getAppDescriptor().getExtensions("org.bahmni.registration.conceptSetGroup.observations", erTriageForms[triageType][1]);
+            var formLookup = erTriageConfigService.getFormLookup(triageType);
+            var extensions = appService.getAppDescriptor().getExtensions("org.bahmni.registration.conceptSetGroup.observations", formLookup[0]);
+            var formExtensions = appService.getAppDescriptor().getExtensions("org.bahmni.registration.conceptSetGroup.observations", formLookup[1]);
 
             var locationUuid = sessionService.getLoginLocationUuid();
             var selectedProvider = $rootScope.currentProvider;

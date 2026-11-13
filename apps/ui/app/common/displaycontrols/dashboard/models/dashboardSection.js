@@ -21,7 +21,8 @@
         "patientInformation",
         "conditionsList",
         "referralHistory",
-        "stockOut"
+        "stockOut",
+        "dtpHistory"
     ];
     var reactDisplayControls = [
         "allergies",

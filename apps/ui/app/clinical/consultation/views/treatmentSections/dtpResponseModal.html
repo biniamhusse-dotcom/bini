@@ -1,0 +1,49 @@
+<div class="ngdialog-message" style="padding: 15px;">
+    <h3 style="margin-top: 0; color: #721c24; border-bottom: 1px solid #f5c6cb; padding-bottom: 8px;">
+        <i class="fa fa-exclamation-circle" style="color: #d9534f;"></i>
+        DTP Resolution &amp; Prescription Resend
+    </h3>
+
+    <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 12px;">
+        <div><strong>Drug:</strong> {{dtpModal.drugOrder.getDisplayName()}} {{dtpModal.drugOrder.getDescriptionWithQuantity()}}</div>
+        <div style="margin-top: 6px;"><strong>Pharmacy DTP Message:</strong></div>
+        <div style="white-space: pre-wrap; font-style: italic; margin-top: 2px;">{{dtpModal.drugOrder.dtpCases}}</div>
+    </div>
+
+    <div style="margin-bottom: 14px;">
+        <button type="button" class="secondary-button" ng-click="dtpEditFullDrug()" style="width: 100%; padding: 8px; font-weight: bold;">
+            <i class="fa fa-edit"></i> Edit Full Drug / Change Drug in Prescription Form
+        </button>
+    </div>
+
+    <div style="border-top: 1px solid #ddd; padding-top: 12px;">
+        <div style="font-weight: bold; margin-bottom: 6px; color: #333;">
+            Or Keep Prescription &amp; Resend with Physician Reason / Explanation:
+        </div>
+        <textarea ng-model="dtpModal.physicianReason" rows="3"
+                  style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+                  placeholder="Enter your clinical reason and explanation for keeping/resending this prescription..."></textarea>
+
+        <div style="margin-top: 8px;">
+            <label style="cursor: pointer; font-weight: normal;">
+                <input type="checkbox" ng-model="dtpModal.resendFullPrescription" />
+                Resend full active prescription (all active drugs without duplicates)
+            </label>
+        </div>
+
+        <div ng-if="dtpModal.error" style="color: #d9534f; margin-top: 6px; font-size: 12px;">
+            {{dtpModal.error}}
+        </div>
+
+        <div style="margin-top: 14px; text-align: right;">
+            <button type="button" class="secondary-button" ng-click="closeDtpModal()" style="margin-right: 8px;">
+                Cancel
+            </button>
+            <button type="button" class="confirm" ng-click="submitDtpOverrideAndResend()" ng-disabled="dtpModal.submitting"
+                    style="background-color: #28a745; color: #fff; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer;">
+                <i class="fa fa-paper-plane"></i>
+                {{dtpModal.submitting ? 'Sending...' : 'Save Reason & Resend Prescription'}}
+            </button>
+        </div>
+    </div>
+</div>

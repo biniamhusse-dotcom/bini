@@ -2,8 +2,8 @@
 
 angular.module('bahmni.registration')
     .controller('SearchPatientController', ['$http', '$rootScope', '$scope', '$location', '$window', 'spinner', 'patientService', 'appService', '$stateParams',
-        'messagingService', '$translate', '$filter', '$bahmniCookieStore', 'encounterService', 'visitService', 'auditLogService', 'ngDialog', 'prescriptionService',
-        function ($http, $rootScope, $scope, $location, $window, spinner, patientService, appService, $stateParams, messagingService, $translate, $filter, $bahmniCookieStore, encounterService, visitService, auditLogService, ngDialog, prescriptionService) {
+        'messagingService', '$translate', '$filter', '$bahmniCookieStore', 'encounterService', 'visitService', 'auditLogService', 'ngDialog', 'prescriptionService', 'erTriageConfigService', 'ethiopianGregorianService',
+        function ($http, $rootScope, $scope, $location, $window, spinner, patientService, appService, $stateParams, messagingService, $translate, $filter, $bahmniCookieStore, encounterService, visitService, auditLogService, ngDialog, prescriptionService, erTriageConfigService, ethiopianGregorianService) {
             $scope.results = [];
             $scope.extraIdentifierTypes = _.filter($rootScope.patientConfiguration.identifierTypes, function (identifierType) {
                 return !identifierType.primary;
@@ -519,49 +519,53 @@ angular.module('bahmni.registration')
                     });
                 }
             };
+            $scope.getMappedLocationName = function (triageName) {
+                var mapped = erTriageConfigService.getMappedLocationInfo(triageName);
+                return mapped ? (mapped.locationName || '') : '';
+            };
+
             $scope.selectTriage = function () {
                 if ($scope.selectedPatient.uuid != undefined) {
-                    $scope.selectedPatient.age = parseInt($scope.selectedPatient.age);
-                    $scope.dialog = ngDialog.open({
-                        template: 'views/selectTriagePopUp.html',
-                        className: 'test ngdialog-theme-default',
-                        scope: $scope
+                    erTriageConfigService.refreshConfig().finally(function () {
+                        $scope.selectedPatient.age = parseInt($scope.selectedPatient.age, 10);
+                        $scope.triageType = erTriageConfigService.getTriageTypesForPatient($scope.selectedPatient);
+                        $scope.selectedTriageType = ($scope.triageType && $scope.triageType.length > 0) ? $scope.triageType[0] : undefined;
+                        $scope.dialog = ngDialog.open({
+                            template: 'views/selectTriagePopUp.html',
+                            className: 'test ngdialog-theme-default',
+                            scope: $scope
+                        });
+                        $('body').addClass('show-controller-back');
                     });
-                    $('body').addClass('show-controller-back');
-                    if ($scope.selectedPatient.gender != "M" && $scope.selectedPatient.age > 10) {
-                        $scope.triageType = erTriageVisitTypes.adultFemale;
-                    } else if ($scope.selectedPatient.gender != "M" && $scope.selectedPatient.age <= 10) {
-                        $scope.triageType = erTriageVisitTypes.pediatricsFemale;
-                    }
-                    else {
-                        if ($scope.selectedPatient.age > 10) {
-                            $scope.triageType = erTriageVisitTypes.adultMale;
-                        }
-                        else if ($scope.selectedPatient.age <= 10) {
-                            $scope.triageType = erTriageVisitTypes.pediatricsMale;
-                        } else {
-                            $scope.triageType = erTriageVisitTypes.Other;
-                        }
-                    }
                 }
             };
             $scope.selectedTriage = function (triageSelected) {
+                if (!triageSelected) {
+                    messagingService.showMessage("error", "Please select a triage type.");
+                    return;
+                }
                 $scope.triageSelected = triageSelected;
-                var selectedVisitType = $scope.visitControl.visitTypes.filter(function (visitType) {
-                    return visitType.name === $scope.triageSelected;
-                })[0];
+                var selectedVisitType = erTriageConfigService.resolveVisitTypeForTriage(
+                    $scope.triageSelected,
+                    $scope.visitControl.visitTypes,
+                    defaultVisitType
+                );
+                var targetVisitLocation = erTriageConfigService.resolveVisitLocationForTriage(
+                    $scope.triageSelected,
+                    $rootScope.visitLocation
+                );
                 $scope.visitControl.startVisit(selectedVisitType);
                 if ($scope.selectedPatient.activeVisitUuid != null) {
                     visitService.getVisitSummary($scope.selectedPatient.activeVisitUuid).then(function (response) {
-                        closeVisit(response.data)
-                    })
+                        closeVisit(response.data);
+                    });
                 }
-                return spinner.forPromise($scope.visitControl.createVisitOnly($scope.selectedPatient.uuid, $rootScope.visitLocation).then(function (response) {
+                return spinner.forPromise($scope.visitControl.createVisitOnly($scope.selectedPatient.uuid, targetVisitLocation).then(function (response) {
                     auditLogService.log($scope.selectedPatient.uuid, "OPEN_VISIT", { visitUuid: response.data.uuid, visitType: response.data.visitType.display }, 'MODULE_LABEL_REGISTRATION_KEY');
                     $location.url("/patient/" + $scope.selectedPatient.uuid + "/erTriageVisit/" + $scope.triageSelected);
                     ngDialog.close();
-                }))
-            }
+                }));
+            };
 
             //This method open visits for CR patients and redirect them to  ER triage form 
             $scope.startVisitForExistedPatientCR = function () {
@@ -645,7 +649,17 @@ angular.module('bahmni.registration')
             $scope.prescriptionFilters = {
                 searchText: '',
                 startDate: null,
-                endDate: null
+                endDate: null,
+                status: ''
+            };
+
+            $scope.filterByStatus = function (statusKey) {
+                if ($scope.prescriptionFilters.status === statusKey) {
+                    $scope.prescriptionFilters.status = '';
+                } else {
+                    $scope.prescriptionFilters.status = statusKey || '';
+                }
+                $scope.applyPrescriptionFilters();
             };
 
             $scope.loadAllPrescribedPatients = function () {
@@ -684,11 +698,18 @@ angular.module('bahmni.registration')
                         }
                     }
                     var providerKey = rx.provider_name || 'Unknown Provider';
+                    var ethDateDisplay = '';
+                    if (dateKey !== 'Unknown Date') {
+                        try {
+                            ethDateDisplay = ethiopianGregorianService.gregToEth(dateKey);
+                        } catch (e) {}
+                    }
                     if (!groups[encounterKey]) {
                         groups[encounterKey] = {
                             encounter_uuid: encounterKey,
                             date: dateKey,
                             dateDisplay: dateDisplay,
+                            ethDateDisplay: ethDateDisplay || dateDisplay,
                             provider: providerKey,
                             drugs: []
                         };
@@ -709,13 +730,21 @@ angular.module('bahmni.registration')
                 var searchText = ($scope.prescriptionFilters.searchText || '').toLowerCase();
                 var startDate = $scope.prescriptionFilters.startDate ? new Date($scope.prescriptionFilters.startDate) : null;
                 var endDate = $scope.prescriptionFilters.endDate ? new Date($scope.prescriptionFilters.endDate) : null;
+                var selectedStatus = ($scope.prescriptionFilters.status || '').toUpperCase();
 
                 if (startDate) startDate.setHours(0, 0, 0, 0);
                 if (endDate) endDate.setHours(23, 59, 59, 999);
 
-                var totalCount = 0;
+                var overallPatientsCount = 0;
+                var overallPrescriptionCount = 0;
+                var overallPendingCount = 0;
+                var overallDispensedCount = 0;
+                var overallDtpCount = 0;
+                var overallTotalVisits = 0;
 
-                $scope.prescribedPatients = $scope.allPrescribedPatients.filter(function (patient) {
+                var filteredList = [];
+
+                ($scope.allPrescribedPatients || []).forEach(function (patient) {
                     var matchesSearch = true;
                     var matchesDate = true;
 
@@ -733,47 +762,111 @@ angular.module('bahmni.registration')
                         }
                     }
 
-                    if (startDate || endDate) {
-                        var matchingRx = (patient.prescriptions || []).filter(function (rx) {
-                            if (!rx.prescription_date) return false;
-                            var rxDate;
-                            if (Array.isArray(rx.prescription_date)) {
-                                rxDate = new Date(rx.prescription_date[0], rx.prescription_date[1] - 1, rx.prescription_date[2]);
-                            } else {
-                                rxDate = new Date(rx.prescription_date);
-                            }
-                            if (isNaN(rxDate.getTime())) return false;
-                            if (startDate && rxDate < startDate) return false;
-                            if (endDate && rxDate > endDate) return false;
-                            return true;
-                        });
-
-                        if (matchingRx.length === 0) {
-                            matchesDate = false;
+                    var dateFilteredRx = (patient.prescriptions || []).filter(function (rx) {
+                        if (!rx.prescription_date) return false;
+                        var rxDate;
+                        if (Array.isArray(rx.prescription_date)) {
+                            rxDate = new Date(rx.prescription_date[0], rx.prescription_date[1] - 1, rx.prescription_date[2]);
                         } else {
-                            patient.filteredPrescriptions = matchingRx;
+                            rxDate = new Date(rx.prescription_date);
                         }
-                    } else {
-                        patient.filteredPrescriptions = patient.prescriptions;
+                        if (isNaN(rxDate.getTime())) return false;
+                        if (startDate && rxDate < startDate) return false;
+                        if (endDate && rxDate > endDate) return false;
+                        return true;
+                    });
+
+                    if ((startDate || endDate) && dateFilteredRx.length === 0) {
+                        matchesDate = false;
                     }
 
                     if (matchesSearch && matchesDate) {
-                        var rxList = patient.filteredPrescriptions || patient.prescriptions || [];
-                        totalCount += rxList.length;
-                        patient._groupedPrescriptions = $scope.groupPrescriptionsByDate(rxList);
-                        return true;
+                        var rxList = (startDate || endDate) ? dateFilteredRx : (patient.prescriptions || []);
+                        overallPatientsCount++;
+                        overallPrescriptionCount += rxList.length;
+
+                        var patientPending = 0;
+                        var patientDispensed = 0;
+                        var patientDtp = 0;
+
+                        rxList.forEach(function (rx) {
+                            var st = (rx.status || 'ISSUED').toUpperCase();
+                            if (st === 'DISPENSED') {
+                                overallDispensedCount++;
+                                patientDispensed++;
+                            } else if (st === 'RETURNED_DTP' || st === 'DTP' || st.indexOf('DTP') !== -1) {
+                                overallDtpCount++;
+                                patientDtp++;
+                            } else if (st !== 'DISCARDED' && st !== 'STOCKED OUT') {
+                                overallPendingCount++;
+                                patientPending++;
+                            }
+                        });
+
+                        var patientGroups = $scope.groupPrescriptionsByDate(rxList);
+                        overallTotalVisits += patientGroups.length;
+
+                        patient._hasDtp = patientDtp > 0;
+                        patient._dtpCount = patientDtp;
+                        patient._hasPending = patientPending > 0;
+                        patient._pendingCount = patientPending;
+                        patient._hasDispensed = patientDispensed > 0;
+                        patient._dispensedCount = patientDispensed;
+
+                        // Check status filter for table display
+                        var matchesStatus = true;
+                        if (selectedStatus) {
+                            if (selectedStatus === 'RETURNED_DTP') {
+                                matchesStatus = patientDtp > 0;
+                            } else if (selectedStatus === 'DISPENSED') {
+                                matchesStatus = patientDispensed > 0;
+                            } else if (selectedStatus === 'PENDING') {
+                                matchesStatus = patientPending > 0;
+                            }
+                        }
+
+                        if (matchesStatus) {
+                            var displayRxList = rxList;
+                            if (selectedStatus) {
+                                displayRxList = rxList.filter(function (rx) {
+                                    var st = (rx.status || 'ISSUED').toUpperCase();
+                                    if (selectedStatus === 'RETURNED_DTP') {
+                                        return st === 'RETURNED_DTP' || st === 'DTP' || st.indexOf('DTP') !== -1;
+                                    } else if (selectedStatus === 'DISPENSED') {
+                                        return st === 'DISPENSED';
+                                    } else if (selectedStatus === 'PENDING') {
+                                        return st !== 'DISPENSED' && st !== 'RETURNED_DTP' && st !== 'DTP' && st.indexOf('DTP') === -1 && st !== 'DISCARDED' && st !== 'STOCKED OUT';
+                                    }
+                                    return true;
+                                });
+                            }
+                            patient.filteredPrescriptions = displayRxList;
+                            patient._groupedPrescriptions = $scope.groupPrescriptionsByDate(displayRxList);
+                            filteredList.push(patient);
+                        }
                     }
-                    return false;
                 });
 
-                $scope.totalPrescriptionCount = totalCount;
+                $scope.prescribedPatients = filteredList;
+                $scope.totalPrescriptionCount = selectedStatus ? 
+                    (selectedStatus === 'RETURNED_DTP' ? overallDtpCount : (selectedStatus === 'DISPENSED' ? overallDispensedCount : overallPendingCount)) :
+                    overallPrescriptionCount;
+                $scope.prescriptionStats = {
+                    totalPatients: overallPatientsCount,
+                    totalPrescriptions: overallPrescriptionCount,
+                    pendingCount: overallPendingCount,
+                    dispensedCount: overallDispensedCount,
+                    dtpCount: overallDtpCount,
+                    totalVisits: overallTotalVisits
+                };
             };
 
             $scope.clearPrescriptionFilters = function () {
                 $scope.prescriptionFilters = {
                     searchText: '',
                     startDate: null,
-                    endDate: null
+                    endDate: null,
+                    status: ''
                 };
                 $scope.applyPrescriptionFilters();
             };
@@ -787,11 +880,373 @@ angular.module('bahmni.registration')
                 }
             };
 
+            $scope.goTo = function (url) {
+                $location.url(url);
+            };
+
             $scope.goToPatientPrescription = function (patientUuid) {
                 $location.url("/patient/" + patientUuid + "/prescription");
             };
 
             $scope.goToHistoricalPrescription = function (patientUuid, encounterUuid) {
                 $location.url("/patient/" + patientUuid + "/prescription?encounter=" + encounterUuid);
+            };
+
+            // Dispensing Registration Book Tab
+            $scope.tabState = { active: 'list' };
+            $scope.activePrescriptionTab = 'list'; // backward compatibility
+            $scope.allRegisterRows = [];
+            $scope.registerRows = [];
+            $scope.loadingRegister = false;
+            $scope.registerFilters = {
+                searchText: '',
+                startDate: null,
+                endDate: null,
+                allDispensed: '',
+                antibiotics: '',
+                gender: '',
+                ageGroup: ''
+            };
+            $scope.registerTotals = {
+                rowCount: 0,
+                totalMeds: 0,
+                fsmlCount: 0,
+                allDispensed: 0,
+                antibiotics: 0
+            };
+
+            try {
+                $scope.registerHeader = JSON.parse(localStorage.getItem('dispensingRegisterHeader') || '{"region":"","zone":"","woreda":"","facilityName":""}');
+            } catch (e) {
+                $scope.registerHeader = { region: '', zone: '', woreda: '', facilityName: '' };
+            }
+
+            // Automatically load facility name and administrative hierarchy (Region, Zone, Woreda) from branding
+            $http.get('/bahmni_config/openmrs/apps/branding.json?v=' + Date.now()).then(function (res) {
+                var b = res.data || {};
+                var saved = {};
+                try {
+                    saved = JSON.parse(localStorage.getItem('dispensingRegisterHeader') || '{}');
+                } catch (e) {}
+
+                // Default to branding values if not explicitly overridden by user
+                $scope.registerHeader.facilityName = (saved.facilityName && saved.facilityName.trim()) ? saved.facilityName : (b.facilityName || 'Dessie HC');
+                $scope.registerHeader.region = (saved.region && saved.region.trim()) ? saved.region : (b.region || 'Amhara');
+                $scope.registerHeader.zone = (saved.zone && saved.zone.trim()) ? saved.zone : (b.zone || 'South Wollo');
+                $scope.registerHeader.woreda = (saved.woreda && saved.woreda.trim()) ? saved.woreda : (b.woreda || 'Dessie');
+            }).catch(function () {
+                if (!$scope.registerHeader.facilityName) $scope.registerHeader.facilityName = 'Dessie HC';
+                if (!$scope.registerHeader.region) $scope.registerHeader.region = 'Amhara';
+                if (!$scope.registerHeader.zone) $scope.registerHeader.zone = 'South Wollo';
+                if (!$scope.registerHeader.woreda) $scope.registerHeader.woreda = 'Dessie';
+            });
+
+            $scope.saveRegisterHeader = function () {
+                try {
+                    localStorage.setItem('dispensingRegisterHeader', JSON.stringify($scope.registerHeader));
+                } catch (e) {}
+            };
+
+            var getRegisterRowOverrides = function () {
+                try {
+                    return JSON.parse(localStorage.getItem('dispensingRegisterRowOverrides') || '{}');
+                } catch (e) {
+                    return {};
+                }
+            };
+
+            $scope.saveRegisterRowOverride = function (row) {
+                if (!row || !row.encounter_uuid) return;
+                var overrides = getRegisterRowOverrides();
+                overrides[row.encounter_uuid] = {
+                    fsmlCount: row.fsmlCount,
+                    allDispensed: row.allDispensed,
+                    antibiotics: row.antibiotics,
+                    remark: row.remark
+                };
+                try {
+                    localStorage.setItem('dispensingRegisterRowOverrides', JSON.stringify(overrides));
+                } catch (e) {}
+                $scope.recalcRegisterTotals();
+            };
+
+            var ANTIBIOTIC_REGEX = /\b(amoxicillin|ampicillin|azithromycin|ceftriaxone|cefixime|cephalexin|ciprofloxacin|clindamycin|cloxacillin|doxycycline|erythromycin|gentamicin|levofloxacin|metronidazole|nitrofurantoin|norfloxacin|penicillin|cotrimoxazole|trimethoprim|sulfamethoxazole|tetracycline|vancomycin|meropenem|augmentin|cefazolin|cefuroxime|cefotaxime|clarithromycin|ofloxacin|tinidazole|chloramphenicol)\b/i;
+
+            $scope.recalcRegisterTotals = function () {
+                var rows = $scope.registerRows || [];
+                var totals = {
+                    rowCount: rows.length,
+                    totalMeds: 0,
+                    fsmlCount: 0,
+                    allDispensed: 0,
+                    antibiotics: 0
+                };
+                rows.forEach(function (r) {
+                    if (!r) return;
+                    totals.totalMeds += Number(r.total_meds) || 0;
+                    totals.fsmlCount += Number(r.fsmlCount) || 0;
+                    totals.allDispensed += Number(r.allDispensed) === 1 ? 1 : 0;
+                    totals.antibiotics += Number(r.antibiotics) === 1 ? 1 : 0;
+                });
+                $scope.registerTotals = totals;
+            };
+
+            $scope.applyRegisterFilters = function () {
+                if (!$scope.allRegisterRows) {
+                    $scope.registerRows = [];
+                    $scope.recalcRegisterTotals();
+                    return;
+                }
+                var filters = $scope.registerFilters || {};
+                var search = (filters.searchText || '').toLowerCase().trim();
+                var startDate = filters.startDate ? new Date(filters.startDate) : null;
+                var endDate = filters.endDate ? new Date(filters.endDate) : null;
+                if (startDate && !isNaN(startDate.getTime())) startDate.setHours(0, 0, 0, 0); else startDate = null;
+                if (endDate && !isNaN(endDate.getTime())) endDate.setHours(23, 59, 59, 999); else endDate = null;
+
+                $scope.registerRows = $scope.allRegisterRows.filter(function (row) {
+                    if (!row) return false;
+                    if (search) {
+                        var hay = [row.mrn, row.patient_name, row.diagnosis_name, row.icd11_code, row.medicines_prescribed, row.remark]
+                            .join(' ').toLowerCase();
+                        if (hay.indexOf(search) === -1) return false;
+                    }
+                    if (startDate || endDate) {
+                        if (!row.rx_date) return false;
+                        var d = new Date(row.rx_date);
+                        if (isNaN(d.getTime())) return false;
+                        if (startDate && d < startDate) return false;
+                        if (endDate && d > endDate) return false;
+                    }
+                    if (filters.allDispensed !== '' && filters.allDispensed !== undefined && filters.allDispensed !== null) {
+                        if (Number(row.allDispensed) !== Number(filters.allDispensed)) return false;
+                    }
+                    if (filters.antibiotics !== '' && filters.antibiotics !== undefined && filters.antibiotics !== null) {
+                        if (Number(row.antibiotics) !== Number(filters.antibiotics)) return false;
+                    }
+                    if (filters.gender) {
+                        if ((row.sex || '').toUpperCase() !== String(filters.gender).toUpperCase()) return false;
+                    }
+                    if (filters.ageGroup) {
+                        var a = Number(row.age);
+                        if (isNaN(a)) return false;
+                        if (filters.ageGroup === 'pediatric' && a >= 15) return false;
+                        if (filters.ageGroup === 'adult' && (a < 15 || a >= 60)) return false;
+                        if (filters.ageGroup === 'geriatric' && a < 60) return false;
+                    }
+                    return true;
+                });
+                $scope.recalcRegisterTotals();
+            };
+
+            $scope.clearRegisterFilters = function () {
+                $scope.registerFilters = {
+                    searchText: '',
+                    startDate: null,
+                    endDate: null,
+                    allDispensed: '',
+                    antibiotics: '',
+                    gender: '',
+                    ageGroup: ''
+                };
+                $scope.applyRegisterFilters();
+            };
+
+            $scope.setRegisterDatePreset = function (preset) {
+                var now = new Date();
+                var start = null;
+                var end = null;
+                if (preset === 'today') {
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                } else if (preset === 'week') {
+                    var day = now.getDay() || 7;
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1);
+                    end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                } else if (preset === 'month') {
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                } else if (preset === 'all') {
+                    start = null;
+                    end = null;
+                }
+                $scope.registerFilters.startDate = start;
+                $scope.registerFilters.endDate = end;
+                $scope.applyRegisterFilters();
+            };
+
+            $scope.loadDispensingRegister = function () {
+                $scope.loadingRegister = true;
+                return prescriptionService.getDispensingRegister().then(function (response) {
+                    var rows = response.data || [];
+                    var overrides = getRegisterRowOverrides();
+                    $scope.allRegisterRows = rows.map(function (r) {
+                        var ov = overrides[r.encounter_uuid] || {};
+                        var detectedAbx = ANTIBIOTIC_REGEX.test(r.medicines_prescribed || '') ? 1 : 0;
+                        return {
+                            encounter_uuid: r.encounter_uuid,
+                            patient_uuid: r.patient_uuid || '',
+                            rx_date: r.rx_date || '',
+                            mrn: r.mrn || '',
+                            patient_name: r.patient_name || '',
+                            age: r.age != null ? r.age : '',
+                            sex: r.sex || '',
+                            diagnosis_name: r.diagnosis_name || '',
+                            icd11_code: r.icd11_code || '',
+                            medicines_prescribed: r.medicines_prescribed || '',
+                            total_meds: Number(r.total_meds) || 0,
+                            fsmlCount: ov.fsmlCount !== undefined ? ov.fsmlCount : (Number(r.total_meds) || 0),
+                            allDispensed: ov.allDispensed !== undefined ? ov.allDispensed : (Number(r.all_dispensed) === 1 ? 1 : 0),
+                            antibiotics: ov.antibiotics !== undefined ? ov.antibiotics : detectedAbx,
+                            remark: ov.remark !== undefined ? ov.remark : ''
+                        };
+                    });
+                    $scope.applyRegisterFilters();
+                    $scope.loadingRegister = false;
+
+                    // Double-layer protection: check any missing patient diagnosis from emrapi.getPatientVitalsAndDiagnosis
+                    var missingDiagPatients = [];
+                    $scope.allRegisterRows.forEach(function (row) {
+                        if ((!row.diagnosis_name || row.diagnosis_name.trim() === '') && row.patient_uuid) {
+                            if (missingDiagPatients.indexOf(row.patient_uuid) === -1) {
+                                missingDiagPatients.push(row.patient_uuid);
+                            }
+                        }
+                    });
+
+                    if (missingDiagPatients.length > 0) {
+                        missingDiagPatients.forEach(function (pUuid) {
+                            $http.get("/openmrs/ws/rest/v1/bahmnicore/sql", {
+                                params: { q: "emrapi.getPatientVitalsAndDiagnosis", uuid: pUuid },
+                                withCredentials: true
+                            }).then(function (res) {
+                                var vList = res.data || [];
+                                var diagItem = vList.find(function (v) {
+                                    return (/diagnosis/i.test(v.concept_name) || v.concept_name === 'Coded Diagnosis' || v.concept_name === 'Non-coded Diagnosis') && v.value;
+                                });
+                                if (diagItem && diagItem.value) {
+                                    $scope.allRegisterRows.forEach(function (row) {
+                                        if (row.patient_uuid === pUuid && (!row.diagnosis_name || row.diagnosis_name.trim() === '')) {
+                                            row.diagnosis_name = diagItem.value;
+                                        }
+                                    });
+                                    $scope.applyRegisterFilters();
+                                }
+                            }).catch(function () {});
+                        });
+                    }
+                }).catch(function (err) {
+                    console.error("Failed to load dispensing register:", err);
+                    $scope.allRegisterRows = $scope.allRegisterRows || [];
+                    $scope.registerRows = $scope.registerRows || [];
+                    $scope.loadingRegister = false;
+                    messagingService.showMessage('error', "Failed to load Dispensing Registration Book!");
+                });
+            };
+
+            $scope.switchPrescriptionTab = function (tab) {
+                $scope.tabState.active = tab;
+                $scope.activePrescriptionTab = tab;
+                if (tab === 'register') {
+                    if (!$scope.allRegisterRows || $scope.allRegisterRows.length === 0) {
+                        $scope.loadDispensingRegister();
+                    } else {
+                        $scope.applyRegisterFilters();
+                    }
+                }
+            };
+
+            // Pre-load dispensing register immediately in background for instant responsiveness without lag
+            try {
+                $scope.loadDispensingRegister();
+            } catch (e) {
+                console.warn("Background register pre-load deferred:", e);
+            }
+
+            $scope.printDispensingRegister = function () {
+                var printEl = document.getElementById('dispensing-register-printable');
+                if (!printEl) return;
+                var w = window.open('', '_blank', 'width=1200,height=800');
+                var rowsHtml = $scope.registerRows.map(function (r, idx) {
+                    return '<tr>' +
+                        '<td style="text-align:center;">' + (idx + 1) + '</td>' +
+                        '<td>' + (r.mrn || '') + '</td>' +
+                        '<td>' + (r.patient_name || '') + '</td>' +
+                        '<td style="text-align:center;">' + (r.age !== '' ? r.age : '') + '</td>' +
+                        '<td style="text-align:center;">' + (r.sex || '') + '</td>' +
+                        '<td>' + (r.diagnosis_name || '') + '</td>' +
+                        '<td style="text-align:center;">' + (r.icd11_code || '') + '</td>' +
+                        '<td>' + (r.medicines_prescribed || '') + '</td>' +
+                        '<td style="text-align:center;">' + (r.total_meds || 0) + '</td>' +
+                        '<td style="text-align:center;">' + (r.fsmlCount || 0) + '</td>' +
+                        '<td style="text-align:center;">' + (r.allDispensed || 0) + '</td>' +
+                        '<td style="text-align:center;">' + (r.antibiotics || 0) + '</td>' +
+                        '<td>' + (r.remark || '') + '</td>' +
+                        '</tr>';
+                }).join('');
+
+                w.document.write('<html><head><title>Health Facility Dispensing Registration Book</title>' +
+                    '<style>@page { size: landscape; margin: 10mm; } body { font-family: Arial, sans-serif; font-size: 11px; } ' +
+                    'h2 { text-align: center; margin: 0 0 6px 0; } .hdr { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; } ' +
+                    'table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #000; padding: 4px; vertical-align: middle; } ' +
+                    'th { background: #e2e8f0; text-align: center; } .sub th { background: #cbd5e0; font-size: 10px; } ' +
+                    '.blk { background: #111; color: #111; }</style></head><body>' +
+                    '<h2>Health Facility Dispensing Registration Book</h2>' +
+                    '<div class="hdr">' +
+                    '<span>Region: ' + ($scope.registerHeader.region || '________________') + '</span>' +
+                    '<span>Zone: ' + ($scope.registerHeader.zone || '________________') + '</span>' +
+                    '<span>Woreda: ' + ($scope.registerHeader.woreda || '________________') + '</span>' +
+                    '<span>Name of Health Facility: ' + ($scope.registerHeader.facilityName || '________________________') + '</span>' +
+                    '</div>' +
+                    '<table><thead><tr>' +
+                    '<th>S.N</th><th>MRN</th><th>Patient Name</th><th>Age</th><th>Sex (M/F)</th>' +
+                    '<th colspan="2">Diagnosis (ESV_ICD11)</th><th>Medicines Prescribed</th>' +
+                    '<th>Total # of Prescribed Meds</th><th># of Meds from *FSML</th><th>All dispensed (1,0)</th><th>Antibiotics (1,0)</th><th>Remark</th>' +
+                    '</tr><tr class="sub">' +
+                    '<th>(1)</th><th>(2)</th><th>(3)</th><th>(4)</th><th>(5)</th><th>(6)</th><th>ESV_ICD11 Code</th>' +
+                    '<th>(7)</th><th>(8)</th><th>(9)</th><th>(10)</th><th>(11)</th><th>(12)</th>' +
+                    '</tr></thead><tbody>' + rowsHtml +
+                    '<tr><td style="font-weight:bold;">Count / Sum</td><td colspan="2" style="text-align:center;font-weight:bold;">' + $scope.registerTotals.rowCount + '</td>' +
+                    '<td colspan="5" class="blk"></td>' +
+                    '<td style="text-align:center;font-weight:bold;">' + $scope.registerTotals.totalMeds + '</td>' +
+                    '<td style="text-align:center;font-weight:bold;">' + $scope.registerTotals.fsmlCount + '</td>' +
+                    '<td style="text-align:center;font-weight:bold;">' + $scope.registerTotals.allDispensed + '</td>' +
+                    '<td style="text-align:center;font-weight:bold;">' + $scope.registerTotals.antibiotics + '</td>' +
+                    '<td class="blk"></td></tr></tbody></table>' +
+                    '<p style="font-size:10px;margin-top:6px;">FSML: Facility Specific Medicine List</p>' +
+                    '</body></html>');
+                w.document.close();
+                w.focus();
+                w.print();
+            };
+
+            $scope.exportDispensingRegisterCsv = function () {
+                var headers = ['S.N', 'MRN', 'Patient Name', 'Age', 'Sex (M/F)', 'Diagnosis (ESV_ICD11)', 'ESV_ICD11 Code', 'Medicines Prescribed', 'Total # of Prescribed Meds', '# of Meds from *FSML', 'All dispensed (1,0)', 'Antibiotics (1,0)', 'Remark'];
+                var esc = function (v) {
+                    var s = String(v == null ? '' : v).replace(/"/g, '""');
+                    return '"' + s + '"';
+                };
+                var lines = [headers.map(esc).join(',')];
+                $scope.registerRows.forEach(function (r, idx) {
+                    lines.push([
+                        idx + 1, r.mrn, r.patient_name, r.age, r.sex, r.diagnosis_name, r.icd11_code,
+                        r.medicines_prescribed, r.total_meds, r.fsmlCount, r.allDispensed, r.antibiotics, r.remark
+                    ].map(esc).join(','));
+                });
+                lines.push([
+                    'Count / Sum', $scope.registerTotals.rowCount, '', '', '', '', '', '',
+                    $scope.registerTotals.totalMeds, $scope.registerTotals.fsmlCount,
+                    $scope.registerTotals.allDispensed, $scope.registerTotals.antibiotics, ''
+                ].map(esc).join(','));
+
+                var blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'Health_Facility_Dispensing_Registration_Book.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             };
         }]);

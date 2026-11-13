@@ -140,6 +140,12 @@
                 "showDetailsButton": false,
                 "displayOrder": 9
             },
+            "dtpHistory": {
+                "title": "DTP History",
+                "type": "dtpHistory",
+                "showDetailsButton": false,
+                "displayOrder": 10
+            },
             "treatments": {
                 "translationKey": "DASHBOARD_TITLE_TREATMENTS_KEY",
                 "type": "treatment",

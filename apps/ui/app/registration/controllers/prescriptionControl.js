@@ -2,9 +2,9 @@
 
 angular.module('bahmni.registration')
     .controller('prescriptionController', ['$window', '$scope', '$rootScope', '$state', '$bahmniCookieStore', 'patientService', 'encounterService', '$stateParams', 'spinner', '$timeout', '$q', 'appService', 'openmrsPatientMapper', 'contextChangeHandler', 'messagingService', 'sessionService', 'visitService', '$location', '$translate',
-        'auditLogService', 'formService', 'observationsService', 'ngDialog', '$http', 'paymentStatusService', 'prescriptionService', 'pharmacyIntegrationService', 'localeService',
+        'auditLogService', 'formService', 'observationsService', 'ngDialog', '$http', 'paymentStatusService', 'prescriptionService', 'pharmacyIntegrationService', 'localeService', 'ethiopianGregorianService',
         function ($window, $scope, $rootScope, $state, $bahmniCookieStore, patientService, encounterService, $stateParams, spinner, $timeout, $q, appService, openmrsPatientMapper, contextChangeHandler, messagingService, sessionService, visitService, $location, $translate, auditLogService,
-            formService, observationsService, ngDialog, $http, paymentStatusService, prescriptionService, pharmacyIntegrationService, localeService) {
+            formService, observationsService, ngDialog, $http, paymentStatusService, prescriptionService, pharmacyIntegrationService, localeService, ethiopianGregorianService) {
             var vm = this;
             var patientUuid = $stateParams.patientUuid;
             var extensions = appService.getAppDescriptor().getExtensions("org.bahmni.registration.conceptSetGroup.observations", "prescriptionconfig");
@@ -216,9 +216,16 @@ angular.module('bahmni.registration')
                 pharmacyIntegrationService.sendBulkPrescriptionsToPharmacy(
                     unsyncedPrescriptions, $scope.patient, $scope.providerName, $scope.pharmacyConfig
                 ).then(function (results) {
-                    var syncedCount = results.filter(function (r) { return r && r.success; }).length;
-                    messagingService.showMessage('info', syncedCount + " prescription(s) synced to pharmacy.");
-                    unsyncedPrescriptions.forEach(function (p) { p.pharmacy_synced = true; });
+                    var syncedCount = 0;
+                    if (Array.isArray(results)) {
+                        syncedCount = results.filter(function (r) { return r && r.success; }).length;
+                    } else if (results && results.success) {
+                        syncedCount = unsyncedPrescriptions.length;
+                    }
+                    if (syncedCount > 0) {
+                        messagingService.showMessage('info', syncedCount + " prescription(s) synced to pharmacy.");
+                        unsyncedPrescriptions.forEach(function (p) { p.pharmacy_synced = true; });
+                    }
                 });
             };
 
@@ -297,96 +304,108 @@ angular.module('bahmni.registration')
             }
 
             // Function to fetch and set prescriptions
+            $scope.loadingPrescriptions = false;
             $scope.fetchPrescriptions = async function () {
+                $scope.loadingPrescriptions = true;
                 try {
                     const response = await prescriptionService.getDrugPrescriptions(patientUuid);
                     let prescriptions = response.data || [];
-                    $scope.allPrescriptions = prescriptions;
 
-                    // Compute statuses and flags for all loaded prescriptions
-                    $scope.allPrescriptions.forEach(function (prescription) {
+                    let paymentCheckEnabled = $scope.rx_config.enable_rx_payment_check;
+                    let enforceOdooCheck = $scope.rx_config.enforce_odoo_payment_confirmation;
+                    let odooPaid = null;
+                    if (!$scope.historicalEncounterUuid && paymentCheckEnabled && enforceOdooCheck && prescriptions.length > 0 && $scope.patient && $scope.patient.identifier) {
+                        const statusResponse = await paymentStatusService.getPaymentStatus($scope.patient.identifier);
+                        odooPaid = !!(statusResponse.data && statusResponse.data.status === "PAID");
+                    }
+
+                    // Compute statuses and flags for all loaded prescriptions in one synchronous pass
+                    prescriptions.forEach(function (prescription) {
+                        if (odooPaid !== null) {
+                            prescription.paymentStatus = odooPaid;
+                        } else if (!$scope.historicalEncounterUuid) {
+                            prescription.paymentStatus = paymentCheckEnabled ? !!prescription.paymentStatus : false;
+                        } else {
+                            prescription.paymentStatus = !!prescription.paymentStatus;
+                        }
                         prescription.status = computePrescriptionStatus(prescription);
                         prescription.evaluated = !!prescription.evaluated;
-                        prescription.paymentStatus = !!prescription.paymentStatus;
                         if (prescription.status === "DISPENSED") {
                             prescription.counseled = true;
                         }
                         updatePrescriptionFlags(prescription);
                     });
 
-                    // If viewing a specific encounter, filter to only that encounter's prescriptions
-                    if ($scope.historicalEncounterUuid) {
-                        $scope.prescriptions = $scope.allPrescriptions.filter(function (p) {
-                            return p.encounter_uuid === $scope.historicalEncounterUuid;
-                        });
-                        $scope.historicalDate = $scope.prescriptions.length > 0 ? $scope.prescriptions[0].date : null;
-                        $scope.historicalProvider = $scope.prescriptions.length > 0 ? $scope.prescriptions[0].prescriber : null;
-                    } else {
-                        let paymentCheckEnabled = $scope.rx_config.enable_rx_payment_check;
-                        let enforceOdooCheck = $scope.rx_config.enforce_odoo_payment_confirmation;
-
-                        // Update paymentStatus and pre_* flags for all prescriptions
-                        await Promise.all($scope.allPrescriptions.map(async (prescription) => {
-                            if (paymentCheckEnabled && enforceOdooCheck) {
-                                const statusResponse = await paymentStatusService.getPaymentStatus($scope.patient.identifier);
-                                prescription.paymentStatus = statusResponse.data && statusResponse.data.status === "PAID";
-                            } else {
-                                prescription.paymentStatus = paymentCheckEnabled ? prescription.paymentStatus : false;
-                            }
-                            prescription.status = computePrescriptionStatus(prescription);
-                            prescription.evaluated = !!prescription.evaluated;
-                            prescription.paymentStatus = !!prescription.paymentStatus;
-                            if (prescription.status === "DISPENSED") {
-                                prescription.counseled = true;
-                            }
-
-                            updatePrescriptionFlags(prescription);
-                        }));
-
-                        $scope.filterPrescriptions($scope.selectedDate);
-                    }
-
+                    $scope.$applyAsync(function () {
+                        $scope.allPrescriptions = prescriptions;
+                        if ($scope.attachDtpFootnotes) {
+                            $scope.attachDtpFootnotes();
+                        }
+                        if ($scope.historicalEncounterUuid) {
+                            $scope.prescriptions = $scope.allPrescriptions.filter(function (p) {
+                                return p.encounter_uuid === $scope.historicalEncounterUuid;
+                            });
+                            $scope.historicalDate = $scope.prescriptions.length > 0 ? $scope.prescriptions[0].date : null;
+                            $scope.historicalProvider = $scope.prescriptions.length > 0 ? $scope.prescriptions[0].prescriber : null;
+                        } else {
+                            $scope.filterPrescriptions($scope.selectedDate);
+                        }
+                        $scope.loadingPrescriptions = false;
+                    });
                 } catch (error) {
                     console.error("Error fetching drug prescriptions:", error);
-                    messagingService.showMessage('error', "Failed to fetch prescriptions!");
+                    $scope.$applyAsync(function () {
+                        $scope.loadingPrescriptions = false;
+                        messagingService.showMessage('error', "Failed to fetch prescriptions!");
+                    });
+                }
+            };
+
+            $scope.refreshPrescriptions = function (showAll) {
+                if (showAll) {
+                    $scope.selectedDate = null;
+                }
+                $scope.fetchPrescriptions();
+                if ($scope.fetchGeneralRxIssues) {
+                    $scope.fetchGeneralRxIssues();
+                }
+                if ($scope.getVitalsAndDiagnosis) {
+                    $scope.getVitalsAndDiagnosis(patientUuid);
                 }
             };
 
 
+            var getFormattedDateString = function (dInput) {
+                if (!dInput) return '';
+                var d = (dInput instanceof Date) ? dInput : new Date(dInput);
+                if (isNaN(d.getTime())) return '';
+                var y = d.getFullYear();
+                var m = String(d.getMonth() + 1).padStart(2, '0');
+                var day = String(d.getDate()).padStart(2, '0');
+                return y + '-' + m + '-' + day;
+            };
+
             $scope.filterPrescriptions = function (selectedDate) {
-    if (!selectedDate) {
-        $scope.prescriptions = $scope.allPrescriptions;
-        return;
-    }
+                if (!selectedDate) {
+                    $scope.prescriptions = $scope.allPrescriptions || [];
+                    return;
+                }
 
-    const selectedDateString = new Date(selectedDate).toISOString().split("T")[0];
+                var selectedDateString = getFormattedDateString(selectedDate);
 
-    $scope.prescriptions = $scope.allPrescriptions.filter(p => {
-
-        if (!p.date || !Array.isArray(p.date) || p.date.length < 3) {
-            console.warn("Invalid prescription.date:", p.date);
-            return false;
-        }
-
-        // Convert array date -> JS Date
-        const d = new Date(
-            p.date[0],       // year
-            p.date[1] - 1,   // month index
-            p.date[2],       // day
-            p.date[3] || 0,  // hour
-            p.date[4] || 0,  // minute
-            p.date[5] || 0   // second
-        );
-
-        if (isNaN(d)) {
-            console.warn("Invalid constructed date:", p.date);
-            return false;
-        }
-
-        const prescriptionDateString = d.toISOString().split("T")[0];
-        return prescriptionDateString === selectedDateString;
-    });
-};
+                $scope.prescriptions = ($scope.allPrescriptions || []).filter(function (p) {
+                    if (!p.date) return false;
+                    var pDateStr = '';
+                    if (Array.isArray(p.date) && p.date.length >= 3) {
+                        pDateStr = p.date[0] + '-' + String(p.date[1]).padStart(2, '0') + '-' + String(p.date[2]).padStart(2, '0');
+                    } else if (typeof p.date === 'string') {
+                        pDateStr = p.date.split('T')[0];
+                    } else if (p.date instanceof Date) {
+                        pDateStr = getFormattedDateString(p.date);
+                    }
+                    return pDateStr === selectedDateString;
+                });
+            };
 
 
             // Fetch prescriptions initially
@@ -476,6 +495,200 @@ angular.module('bahmni.registration')
                     scope: $scope,
                     showClose: true,
                     closeByDocument: true
+                });
+            };
+
+            $scope.generalRxIssueOptions = [
+                { id: 'dx_missing', label: 'Diagnosis (Dx) not documented' },
+                { id: 'profile_incomplete', label: 'Patient profile incomplete' },
+                { id: 'vitals_missing', label: 'Weight / Vital signs missing' },
+                { id: 'allergies_missing', label: 'Allergies not documented' },
+                { id: 'prescriber_missing', label: 'Prescriber info / signature missing' },
+                { id: 'other', label: 'Other general Rx evaluation issue' }
+            ];
+            $scope.generalRxIssues = [];
+            $scope.dtpHistoryRecords = [];
+
+            var formatDtpAction = function (action) {
+                switch (action) {
+                    case 'DRUG_CHANGED': return 'Drug Changed';
+                    case 'REGIMEN_EDITED': return 'Regimen / Dose Edited';
+                    case 'DISCONTINUED': return 'Discontinued';
+                    case 'RESENT_WITH_REASON': return 'Kept & Resent with Reason';
+                    default: return action || 'Responded';
+                }
+            };
+
+            $scope.attachDtpFootnotes = function () {
+                if (!$scope.allPrescriptions || !$scope.dtpHistoryRecords) return;
+                $scope.allPrescriptions.forEach(function (rx) {
+                    var drugName = (rx.drug_name || rx.non_coded_drug_name || '').toLowerCase();
+                    var matched = null;
+                    for (var i = 0; i < $scope.dtpHistoryRecords.length; i++) {
+                        var h = $scope.dtpHistoryRecords[i];
+                        if (h.orderUuid && (h.orderUuid === rx.uuid || (rx.previous_order_uuid && h.orderUuid === rx.previous_order_uuid))) {
+                            matched = h;
+                            break;
+                        }
+                        if (h.action === 'DRUG_CHANGED' && drugName && h.newDrug && h.newDrug.toLowerCase().indexOf(drugName) === 0) {
+                            matched = h;
+                            break;
+                        }
+                    }
+                    if (matched) {
+                        rx.dtpFootnote = {
+                            dtpMessage: matched.dtpMessage || rx.dtp || '',
+                            actionLabel: formatDtpAction(matched.action),
+                            originalDrug: matched.originalDrug || '',
+                            physicianReason: matched.physicianReason || '',
+                            providerName: matched.providerName || '',
+                            timestamp: matched.timestamp || ''
+                        };
+                    } else if (rx.dtp) {
+                        rx.dtpFootnote = {
+                            dtpMessage: rx.dtp,
+                            actionLabel: '',
+                            originalDrug: '',
+                            physicianReason: '',
+                            providerName: '',
+                            timestamp: ''
+                        };
+                    }
+                });
+            };
+
+            $scope.fetchGeneralRxIssues = function () {
+                if (!patientUuid) return;
+                var dtpConcept = ($scope.rx_config && $scope.rx_config.dtp_concept) || '07d93800-d822-4229-996c-2fd05091563e';
+                $http.get('/openmrs/ws/rest/v1/obs', {
+                    params: {
+                        patient: patientUuid,
+                        concept: dtpConcept,
+                        v: 'custom:(uuid,obsDatetime,value,creator:(display))'
+                    },
+                    withCredentials: true
+                }).then(function (response) {
+                    var results = (response.data && response.data.results) || [];
+                    var issues = [];
+                    var resolutions = {};
+                    var historyRecords = [];
+
+                    results.forEach(function (obs) {
+                        if (!obs.value || typeof obs.value !== 'string') return;
+                        if (obs.value.indexOf('[DTP_HISTORY]') === 0) {
+                            try {
+                                var h = JSON.parse(obs.value.substring('[DTP_HISTORY]'.length));
+                                h.providerName = h.providerName || (obs.creator ? obs.creator.display : '');
+                                h.timestamp = h.timestamp || obs.obsDatetime;
+                                if (h.action === 'GENERAL_RX_RESOLVED' && h.issueObsUuid) {
+                                    resolutions[h.issueObsUuid] = h;
+                                } else {
+                                    historyRecords.push(h);
+                                }
+                            } catch (e) {}
+                        } else if (obs.value.indexOf('[GENERAL_RX_ISSUE]') === 0) {
+                            try {
+                                var parsed = JSON.parse(obs.value.substring('[GENERAL_RX_ISSUE]'.length));
+                                var issueLabels = (parsed.issues || []).join(', ');
+                                var summary = issueLabels ? (issueLabels + (parsed.message ? ' — ' + parsed.message : '')) : (parsed.message || 'General Rx Issue');
+                                issues.push({
+                                    obsUuid: obs.uuid,
+                                    timestamp: parsed.timestamp || obs.obsDatetime,
+                                    priority: parsed.priority || 'Normal',
+                                    reportedBy: parsed.reportedBy || (obs.creator ? obs.creator.display : ''),
+                                    summary: summary,
+                                    resolved: false,
+                                    physicianReply: ''
+                                });
+                            } catch (e) {}
+                        }
+                    });
+
+                    issues.forEach(function (issue) {
+                        if (resolutions[issue.obsUuid]) {
+                            issue.resolved = true;
+                            issue.physicianReply = resolutions[issue.obsUuid].physicianReason || 'Fixed';
+                        }
+                    });
+
+                    issues.sort(function (a, b) {
+                        return new Date(b.timestamp) - new Date(a.timestamp);
+                    });
+                    historyRecords.sort(function (a, b) {
+                        return new Date(b.timestamp) - new Date(a.timestamp);
+                    });
+                    $scope.generalRxIssues = issues;
+                    $scope.dtpHistoryRecords = historyRecords;
+                    $scope.attachDtpFootnotes();
+                });
+            };
+            $scope.fetchGeneralRxIssues();
+
+            $scope.openGeneralRxIssueModal = function () {
+                $scope.generalRxIssueForm = {
+                    selectedIssues: {},
+                    message: '',
+                    priority: 'Urgent (Hold Rx)',
+                    reportedBy: ($rootScope.currentUser && $rootScope.currentUser.username) ? $rootScope.currentUser.username : 'Pharmacist'
+                };
+                $scope.generalRxIssueModalInstance = ngDialog.open({
+                    template: 'views/generalRxIssueModal.html',
+                    className: 'ngdialog-theme-default dtp-modal-dialog',
+                    scope: $scope,
+                    showClose: true,
+                    closeByDocument: false
+                });
+            };
+
+            $scope.closeGeneralRxIssueModal = function () {
+                if ($scope.generalRxIssueModalInstance) {
+                    $scope.generalRxIssueModalInstance.close();
+                } else {
+                    ngDialog.close();
+                }
+            };
+
+            $scope.submitGeneralRxIssue = function () {
+                var selectedLabels = [];
+                $scope.generalRxIssueOptions.forEach(function (opt) {
+                    if ($scope.generalRxIssueForm.selectedIssues[opt.id]) {
+                        selectedLabels.push(opt.label);
+                    }
+                });
+                var msg = ($scope.generalRxIssueForm.message || '').trim();
+                if (selectedLabels.length === 0 && !msg) {
+                    messagingService.showMessage('error', 'Please select at least one evaluation problem or enter a message.');
+                    return;
+                }
+
+                $scope.generalRxIssueSubmitting = true;
+                var dtpConcept = ($scope.rx_config && $scope.rx_config.dtp_concept) || '07d93800-d822-4229-996c-2fd05091563e';
+                var nowIso = new Date().toISOString();
+                var payload = {
+                    person: patientUuid,
+                    concept: dtpConcept,
+                    obsDatetime: nowIso,
+                    value: '[GENERAL_RX_ISSUE]' + JSON.stringify({
+                        issues: selectedLabels,
+                        message: msg,
+                        priority: $scope.generalRxIssueForm.priority || 'Urgent (Hold Rx)',
+                        reportedBy: $scope.generalRxIssueForm.reportedBy || 'Pharmacist',
+                        timestamp: nowIso
+                    })
+                };
+
+                $http.post(Bahmni.Common.Constants.openmrsObsUrl, payload, {
+                    withCredentials: true,
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+                }).then(function () {
+                    $scope.generalRxIssueSubmitting = false;
+                    messagingService.showMessage('info', 'Message sent to physician successfully.');
+                    $scope.closeGeneralRxIssueModal();
+                    $scope.fetchGeneralRxIssues();
+                }).catch(function (err) {
+                    $scope.generalRxIssueSubmitting = false;
+                    console.error('Failed to send general Rx issue:', err);
+                    messagingService.showMessage('error', 'Failed to send message to physician.');
                 });
             };
 

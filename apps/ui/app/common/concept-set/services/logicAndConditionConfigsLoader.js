@@ -23,7 +23,7 @@ angular.module('bahmni.common.conceptSet')
 
         var loadSkipLogicConfigs = function () {
             var configs;
-            var configPath = configsDirectoryPath + 'skipLogics.json';
+            var configPath = configsDirectoryPath + 'skipLogics.json?t=' + Date.now();
 
             // Load configs from the external JSON file
             return $http.get(configPath)

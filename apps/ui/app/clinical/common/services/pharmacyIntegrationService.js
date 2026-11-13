@@ -53,6 +53,8 @@ angular.module('bahmni.clinical')
                 instructions: drugOrder.instructions || '',
                 status: drugOrder.isActive() ? 'ISSUED' : 'COMPLETED',
                 encounter_uuid: drugOrder.encounterUuid || '',
+                dtp_override: !!drugOrder.dtpOverride,
+                dtp_physician_reason: drugOrder.dtpPhysicianResponse || '',
                 sent_at: new Date().toISOString(),
                 source_system: 'bahmni_emr'
             };

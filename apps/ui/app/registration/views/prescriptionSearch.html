@@ -44,45 +44,150 @@
         </article>
     </section>
 
-    <!-- Advanced Filter Section for Prescribed Patients -->
-    <section class="prescription-list-section" style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0; color: #333;">
-                <i class="fa fa-list-alt"></i> All Prescribed Patients
-            </h3>
-            <button class="btn btn-primary" ng-click="loadAllPrescribedPatients()" ng-disabled="loadingPrescribedPatients">
-                <i class="fa fa-refresh" ng-class="{'fa-spin': loadingPrescribedPatients}"></i> 
-                {{ loadingPrescribedPatients ? 'Loading...' : 'Load All Prescriptions' }}
+    <!-- Prescription Module Section (Tabbed: Patient View & Health Facility Dispensing Registration Book) -->
+    <style>
+        .tab-inactive-btn {
+            background-color: #edf2f7 !important;
+            color: #2d3748 !important;
+            border: 1px solid #cbd5e0 !important;
+        }
+        .tab-inactive-btn:hover, .tab-inactive-btn:focus, .tab-inactive-btn:active {
+            background-color: #e2e8f0 !important;
+            color: #1a202c !important;
+        }
+        .tab-active-btn {
+            background-color: #2b6cb0 !important;
+            color: #ffffff !important;
+            border: 1px solid #2b6cb0 !important;
+        }
+        .tab-active-btn:hover, .tab-active-btn:focus, .tab-active-btn:active {
+            background-color: #2c5282 !important;
+            color: #ffffff !important;
+        }
+    </style>
+    <section class="prescription-list-section" ng-init="tabState = tabState || { active: 'list' }" style="margin-top: 20px; padding: 15px; background-color: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <!-- Top Tab Bar -->
+        <div style="display: flex; gap: 10px; margin-bottom: 16px; border-bottom: 2px solid #cbd5e0; padding-bottom: 12px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn tab-active-btn"
+                    style="font-weight: 700; font-size: 13px; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+                <i class="fa fa-list-alt" style="margin-right: 6px;"></i> All Prescribed Patients
+            </button>
+            <button type="button" class="btn tab-inactive-btn"
+                    ng-click="goTo('/dispensingRegister')"
+                    style="font-weight: 700; font-size: 13px; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+                <i class="fa fa-book" style="margin-right: 6px; color: #2b6cb0;"></i> Health Facility Dispensing Registration Book
+                <span class="badge" style="background: #2b6cb0; color: #ffffff; margin-left: 6px; font-size: 11px;" ng-if="allRegisterRows.length > 0">{{ allRegisterRows.length }}</span>
             </button>
         </div>
 
+        <!-- TAB 1: ALL PRESCRIBED PATIENTS (ORIGINAL VIEW) -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #333;">
+                    <i class="fa fa-list-alt"></i> All Prescribed Patients
+                </h3>
+                <button class="btn btn-primary" ng-click="loadAllPrescribedPatients()" ng-disabled="loadingPrescribedPatients">
+                    <i class="fa fa-refresh" ng-class="{'fa-spin': loadingPrescribedPatients}"></i> 
+                    {{ loadingPrescribedPatients ? 'Loading...' : 'Load All Prescriptions' }}
+                </button>
+            </div>
+
+        <!-- Activity Summary Cards (Interactive dynamic filtering) -->
+        <div ng-show="showPrescribedList && prescriptionStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 15px;">
+            <div ng-click="filterByStatus('')" title="Click to view all prescribed patients"
+                 style="background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #2b6cb0; border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s;"
+                 ng-style="!prescriptionFilters.status ? {'box-shadow': '0 0 0 2px #2b6cb0', 'background': '#ebf8ff'} : {}">
+                <div style="font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; display: flex; justify-content: space-between;">
+                    <span>Total Patients</span>
+                    <i class="fa fa-filter" ng-if="!prescriptionFilters.status" style="color: #2b6cb0;"></i>
+                </div>
+                <div style="font-size: 22px; font-weight: 700; color: #2b6cb0; margin-top: 4px;">
+                    <i class="fa fa-users" style="font-size: 16px; margin-right: 4px;"></i>{{ prescriptionStats.totalPatients || 0 }}
+                </div>
+            </div>
+            <div ng-click="filterByStatus('')" title="Click to view all prescribed drugs"
+                 style="background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #319795; border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase;">Prescribed Drugs</div>
+                <div style="font-size: 22px; font-weight: 700; color: #319795; margin-top: 4px;">
+                    <i class="fa fa-medkit" style="font-size: 16px; margin-right: 4px;"></i>{{ prescriptionStats.totalPrescriptions || 0 }}
+                </div>
+            </div>
+            <div ng-click="filterByStatus('PENDING')" title="Click to filter by Pending Dispensation"
+                 style="background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #d97706; border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s;"
+                 ng-style="prescriptionFilters.status === 'PENDING' ? {'box-shadow': '0 0 0 2px #d97706', 'background': '#fffaf0'} : {}">
+                <div style="font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; display: flex; justify-content: space-between;">
+                    <span>Pending</span>
+                    <i class="fa fa-filter" ng-if="prescriptionFilters.status === 'PENDING'" style="color: #d97706;"></i>
+                </div>
+                <div style="font-size: 22px; font-weight: 700; color: #d97706; margin-top: 4px;">
+                    <i class="fa fa-clock-o" style="font-size: 16px; margin-right: 4px;"></i>{{ prescriptionStats.pendingCount || 0 }}
+                </div>
+            </div>
+            <div ng-click="filterByStatus('DISPENSED')" title="Click to filter by Dispensed"
+                 style="background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #2f855a; border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s;"
+                 ng-style="prescriptionFilters.status === 'DISPENSED' ? {'box-shadow': '0 0 0 2px #2f855a', 'background': '#f0fff4'} : {}">
+                <div style="font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; display: flex; justify-content: space-between;">
+                    <span>Dispensed</span>
+                    <i class="fa fa-filter" ng-if="prescriptionFilters.status === 'DISPENSED'" style="color: #2f855a;"></i>
+                </div>
+                <div style="font-size: 22px; font-weight: 700; color: #2f855a; margin-top: 4px;">
+                    <i class="fa fa-check-circle" style="font-size: 16px; margin-right: 4px;"></i>{{ prescriptionStats.dispensedCount || 0 }}
+                </div>
+            </div>
+            <div ng-click="filterByStatus('RETURNED_DTP')" title="Click to filter by DTP Returned"
+                 style="background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #c53030; border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s;"
+                 ng-style="prescriptionFilters.status === 'RETURNED_DTP' ? {'box-shadow': '0 0 0 2px #c53030', 'background': '#fff5f5'} : {}">
+                <div style="font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; display: flex; justify-content: space-between;">
+                    <span>DTP Returned</span>
+                    <i class="fa fa-filter" ng-if="prescriptionFilters.status === 'RETURNED_DTP'" style="color: #c53030;"></i>
+                </div>
+                <div style="font-size: 22px; font-weight: 700; color: #c53030; margin-top: 4px;">
+                    <i class="fa fa-exclamation-triangle" style="font-size: 16px; margin-right: 4px;"></i>{{ prescriptionStats.dtpCount || 0 }}
+                </div>
+            </div>
+            <div ng-click="filterByStatus('')" title="Click to view all visits"
+                 style="background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #4a5568; border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase;">Total Visits</div>
+                <div style="font-size: 22px; font-weight: 700; color: #4a5568; margin-top: 4px;">
+                    <i class="fa fa-calendar" style="font-size: 16px; margin-right: 4px;"></i>{{ prescriptionStats.totalVisits || 0 }}
+                </div>
+            </div>
+        </div>
+
         <!-- Advanced Filters -->
-        <div class="advanced-filters" ng-show="showPrescribedList" style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; padding: 10px; background-color: #fff; border-radius: 5px; border: 1px solid #ddd;">
+        <div class="advanced-filters" ng-show="showPrescribedList" style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; padding: 12px 14px; background-color: #fff; border-radius: 6px; border: 1px solid #cbd5e0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: flex-end;">
             <div class="filter-group">
-                <label><strong>Search:</strong></label>
+                <label style="font-weight: 700; font-size: 12px; color: #4a5568; display: block; margin-bottom: 4px;">Search:</label>
                 <input type="text" ng-model="prescriptionFilters.searchText" 
                        placeholder="Search by ID, Name, Drug..."
                        ng-change="applyPrescriptionFilters()"
-                       style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 250px;">
+                       style="padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; width: 230px; font-size: 12px;">
             </div>
             
             <div class="filter-group">
-                <label><strong>Start Date:</strong></label>
-                <input type="date" ng-model="prescriptionFilters.startDate" 
-                       ng-change="applyPrescriptionFilters()"
-                       style="padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+                <label style="font-weight: 700; font-size: 12px; color: #4a5568; display: block; margin-bottom: 4px;">Status:</label>
+                <select ng-model="prescriptionFilters.status" ng-change="applyPrescriptionFilters()"
+                        style="padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff; min-width: 140px;">
+                    <option value="">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="DISPENSED">Dispensed</option>
+                    <option value="RETURNED_DTP">DTP Returned</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label style="font-weight: 700; font-size: 12px; color: #4a5568; display: block; margin-bottom: 4px;">Start Date (ቀን):</label>
+                <ethiopian-date-selector date="prescriptionFilters.startDate" change="applyPrescriptionFilters()" allow-future-dates="true" placeholder="'ቀን (dd/mm/yyyy)'" style="width: 150px;"></ethiopian-date-selector>
             </div>
             
             <div class="filter-group">
-                <label><strong>End Date:</strong></label>
-                <input type="date" ng-model="prescriptionFilters.endDate" 
-                       ng-change="applyPrescriptionFilters()"
-                       style="padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+                <label style="font-weight: 700; font-size: 12px; color: #4a5568; display: block; margin-bottom: 4px;">End Date (ቀን):</label>
+                <ethiopian-date-selector date="prescriptionFilters.endDate" change="applyPrescriptionFilters()" allow-future-dates="true" placeholder="'ቀን (dd/mm/yyyy)'" style="width: 150px;"></ethiopian-date-selector>
             </div>
             
-            <div class="filter-group" style="display: flex; align-items: flex-end;">
-                <button class="btn btn-default" ng-click="clearPrescriptionFilters()">
-                    <i class="fa fa-times"></i> Clear Filters
+            <div class="filter-group">
+                <button class="btn btn-default" ng-click="clearPrescriptionFilters()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e0;">
+                    <i class="fa fa-times"></i> Reset Filters
                 </button>
             </div>
         </div>
@@ -131,6 +236,9 @@
                             <td>{{patient.phone_number}}</td>
                             <td>
                                 <span class="badge badge-info">{{patient._groupedPrescriptions.length || (patient.filteredPrescriptions || patient.prescriptions).length}} visit(s)</span>
+                                <span class="badge" style="background-color: #c53030; color: white; margin-left: 4px;" ng-if="patient._hasDtp" title="Prescriptions returned with Drug Therapy Problems"><i class="fa fa-exclamation-triangle"></i> DTP ({{patient._dtpCount}})</span>
+                                <span class="badge" style="background-color: #d97706; color: white; margin-left: 4px;" ng-if="patient._hasPending" title="Prescriptions pending dispensation"><i class="fa fa-clock-o"></i> Pending ({{patient._pendingCount}})</span>
+                                <span class="badge" style="background-color: #2f855a; color: white; margin-left: 4px;" ng-if="patient._hasDispensed" title="Prescriptions dispensed"><i class="fa fa-check"></i> Dispensed ({{patient._dispensedCount}})</span>
                                 <i class="fa" ng-class="{'fa-chevron-down': patient._expanded, 'fa-chevron-right': !patient._expanded}" style="margin-left: 5px;"></i>
                             </td>
                             <td>
@@ -146,8 +254,9 @@
                                         <div ng-click="group._open = !group._open" style="background-color: #d4e4f7; padding: 6px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
                                             <div>
                                                 <strong style="color: #1a5276;">
-                                                    <i class="fa fa-calendar"></i> {{group.dateDisplay}}
+                                                    <i class="fa fa-calendar"></i> {{group.ethDateDisplay || group.dateDisplay}}
                                                 </strong>
+                                                <span ng-if="group.ethDateDisplay && group.ethDateDisplay !== group.dateDisplay" style="margin-left: 4px; color: #718096; font-size: 11px;">(GC: {{group.dateDisplay}})</span>
                                                 <span style="margin-left: 12px; color: #555;">
                                                     <i class="fa fa-user-md"></i> {{group.provider}}
                                                 </span>
@@ -164,6 +273,7 @@
                                             <thead style="background-color: #eaf2f8;">
                                                 <tr>
                                                     <th style="font-size: 11px;">Drug Name</th>
+                                                    <th style="font-size: 11px;">Status</th>
                                                     <th style="font-size: 11px;">Dose</th>
                                                     <th style="font-size: 11px;">Frequency</th>
                                                     <th style="font-size: 11px;">Duration</th>
@@ -174,6 +284,20 @@
                                             <tbody>
                                                 <tr ng-repeat="rx in group.drugs">
                                                     <td style="font-size: 11px; font-weight: 600;">{{rx.drug_name}}</td>
+                                                    <td style="font-size: 11px;">
+                                                        <span class="badge" ng-class="{
+                                                            'badge-danger': rx.status === 'RETURNED_DTP' || rx.status === 'DTP',
+                                                            'badge-success': rx.status === 'DISPENSED',
+                                                            'badge-warning': rx.status === 'ISSUED' || rx.status === 'PENDING'
+                                                        }" style="font-size: 10px; padding: 2px 6px;">
+                                                            <i class="fa" ng-class="{
+                                                                'fa-exclamation-triangle': rx.status === 'RETURNED_DTP' || rx.status === 'DTP',
+                                                                'fa-check': rx.status === 'DISPENSED',
+                                                                'fa-clock-o': rx.status === 'ISSUED' || rx.status === 'PENDING'
+                                                            }"></i>
+                                                            {{ (rx.status === 'RETURNED_DTP' || rx.status === 'DTP') ? 'RETURNED (DTP)' : (rx.status || 'ISSUED') }}
+                                                        </span>
+                                                    </td>
                                                     <td style="font-size: 11px;">{{rx.dose}} {{rx.dose_units}}</td>
                                                     <td style="font-size: 11px;">{{rx.frequency}}</td>
                                                     <td style="font-size: 11px;">{{rx.duration}} {{rx.duration_units}}</td>
@@ -190,6 +314,7 @@
                 </table>
             </div>
         </div>
+        <!-- END PATIENTS LIST -->
     </section>
 
     <div class="note-container no-search-results" ng-if="noResultsMessage">

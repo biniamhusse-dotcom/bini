@@ -34,7 +34,7 @@ const EMR_EAPTS_URL = process.env.EMR_EAPTS_URL || 'http://emr-eapts:3005';
 
 const openmrsAuth = { username: OPENMRS_USER, password: OPENMRS_PASS };
 
-const DTP_CONCEPT_UUID = '99516581-a4a3-439c-a16c-e451e9e25783';
+const DTP_CONCEPT_UUID = '07d93800-d822-4229-996c-2fd05091563e';
 const PRESCRIPTION_STATE_CONCEPT_UUID = '97a9b0ad-ca27-44bb-96c8-fc0502ce09e6';
 
 app.get('/health', (req, res) => {

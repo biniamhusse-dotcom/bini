@@ -4,7 +4,7 @@
     "extensionPointId": "org.bahmni.clinical.consultation.board",
     "type": "link",
     "label": "Observations",
-    "translationKey":"OBSERVATIONS_BOARD_LABEL_KEY",
+    "translationKey": "OBSERVATIONS_BOARD_LABEL_KEY",
     "url": "concept-set-group/observations",
     "default": true,
     "icon": "fa-user-md",
@@ -16,7 +16,7 @@
     "extensionPointId": "org.bahmni.clinical.consultation.board",
     "type": "link",
     "label": "Diagnosis",
-    "translationKey":"DIAGNOSIS_BOARD_LABEL_KEY",
+    "translationKey": "DIAGNOSIS_BOARD_LABEL_KEY",
     "url": "diagnosis",
     "icon": "fa-user-md",
     "order": 2,
@@ -27,7 +27,7 @@
     "extensionPointId": "org.bahmni.clinical.consultation.board",
     "type": "link",
     "label": "Disposition",
-    "translationKey":"DISPOSITION_BOARD_LABEL_KEY",
+    "translationKey": "DISPOSITION_BOARD_LABEL_KEY",
     "url": "disposition",
     "icon": "fa-user-md",
     "order": 30,
@@ -38,7 +38,7 @@
     "extensionPointId": "org.bahmni.clinical.consultation.board",
     "type": "link",
     "label": "Consultation",
-    "translationKey":"CONSULTATION_BOARD_LABEL_KEY",
+    "translationKey": "CONSULTATION_BOARD_LABEL_KEY",
     "url": "consultation",
     "icon": "fa-user-md",
     "order": 29,
@@ -107,7 +107,7 @@
     "order": 2,
     "requiredPrivilege": "app:clinical"
   },
-    "bahmniClinicalPatientsWithLabresult": {
+  "bahmniClinicalPatientsWithLabresult": {
     "id": "bahmni.clinical.patients.search.PatientsWithLabresult",
     "extensionPointId": "org.bahmni.patient.search",
     "type": "config",
@@ -122,274 +122,76 @@
     "requiredPrivilege": "app:clinical"
   },
   "bahmniClinicalPatientsWithRadiologyresult": {
-  "id": "bahmni.clinical.patients.search.PatientsWithRadiologyresult",
-  "extensionPointId": "org.bahmni.patient.search",
-  "type": "config",
-  "extensionParams": {
-    "searchHandler": "emrapi.sqlSearch.notifyPatientsWithRadiologyResults",
-    "translationKey": "Radiology",
-    "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
-  },
-  "label": "Active",
-  "order": 3,
-  "requiredPrivilege": "app:clinical"
-},
-"bahmniClinicalPatientsWithPathologyresult": {
-"id": "bahmni.clinical.patients.search.PatientsWithPathologyresult",
-"extensionPointId": "org.bahmni.patient.search",
-"type": "config",
-"extensionParams": {
-  "searchHandler": "emrapi.sqlSearch.notifyPatientsWithPathologyResults",
-  "translationKey": "Pathology",
-  "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
-},
-"label": "Active",
-"order": 3,
-"requiredPrivilege": "app:clinical"
-},
-"bahmniClinicalPatientsWithProcedureresult": {
-"id": "bahmni.clinical.patients.search.PatientsWithProcedureresult",
-"extensionPointId": "org.bahmni.patient.search",
-"type": "config",
-"extensionParams": {
-  "searchHandler": "emrapi.sqlSearch.notifyPatientsWithPathologyResults",
-  "translationKey": "Procedure",
-  "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
-},
-"label": "Active",
-"order": 3,
-"requiredPrivilege": "app:clinical"
-},
-"bahmniClinicalDtpCases": {
-"id": "bahmni.clinical.patients.search.dtpCases",
-"extensionPointId": "org.bahmni.patient.search",
-"type": "config",
-"extensionParams": {
-  "searchHandler": "emrapi.sqlSearch.dtpCases",
-  "translationKey": "DTP",
-  "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
-},
-"label": "Active",
-"order": 3,
-"requiredPrivilege": "app:clinical"
-},
-"bahmniClinicalPatientsSearchAllPatients": {
-  "id": "bahmni.clinical.patients.search.allPatients",
-  "extensionPointId": "org.bahmni.patient.search",
-  "type": "config",
-  "extensionParams": {
-    "translationKey": "MODULE_LABEL_ALL_KEY",
-    "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
-  },
-  "label": "All",
-
-  "order": 5,
-  "requiredPrivilege": "access: all patients"
-},
-  "bahmniClinicalConceptSetGroupObservationsHistory": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "id": "bahmni.clinical.patients.search.PatientsWithRadiologyresult",
+    "extensionPointId": "org.bahmni.patient.search",
     "type": "config",
     "extensionParams": {
-      "conceptName": "History and Physical Examination",
-      "default": true,
-      "defaultLocation": "All"
+      "searchHandler": "emrapi.sqlSearch.notifyPatientsWithRadiologyResults",
+      "translationKey": "Radiology",
+      "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
     },
-    "order": 1,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsVitals": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.vitals",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "default": true,
-      "conceptName": "Vitals",
-      "defaultLocation": "All"
-    },
-    "order": 2,
-    "requiredPrivilege": "app:clinical"
-  },
-  "bahmniClinicalConceptSetGroupObservationsFamilyPlanningProfile": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "Family Planning Profile",
-      "default": true,
-      "defaultLocation": "MCH OPD"
-    },
-    "order": 21,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCQuickCheck": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC Quick Check",
-      "default": true,
-      "order": 1,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 1,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCProfile": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC Profile",
-      "default": true,
-      "order": 2,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 2,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCSYMPTOMANDFOLLOW-UP": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC Symptom and Follow-up",
-      "default": true,
-      "order": 3,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 3,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCPhysicalExamination": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC physical examination",
-      "default": true,
-      "order": 4,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 4,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCLABTESTANDIMAGING": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC Lab Test and Imaging",
-      "default": true,
-      "order": 5,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 5,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCCounsellingTreatment": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC Counselling & treatment",
-      "default": true,
-      "order": 6,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 6,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCReferral": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC Referral",
-      "default": true,
-      "order": 7,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 7,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCConfiguration": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC Configuration",
-      "default": true,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 8,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsANCend": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.history",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "DAK, ANC end",
-      "default": true,
-      "defaultLocation": "ANC OPD"
-    },
-    "order": 9,
-    "requiredPrivilege": "app:clinical:history"
-  },
-  "bahmniClinicalConceptSetGroupObservationsSecondVitals": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.secondVitals",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "Second Vitals",
-      "showIf": [
-        "var visitTypes = [];",
-        "if(visitTypes.length === 0) return true;",
-        "var visitTypeName = context.visitType ? context.visitType.name : null;",
-        "return visitTypes.indexOf(visitTypeName) !== -1;"
-      ]
-    },
+    "label": "Active",
     "order": 3,
     "requiredPrivilege": "app:clinical"
   },
-  "bahmniClinicalConceptSetGroupObservationsObstetrics": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.obstetrics",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+  "bahmniClinicalPatientsWithPathologyresult": {
+    "id": "bahmni.clinical.patients.search.PatientsWithPathologyresult",
+    "extensionPointId": "org.bahmni.patient.search",
     "type": "config",
     "extensionParams": {
-      "conceptName": "Obstetrics"
+      "searchHandler": "emrapi.sqlSearch.notifyPatientsWithPathologyResults",
+      "translationKey": "Pathology",
+      "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
     },
-    "order": 4,
+    "label": "Active",
+    "order": 3,
     "requiredPrivilege": "app:clinical"
   },
-  "bahmniClinicalConceptSetGroupObservationsGynaecology": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.gynaecology",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+  "bahmniClinicalPatientsWithProcedureresult": {
+    "id": "bahmni.clinical.patients.search.PatientsWithProcedureresult",
+    "extensionPointId": "org.bahmni.patient.search",
     "type": "config",
     "extensionParams": {
-      "conceptName": "Gynaecology"
+      "searchHandler": "emrapi.sqlSearch.notifyPatientsWithPathologyResults",
+      "translationKey": "Procedure",
+      "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
     },
+    "label": "Active",
+    "order": 3,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalDtpCases": {
+    "id": "bahmni.clinical.patients.search.dtpCases",
+    "extensionPointId": "org.bahmni.patient.search",
+    "type": "config",
+    "extensionParams": {
+      "searchHandler": "emrapi.sqlSearch.dtpCases",
+      "translationKey": "DTP",
+      "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
+    },
+    "label": "Active",
+    "order": 3,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalPatientsSearchAllPatients": {
+    "id": "bahmni.clinical.patients.search.allPatients",
+    "extensionPointId": "org.bahmni.patient.search",
+    "type": "config",
+    "extensionParams": {
+      "translationKey": "MODULE_LABEL_ALL_KEY",
+      "forwardUrl": "#/default/patient/{{patientUuid}}/dashboard"
+    },
+    "label": "All",
     "order": 5,
-    "requiredPrivilege": "app:clinical"
-  },
-  "bahmniClinicalConceptSetGroupObservationsDischargeSummary": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.dischargeSummary",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "Discharge Summary"
-    },
-    "order": 6,
-    "requiredPrivilege": "Discharge Summary"
+    "requiredPrivilege": "access: all patients"
   },
   "bahmniClinicalBillingTreatment": {
     "id": "bahmni.clinical.billing.treatment",
     "extensionPointId": "org.bahmni.clinical.consultation.board",
     "type": "link",
     "label": "Medications",
-    "translationKey":"MEDICATIONS_BOARD_LABEL_KEY",
-    "extensionParams":{
+    "translationKey": "MEDICATIONS_BOARD_LABEL_KEY",
+    "extensionParams": {
       "tabConfigName": "allMedicationTabConfig"
     },
     "url": "treatment",
@@ -402,7 +204,7 @@
     "extensionPointId": "org.bahmni.clinical.consultation.board",
     "type": "link",
     "label": "Orders",
-    "translationKey":"ORDERS_BOARD_LABEL_KEY",
+    "translationKey": "ORDERS_BOARD_LABEL_KEY",
     "url": "orders",
     "icon": "icon-user-md",
     "order": 6,
@@ -705,6 +507,227 @@
     "order": 1,
     "requiredPrivilege": "app:clinical"
   },
+  "bahmniClinicalConceptSetGroupObservationsFingerprintpage": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.fingerprintpage",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.fingerprintPage",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Fingerprint Image and Against Video Form",
+      "default": true
+    },
+    "order": 1,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsHistory": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "History and Physical Examination",
+      "default": true,
+      "defaultLocation": "All"
+    },
+    "order": 1,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCQuickCheck": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC Quick Check",
+      "default": true,
+      "order": 1,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 1,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsVitals": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.vitals",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "default": true,
+      "conceptName": "Vitals",
+      "defaultLocation": "All"
+    },
+    "order": 2,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCProfile": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC Profile",
+      "default": true,
+      "order": 2,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 2,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCSYMPTOMANDFOLLOW-UP": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC Symptom and Follow-up",
+      "default": true,
+      "order": 3,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 3,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsSecondVitals": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.secondVitals",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Second Vitals",
+      "showIf": [
+        "var visitTypes = [];",
+        "if(visitTypes.length === 0) return true;",
+        "var visitTypeName = context.visitType ? context.visitType.name : null;",
+        "return visitTypes.indexOf(visitTypeName) !== -1;"
+      ]
+    },
+    "order": 3,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCPhysicalExamination": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC physical examination",
+      "default": true,
+      "order": 4,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 4,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsObstetrics": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.obstetrics",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Obstetrics"
+    },
+    "order": 4,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCLABTESTANDIMAGING": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC Lab Test and Imaging",
+      "default": true,
+      "order": 5,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 5,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsGynaecology": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.gynaecology",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Gynaecology"
+    },
+    "order": 5,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCCounsellingTreatment": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC Counselling & treatment",
+      "default": true,
+      "order": 6,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 6,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsDischargeSummary": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.dischargeSummary",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Discharge Summary"
+    },
+    "order": 6,
+    "requiredPrivilege": "Discharge Summary"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCReferral": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC Referral",
+      "default": true,
+      "order": 7,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 7,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCConfiguration": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC Configuration",
+      "default": true,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 8,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "bahmniClinicalConceptSetGroupObservationsANCend": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "DAK, ANC end",
+      "default": true,
+      "defaultLocation": "ANC OPD"
+    },
+    "order": 9,
+    "requiredPrivilege": "app:clinical:history"
+  },
+  "obs_ipd_vital_sign_and_pain_tracker_format": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.obs_ipd_vital_sign_and_pain_tracker_format",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "IPD Vital Sign and Pain Tracker Format",
+      "default": false,
+      "defaultLocation": "",
+      "order": 18
+    },
+    "order": 18,
+    "requiredPrivilege": "app:clinical:observationTab"
+  },
+  "bahmniClinicalConceptSetGroupObservationsFamilyPlanningProfile": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.history",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Family Planning Profile",
+      "default": true,
+      "defaultLocation": "MCH OPD"
+    },
+    "order": 21,
+    "requiredPrivilege": "app:clinical:history"
+  },
   "bahmniClinicalConceptSetGroupObservationsWHOTrauma": {
     "id": "bahmni.clinical.conceptSetGroup.observations.whoTrauma",
     "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
@@ -716,17 +739,6 @@
       "formUUID": "787486b1-fdae-40f8-b704-4aa241633468"
     },
     "order": 30,
-    "requiredPrivilege": "app:clinical"
-  },
-  "bahmniClinicalConceptSetGroupObservationsFingerprintpage": {
-    "id": "bahmni.clinical.conceptSetGroup.observations.fingerprintpage",
-    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.fingerprintPage",
-    "type": "config",
-    "extensionParams": {
-      "conceptName": "Fingerprint Image and Against Video Form",
-      "default": true
-    },
-    "order": 1,
     "requiredPrivilege": "app:clinical"
   }
 }

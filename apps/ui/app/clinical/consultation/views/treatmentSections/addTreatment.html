@@ -11,6 +11,18 @@
     </h2>
     <div class="order-section-container"  ng-show="addTreatment">
         <div class="Order-section-orderDrug clearfix">
+            <div ng-if="treatment.isDtpEdit" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px 12px; border-radius: 4px; margin-bottom: 10px; font-size: 13px;">
+                <div style="font-weight: bold; margin-bottom: 4px;">
+                    <i class="fa fa-exclamation-triangle" style="color: #d9534f;"></i>
+                    Editing DTP-Evaluated Drug ({{treatment.dtpOriginalDrugName}})
+                </div>
+                <div style="font-size: 12px; margin-bottom: 4px;">
+                    <strong>DTP Case:</strong> {{treatment.dtpCases}}
+                </div>
+                <div style="font-size: 11px; color: #664d03;">
+                    You can change the drug name, dose, frequency, duration, or add your clinical reason below. Saving will update the prescription without duplicating.
+                </div>
+            </div>
             <form name="addForm" ng-class="{ 'show-invalid': formInvalid}"  ng-submit="add()" bm-form class="edit-drug-order-container" alert-on-exit>
                 <article class="form-field">
                     <div class="field-attribute">
@@ -41,7 +53,7 @@
                        }"
                                    ng-change="onChange()"
                                    ng-model="treatment.drugNameDisplay" on-select="onSelect" autofocus
-                                   ng-disabled="treatment.previousOrderUuid" ng-readonly="treatment.isBeingEdited"/>
+                                   ng-disabled="treatment.previousOrderUuid && !treatment.isDtpEdit" ng-readonly="treatment.isBeingEdited && !treatment.isDtpEdit"/>
 
                 <span ng-if="treatmentConfig.allowNonCodedDrugs()">
                     <button type="button" ng-model="treatment.isNonCodedDrug"
@@ -291,6 +303,17 @@
                     </div>
                 </article>
 
+
+                <article class="form-field" ng-if="treatment.isDtpEdit">
+                    <div class="field-attribute">
+                        <label class="fl" style="color: #856404; font-weight: bold;">Physician Reason / Explanation</label>
+                    </div>
+                    <div class="field-value">
+                        <textarea id="dtp-physician-reason" rows="2" class="drug-order-notes"
+                                  ng-model="treatment.dtpPhysicianReason"
+                                  placeholder="Enter clinical reason or explanation for this DTP resolution..."></textarea>
+                    </div>
+                </article>
 
                 <div class="operations fr clearfix">
                     <button class="add-drug-btn secondary-button fl" type="submit" accesskey="{{ ::treatmentConfig.translate('addAccessKey', 'MEDICATION_ADD_ACCESS_KEY') }}"

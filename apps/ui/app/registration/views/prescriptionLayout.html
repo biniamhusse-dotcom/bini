@@ -2,11 +2,22 @@
     <header class="reg-header" ng-controller="NavigationController">
     <ul class="top-nav fl">
         <a class="back-btn" accesskey="h" href="../home/index.html" ng-click="onHomeNavigate($event)"><i class="fa fa-home"></i></a>
-        <li>
-            <a ng-click="goTo('/prescriptionSearch')"><i class="fa-search fa fa-white small"></i>
-                <span class="nav-link" ng-bind-html="SEARCH"></span>S<u>e</u>arch</a>
+        <li style="margin-left: 10px;">
+            <a ng-click="goTo('/prescriptionSearch')"
+               ng-style="isCurrentPath('/prescriptionSearch') ? {'background': 'rgba(255,255,255,0.25)', 'color': '#ffffff', 'font-weight': 'bold', 'border-radius': '4px', 'padding': '5px 12px'} : {'color': '#e2e8f0', 'padding': '5px 12px'}"
+               style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none;">
+                <i class="fa-search fa fa-white small"></i>
+                <span class="nav-link" ng-bind-html="SEARCH"></span>S<u>e</u>arch
+            </a>
         </li>
-
+        <li style="margin-left: 6px;">
+            <a ng-click="goTo('/dispensingRegister')"
+               ng-style="isCurrentPath('/dispensingRegister') ? {'background': 'rgba(255,255,255,0.25)', 'color': '#ffffff', 'font-weight': 'bold', 'border-radius': '4px', 'padding': '5px 12px'} : {'color': '#e2e8f0', 'padding': '5px 12px'}"
+               style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none;">
+                <i class="fa fa-book fa-white small"></i>
+                <span>Health Facility Dispensing Registration Book</span>
+            </a>
+        </li>
     </ul>
     <div class="reg-header-right fr">
         <!-- <div ui-view="headerExtension" class="print-action-items fl"></div> -->

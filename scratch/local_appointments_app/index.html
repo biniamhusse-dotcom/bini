@@ -7,6 +7,11 @@
     <link rel="icon" type="image/x-icon" href="/bahmni/favicon.ico">
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- Ethiopian Calendars CSS -->
+    <link rel="stylesheet" href="lib/jquery-calendars/css/jquery.calendars.picker.css">
+    
+    <!-- Main Appointment Scheduling App Bundle -->
     <script type="text/javascript" src="appointment.js"></script>
     <style>
     .back-btn-spec {
@@ -21,6 +26,141 @@
         border: 1px solid rgba(255,255,255,0.3);
     }
     .back-btn-spec:hover { background: rgba(255,255,255,0.3); }
+
+    /* Ethiopian Calendar Picker Styles */
+    .calendars-popup {
+        z-index: 9999999 !important;
+        font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+        border-radius: 6px !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25) !important;
+        background: #fff !important;
+        border: 1px solid #00796B !important;
+        overflow: hidden !important;
+    }
+    .calendars {
+        border-radius: 6px !important;
+        border: none !important;
+        font-family: inherit !important;
+        background: #fff !important;
+        width: 230px !important;
+    }
+    /* Hide clunky Clear/Close bar; selection automatically closes the picker */
+    .calendars-ctrl {
+        display: none !important;
+    }
+    .calendars-nav {
+        background-color: #00796B !important;
+        color: #fff !important;
+        font-weight: bold;
+        padding: 6px 4px !important;
+        font-size: 13px !important;
+    }
+    .calendars-nav a {
+        color: #fff !important;
+        font-weight: 600 !important;
+        padding: 2px 6px !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+    }
+    .calendars-nav a:hover {
+        background-color: rgba(255,255,255,0.25) !important;
+        border-radius: 3px;
+    }
+    .calendars-month-header {
+        background-color: #f4fbf9 !important;
+        font-weight: bold !important;
+        color: #004d40 !important;
+        padding: 6px 4px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid #e0f2f1 !important;
+    }
+    .calendars-month-header select {
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
+        border: 1px solid #b2dfdb !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: #004d40 !important;
+        background: #fff !important;
+        cursor: pointer !important;
+    }
+    .calendars-month {
+        width: 100% !important;
+        border: none !important;
+    }
+    .calendars-month table {
+        width: 100% !important;
+    }
+    .calendars-month th {
+        background-color: #f1f8f6 !important;
+        color: #00796B !important;
+        font-weight: 600 !important;
+        padding: 6px 2px !important;
+        font-size: 12px !important;
+        border-bottom: 1px solid #e0f2f1 !important;
+    }
+    .calendars-month td {
+        padding: 2px !important;
+    }
+    .calendars-month td a {
+        color: #2c3e50 !important;
+        padding: 5px 6px !important;
+        display: block !important;
+        text-align: center !important;
+        border-radius: 4px !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        transition: background 0.15s ease, color 0.15s ease !important;
+    }
+    .calendars-month td a:hover, .calendars-highlight {
+        background-color: #80cbc4 !important;
+        color: #004d40 !important;
+    }
+    .calendars-selected {
+        background-color: #00796B !important;
+        color: #fff !important;
+        font-weight: bold !important;
+        border-radius: 4px !important;
+    }
+    .calendars-today {
+        background-color: #fff9c4 !important;
+        font-weight: bold !important;
+        border: 1px dashed #fbc02d !important;
+        border-radius: 4px !important;
+    }
+
+    /* Ethiopian Date Input in Drawer Form */
+    .eth-date-picker-input {
+        cursor: pointer !important;
+        background-color: #fff !important;
+    }
+    .eth-date-picker-input:focus {
+        border-color: #00796B !important;
+        outline: none !important;
+        box-shadow: 0 0 5px rgba(0, 121, 107, 0.4) !important;
+    }
+
+    /* Ethiopian Date Input in Navigation Bar */
+    .eth-date-nav-input {
+        width: 215px !important;
+        padding: 5px 10px !important;
+        border: 1px solid #b0bec5 !important;
+        border-radius: 4px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+        background: #ffffff !important;
+        cursor: pointer !important;
+        font-weight: 600 !important;
+        color: #004d40 !important;
+        letter-spacing: 0.3px;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+    }
+    .eth-date-nav-input:hover, .eth-date-nav-input:focus {
+        border-color: #00796B !important;
+        outline: none !important;
+        box-shadow: 0 0 5px rgba(0, 121, 107, 0.4) !important;
+    }
     </style>
 </head>
 <body>

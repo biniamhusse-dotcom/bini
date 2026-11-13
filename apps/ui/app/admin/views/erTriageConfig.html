@@ -1,0 +1,219 @@
+<div class="er-triage-config-page" style="padding: 24px; max-width: 1320px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #2c3e50;">
+
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 style="margin: 0; font-size: 24px; color: #1a365d; display: flex; align-items: center; gap: 10px;">
+                <i class="fa fa-ambulance" style="color: #c53030;"></i> Emergency Triage Types &amp; Location Mapping
+            </h2>
+            <p style="margin: 6px 0 0 0; color: #718096; font-size: 14px;">
+                Configure triage types, dynamic age ranges &amp; gender rules, and map each triage type to an existing OpenMRS location and visit type.
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="#/dashboard" class="btn" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-arrow-left"></i> Admin Dashboard
+            </a>
+            <button type="button" class="btn btn-primary" ng-click="saveConfig()" ng-disabled="saving || loading" style="background: #2b6cb0; color: #fff; border: none; padding: 9px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <i class="fa fa-spin fa-spinner" ng-if="saving"></i>
+                <i class="fa fa-check" ng-if="!saving"></i>
+                {{ saving ? 'Saving...' : 'Save Configuration' }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Saved Banner -->
+    <div ng-if="savedSuccess" style="background: #f0fff4; border-left: 4px solid #38a169; border-radius: 6px; padding: 14px 18px; margin-bottom: 20px; color: #22543d; font-size: 14px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa fa-check-circle fa-lg" style="color: #38a169;"></i>
+        <div>
+            <strong>Saved!</strong> Emergency Triage app will now list triage types matching the configured age &amp; gender rules and route visits to their mapped locations.
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div ng-if="loading" style="text-align: center; padding: 60px 0; color: #718096;">
+        <i class="fa fa-spinner fa-spin fa-3x" style="color: #3182ce; margin-bottom: 12px;"></i>
+        <div style="font-size: 16px;">Loading OpenMRS locations, visit types, and Emergency Triage configuration...</div>
+    </div>
+
+    <div ng-if="!loading">
+
+        <!-- Quick Add & Age Cutoff Toolbar -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-weight: 600; font-size: 13px; color: #2d3748;">
+                    <i class="fa fa-map-marker" style="color: #3182ce;"></i> Quick Add Location:
+                </span>
+                <select ng-model="quickLocationUuid" style="padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; min-width: 220px; background: #fff;">
+                    <option value="">-- Select OpenMRS Location --</option>
+                    <option ng-repeat="loc in locations" value="{{loc.uuid}}">{{loc.name}}{{loc.tagText}}</option>
+                </select>
+                <button type="button" ng-click="addFromLocation()" ng-disabled="!quickLocationUuid" style="background: #3182ce; color: #fff; border: none; padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-plus"></i> Add Location
+                </button>
+                <button type="button" ng-click="addEmptyRow()" style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-plus-circle"></i> Add Custom Type
+                </button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px;">
+                <label style="font-size: 12px; font-weight: 600; color: #2d3748; margin: 0;">
+                    Default Pediatric Max Age (yrs):
+                </label>
+                <input type="number" ng-model="erTriageAgeCutoff" min="0" max="120"
+                       style="width: 62px; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 13px; font-weight: 600; text-align: center; background: #fff;">
+                <button type="button" ng-click="applyCutoffToRows()" title="Apply this age cutoff to Adult and Pediatrics rows"
+                        style="background: #2b6cb0; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                    Apply Cutoff
+                </button>
+            </div>
+        </div>
+
+        <!-- Warning if unmapped -->
+        <div ng-if="preview.unmappedCount > 0" style="background: #fffaf0; border-left: 4px solid #dd6b20; border-radius: 6px; padding: 12px 16px; margin-bottom: 18px; color: #7b341e; font-size: 13px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa fa-exclamation-triangle" style="color: #dd6b20; font-size: 16px;"></i>
+            <span>{{ preview.unmappedCount }} triage type(s) do not have a mapped OpenMRS location yet. Select an existing location in the table below before saving.</span>
+        </div>
+
+        <!-- Triage Types & Mapping Table -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 22px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568;">
+                        <th style="padding: 10px 10px;">Triage Type Label</th>
+                        <th style="padding: 10px 10px;">Mapped Existing Location</th>
+                        <th style="padding: 10px 10px;">Visit Type Created</th>
+                        <th style="padding: 10px 10px;">Triage Form Template</th>
+                        <th style="padding: 10px 10px;">Genders</th>
+                        <th style="padding: 10px 10px;">Age Range (Years)</th>
+                        <th style="padding: 10px 8px; width: 46px; text-align: center;">Del</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-if="triageRows.length === 0">
+                        <td colspan="7" style="padding: 32px; text-align: center; color: #718096;">
+                            No triage types configured yet. Use "Quick Add Location" or "Add Custom Type" above.
+                        </td>
+                    </tr>
+                    <tr ng-repeat="row in triageRows track by $index" style="border-bottom: 1px solid #edf2f7;">
+                        <td style="padding: 10px; vertical-align: top; min-width: 145px;">
+                            <input type="text" ng-model="row.name" placeholder="e.g. Adult ER"
+                                   style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; font-weight: 600; color: #1a202c; box-sizing: border-box;">
+                        </td>
+                        <td style="padding: 10px; vertical-align: top; min-width: 165px;">
+                            <select ng-model="row.locationUuid" ng-change="onLocationChange(row)"
+                                    style="width: 100%; padding: 6px 8px; border: 1px solid {{ row.locationUuid ? '#cbd5e0' : '#e53e3e' }}; border-radius: 6px; font-size: 13px; background: #fff;">
+                                <option value="">-- Select Location --</option>
+                                <option ng-repeat="loc in locations" value="{{loc.uuid}}">{{loc.name}}</option>
+                            </select>
+                            <div ng-if="row.locationUuid" style="font-size: 11px; color: #38a169; margin-top: 3px;">
+                                <i class="fa fa-check"></i> {{row.locationName}}
+                            </div>
+                        </td>
+                        <td style="padding: 10px; vertical-align: top; min-width: 155px;">
+                            <select ng-model="row.visitTypeUuid" ng-change="onVisitTypeChange(row)"
+                                    style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                                <option value="">-- Auto / Default --</option>
+                                <option ng-repeat="vt in visitTypes" value="{{vt.uuid}}">{{vt.name}}</option>
+                            </select>
+                        </td>
+                        <td style="padding: 10px; vertical-align: top; min-width: 180px;">
+                            <select ng-model="row.formId"
+                                    style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                                <option ng-repeat="f in availableForms" value="{{f.id}}">{{f.label}}</option>
+                            </select>
+                        </td>
+                        <td style="padding: 10px; vertical-align: top; min-width: 135px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 12px;">
+                                <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" ng-model="row.genders.M"> Male
+                                </label>
+                                <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" ng-model="row.genders.F"> Female
+                                </label>
+                                <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" ng-model="row.genders.O"> Other
+                                </label>
+                            </div>
+                        </td>
+                        <td style="padding: 10px; vertical-align: top; min-width: 165px;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <input type="number" ng-model="row.minAge" min="0" max="150" placeholder="0" title="Minimum age in years (leave blank for no minimum)"
+                                       style="width: 60px; padding: 5px 6px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 13px; text-align: center;">
+                                <span style="color: #718096; font-weight: 600;">to</span>
+                                <input type="number" ng-model="row.maxAge" min="0" max="150" placeholder="Any" title="Maximum age in years (leave blank for no maximum)"
+                                       style="width: 60px; padding: 5px 6px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 13px; text-align: center;">
+                            </div>
+                            <div style="font-size: 11px; color: #4a5568; margin-top: 3px;">
+                                {{ getAgeRangeLabel(row) }}
+                            </div>
+                        </td>
+                        <td style="padding: 10px 8px; text-align: center; vertical-align: top;">
+                            <button type="button" ng-click="removeRow($index)" title="Remove Triage Type"
+                                    style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 6px 9px; border-radius: 6px; cursor: pointer;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Live Preview & Simulator -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 16px; color: #2d3748;">
+                    <i class="fa fa-list-ul" style="color: #3182ce;"></i> Emergency Triage Dropdown Preview &amp; Live Tester
+                </h3>
+                <div style="display: flex; align-items: center; gap: 10px; background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 7px 12px; font-size: 13px;">
+                    <span style="font-weight: 600; color: #2b6cb0;">Test Patient:</span>
+                    <select ng-model="testPatient.gender" style="padding: 4px 8px; border: 1px solid #90cdf4; border-radius: 5px; background: #fff;">
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                        <option value="O">Other</option>
+                    </select>
+                    <label style="margin: 0; font-weight: 500; color: #2d3748;">Age:</label>
+                    <input type="number" ng-model="testPatient.age" min="0" max="150" placeholder="Any"
+                           style="width: 65px; padding: 4px 6px; border: 1px solid #90cdf4; border-radius: 5px; text-align: center; background: #fff;">
+                    <span style="color: #2d3748;">&rarr;</span>
+                    <span ng-if="preview.simulated.length === 0" style="color: #c53030; font-weight: 600;">No match (falls back to all)</span>
+                    <span ng-repeat="m in preview.simulated track by $index" style="background: #fff; border: 1px solid #90cdf4; border-radius: 5px; padding: 2px 8px; font-size: 12px; color: #1a365d;">
+                        <strong>{{m.name}}</strong> <span style="color: #718096;">({{m.locationName}})</span>
+                    </span>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #2b6cb0; margin-bottom: 6px;">Adult Male (&gt; {{erTriageAgeCutoff}} yrs)</div>
+                    <div ng-if="preview.adultMale.length === 0" style="font-size: 12px; color: #a0aec0;">None matched</div>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #2d3748;">
+                        <li ng-repeat="item in preview.adultMale track by $index">{{item}}</li>
+                    </ul>
+                </div>
+                <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #2b6cb0; margin-bottom: 6px;">Pediatrics Male (&le; {{erTriageAgeCutoff}} yrs)</div>
+                    <div ng-if="preview.pediatricsMale.length === 0" style="font-size: 12px; color: #a0aec0;">None matched</div>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #2d3748;">
+                        <li ng-repeat="item in preview.pediatricsMale track by $index">{{item}}</li>
+                    </ul>
+                </div>
+                <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #b83280; margin-bottom: 6px;">Adult Female (&gt; {{erTriageAgeCutoff}} yrs)</div>
+                    <div ng-if="preview.adultFemale.length === 0" style="font-size: 12px; color: #a0aec0;">None matched</div>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #2d3748;">
+                        <li ng-repeat="item in preview.adultFemale track by $index">{{item}}</li>
+                    </ul>
+                </div>
+                <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #b83280; margin-bottom: 6px;">Pediatrics Female (&le; {{erTriageAgeCutoff}} yrs)</div>
+                    <div ng-if="preview.pediatricsFemale.length === 0" style="font-size: 12px; color: #a0aec0;">None matched</div>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #2d3748;">
+                        <li ng-repeat="item in preview.pediatricsFemale track by $index">{{item}}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

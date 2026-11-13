@@ -2,7 +2,7 @@
 
 angular.module('admin', ['httpErrorInterceptor', 'bahmni.admin', 'bahmni.common.routeErrorHandler', 'ngSanitize',
     'bahmni.common.uiHelper', 'bahmni.common.config', 'bahmni.common.orders', 'bahmni.common.i18n', 'pascalprecht.translate',
-    'ngCookies', 'angularFileUpload', 'bahmni.common.services', 'bahmni.common.ethiopianDateSelector']);
+    'ngCookies', 'angularFileUpload', 'bahmni.common.services', 'bahmni.common.ethiopianDateSelector', 'ngDialog']);
 angular.module('admin')
     .config(['$stateProvider', '$httpProvider', '$urlRouterProvider', '$compileProvider', '$bahmniTranslateProvider',
         function ($stateProvider, $httpProvider, $urlRouterProvider, $compileProvider, $bahmniTranslateProvider) {
@@ -80,6 +80,48 @@ angular.module('admin')
                 url: '/paymentConfig',
                 templateUrl: 'views/paymentConfig.html',
                 controller: 'PaymentConfigController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
+            }).state('admin.erTriageConfig', {
+                url: '/erTriageConfig',
+                templateUrl: 'views/erTriageConfig.html?v=1.2',
+                controller: 'ErTriageConfigController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
+            }).state('admin.locationVisitMapping', {
+                url: '/locationVisitMapping',
+                templateUrl: 'views/locationVisitMapping.html?v=1.0',
+                controller: 'LocationVisitMappingController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
+            }).state('admin.dashboardConfig', {
+                url: '/dashboardConfig',
+                templateUrl: 'views/dashboardConfig.html?v=1.0',
+                controller: 'DashboardConfigController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
+            }).state('admin.obsFormManager', {
+                url: '/obsFormManager',
+                templateUrl: 'views/obsFormManager.html?v=1.6',
+                controller: 'ObsFormManagerController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
+            }).state('admin.drugManagement', {
+                url: '/drugManagement',
+                templateUrl: 'views/drugManagement.html?v=2.0',
+                controller: 'DrugManagementController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
+            }).state('admin.diagnosisManagement', {
+                url: '/diagnosisManagement',
+                templateUrl: 'views/diagnosisManagement.html?v=2.0',
+                controller: 'DiagnosisManagementController',
                 data: {
                     backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
                 }

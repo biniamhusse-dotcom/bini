@@ -137,11 +137,27 @@ angular
                 // template: '<h1>This is Info</h1>',
                 views: {
                     'layout': { templateUrl: 'views/prescriptionLayout.html', controller: 'SearchPatientController' },
-                    'content@prescriptionSearch': { templateUrl: 'views/prescriptionSearch.html?v=3' }
+                    'content@prescriptionSearch': { templateUrl: 'views/prescriptionSearch.html?v=20261112_reg15' }
 
                 },
                 data: {
                     pageTitle: 'Prescription Search'
+                },
+                resolve: {
+                    initialize: function (initialization) {
+                        return initialization();
+                    }
+                }
+            })
+            .state('dispensingRegister', {
+                url: '/dispensingRegister',
+                reloadOnSearch: false,
+                views: {
+                    'layout': { templateUrl: 'views/prescriptionLayout.html', controller: 'SearchPatientController' },
+                    'content@dispensingRegister': { templateUrl: 'views/dispensingRegister.html?v=20261112_reg15' }
+                },
+                data: {
+                    pageTitle: 'Health Facility Dispensing Registration Book'
                 },
                 resolve: {
                     initialize: function (initialization) {
@@ -280,7 +296,10 @@ angular
             $rootScope.createAuditLog = function (event, toState, toParams, fromState) {
                 var states = getStates(toState.name, fromState.name);
                 states.forEach(function (state) {
-                    auditLogService.log(toParams.patientUuid, Bahmni.Registration.StateNameEvenTypeMap[state], undefined, "MODULE_LABEL_REGISTRATION_KEY");
+                    var eventType = Bahmni.Registration.StateNameEvenTypeMap[state];
+                    if (eventType) {
+                        auditLogService.log(toParams.patientUuid, eventType, undefined, "MODULE_LABEL_REGISTRATION_KEY");
+                    }
                 });
             };
 

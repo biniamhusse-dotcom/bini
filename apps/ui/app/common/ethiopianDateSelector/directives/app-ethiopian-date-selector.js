@@ -3,7 +3,7 @@
 angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSelector', ['ethiopianGregorianService', function (ethiopianGregorianService) {
     return {
         restrict: 'E',
-        template: '<div class="field-value"><input type="text" ng-required="required" ng-disabled="disabled" placeholder="ቀን"/></div>',
+        template: '<div class="field-value eth-date-input-wrap"><input type="text" ng-required="required" ng-disabled="disabled" placeholder="ቀን (dd/mm/yyyy)"/><span class="eth-date-icon" ng-click="openPicker()" title="Open Ethiopian Calendar"><i class="fa fa-calendar"></i></span></div>',
         scope: {
             date: "=",
             handler: "&",
@@ -87,6 +87,9 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
 
             inputElement.calendarsPicker({
                 calendar: calendar,
+                yearRange: 'c-100:c+20',
+                showOtherMonths: true,
+                selectOtherMonths: true,
                 onSelect: function (dates) {
                     if (!dates || !dates[0]) return;
                     var ethDate = dates[0];
@@ -105,6 +108,12 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
                 maxDate: maxDate ? ethiopianGregorianService.gregToEth(maxDate) : null,
                 holidays: Bahmni.Common.EthiopianDateSelector.constants.holidays
             });
+
+            scope.openPicker = function () {
+                if (!scope.disabled) {
+                    inputElement.calendarsPicker('show');
+                }
+            };
 
             inputElement.on('change blur', function () {
                 var ethVal = inputElement.val();
@@ -225,6 +234,9 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
 
             inputElement.calendarsPicker({
                 calendar: calendar,
+                yearRange: 'c-100:c+20',
+                showOtherMonths: true,
+                selectOtherMonths: true,
                 onSelect: function (dates) {
                     if (!dates || !dates[0]) return;
                     var ethDate = dates[0];
@@ -243,6 +255,12 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
                 maxDate: maxDate ? ethiopianGregorianService.gregToEth(maxDate) : null,
                 holidays: Bahmni.Common.EthiopianDateSelector.constants.holidays
             });
+
+            scope.openPicker = function () {
+                if (!scope.disabled) {
+                    inputElement.calendarsPicker('show');
+                }
+            };
 
             inputElement.on('change blur', function () {
                 var ethVal = inputElement.val();
@@ -357,6 +375,9 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
 
             inputElement.calendarsPicker({
                 calendar: calendar,
+                yearRange: 'c-100:c+20',
+                showOtherMonths: true,
+                selectOtherMonths: true,
                 onSelect: function (dates) {
                     if (!dates || !dates[0]) return;
                     var ethDate = dates[0];
@@ -375,6 +396,12 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateSe
                 maxDate: maxDate ? ethiopianGregorianService.gregToEth(maxDate) : null,
                 holidays: Bahmni.Common.EthiopianDateSelector.constants.holidays
             });
+
+            scope.openPicker = function () {
+                if (!scope.disabled) {
+                    inputElement.calendarsPicker('show');
+                }
+            };
 
             inputElement.on('change blur', function () {
                 var ethVal = inputElement.val();

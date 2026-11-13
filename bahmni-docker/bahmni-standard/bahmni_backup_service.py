@@ -9,6 +9,8 @@ Supports:
 """
 
 import argparse
+import csv
+import io
 import base64
 import datetime
 import glob
@@ -22,6 +24,7 @@ import tempfile
 import threading
 import tarfile
 import time
+import uuid
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -1030,6 +1033,9 @@ def load_branding_config():
     
     data = {
         "facilityName": "Boru Meda General Hospital",
+        "region": "Amhara",
+        "zone": "South Wollo",
+        "woreda": "Dessie",
         "browserTitle": "BMH bahmni",
         "tagline": "General Hospital EMR System",
         "welcomeMessage": "WELCOME TO BORU MEDA GENERAL HOSPITAL EMR System",
@@ -1091,6 +1097,9 @@ def load_branding_config():
 
 def save_branding_config(payload):
     facility_name = (payload.get("facilityName") or "Boru Meda General Hospital").strip()
+    region = (payload.get("region") or "").strip()
+    zone = (payload.get("zone") or "").strip()
+    woreda = (payload.get("woreda") or "").strip()
     browser_title = (payload.get("browserTitle") or payload.get("facilityName") or "BMH bahmni").strip()
     tagline = (payload.get("tagline") or "").strip()
     welcome_message = (payload.get("welcomeMessage") or f"WELCOME TO {facility_name.upper()} EMR System").strip()
@@ -1296,6 +1305,9 @@ def save_branding_config(payload):
     branding_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "branding.json")
     saved_meta = {
         "facilityName": facility_name,
+        "region": region,
+        "zone": zone,
+        "woreda": woreda,
         "browserTitle": browser_title,
         "tagline": tagline,
         "welcomeMessage": welcome_message,
@@ -1496,6 +1508,756 @@ def save_payment_config(payload):
 
 # ── HTTP Server Request Handler ──────────────────────────────────────────────
 
+
+
+# ── Clinical & Registration Configuration Endpoints ─────────────────────────
+
+def load_er_triage_config():
+    reg_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "registration", "app.json")
+    if os.path.isfile(reg_file):
+        try:
+            with open(reg_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                config = data.get("config", {})
+                return {
+                    "erTriageAgeCutoff": config.get("erTriageAgeCutoff", 10),
+                    "erTriageRules": config.get("erTriageRules", []),
+                    "erTriageVisitTypes": config.get("erTriageVisitTypes", {}),
+                    "erTriageFormLookup": config.get("erTriageFormLookup", {}),
+                    "erTriageLocationMap": config.get("erTriageLocationMap", {})
+                }
+        except Exception as e:
+            log(f"Warning loading er-triage-config: {e}")
+    return {
+        "erTriageAgeCutoff": 10,
+        "erTriageRules": [],
+        "erTriageVisitTypes": {},
+        "erTriageFormLookup": {},
+        "erTriageLocationMap": {}
+    }
+
+def save_er_triage_config(payload):
+    reg_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "registration", "app.json")
+    if not os.path.isfile(reg_file):
+        raise FileNotFoundError("registration app.json not found")
+    with open(reg_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if "config" not in data:
+        data["config"] = {}
+    cfg = data["config"]
+    if "erTriageAgeCutoff" in payload:
+        cfg["erTriageAgeCutoff"] = payload["erTriageAgeCutoff"]
+    if "erTriageRules" in payload:
+        cfg["erTriageRules"] = payload["erTriageRules"]
+    if "erTriageVisitTypes" in payload:
+        cfg["erTriageVisitTypes"] = payload["erTriageVisitTypes"]
+    if "erTriageFormLookup" in payload:
+        cfg["erTriageFormLookup"] = payload["erTriageFormLookup"]
+    if "erTriageLocationMap" in payload:
+        cfg["erTriageLocationMap"] = payload["erTriageLocationMap"]
+    write_file_safe(reg_file, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+    sync_file_to_bahmni_web(reg_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/registration/app.json")
+    log("Saved er-triage configuration successfully.")
+    return load_er_triage_config()
+
+def load_location_visit_mappings():
+    omrs = get_container("openmrsdb")
+    sql = """
+    SELECT l.uuid as locationUuid, l.name as locationName,
+           la.value_reference as visitTypeUuid, vt.name as visitTypeName
+    FROM location l
+    LEFT JOIN location_attribute la ON l.location_id = la.location_id AND la.voided = 0
+    LEFT JOIN location_attribute_type lat ON la.attribute_type_id = lat.location_attribute_type_id AND lat.name = 'defaultVisitType'
+    LEFT JOIN visit_type vt ON la.value_reference = vt.uuid AND vt.retired = 0
+    WHERE l.retired = 0
+    ORDER BY l.name ASC;
+    """
+    rows = run_openmrs_query(sql)
+    return {"mappings": rows}
+
+def save_location_visit_mappings(payload):
+    mappings = payload.get("mappings", [])
+    omrs = get_container("openmrsdb")
+    for m in mappings:
+        loc_uuid = m.get("locationUuid")
+        vt_uuid = m.get("visitTypeUuid")
+        if loc_uuid and vt_uuid:
+            sql = f"""
+            INSERT INTO location_attribute (location_id, attribute_type_id, value_reference, uuid, creator, date_created)
+            SELECT l.location_id, lat.location_attribute_type_id, '{escape_sql_str(vt_uuid)}', UUID(), 1, NOW()
+            FROM location l
+            JOIN location_attribute_type lat ON lat.name = 'defaultVisitType'
+            WHERE l.uuid = '{escape_sql_str(loc_uuid)}'
+            ON DUPLICATE KEY UPDATE value_reference = '{escape_sql_str(vt_uuid)}';
+            """
+            run_openmrs_query(sql)
+    return load_location_visit_mappings()
+
+def load_dashboard_config():
+    dash_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical", "dashboard.json")
+    if os.path.exists(dash_file):
+        try:
+            with open(dash_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            log(f"Warning loading dashboard.json: {e}")
+    return {"dashboard": {}}
+
+def save_dashboard_config(payload):
+    dash_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical", "dashboard.json")
+    write_file_safe(dash_file, json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+    sync_file_to_bahmni_web(dash_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/clinical/dashboard.json")
+    log("Saved dashboard.json successfully.")
+    return load_dashboard_config()
+
+def _obs_form_paths():
+    clinical_dir = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical")
+    logics_dir = os.path.join(CONFIG_DIR, "openmrs", "apps", "logicsAndConditions")
+    return (
+        os.path.join(clinical_dir, "app.json"),
+        os.path.join(clinical_dir, "extension.json"),
+        os.path.join(logics_dir, "skipLogics.json")
+    )
+
+def load_obs_form_config():
+    app_file, ext_file, skip_file = _obs_form_paths()
+    clinical_app = {}
+    if os.path.exists(app_file):
+        with open(app_file, "r", encoding="utf-8") as f:
+            clinical_app = json.load(f)
+    clinical_ext = {}
+    if os.path.exists(ext_file):
+        with open(ext_file, "r", encoding="utf-8") as f:
+            clinical_ext = json.load(f)
+    skip_logics = []
+    if os.path.exists(skip_file):
+        with open(skip_file, "r", encoding="utf-8") as f:
+            skip_logics = json.load(f)
+    obs_extensions = []
+    for key, val in clinical_ext.items():
+        if isinstance(val, dict) and val.get("extensionPointId") == "org.bahmni.clinical.conceptSetGroup.observations":
+            entry = dict(val)
+            entry["key"] = key
+            obs_extensions.append(entry)
+    obs_extensions.sort(key=lambda item: item.get("order", 999))
+    concept_set_ui = clinical_app.get("config", {}).get("conceptSetUI", {})
+    return {
+        "conceptSetUI": concept_set_ui,
+        "observationExtensions": obs_extensions,
+        "skipLogics": skip_logics
+    }
+
+def save_obs_form_config(payload):
+    if not isinstance(payload, dict):
+        raise ValueError("Payload must be a JSON object")
+    app_file, ext_file, skip_file = _obs_form_paths()
+    if "conceptSetUI" in payload:
+        concept_set_ui = payload["conceptSetUI"]
+        clinical_app = {}
+        if os.path.exists(app_file):
+            with open(app_file, "r", encoding="utf-8") as f:
+                clinical_app = json.load(f)
+        if not isinstance(clinical_app.get("config"), dict):
+            clinical_app["config"] = {}
+        clinical_app["config"]["conceptSetUI"] = concept_set_ui
+        write_file_safe(app_file, json.dumps(clinical_app, indent=4, ensure_ascii=False) + "\n")
+        sync_file_to_bahmni_web(app_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/clinical/app.json")
+    return load_obs_form_config()
+
+def save_obs_concept_answers(payload):
+    concept_uuid = payload.get("conceptUuid")
+    add_uuids = payload.get("addAnswerUuids", [])
+    remove_uuid = payload.get("removeAnswerUuid")
+    omrs = get_container("openmrsdb")
+    statements = []
+    if add_uuids:
+        for ans_uuid in add_uuids:
+            row_uuid = str(uuid.uuid4())
+            statements.append(
+                f"INSERT INTO concept_answer (concept_id, answer_concept, creator, date_created, uuid, sort_weight) "
+                f"SELECT q.concept_id, a.concept_id, 1, NOW(), '{row_uuid}', "
+                f"COALESCE((SELECT MAX(ca2.sort_weight) FROM concept_answer ca2 WHERE ca2.concept_id = q.concept_id), 0) + 1 "
+                f"FROM concept q JOIN concept a ON a.uuid = '{escape_sql_str(ans_uuid)}' "
+                f"WHERE q.uuid = '{escape_sql_str(concept_uuid)}' "
+                f"AND NOT EXISTS (SELECT 1 FROM concept_answer ca WHERE ca.concept_id = q.concept_id AND ca.answer_concept = a.concept_id);"
+            )
+    if remove_uuid:
+        statements.append(
+            f"DELETE ca FROM concept_answer ca "
+            f"JOIN concept q ON ca.concept_id = q.concept_id "
+            f"JOIN concept a ON ca.answer_concept = a.concept_id "
+            f"WHERE q.uuid = '{escape_sql_str(concept_uuid)}' AND a.uuid = '{escape_sql_str(remove_uuid)}';"
+        )
+    if statements:
+        sql = "\n".join(statements)
+        proc = subprocess.run(["docker", "exec", "-i", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "openmrs"], input=sql, text=True, capture_output=True)
+        if proc.returncode != 0:
+            raise RuntimeError(f"MySQL error updating concept answers: {proc.stderr.strip()}")
+    return {"conceptUuid": concept_uuid, "added": len(add_uuids), "removed": 1 if remove_uuid else 0}
+
+def load_drug_catalog_config():
+    cfg_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "drugCatalogConfig.json")
+    if os.path.isfile(cfg_file):
+        try:
+            with open(cfg_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            log(f"Warning reading drugCatalogConfig.json: {e}")
+    return {
+        "version": "1.0",
+        "updatedAt": datetime.datetime.utcnow().isoformat() + "Z",
+        "categories": ["Medicine", "Supply", "Reagent", "Other"],
+        "subcategories": {
+            "Medicine": ["Antibiotic", "Opioid / Narcotic", "Analgesic / Antipyretic", "Sedative / Anxiolytic / Hypnotic", "Antihypertensive / Cardiovascular", "Antidiabetic / Endocrine", "Antimalarial", "Antiretroviral (ARV)", "Antitubercular (TB)", "Chemotherapy / Oncology", "General Medicine", "Other Medicine"],
+            "Supply": ["Surgical Supply & Blades", "Consumable & Disposables", "Bandages, Gauze & Wound Care", "Syringes & Needles", "Catheters & Tubes", "Gloves & PPE", "Orthopedic Support", "Other Supply"],
+            "Reagent": ["Rapid Diagnostic Test Kit", "Clinical Chemistry Reagent", "Urinalysis & Staining Reagent", "Blood Bank Reagent", "Other Reagent"],
+            "Other": ["General", "Miscellaneous"]
+        },
+        "restrictionTags": [
+            "Physician Only",
+            "Physician / Specialist Only",
+            "Controlled Substance (Narcotic)",
+            "Reserve Antimicrobial",
+            "Specialist Only"
+        ],
+        "items": {}
+    }
+
+
+def save_drug_catalog_config(payload):
+    if not isinstance(payload, dict):
+        raise ValueError("Payload must be a JSON object")
+    cfg_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "drugCatalogConfig.json")
+    current = load_drug_catalog_config()
+    current.update(payload)
+    current["updatedAt"] = datetime.datetime.utcnow().isoformat() + "Z"
+    write_file_safe(cfg_file, json.dumps(current, indent=2, ensure_ascii=False) + "\n")
+    sync_file_to_bahmni_web(cfg_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/drugCatalogConfig.json")
+    log("Saved drugCatalogConfig.json successfully.")
+    return current
+
+# ── Diagnosis & ICD-11 Management Helper Functions ──────────────────────────
+
+def escape_sql_str(val):
+    if val is None:
+        return ""
+    return re.sub(r"[\x00\n\r\b\t\'\"\\]", lambda m: "\\" + m.group(0), str(val))
+
+def run_openmrs_query(sql):
+    omrs = get_container("openmrsdb")
+    proc = subprocess.run(
+        ["docker", "exec", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "openmrs", "-e", sql],
+        capture_output=True
+    )
+    stdout = proc.stdout.decode("utf-8", errors="replace")
+    stderr = proc.stderr.decode("utf-8", errors="replace")
+    if proc.returncode != 0:
+        raise RuntimeError(f"OpenMRS SQL error: {stderr.strip()}")
+    lines = [l.strip() for l in stdout.strip().split("\n") if l.strip() and not l.startswith("mysql:")]
+    if not lines:
+        return []
+    headers = lines[0].split("\t")
+    rows = []
+    for line in lines[1:]:
+        parts = line.split("\t")
+        if len(parts) == len(headers):
+            rows.append(dict(zip(headers, parts)))
+    return rows
+
+def get_diagnosis_catalog(params):
+    q = (params.get("q", [""])[0] if isinstance(params.get("q"), list) else str(params.get("q", ""))).strip()
+    status = params.get("status", ["active"])[0] if isinstance(params.get("status"), list) else str(params.get("status", "active"))
+    has_icd11 = params.get("has_icd11", ["all"])[0] if isinstance(params.get("has_icd11"), list) else str(params.get("has_icd11", "all"))
+    page = int(params.get("page", [1])[0] if isinstance(params.get("page"), list) else params.get("page", 1))
+    limit = int(params.get("limit", [25])[0] if isinstance(params.get("limit"), list) else params.get("limit", 25))
+    limit = min(max(limit, 1), 100)
+    page = max(page, 1)
+    offset = (page - 1) * limit
+
+    esc_q = escape_sql_str(q)
+    if esc_q:
+        cids_sql = f"""
+        SELECT DISTINCT c.concept_id
+        FROM concept c
+        JOIN concept_name cn ON c.concept_id = cn.concept_id AND cn.voided = 0
+        WHERE c.class_id = 4 AND (cn.name LIKE '%{esc_q}%' OR c.uuid = '{esc_q}')
+        UNION
+        SELECT DISTINCT crm.concept_id
+        FROM concept_reference_term cr
+        JOIN concept_reference_map crm ON cr.concept_reference_term_id = crm.concept_reference_term_id
+        JOIN concept c ON crm.concept_id = c.concept_id AND c.class_id = 4
+        WHERE cr.code LIKE '{esc_q}%'
+        LIMIT 200;
+        """
+    else:
+        cids_sql = f"""
+        SELECT DISTINCT crm.concept_id
+        FROM concept_reference_source crs
+        JOIN concept_reference_term cr ON crs.concept_source_id = cr.concept_source_id AND cr.retired = 0
+        JOIN concept_reference_map crm ON cr.concept_reference_term_id = crm.concept_reference_term_id
+        JOIN concept c ON crm.concept_id = c.concept_id AND c.class_id = 4
+        WHERE crs.name = 'Ethiopia ICD-11'
+        ORDER BY crm.concept_id ASC
+        LIMIT 200;
+        """
+
+    cids_rows = run_openmrs_query(cids_sql)
+    cids = [r["concept_id"] for r in cids_rows if r.get("concept_id")]
+    if not cids:
+        return {
+            "items": [],
+            "total": 0,
+            "page": page,
+            "limit": limit,
+            "stats": {
+                "totalDiagnoses": 39723,
+                "icd11Mapped": 2451,
+                "missingIcd11": 37272,
+                "totalIcd11Terms": 2530,
+                "retiredDiagnoses": 0
+            }
+        }
+
+    cids_str = ",".join(cids)
+    details_sql = f"""
+    SELECT 
+        c.concept_id,
+        c.uuid,
+        c.retired,
+        COALESCE(c.retire_reason, '') AS retire_reason,
+        cn.name AS display_name,
+        COALESCE(icd11.code, '') AS icd11_code,
+        COALESCE(icd11.name, '') AS icd11_name,
+        COALESCE(icd11.source_name, '') AS icd11_source,
+        COALESCE(icd10.code, '') AS icd10_code,
+        COALESCE(cd.description, '') AS description
+    FROM concept c
+    INNER JOIN concept_name cn ON c.concept_id = cn.concept_id 
+        AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+    LEFT JOIN concept_description cd ON c.concept_id = cd.concept_id AND cd.locale = 'en'
+    LEFT JOIN (
+        SELECT crm.concept_id, cr.code, COALESCE(cr.name, '') AS name, crs.name AS source_name
+        FROM concept_reference_map crm
+        JOIN concept_reference_term cr ON crm.concept_reference_term_id = cr.concept_reference_term_id AND cr.retired = 0
+        JOIN concept_reference_source crs ON cr.concept_source_id = crs.concept_source_id 
+            AND crs.name IN ('Ethiopia ICD-11', 'ICD-11-WHO')
+        WHERE crm.concept_id IN ({cids_str})
+    ) icd11 ON icd11.concept_id = c.concept_id
+    LEFT JOIN (
+        SELECT crm.concept_id, cr.code, crs.name AS source_name
+        FROM concept_reference_map crm
+        JOIN concept_reference_term cr ON crm.concept_reference_term_id = cr.concept_reference_term_id AND cr.retired = 0
+        JOIN concept_reference_source crs ON cr.concept_source_id = crs.concept_source_id 
+            AND crs.name LIKE 'ICD-10%'
+        WHERE crm.concept_id IN ({cids_str})
+    ) icd10 ON icd10.concept_id = c.concept_id
+    WHERE c.concept_id IN ({cids_str})
+    GROUP BY c.concept_id, c.uuid, c.retired, c.retire_reason, cn.name, icd11.code, icd11.name, icd11.source_name, icd10.code, cd.description
+    ORDER BY cn.name ASC;
+    """
+    all_items = run_openmrs_query(details_sql)
+
+    filtered = []
+    for item in all_items:
+        is_ret = str(item.get("retired", "0")) == "1"
+        if status == "active" and is_ret:
+            continue
+        if status == "retired" and not is_ret:
+            continue
+        has_code = bool(item.get("icd11_code"))
+        if has_icd11 == "yes" and not has_code:
+            continue
+        if has_icd11 == "no" and has_code:
+            continue
+        filtered.append(item)
+
+    total_count = len(filtered)
+    paginated = filtered[offset : offset + limit]
+
+    return {
+        "items": paginated,
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "stats": {
+            "totalDiagnoses": 39723,
+            "icd11Mapped": 2451,
+            "missingIcd11": 37272,
+            "totalIcd11Terms": 2530,
+            "retiredDiagnoses": len([x for x in all_items if str(x.get("retired", "0")) == "1"])
+        }
+    }
+
+def get_icd11_reference_terms(q="", limit=50):
+    esc_q = escape_sql_str(q.strip())
+    limit = min(max(int(limit), 1), 200)
+    where_extra = ""
+    if esc_q:
+        where_extra = f" AND (cr.code LIKE '{esc_q}%' OR cr.name LIKE '%{esc_q}%')"
+    sql = f"""
+    SELECT cr.code, COALESCE(cr.name, '') AS name, crs.name AS source
+    FROM concept_reference_term cr
+    JOIN concept_reference_source crs ON cr.concept_source_id = crs.concept_source_id
+    WHERE crs.name = 'Ethiopia ICD-11' AND cr.retired = 0 {where_extra}
+    ORDER BY cr.code ASC
+    LIMIT {limit};
+    """
+    return run_openmrs_query(sql)
+
+def save_diagnosis_concept(payload):
+    name = (payload.get("name") or "").strip()
+    if not name:
+        raise ValueError("Diagnosis name is required.")
+
+    concept_uuid = (payload.get("conceptUuid") or "").strip()
+    short_name = (payload.get("shortName") or "").strip()
+    icd11_code = (payload.get("icd11Code") or "").strip()
+    icd11_name = (payload.get("icd11Name") or name).strip()
+    icd10_code = (payload.get("icd10Code") or "").strip()
+    description = (payload.get("description") or "").strip()
+
+    esc_name = escape_sql_str(name)
+    esc_short = escape_sql_str(short_name)
+    esc_icd11 = escape_sql_str(icd11_code)
+    esc_icd11_name = escape_sql_str(icd11_name)
+    esc_icd10 = escape_sql_str(icd10_code)
+    esc_desc = escape_sql_str(description)
+
+    omrs = get_container("openmrsdb")
+
+    if concept_uuid:
+        esc_uuid = escape_sql_str(concept_uuid)
+        statements = [
+            f"UPDATE concept_name SET name = '{esc_name}' WHERE concept_id = (SELECT concept_id FROM concept WHERE uuid = '{esc_uuid}') AND concept_name_type = 'FULLY_SPECIFIED' AND locale = 'en' AND voided = 0;"
+        ]
+        if esc_desc:
+            statements.append(
+                f"INSERT INTO concept_description (concept_id, description, locale, creator, date_created, uuid) VALUES ((SELECT concept_id FROM concept WHERE uuid = '{esc_uuid}'), '{esc_desc}', 'en', 1, NOW(), UUID()) ON DUPLICATE KEY UPDATE description = '{esc_desc}';"
+            )
+        if esc_icd11:
+            statements.append(
+                f"INSERT IGNORE INTO concept_reference_term (concept_source_id, name, code, creator, date_created, retired, uuid) VALUES (53, '{esc_icd11_name}', '{esc_icd11}', 1, NOW(), 0, UUID());"
+            )
+            statements.append(
+                f"INSERT INTO concept_reference_map (concept_id, concept_reference_term_id, concept_map_type_id, creator, date_created, uuid) VALUES ((SELECT concept_id FROM concept WHERE uuid = '{esc_uuid}'), (SELECT concept_reference_term_id FROM concept_reference_term WHERE concept_source_id = 53 AND code = '{esc_icd11}' LIMIT 1), 1, 1, NOW(), UUID()) ON DUPLICATE KEY UPDATE concept_reference_term_id = VALUES(concept_reference_term_id);"
+            )
+        sql_combined = " ".join(statements)
+        proc = subprocess.run(
+            ["docker", "exec", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "openmrs", "-e", sql_combined],
+            text=True, capture_output=True
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"Error updating diagnosis: {proc.stderr.strip()}")
+        return {"uuid": concept_uuid, "name": name, "icd11Code": icd11_code, "action": "updated"}
+    else:
+        new_uuid = str(uuid.uuid4())
+        statements = [
+            f"INSERT INTO concept (datatype_id, class_id, is_set, creator, date_created, retired, uuid) VALUES (4, 4, 0, 1, NOW(), 0, '{new_uuid}');",
+            f"INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid) VALUES ((SELECT concept_id FROM concept WHERE uuid = '{new_uuid}'), '{esc_name}', 'en', 1, 1, NOW(), 'FULLY_SPECIFIED', 0, UUID());"
+        ]
+        if esc_short:
+            statements.append(
+                f"INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid) VALUES ((SELECT concept_id FROM concept WHERE uuid = '{new_uuid}'), '{esc_short}', 'en', 0, 1, NOW(), 'SHORT', 0, UUID());"
+            )
+        if esc_desc:
+            statements.append(
+                f"INSERT INTO concept_description (concept_id, description, locale, creator, date_created, uuid) VALUES ((SELECT concept_id FROM concept WHERE uuid = '{new_uuid}'), '{esc_desc}', 'en', 1, NOW(), UUID());"
+            )
+        if esc_icd11:
+            statements.append(
+                f"INSERT IGNORE INTO concept_reference_term (concept_source_id, name, code, creator, date_created, retired, uuid) VALUES (53, '{esc_icd11_name}', '{esc_icd11}', 1, NOW(), 0, UUID());"
+            )
+            statements.append(
+                f"INSERT INTO concept_reference_map (concept_id, concept_reference_term_id, concept_map_type_id, creator, date_created, uuid) VALUES ((SELECT concept_id FROM concept WHERE uuid = '{new_uuid}'), (SELECT concept_reference_term_id FROM concept_reference_term WHERE concept_source_id = 53 AND code = '{esc_icd11}' LIMIT 1), 1, 1, NOW(), UUID());"
+            )
+        if esc_icd10:
+            statements.append(
+                f"INSERT IGNORE INTO concept_reference_term (concept_source_id, name, code, creator, date_created, retired, uuid) VALUES (12, '{esc_name}', '{esc_icd10}', 1, NOW(), 0, UUID());"
+            )
+            statements.append(
+                f"INSERT INTO concept_reference_map (concept_id, concept_reference_term_id, concept_map_type_id, creator, date_created, uuid) VALUES ((SELECT concept_id FROM concept WHERE uuid = '{new_uuid}'), (SELECT concept_reference_term_id FROM concept_reference_term WHERE concept_source_id = 12 AND code = '{esc_icd10}' LIMIT 1), 1, 1, NOW(), UUID());"
+            )
+        sql_combined = " ".join(statements)
+        proc = subprocess.run(
+            ["docker", "exec", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "openmrs", "-e", sql_combined],
+            text=True, capture_output=True
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"Error creating diagnosis: {proc.stderr.strip()}")
+
+        if icd11_code:
+            try:
+                icd_file = os.path.join(os.path.dirname(CONFIG_DIR), "apps", "ui", "app", "i18n", "clinical", "icd11_data.json")
+                if os.path.isfile(icd_file):
+                    with open(icd_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    if not any(x.get("code") == icd11_code for x in data):
+                        data.append({"code": icd11_code, "name": name})
+                        with open(icd_file, "w", encoding="utf-8") as f:
+                            json.dump(data, f, indent=4, ensure_ascii=False)
+            except Exception as e:
+                log(f"Warning syncing icd11_data.json: {e}")
+
+        return {"uuid": new_uuid, "name": name, "icd11Code": icd11_code, "action": "created"}
+
+def retire_diagnosis_concept(payload):
+    concept_uuid = (payload.get("conceptUuid") or "").strip()
+    if not concept_uuid:
+        raise ValueError("Concept UUID is required.")
+    retired = 1 if payload.get("retired", True) else 0
+    reason = escape_sql_str((payload.get("retireReason") or "Retired via Admin Diagnosis Management").strip())
+    esc_uuid = escape_sql_str(concept_uuid)
+    omrs = get_container("openmrsdb")
+    if retired:
+        sql = f"UPDATE concept SET retired = 1, retire_reason = '{reason}', retired_by = 1, date_retired = NOW() WHERE uuid = '{esc_uuid}';"
+    else:
+        sql = f"UPDATE concept SET retired = 0, retire_reason = NULL, retired_by = NULL, date_retired = NULL WHERE uuid = '{esc_uuid}';"
+    proc = subprocess.run(
+        ["docker", "exec", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "openmrs", "-e", sql],
+        text=True, capture_output=True
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"Error retiring diagnosis: {proc.stderr.strip()}")
+    return {"uuid": concept_uuid, "retired": bool(retired)}
+
+def batch_import_diagnoses(items):
+    if not isinstance(items, list):
+        raise ValueError("Items must be a list of diagnosis objects.")
+    created = 0
+    updated = 0
+    errors = []
+
+    for idx, item in enumerate(items):
+        name = (item.get("name") or "").strip()
+        if not name:
+            errors.append(f"Row {idx + 1}: Name is required.")
+            continue
+        try:
+            res = save_diagnosis_concept(item)
+            if res.get("action") == "created":
+                created += 1
+            else:
+                updated += 1
+        except Exception as e:
+            errors.append(f"Row {idx + 1} ({name}): {str(e)}")
+
+    return {
+        "success": True,
+        "total": len(items),
+        "created": created,
+        "updated": updated,
+        "errors": errors
+    }
+
+
+def export_diagnosis_csv_text(params):
+    q = (params.get("q", [""])[0] if isinstance(params.get("q"), list) else str(params.get("q", ""))).strip()
+    status = params.get("status", ["active"])[0] if isinstance(params.get("status"), list) else str(params.get("status", "active"))
+    icd11 = params.get("icd11", [""])[0] if isinstance(params.get("icd11"), list) else str(params.get("icd11", ""))
+
+    export_params = {
+        "q": q,
+        "status": status,
+        "icd11": icd11,
+        "page": 1,
+        "limit": 5000
+    }
+    data = get_diagnosis_catalog(export_params)
+    items = data.get("items", [])
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+    writer.writerow([
+        "Diagnosis Full Name",
+        "Ethiopia ICD-11 Code",
+        "ICD-11 Name",
+        "Reference Source",
+        "ICD-10 Code",
+        "Concept UUID",
+        "Status",
+        "Description"
+    ])
+    for item in items:
+        writer.writerow([
+            item.get("display_name", ""),
+            item.get("icd11_code", ""),
+            item.get("icd11_name", ""),
+            item.get("icd11_source", ""),
+            item.get("icd10_code", ""),
+            item.get("uuid", ""),
+            "Active" if item.get("retired") == "0" else "Retired",
+            item.get("description", "")
+        ])
+    return "\ufeff" + output.getvalue()
+
+
+def batch_import_drugs(items):
+    if not isinstance(items, list):
+        raise ValueError("Items must be a list of drug objects.")
+    cfg = load_drug_catalog_config()
+    cfg_items = cfg.setdefault("items", {})
+
+    created = 0
+    updated = 0
+    errors = []
+
+    for idx, item in enumerate(items):
+        name = (item.get("name") or "").strip()
+        if not name:
+            errors.append(f"Row {idx + 1}: Drug name is required.")
+            continue
+
+        esc_name = escape_sql_str(name)
+        strength = (item.get("strength") or "").strip()
+        esc_strength = escape_sql_str(strength)
+        dosage_form_str = (item.get("dosageForm") or item.get("dosage_form") or "").strip()
+        category = (item.get("category") or "Medicine").strip()
+        subcategory = (item.get("subcategory") or "").strip()
+        is_restricted = bool(
+            item.get("isRestricted") or item.get("restricted") or
+            (str(item.get("access", "")).lower() in ("physician only", "restricted", "1", "true"))
+        )
+        restriction_tag = (item.get("restrictionTag") or ("Physician Only" if is_restricted else "")).strip()
+
+        # Check if drug already exists
+        drug_uuid = (item.get("uuid") or item.get("drugUuid") or "").strip()
+        if not drug_uuid:
+            chk_sql = f"SELECT uuid, drug_id FROM drug WHERE name = '{esc_name}' LIMIT 1;"
+            rows = run_openmrs_query(chk_sql)
+            if rows and rows[0].get("uuid"):
+                drug_uuid = rows[0]["uuid"]
+
+        # Resolve dosage form concept_id if provided
+        dosage_form_id = None
+        if dosage_form_str:
+            esc_df = escape_sql_str(dosage_form_str)
+            df_sql = f"SELECT concept_id FROM concept_name WHERE LOWER(name) = LOWER('{esc_df}') AND locale = 'en' AND voided = 0 ORDER BY (concept_name_type = 'FULLY_SPECIFIED') DESC LIMIT 1;"
+            df_rows = run_openmrs_query(df_sql)
+            if df_rows and df_rows[0].get("concept_id"):
+                dosage_form_id = df_rows[0]["concept_id"]
+
+        try:
+            if drug_uuid:
+                updates = []
+                if strength:
+                    updates.append(f"strength = '{esc_strength}'")
+                if dosage_form_id:
+                    updates.append(f"dosage_form = {dosage_form_id}")
+                if updates:
+                    up_sql = f"UPDATE drug SET {', '.join(updates)}, date_changed = NOW(), changed_by = 1 WHERE uuid = '{escape_sql_str(drug_uuid)}';"
+                    run_openmrs_query(up_sql)
+
+                cfg_items[drug_uuid] = {
+                    "uuid": drug_uuid,
+                    "name": name,
+                    "category": category,
+                    "subcategory": subcategory,
+                    "isRestricted": is_restricted,
+                    "restrictionTag": restriction_tag,
+                    "updatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat()
+                }
+                updated += 1
+            else:
+                new_drug_uuid = str(uuid.uuid4())
+                generic_concept_id = None
+                gen_rows = run_openmrs_query(f"SELECT c.concept_id FROM concept c JOIN concept_name cn ON c.concept_id = cn.concept_id WHERE cn.name = '{esc_name}' AND c.class_id = 3 AND cn.voided = 0 LIMIT 1;")
+                if gen_rows and gen_rows[0].get("concept_id"):
+                    generic_concept_id = gen_rows[0]["concept_id"]
+                else:
+                    new_c_uuid = str(uuid.uuid4())
+                    c_stmts = [
+                        f"INSERT INTO concept (datatype_id, class_id, is_set, creator, date_created, retired, uuid) VALUES (4, 3, 0, 1, NOW(), 0, '{new_c_uuid}');",
+                        f"INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid) VALUES ((SELECT concept_id FROM concept WHERE uuid = '{new_c_uuid}'), '{esc_name}', 'en', 1, 1, NOW(), 'FULLY_SPECIFIED', 0, UUID());"
+                    ]
+                    run_openmrs_query(" ".join(c_stmts))
+                    c_id_row = run_openmrs_query(f"SELECT concept_id FROM concept WHERE uuid = '{new_c_uuid}';")
+                    if c_id_row:
+                        generic_concept_id = c_id_row[0]["concept_id"]
+
+                df_val = str(dosage_form_id) if dosage_form_id else "NULL"
+                str_val = f"'{esc_strength}'" if strength else "NULL"
+                ins_sql = f"INSERT INTO drug (concept_id, name, strength, dosage_form, creator, date_created, retired, uuid) VALUES ({generic_concept_id}, '{esc_name}', {str_val}, {df_val}, 1, NOW(), 0, '{new_drug_uuid}');"
+                run_openmrs_query(ins_sql)
+
+                cfg_items[new_drug_uuid] = {
+                    "uuid": new_drug_uuid,
+                    "name": name,
+                    "category": category,
+                    "subcategory": subcategory,
+                    "isRestricted": is_restricted,
+                    "restrictionTag": restriction_tag,
+                    "updatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat()
+                }
+                created += 1
+        except Exception as e:
+            errors.append(f"Row {idx + 1} ({name}): {str(e)}")
+
+    save_drug_catalog_config(cfg)
+    return {
+        "success": True,
+        "total": len(items),
+        "created": created,
+        "updated": updated,
+        "errors": errors
+    }
+
+
+def export_drug_csv_text():
+    cfg = load_drug_catalog_config()
+    cfg_items = cfg.get("items", {})
+
+    sql = """
+    SELECT d.uuid, d.name, COALESCE(d.strength, '') AS strength,
+           d.retired, COALESCE(cn_df.name, '') AS dosage_form,
+           COALESCE(cn_gen.name, '') AS generic_concept
+    FROM drug d
+    LEFT JOIN concept_name cn_df ON d.dosage_form = cn_df.concept_id 
+        AND cn_df.locale = 'en' AND cn_df.concept_name_type = 'FULLY_SPECIFIED' AND cn_df.voided = 0
+    LEFT JOIN concept_name cn_gen ON d.concept_id = cn_gen.concept_id 
+        AND cn_gen.locale = 'en' AND cn_gen.concept_name_type = 'FULLY_SPECIFIED' AND cn_gen.voided = 0
+    ORDER BY d.name ASC;
+    """
+    drugs = run_openmrs_query(sql)
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+    writer.writerow([
+        "Drug / Item Name",
+        "Strength",
+        "Dosage Form",
+        "Category",
+        "Subcategory",
+        "Prescription Access",
+        "Restriction Tag",
+        "Drug UUID",
+        "Generic Concept",
+        "Status"
+    ])
+
+    for d in drugs:
+        u = d.get("uuid", "")
+        cls_info = cfg_items.get(u, {})
+        cat = cls_info.get("category") or "Medicine"
+        subcat = cls_info.get("subcategory") or ""
+        is_restr = cls_info.get("isRestricted", False)
+        restr_tag = cls_info.get("restrictionTag", "")
+        status_str = "Retired" if str(d.get("retired", "0")) == "1" else "Active"
+        access_str = "Physician Only" if is_restr else "Open / Unrestricted"
+
+        writer.writerow([
+            d.get("name", ""),
+            d.get("strength", ""),
+            d.get("dosage_form", ""),
+            cat,
+            subcat,
+            access_str,
+            restr_tag,
+            u,
+            d.get("generic_concept", ""),
+            status_str
+        ])
+    return "\ufeff" + output.getvalue()
+
 class BackupAPIHandler(BaseHTTPRequestHandler):
     def _send_cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -1538,6 +2300,95 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
             self._send_json(200, load_auto_config())
         elif path in ("/api/branding", "/branding"):
             self._send_json(200, load_branding_config())
+        elif path in ("/api/drug-catalog/config", "/drug-catalog/config", "/api/drug-catalog-config", "/drug-catalog-config"):
+            try:
+                self._send_json(200, load_drug_catalog_config())
+            except Exception as e:
+                log(f"Error loading drug catalog config: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/drug-catalog/export-csv", "/drug-catalog/export-csv"):
+            try:
+                csv_text = export_drug_csv_text()
+                csv_bytes = csv_text.encode("utf-8")
+                self.send_response(200)
+                self._send_cors()
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", 'attachment; filename="Drug_Supply_Catalog.csv"')
+                self.send_header("Content-Length", str(len(csv_bytes)))
+                self.end_headers()
+                self.wfile.write(csv_bytes)
+            except Exception as e:
+                log(f"Error exporting drug csv: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/diagnosis-management", "/diagnosis-management", "/api/diagnosis-management/catalog", "/diagnosis-management/catalog"):
+            try:
+                self._send_json(200, get_diagnosis_catalog(query_params))
+            except Exception as e:
+                log(f"Error loading diagnosis catalog: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/diagnosis-management/icd11-terms", "/diagnosis-management/icd11-terms", "/api/diagnosis-management/terms", "/diagnosis-management/terms"):
+            try:
+                q_term = (query_params.get("q", [""])[0] if isinstance(query_params.get("q"), list) else "").strip()
+                lim = int(query_params.get("limit", [50])[0] if isinstance(query_params.get("limit"), list) else 50)
+                self._send_json(200, get_icd11_reference_terms(q_term, lim))
+            except Exception as e:
+                log(f"Error loading icd11 terms: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/diagnosis-management/export-csv", "/diagnosis-management/export-csv"):
+            try:
+                csv_text = export_diagnosis_csv_text(query_params)
+                csv_bytes = csv_text.encode("utf-8")
+                self.send_response(200)
+                self._send_cors()
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", 'attachment; filename="Diagnosis_ICD11_Catalog.csv"')
+                self.send_header("Content-Length", str(len(csv_bytes)))
+                self.end_headers()
+                self.wfile.write(csv_bytes)
+            except Exception as e:
+                log(f"Error exporting diagnosis csv: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/dashboard-config", "/dashboard-config"):
+            try:
+                self._send_json(200, load_dashboard_config())
+            except Exception as e:
+                log(f"Error loading dashboard config: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/er-triage-config", "/er-triage-config"):
+            try:
+                self._send_json(200, load_er_triage_config())
+            except Exception as e:
+                log(f"Error loading er triage config: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/location-visit-mappings", "/location-visit-mappings"):
+            try:
+                self._send_json(200, load_location_visit_mappings())
+            except Exception as e:
+                log(f"Error loading location visit mappings: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/obs-form-config", "/obs-form-config"):
+            try:
+                self._send_json(200, load_obs_form_config())
+            except Exception as e:
+                log(f"Error loading obs form config: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/systemdate", "/systemdate"):
+            now = datetime.datetime.now()
+            self._send_json(200, {
+                "date": now.strftime("%Y-%m-%d"),
+                "time": now.strftime("%H:%M:%S"),
+                "datetime": now.isoformat()
+            })
+
         elif path in ("/api/payment-config", "/payment-config"):
             self._send_json(200, load_payment_config())
         else:
@@ -1765,6 +2616,98 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True, "message": "Branding updated successfully.", "branding": updated_branding})
             except Exception as e:
                 log(f"Error saving branding: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/drug-catalog/config", "/drug-catalog/config", "/api/drug-catalog-config", "/drug-catalog-config"):
+            try:
+                result = save_drug_catalog_config(payload)
+                self._send_json(200, {"success": True, "message": "Drug catalog configuration updated successfully.", "config": result})
+            except Exception as e:
+                log(f"Error saving drug catalog config: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/drug-catalog/import-csv", "/drug-catalog/import-csv"):
+            try:
+                items = payload.get("items", []) if isinstance(payload, dict) else payload
+                result = batch_import_drugs(items)
+                self._send_json(200, result)
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error importing drug csv: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/diagnosis-management/save", "/diagnosis-management/save"):
+            try:
+                result = save_diagnosis_concept(payload)
+                self._send_json(200, {"success": True, "message": "Diagnosis concept saved successfully.", "result": result})
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error saving diagnosis: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/diagnosis-management/retire", "/diagnosis-management/retire"):
+            try:
+                result = retire_diagnosis_concept(payload)
+                self._send_json(200, {"success": True, "message": "Diagnosis status updated successfully.", "result": result})
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error updating diagnosis status: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/diagnosis-management/import-csv", "/diagnosis-management/import-csv"):
+            try:
+                items = payload.get("items", []) if isinstance(payload, dict) else payload
+                result = batch_import_diagnoses(items)
+                self._send_json(200, result)
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error importing diagnosis csv: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/dashboard-config", "/dashboard-config"):
+            try:
+                result = save_dashboard_config(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error saving dashboard config: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/er-triage-config", "/er-triage-config"):
+            try:
+                result = save_er_triage_config(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error saving er triage config: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/location-visit-mappings", "/location-visit-mappings"):
+            try:
+                result = save_location_visit_mappings(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error saving location visit mappings: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/obs-form-config", "/obs-form-config"):
+            try:
+                result = save_obs_form_config(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error saving obs form config: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/obs-concept-answers", "/obs-concept-answers"):
+            try:
+                result = save_obs_concept_answers(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error updating concept answers: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/payment-config", "/payment-config"):

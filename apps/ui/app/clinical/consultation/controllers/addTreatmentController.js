@@ -3,10 +3,10 @@
 angular.module('bahmni.clinical')
     .controller('AddTreatmentController', ['$scope', '$http','$rootScope', 'contextChangeHandler', 'treatmentConfig', 'drugService',
         '$timeout', 'clinicalAppConfigService', 'ngDialog', '$window', 'messagingService', 'appService', 'activeDrugOrders',
-        'orderSetService', '$q', 'locationService', 'spinner', '$translate', '$state', 'cdssService', 'observationsService', 'diagnosisService', 'visitService',
+        'orderSetService', '$q', 'locationService', 'spinner', '$translate', '$state', 'cdssService', 'observationsService', 'diagnosisService', 'visitService', 'drugCatalogService',
         function ($scope, $http, $rootScope, contextChangeHandler, treatmentConfig, drugService, $timeout,
                   clinicalAppConfigService, ngDialog, $window, messagingService, appService, activeDrugOrders,
-                  orderSetService, $q, locationService, spinner, $translate, $state, cdssService, observationsService, diagnosisService, visitService) {
+                  orderSetService, $q, locationService, spinner, $translate, $state, cdssService, observationsService, diagnosisService, visitService, drugCatalogService) {
             var DateUtil = Bahmni.Common.Util.DateUtil;
             var DrugOrderViewModel = Bahmni.Clinical.DrugOrderViewModel;
             var scrollTop = _.partial($window.scrollTo, 0, 0);
@@ -233,9 +233,14 @@ angular.module('bahmni.clinical')
             var isSameDrugBeingDiscontinuedAndOrdered = function () {
                 var existingTreatment = false;
                 angular.forEach($scope.consultation.discontinuedDrugs, function (drugOrder) {
-                    existingTreatment = _.some($scope.treatments, function (treatment) {
+                    if (drugOrder.dtpCases) {
+                        return;
+                    }
+                    if (_.some($scope.treatments, function (treatment) {
                         return treatment.getDisplayName() === drugOrder.getDisplayName() && treatment.careSetting === drugOrder.careSetting;
-                    }) && drugOrder.isMarkedForDiscontinue;
+                    }) && drugOrder.isMarkedForDiscontinue) {
+                        existingTreatment = true;
+                    }
                 });
                 return existingTreatment;
             };
@@ -398,10 +403,14 @@ angular.module('bahmni.clinical')
                 drugOrder.isDiscontinuedAllowed = false;
                 $scope.treatments.forEach(setIsNotBeingEdited);
                 setDrugOrderBeingEdited(drugOrder);
+                var existingPendingIndex = _.findIndex($scope.treatments, function (t) {
+                    return (t.previousOrderUuid && t.previousOrderUuid === drugOrder.uuid) ||
+                           (t.dtpOriginalOrderUuid && t.dtpOriginalOrderUuid === drugOrder.uuid);
+                });
                 $scope.treatment = drugOrder.revise();
                 selectDrugFromDropdown(drugOrder.drug);
                 markEitherVariableDrugOrUniformDrug($scope.treatment);
-                $scope.treatment.currentIndex = $scope.treatments.length + 1;
+                $scope.treatment.currentIndex = existingPendingIndex !== -1 ? existingPendingIndex : $scope.treatments.length;
                 if ($scope.treatment.frequencyType === Bahmni.Clinical.Constants.dosingTypes.variable) {
                     $scope.treatment.isUniformFrequency = false;
                 }
@@ -465,6 +474,33 @@ angular.module('bahmni.clinical')
                 var newDrugOrder = $scope.treatment;
                 setNonCodedDrugConcept($scope.treatment);
 
+                if ($scope.treatment.isDtpEdit) {
+                    var currentDrugUuid = $scope.treatment.drug ? $scope.treatment.drug.uuid : null;
+                    var currentDrugName = $scope.treatment.getDisplayName ? $scope.treatment.getDisplayName() : ($scope.treatment.drugNameDisplay || '');
+                    var drugChanged = ($scope.treatment.dtpOriginalDrugUuid !== currentDrugUuid) ||
+                        (!currentDrugUuid && $scope.treatment.dtpOriginalDrugName !== currentDrugName);
+                    var origOrder = $scope.treatment.dtpOriginalOrder;
+                    if (drugChanged) {
+                        if (origOrder && !origOrder.isMarkedForDiscontinue) {
+                            $rootScope.$broadcast("event:discontinueDrugOrder", origOrder);
+                            origOrder.orderReasonText = "DTP Resolved - Drug Changed" + ($scope.treatment.dtpPhysicianReason ? ": " + $scope.treatment.dtpPhysicianReason : "");
+                            origOrder.dtpHandledByDrugChange = true;
+                        }
+                        $scope.treatment.action = Bahmni.Clinical.Constants.orderActions.new;
+                        $scope.treatment.previousOrderUuid = undefined;
+                        $scope.treatment.orderGroupUuid = undefined;
+                        $scope.treatment.dtpActionTaken = 'DRUG_CHANGED';
+                    } else {
+                        if (origOrder && origOrder.isMarkedForDiscontinue) {
+                            $rootScope.$broadcast("event:undoDiscontinueDrugOrder", origOrder);
+                            origOrder.dtpHandledByDrugChange = false;
+                        }
+                        $scope.treatment.action = Bahmni.Clinical.Constants.orderActions.revise;
+                        $scope.treatment.previousOrderUuid = $scope.treatment.dtpOriginalOrderUuid;
+                        $scope.treatment.dtpActionTaken = 'REGIMEN_EDITED';
+                    }
+                }
+
                 newDrugOrder.calculateEffectiveStopDate();
 
                 if (getConflictingDrugOrder(newDrugOrder)) {
@@ -504,8 +540,11 @@ angular.module('bahmni.clinical')
                 allDrugOrders = _.reject(allDrugOrders, newDrugOrder);
                 var unsavedNotBeingEditedOrders = _.filter(allDrugOrders, { isBeingEdited: false });
                 var existingDrugOrders;
-                if (newDrugOrder.isBeingEdited) {
-                    existingDrugOrders = _.reject($scope.consultation.activeAndScheduledDrugOrders, { uuid: newDrugOrder.previousOrderUuid });
+                if (newDrugOrder.isBeingEdited || newDrugOrder.isDtpEdit) {
+                    existingDrugOrders = _.reject($scope.consultation.activeAndScheduledDrugOrders, function (order) {
+                        return (newDrugOrder.previousOrderUuid && order.uuid === newDrugOrder.previousOrderUuid) ||
+                               (newDrugOrder.dtpOriginalOrderUuid && order.uuid === newDrugOrder.dtpOriginalOrderUuid);
+                    });
                 } else {
                     existingDrugOrders = $scope.consultation.activeAndScheduledDrugOrders;
                 }
@@ -652,12 +691,72 @@ angular.module('bahmni.clinical')
                 var listOfDrugSynonyms = _.map(drugs, function (drug) {
                     return Bahmni.Clinical.DrugSearchResult.getAllMatchingSynonyms(drug, searchString);
                 });
-                return _.flatten(listOfDrugSynonyms);
+                var results = _.flatten(listOfDrugSynonyms);
+                _.forEach(results, function (item) {
+                    if (item && item.drug) {
+                        var cls = drugCatalogService.getDrugClassification(item.drug.uuid, item.drug.name);
+                        if (cls && cls.isRestricted) {
+                            var tag = cls.restrictionTag || 'Physician Only';
+                            if (item.label && item.label.indexOf('[' + tag + ']') === -1) {
+                                item.label = '🔒 [' + tag + '] ' + item.label;
+                            }
+                        }
+                    }
+                });
+                return results;
             };
 
             (function () {
                 var selectedItem;
                 $scope.onSelect = function (item) {
+                    if (item && item.drug) {
+                        var drugUuid = item.drug.uuid;
+                        var drugName = item.drug.name || (item.drug.concept && item.drug.concept.name && item.drug.concept.name.name) || '';
+                        var isRestricted = drugCatalogService.isDrugRestricted(drugUuid, drugName);
+                        var allowed = drugCatalogService.canUserPrescribe($rootScope.currentUser, drugUuid, drugName);
+
+                        if (isRestricted && !allowed) {
+                            var classification = drugCatalogService.getDrugClassification(drugUuid, drugName);
+                            var subcat = (classification && classification.subcategory) ? ' (' + classification.subcategory + ')' : '';
+                            var tag = (classification && classification.restrictionTag) ? classification.restrictionTag : 'Physician Only';
+                            var alertMsg = "Unauthorized: \"" + drugName + "\" is a restricted medication (" + tag + subcat + "). Only authorized physicians can prescribe this drug.";
+
+                            $timeout(function () {
+                                if ($scope.treatment) {
+                                    $scope.treatment.drugNameDisplay = '';
+                                    delete $scope.treatment.drug;
+                                }
+                                $scope.clearForm();
+                            }, 50);
+
+                            messagingService.showMessage("error", alertMsg);
+
+                            ngDialog.open({
+                                template: '<div style="padding: 24px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; color: #1f2937;">' +
+                                    '<div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px; border-bottom: 2px solid #fee2e2; padding-bottom: 12px;">' +
+                                    '  <div style="background-color: #fee2e2; color: #dc2626; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;"><i class="fa fa-lock"></i></div>' +
+                                    '  <div><h3 style="margin: 0; color: #b91c1c; font-size: 18px; font-weight: 700;">Prescription Authorization Required</h3><span style="font-size: 12px; color: #991b1b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Restricted Medication Alert</span></div>' +
+                                    '</div>' +
+                                    '<p style="font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #374151;">' +
+                                    '  You do not have permission to prescribe <strong style="color: #b91c1c;">' + drugName + '</strong>.<br/>' +
+                                    '  This medication is restricted to: <span style="background: #fef2f2; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid #fecaca;"><i class="fa fa-shield"></i> ' + tag + '</span>' + subcat + '.' +
+                                    '</p>' +
+                                    '<div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #92400e; border-radius: 4px;">' +
+                                    '  <i class="fa fa-exclamation-triangle" style="margin-right: 6px;"></i> Hospital policy requires an authorized Physician / Doctor with the <code>' + drugCatalogService.RESTRICTED_PRIVILEGE + '</code> privilege to prescribe controlled substances and restricted pharmaceuticals.' +
+                                    '</div>' +
+                                    '<div style="text-align: right;">' +
+                                    '  <button class="btn btn-primary" style="background-color: #dc2626; border-color: #b91c1c; padding: 8px 24px; font-weight: 600; border-radius: 6px;" ng-click="closeThisDialog()"><i class="fa fa-check" style="margin-right: 6px;"></i> OK, Understood</button>' +
+                                    '</div>' +
+                                    '</div>',
+                                plain: true,
+                                showClose: true,
+                                closeByDocument: true,
+                                closeByEscape: true,
+                                className: 'ngdialog-theme-default'
+                            });
+                            return;
+                        }
+                    }
                     selectedItem = item;
                     $scope.onChange();
                 };
@@ -949,6 +1048,14 @@ angular.module('bahmni.clinical')
             };
 
             $scope.verifyAdd = function (treatment) {
+                if (treatment && treatment.drug) {
+                    var tUuid = treatment.drug.uuid;
+                    var tName = treatment.drug.name;
+                    if (drugCatalogService.isDrugRestricted(tUuid, tName) && !drugCatalogService.canUserPrescribe($rootScope.currentUser, tUuid, tName)) {
+                        messagingService.showMessage("error", "Unauthorized: Cannot add restricted medication \"" + tName + "\". Physician privilege required.");
+                        return false;
+                    }
+                }
                 if (!$scope.addTreatmentWithPatientWeight.hasOwnProperty('duration') && !$scope.addTreatmentWithDiagnosis.hasOwnProperty('order')) {
                     return $scope.addForm.$valid && $scope.calculateDose(treatment);
                 } else {
@@ -984,6 +1091,7 @@ angular.module('bahmni.clinical')
             };
 
             var init = function () {
+                drugCatalogService.loadCatalogConfig();
                 $scope.consultation.removableDrugs = $scope.consultation.removableDrugs || [];
                 $scope.consultation.discontinuedDrugs = $scope.consultation.discontinuedDrugs || [];
                 $scope.consultation.drugOrdersWithUpdatedOrderAttributes = $scope.consultation.drugOrdersWithUpdatedOrderAttributes || {};

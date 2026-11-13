@@ -1,4 +1,27 @@
 <section class="drug-orders-history" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <div ng-if="generalRxIssues && generalRxIssues.length > 0"
+         style="background-color: #fff3cd; border: 1px solid #ffeeba; border-left: 4px solid #d97706; color: #856404; padding: 10px 12px; border-radius: 4px; margin-bottom: 10px; font-size: 12px;">
+        <div style="font-weight: bold; margin-bottom: 4px;">
+            <i class="fa fa-envelope" style="color: #d97706;"></i>
+            Pharmacy General Prescription Evaluation Message(s):
+        </div>
+        <div ng-repeat="issue in generalRxIssues" style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #f3e2a9;">
+            <div>
+                <strong>[{{issue.priority || 'Normal'}}]</strong> {{issue.summary}}
+                <span ng-if="issue.reportedBy" style="color: #666;"> — reported by {{issue.reportedBy}} ({{issue.timestamp | bahmniDateTime}})</span>
+            </div>
+            <div style="margin-top: 4px;">
+                <span ng-if="issue.resolved" style="color: #155724; font-weight: bold;">
+                    <i class="fa fa-check-circle"></i> Resolved: {{issue.physicianReply}}
+                </span>
+                <button ng-if="!issue.resolved" type="button" class="secondary-button"
+                        ng-click="resolveGeneralRxIssue(issue)"
+                        style="padding: 4px 10px; font-size: 11px; background-color: #28a745; color: #fff; border: none; border-radius: 3px; cursor: pointer;">
+                    <i class="fa fa-wrench"></i> Fix &amp; Resend Prescription
+                </button>
+            </div>
+        </div>
+    </div>
     <div ng-if="drugOrderGroupsEmpty()">
         <p class="placeholder-text">{{'MEDICATION_NO_PRESCRIPTION_SAVED_PLACEHOLDER'|translate}}</p>
     </div>
@@ -37,6 +60,11 @@
                                                 <i class="fa fa-times" style="position: absolute; top: 5px; right: 10px; cursor: pointer;" ng-click="drugOrder.showDtpCases = false"></i>
                                                 <strong style="margin-left: -25%;">DTP Case Details:</strong>
                                                 <p>{{drugOrder.dtpCases}}</p>
+                                                <div style="margin-top: 8px; border-top: 1px solid #a9d8e4; padding-top: 8px; font-style: normal;">
+                                                    <button type="button" class="secondary-button" ng-click="drugOrder.showDtpCases = false; openDtpResponseModal(drugOrder, drugOrderGroup.drugOrders)" style="padding: 4px 8px; font-size: 12px;">
+                                                        <i class="fa fa-reply"></i> Respond / Resend
+                                                    </button>
+                                                </div>
 <div class="drug-dosage relative">
                                     <strong class="drug-name popover-trigger">
                                             <button type="button" ng-if="drugOrder.alerts && drugOrder.alerts.length > 0 && !hasActiveAlerts(drugOrder.alerts)" class="cdss-alert-icon" bm-pop-over-trigger>
@@ -81,6 +109,12 @@
                                         </button>
                                         <button type="button" class="send-to-pharmacy-btn per-row" ng-click="sendToPharmacy(drugOrder)" title="Send to Pharmacy">
                                             <i class="fa fa-paper-plane"></i>
+                                        </button>
+                                        <button type="button" ng-if="drugOrder.dtpCases" class="secondary-button per-row"
+                                                ng-click="openDtpResponseModal(drugOrder, drugOrderGroup.drugOrders)"
+                                                title="Respond to DTP &amp; Resend"
+                                                style="background-color: #d9534f; color: #fff; border-color: #d43f3a; padding: 2px 6px; font-size: 11px;">
+                                            <i class="fa fa-comment-medical"></i> DTP Resend
                                         </button>
                                         <input ng-show="printPrescriptionFeature" type="checkbox" id="{{$parent.$index + '/' + drugOrder.uuid}}" name="selectedDrug"
                                             ng-model="selectedDrugs[$parent.$index + '/' + drugOrder.uuid]"/>

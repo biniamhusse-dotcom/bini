@@ -547,6 +547,17 @@ Bahmni.Clinical.DrugOrderViewModel = function (config, proto, encounterDate) {
         newDrugOrder.orderGroupUuid = self.orderGroupUuid;
         newDrugOrder.isNewOrderSet = false;
 
+        if (self.dtpCases) {
+            newDrugOrder.isDtpEdit = true;
+            newDrugOrder.dtpCases = self.dtpCases;
+            newDrugOrder.dtpOriginalOrder = self;
+            newDrugOrder.dtpOriginalOrderUuid = self.uuid;
+            newDrugOrder.dtpOriginalOrderNumber = self.orderNumber;
+            newDrugOrder.dtpOriginalDrugUuid = self.drug ? self.drug.uuid : null;
+            newDrugOrder.dtpOriginalDrugName = self.getDisplayName ? self.getDisplayName() : (self.drugNameDisplay || '');
+            newDrugOrder.dtpOriginalDescription = self.getDescriptionWithQuantity ? self.getDescriptionWithQuantity() : '';
+        }
+
         if (newDrugOrder.effectiveStartDate <= today()) {
             newDrugOrder.effectiveStartDate = today();
         }

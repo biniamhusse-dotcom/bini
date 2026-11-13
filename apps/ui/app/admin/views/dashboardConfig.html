@@ -1,0 +1,517 @@
+<div class="dashboard-config-page" style="padding: 24px; max-width: 1340px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #2c3e50;">
+
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 style="margin: 0; font-size: 24px; color: #1a365d; display: flex; align-items: center; gap: 10px;">
+                <i class="fa fa-th-large" style="color: #2b6cb0;"></i> Dashboard Sections &amp; Form Display Manager
+            </h2>
+            <p style="margin: 6px 0 0 0; color: #718096; font-size: 14px;">
+                Manage clinical dashboard tabs &amp; sections, link Observation Forms to sections, and choose each section's display style (Form View, Forms List, Table / Flow Sheet, Graph).
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="#/dashboard" class="btn" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-arrow-left"></i> Admin Dashboard
+            </a>
+            <button type="button" ng-click="loadAll()" ng-disabled="loading || saving" style="background: #fff; color: #2d3748; border: 1px solid #cbd5e0; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i> Reload
+            </button>
+            <button type="button" ng-click="saveDashboard()" ng-disabled="saving || loading"
+                    style="background: {{ dirty ? '#2f855a' : '#2b6cb0' }}; color: #fff; border: none; padding: 9px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <i class="fa fa-spin fa-spinner" ng-if="saving"></i>
+                <i class="fa fa-check" ng-if="!saving"></i>
+                {{ saving ? 'Saving...' : (dirty ? 'Save Dashboard Changes*' : 'Save Dashboard') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Saved Banner -->
+    <div ng-if="savedBanner" style="background: #f0fff4; border-left: 4px solid #38a169; border-radius: 6px; padding: 12px 16px; margin-bottom: 18px; color: #22543d; font-size: 14px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa fa-check-circle fa-lg" style="color: #38a169;"></i>
+        <span>{{ savedBanner }}</span>
+    </div>
+
+    <!-- Unsaved Banner -->
+    <div ng-if="dirty && !savedBanner" style="background: #fffaf0; border-left: 4px solid #dd6b20; border-radius: 6px; padding: 10px 16px; margin-bottom: 18px; color: #7b341e; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+        <span><i class="fa fa-info-circle"></i> You have unsaved dashboard changes. Click <strong>Save Dashboard Changes*</strong> when ready.</span>
+    </div>
+
+    <!-- Loading -->
+    <div ng-if="loading" style="text-align: center; padding: 60px 0; color: #718096;">
+        <i class="fa fa-spinner fa-spin fa-3x" style="color: #3182ce; margin-bottom: 12px;"></i>
+        <div style="font-size: 16px;">Loading dashboard configuration and OpenMRS observation forms...</div>
+    </div>
+
+    <div ng-if="!loading">
+
+        <!-- Dashboard Tabs Strip -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                <span style="font-weight: 700; font-size: 14px; color: #1a365d;">
+                    <i class="fa fa-folder-open" style="color: #3182ce;"></i> Dashboard Tabs
+                </span>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" ng-click="startNewTab()" style="background: #3182ce; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                        <i class="fa fa-plus"></i> New Tab
+                    </button>
+                    <button type="button" ng-click="startEditTab()" ng-disabled="!activeTabConfig" style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                        <i class="fa fa-pencil"></i> Edit Active Tab
+                    </button>
+                    <button type="button" ng-click="deleteActiveTab()" ng-disabled="tabList.length <= 1" style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                        <i class="fa fa-trash"></i> Delete Tab
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <button type="button" ng-repeat="tab in tabList track by tab.key" ng-click="selectTab(tab.key)"
+                        style="padding: 7px 14px; border-radius: 20px; border: 1px solid {{ tab.key === activeTabKey ? '#2b6cb0' : '#cbd5e0' }}; background: {{ tab.key === activeTabKey ? '#2b6cb0' : '#f7fafc' }}; color: {{ tab.key === activeTabKey ? '#fff' : '#2d3748' }}; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <span>{{ tab.label }}</span>
+                    <span style="font-size: 11px; padding: 1px 7px; border-radius: 10px; background: {{ tab.key === activeTabKey ? 'rgba(255,255,255,0.22)' : '#e2e8f0' }};">
+                        {{ tab.sectionCount }}
+                    </span>
+                    <i class="fa fa-star" ng-if="tab.displayByDefault" title="Default Tab" style="font-size: 11px; color: {{ tab.key === activeTabKey ? '#fefcbf' : '#d69e2e' }};"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Edit / New Tab Panel -->
+        <div ng-if="editingTab" style="background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #2b6cb0;">
+                {{ editingTab.isNew ? 'Create New Dashboard Tab' : 'Edit Dashboard Tab: ' + editingTab.originalKey }}
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Tab Key (ID) <span style="color: #e53e3e;">*</span></label>
+                    <input type="text" ng-model="editingTab.key" placeholder="e.g. emergencySummary" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Display Title</label>
+                    <input type="text" ng-model="editingTab.title" placeholder="e.g. Emergency Summary" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Translation Key (Optional)</label>
+                    <input type="text" ng-model="editingTab.translationKey" placeholder="e.g. DASHBOARD_TAB_GENERAL_KEY" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Print Header</label>
+                    <input type="text" ng-model="editingTab.printingHeader" placeholder="Summary Report" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0;">
+                    <input type="checkbox" ng-model="editingTab.displayByDefault"> Make this the Default Tab when opening a patient dashboard
+                </label>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" ng-click="cancelEditTab()" style="background: #fff; color: #4a5568; border: 1px solid #cbd5e0; padding: 7px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">Cancel</button>
+                    <button type="button" ng-click="applyTabEdit()" style="background: #2b6cb0; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Apply Tab</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Editor Drawer/Card -->
+        <div ng-if="editingSection" style="background: #fff; border: 2px solid #3182ce; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(49,130,206,0.12);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 17px; color: #1a365d;">
+                    <i class="fa fa-sliders" style="color: #3182ce;"></i>
+                    {{ editingSection.isNew ? 'Add New Dashboard Section to "' + activeTabKey + '"' : 'Configure Section: ' + editingSection.originalKey }}
+                </h3>
+                <button type="button" ng-click="cancelEditSection()" style="background: none; border: none; font-size: 18px; color: #718096; cursor: pointer;">&times;</button>
+            </div>
+
+            <!-- Basic Section Metadata -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Section Key <span style="color: #e53e3e;">*</span></label>
+                    <input type="text" ng-model="editingSection.key" placeholder="e.g. ancFlowSheet" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Section Title</label>
+                    <input type="text" ng-model="editingSection.title" placeholder="e.g. ANC Follow-up" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Translation Key (Optional)</label>
+                    <input type="text" ng-model="editingSection.translationKey" placeholder="Optional i18n key" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Display Order</label>
+                    <input type="number" ng-model="editingSection.displayOrder" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Layout Width</label>
+                    <select ng-model="editingSection.displayType" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                        <option ng-repeat="l in layoutOptions track by l.id" value="{{l.id}}">{{l.label}}</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Display Style Selector -->
+            <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 10px;">
+                    <label style="font-size: 13px; font-weight: 700; color: #1a365d; margin: 0;">
+                        Display Style (How Observation Forms / Data Render in this Section):
+                    </label>
+                    <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" ng-model="editingSection.hideEmptyDisplayControl"> Hide section when empty
+                    </label>
+                </div>
+                <select ng-model="editingSection.styleId" ng-change="onStyleChange()"
+                        style="width: 100%; max-width: 460px; padding: 8px 12px; border: 1px solid #3182ce; border-radius: 6px; font-size: 13px; font-weight: 600; background: #fff; color: #1a365d;">
+                    <option ng-repeat="st in displayStyles track by st.id" value="{{st.id}}">{{st.label}}</option>
+                </select>
+            </div>
+
+            <!-- STYLE 1: Observation Form View (Hierarchical) -->
+            <div ng-if="editingSection.styleId === 'form_obs'" style="border: 1px solid #bee3f8; background: #f7fbff; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #2b6cb0;">Observation Form / Concept Set Configuration</h4>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px;">Linked Observation Templates / Concepts:</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                        <span ng-if="editingSection.obsConceptNames.length === 0" style="font-size: 12px; color: #c05621;">No observation form/concept linked yet.</span>
+                        <span ng-repeat="c in editingSection.obsConceptNames track by $index"
+                              style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #90cdf4; color: #1a365d; padding: 3px 9px; border-radius: 14px; font-size: 12px; font-weight: 600;">
+                            {{ c }}
+                            <button type="button" ng-click="removeFromList(editingSection.obsConceptNames, $index)" style="background: none; border: none; color: #c53030; cursor: pointer; font-weight: 700; padding: 0;">&times;</button>
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <select ng-model="editingSection.pickerTemplateToAdd" style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff; min-width: 240px;">
+                            <option value="">-- Pick Observation Template --</option>
+                            <option ng-repeat="tpl in observationTemplates track by $index" value="{{tpl}}">{{tpl}}</option>
+                        </select>
+                        <button type="button" ng-click="addToList(editingSection.obsConceptNames, editingSection.pickerTemplateToAdd); editingSection.pickerTemplateToAdd=''"
+                                ng-disabled="!editingSection.pickerTemplateToAdd"
+                                style="background: #3182ce; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Add Template</button>
+                        <input type="text" ng-model="editingSection.customConceptToAdd" placeholder="Or type concept name..." style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; min-width: 180px;">
+                        <button type="button" ng-click="addToList(editingSection.obsConceptNames, editingSection.customConceptToAdd); editingSection.customConceptToAdd=''"
+                                ng-disabled="!editingSection.customConceptToAdd"
+                                style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 6px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Add Concept</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 12px; margin-bottom: 10px;">
+                    <label style="margin: 0;">Visits to show:
+                        <input type="number" ng-model="editingSection.obsNumberOfVisits" min="1" max="100" style="width: 60px; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; margin-left: 4px;">
+                    </label>
+                    <label style="margin: 0;">Scope:
+                        <select ng-model="editingSection.obsScope" style="padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; background: #fff; margin-left: 4px;">
+                            <option value="all">All Visits</option>
+                            <option value="latest">Latest Only</option>
+                        </select>
+                    </label>
+                    <label style="margin: 0; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                        <input type="checkbox" ng-model="editingSection.showGroupDateTime"> Show Date/Time Header
+                    </label>
+                    <label style="margin: 0; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                        <input type="checkbox" ng-model="editingSection.showDetailsButton"> Show Details / Expand Button
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; border-top: 1px solid #bee3f8; padding-top: 10px;">
+                    <label style="margin: 0; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" ng-model="editingSection.enableExpandedPivot"> Enable Pivot Table when expanded
+                    </label>
+                    <label style="margin: 0; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" ng-model="editingSection.enableExpandedGraph"> Enable Graph when expanded
+                    </label>
+                </div>
+            </div>
+
+            <!-- STYLE 2 & 3: Forms List (Templates or Form Builder v2) -->
+            <div ng-if="editingSection.styleId === 'forms_list' || editingSection.styleId === 'forms_v2'" style="border: 1px solid #b2f5ea; background: #f4fffe; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #285e61;">
+                    {{ editingSection.styleId === 'forms_v2' ? 'Form Builder (v2) Forms List Configuration' : 'Observation Templates Forms List Configuration' }}
+                </h4>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">
+                        Linked Forms (<code>formGroup</code> &mdash; leave empty to display ALL submitted forms):
+                    </label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                        <span ng-if="editingSection.formGroup.length === 0" style="font-size: 12px; color: #285e61; font-style: italic;">Showing ALL forms</span>
+                        <span ng-repeat="fg in editingSection.formGroup track by $index"
+                              style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #81e6d9; color: #234e52; padding: 3px 9px; border-radius: 14px; font-size: 12px; font-weight: 600;">
+                            {{ fg }}
+                            <button type="button" ng-click="removeFromList(editingSection.formGroup, $index)" style="background: none; border: none; color: #c53030; cursor: pointer; font-weight: 700; padding: 0;">&times;</button>
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <select ng-if="editingSection.styleId === 'forms_list'" ng-model="editingSection.pickerFormToAdd" style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff; min-width: 240px;">
+                            <option value="">-- Pick Observation Template --</option>
+                            <option ng-repeat="tpl in observationTemplates track by $index" value="{{tpl}}">{{tpl}}</option>
+                        </select>
+                        <select ng-if="editingSection.styleId === 'forms_v2'" ng-model="editingSection.pickerFormToAdd" style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff; min-width: 240px;">
+                            <option value="">-- Pick Published Form Builder Form --</option>
+                            <option ng-repeat="pf in publishedForms track by $index" value="{{pf}}">{{pf}}</option>
+                        </select>
+                        <button type="button" ng-click="addToList(editingSection.formGroup, editingSection.pickerFormToAdd); editingSection.pickerFormToAdd=''"
+                                ng-disabled="!editingSection.pickerFormToAdd"
+                                style="background: #319795; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Link Form</button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 12px;">
+                    <label style="margin: 0;">Max Visits:
+                        <input type="number" ng-model="editingSection.maximumNoOfVisits" min="1" max="500" style="width: 65px; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; margin-left: 4px;">
+                    </label>
+                    <label ng-if="editingSection.styleId === 'forms_v2'" style="margin: 0;">Renderer:
+                        <select ng-model="editingSection.formsV2Renderer" style="padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; background: #fff; margin-left: 4px;">
+                            <option value="formsV2">formsV2 (Filterable by formGroup)</option>
+                            <option value="formsV2React">formsV2React (Modern Inline View)</option>
+                        </select>
+                    </label>
+                    <label ng-if="editingSection.styleId === 'forms_v2'" style="margin: 0; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                        <input type="checkbox" ng-model="editingSection.showEditForActiveEncounter"> Allow Edit for Active Encounter
+                    </label>
+                </div>
+            </div>
+
+            <!-- STYLE 4: Table / Flow Sheet -->
+            <div ng-if="editingSection.styleId === 'table'" style="border: 1px solid #faf089; background: #fffff0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #975a16;">Table / Flow Sheet Configuration (<code>obsToObsFlowSheet</code>)</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Form Source Type</label>
+                        <select ng-model="editingSection.tableSourceType" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff;">
+                            <option value="template">Observation Template (Concept Set)</option>
+                            <option value="formBuilder">Form Builder (v2) Forms</option>
+                        </select>
+                    </div>
+                    <div ng-if="editingSection.tableSourceType === 'template'">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Linked Observation Template</label>
+                        <select ng-model="editingSection.tableTemplateName" ng-change="loadMembersForTemplate(editingSection.tableTemplateName)"
+                                style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff;">
+                            <option value="">-- Select Template --</option>
+                            <option ng-repeat="tpl in observationTemplates track by $index" value="{{tpl}}">{{tpl}}</option>
+                        </select>
+                    </div>
+                    <div ng-if="editingSection.tableSourceType === 'formBuilder'">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Add Form Builder Form</label>
+                        <div style="display: flex; gap: 6px;">
+                            <select ng-model="editingSection.pickerFormToAdd" style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff;">
+                                <option value="">-- Select Form --</option>
+                                <option ng-repeat="pf in publishedForms track by $index" value="{{pf}}">{{pf}}</option>
+                            </select>
+                            <button type="button" ng-click="addToList(editingSection.tableFormNames, editingSection.pickerFormToAdd); editingSection.pickerFormToAdd=''"
+                                    ng-disabled="!editingSection.pickerFormToAdd"
+                                    style="background: #d69e2e; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer;">+</button>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;">
+                            <span ng-repeat="fn in editingSection.tableFormNames track by $index" style="background: #fff; border: 1px solid #ecc94b; padding: 2px 7px; border-radius: 10px; font-size: 11px;">
+                                {{fn}} <button type="button" ng-click="removeFromList(editingSection.tableFormNames, $index)" style="border: none; background: none; color: #c53030; cursor: pointer;">&times;</button>
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Table Orientation (<code>pivotOn</code>)</label>
+                        <select ng-model="editingSection.tablePivotOn" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff;">
+                            <option value="row">Rows = Encounters / Columns = Fields</option>
+                            <option value="column">Columns = Encounters / Rows = Fields</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Group By Concept (Optional)</label>
+                        <input type="text" ng-model="editingSection.tableGroupByConcept" placeholder="e.g. Specimen Collection Date"
+                               style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <!-- Column Concepts -->
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Table Columns / Concepts (leave empty to auto-include all template fields):</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                        <span ng-repeat="col in editingSection.tableConceptNames track by $index"
+                              style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #ecc94b; padding: 3px 9px; border-radius: 14px; font-size: 12px; font-weight: 600;">
+                            {{col}}
+                            <button type="button" ng-click="removeFromList(editingSection.tableConceptNames, $index)" style="border: none; background: none; color: #c53030; cursor: pointer; font-weight: 700; padding: 0;">&times;</button>
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <select ng-if="templateMemberConcepts.length > 0" ng-model="editingSection.pickerFieldToAdd" style="padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff; min-width: 210px;">
+                            <option value="">-- Pick Concept from Template --</option>
+                            <option ng-repeat="m in templateMemberConcepts track by $index" value="{{m}}">{{m}}</option>
+                        </select>
+                        <button type="button" ng-if="templateMemberConcepts.length > 0" ng-click="addToList(editingSection.tableConceptNames, editingSection.pickerFieldToAdd); editingSection.pickerFieldToAdd=''"
+                                ng-disabled="!editingSection.pickerFieldToAdd"
+                                style="background: #d69e2e; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Add Field</button>
+                        <input type="text" ng-model="editingSection.customConceptToAdd" placeholder="Or type concept name..." style="padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; min-width: 180px;">
+                        <button type="button" ng-click="addToList(editingSection.tableConceptNames, editingSection.customConceptToAdd); editingSection.customConceptToAdd=''"
+                                ng-disabled="!editingSection.customConceptToAdd"
+                                style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Add</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px;">
+                    <label style="margin: 0;">Visits:
+                        <input type="number" ng-model="editingSection.tableNumberOfVisits" min="1" max="100" style="width: 60px; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; margin-left: 4px;">
+                    </label>
+                    <label style="margin: 0; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                        <input type="checkbox" ng-model="editingSection.tableIsEditable"> Inline Editable
+                    </label>
+                    <label style="margin: 0; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                        <input type="checkbox" ng-model="editingSection.tableHideEmptyRecords"> Hide Empty Columns
+                    </label>
+                </div>
+            </div>
+
+            <!-- STYLE 5: Graphical / Trend Chart -->
+            <div ng-if="editingSection.styleId === 'graph'" style="border: 1px solid #d6bcfa; background: #faf5ff; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #6b46c1;">Graphical / Trend Chart Configuration (<code>observationGraph</code>)</h4>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Load Concepts From Template (Optional Helper):</label>
+                    <select ng-model="editingSection.sourceTemplateForFields" ng-change="loadMembersForTemplate(editingSection.sourceTemplateForFields)"
+                            style="padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff; min-width: 240px;">
+                        <option value="">-- Pick Observation Template to browse concepts --</option>
+                        <option ng-repeat="tpl in observationTemplates track by $index" value="{{tpl}}">{{tpl}}</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Y-Axis Concepts to Plot (Numeric):</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                        <span ng-repeat="yc in editingSection.graphYConcepts track by $index"
+                              style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #b794f4; color: #44337a; padding: 3px 9px; border-radius: 14px; font-size: 12px; font-weight: 600;">
+                            {{yc}}
+                            <button type="button" ng-click="removeFromList(editingSection.graphYConcepts, $index)" style="border: none; background: none; color: #c53030; cursor: pointer; font-weight: 700; padding: 0;">&times;</button>
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <select ng-if="templateMemberConcepts.length > 0" ng-model="editingSection.pickerFieldToAdd" style="padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff; min-width: 210px;">
+                            <option value="">-- Pick Concept from Template --</option>
+                            <option ng-repeat="m in templateMemberConcepts track by $index" value="{{m}}">{{m}}</option>
+                        </select>
+                        <button type="button" ng-if="templateMemberConcepts.length > 0" ng-click="addToList(editingSection.graphYConcepts, editingSection.pickerFieldToAdd); editingSection.pickerFieldToAdd=''"
+                                ng-disabled="!editingSection.pickerFieldToAdd"
+                                style="background: #6b46c1; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Plot Concept</button>
+                        <input type="text" ng-model="editingSection.customConceptToAdd" placeholder="e.g. Systolic Data, Weight..." style="padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; min-width: 190px;">
+                        <button type="button" ng-click="addToList(editingSection.graphYConcepts, editingSection.customConceptToAdd); editingSection.customConceptToAdd=''"
+                                ng-disabled="!editingSection.customConceptToAdd"
+                                style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Add</button>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">X-Axis</label>
+                        <input type="text" ng-model="editingSection.graphXConcept" placeholder="observationDateTime or Age" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Reference CSV (Optional)</label>
+                        <input type="text" ng-model="editingSection.graphReferenceData" placeholder="e.g. growthChartReference.csv" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Number of Visits</label>
+                        <input type="number" ng-model="editingSection.graphNumberOfVisits" min="1" max="100" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- STYLE 6: Disease Template -->
+            <div ng-if="editingSection.styleId === 'disease'" style="border: 1px solid #feb2b2; background: #fff5f5; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #c53030;">Disease Template Configuration</h4>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Template Name:</label>
+                    <input type="text" ng-model="editingSection.diseaseTemplateName" placeholder="e.g. Diabetes Templates" style="width: 100%; max-width: 340px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px;">
+                </div>
+            </div>
+
+            <!-- STYLE 7: Built-in Clinical Section -->
+            <div ng-if="editingSection.styleId === 'builtin'" style="border: 1px solid #cbd5e0; background: #f7fafc; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #2d3748;">Built-in Section Configuration</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Control Type</label>
+                        <select ng-model="editingSection.builtinType" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff;">
+                            <option ng-repeat="bt in builtinTypes track by bt" value="{{bt}}">{{bt}}</option>
+                        </select>
+                    </div>
+                    <div ng-if="editingSection.builtinType === 'ordersControl'">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Order Type</label>
+                        <input type="text" ng-model="editingSection.builtinOrderType" placeholder="e.g. Lab Order, Radiology Order" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; box-sizing: border-box;">
+                    </div>
+                    <div ng-if="editingSection.builtinType === 'custom'">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Custom Angular Template</label>
+                        <input type="text" ng-model="editingSection.builtinCustomTemplate" placeholder="<my-directive></my-directive>" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" ng-click="cancelEditSection()" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="applySectionEdit()" style="background: #2b6cb0; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Apply Section Changes</button>
+            </div>
+        </div>
+
+        <!-- Sections Toolbar & Table -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" ng-model="sectionFilter.query" ng-change="applySectionFilters()" placeholder="Search section, form, or concept..."
+                       style="padding: 7px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; min-width: 240px;">
+                <select ng-model="sectionFilter.style" ng-change="applySectionFilters()" style="padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                    <option value="all">All Display Styles</option>
+                    <option ng-repeat="st in displayStyles track by st.id" value="{{st.id}}">{{st.label}}</option>
+                </select>
+            </div>
+            <button type="button" ng-click="startNewSection()" ng-disabled="!activeTabConfig"
+                    style="background: #2b6cb0; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <i class="fa fa-plus"></i> Add Section / Link Observation Form
+            </button>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568;">
+                        <th style="padding: 11px 12px; width: 72px;">Order</th>
+                        <th style="padding: 11px 12px;">Section Title &amp; Key</th>
+                        <th style="padding: 11px 12px;">Display Style</th>
+                        <th style="padding: 11px 12px;">Linked Observation Form(s) / Source</th>
+                        <th style="padding: 11px 12px;">Layout Width</th>
+                        <th style="padding: 11px 12px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-if="filteredSectionRows.length === 0">
+                        <td colspan="6" style="padding: 32px; text-align: center; color: #718096;">
+                            No sections match your filter in this tab.
+                        </td>
+                    </tr>
+                    <tr ng-repeat="row in filteredSectionRows track by row.key" style="border-bottom: 1px solid #edf2f7;">
+                        <td style="padding: 10px 12px; vertical-align: top;">
+                            <input type="number" ng-model="row.displayOrder" ng-blur="updateSectionOrder(row, row.displayOrder)"
+                                   style="width: 58px; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; text-align: center;">
+                        </td>
+                        <td style="padding: 10px 12px; vertical-align: top;">
+                            <div style="font-weight: 700; color: #1a202c;">{{ row.displayTitle }}</div>
+                            <div style="font-size: 11px; color: #718096;">key: <code>{{ row.key }}</code></div>
+                        </td>
+                        <td style="padding: 10px 12px; vertical-align: top;">
+                            <span style="display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; background: {{ row.badgeBg }}; color: {{ row.badgeColor }};">
+                                {{ row.styleLabel }}
+                            </span>
+                        </td>
+                        <td style="padding: 10px 12px; vertical-align: top; max-width: 320px;">
+                            <span ng-repeat="item in row.linkedItems track by $index"
+                                  style="display: inline-block; background: #edf2f7; color: #2d3748; border-radius: 4px; padding: 2px 7px; font-size: 11px; margin: 0 4px 4px 0;">
+                                {{ item }}
+                            </span>
+                        </td>
+                        <td style="padding: 10px 12px; vertical-align: top;">
+                            <select ng-model="row.displayType" ng-change="updateSectionLayout(row, row.displayType)"
+                                    style="padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff;">
+                                <option ng-repeat="l in layoutOptions track by l.id" value="{{l.id}}">{{l.label}}</option>
+                            </select>
+                        </td>
+                        <td style="padding: 10px 12px; text-align: right; vertical-align: top; white-space: nowrap;">
+                            <button type="button" ng-click="startEditSection(row)" style="background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; margin-right: 6px;">
+                                <i class="fa fa-pencil"></i> Edit / Style
+                            </button>
+                            <button type="button" ng-click="deleteSection(row)" style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 5px 9px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>

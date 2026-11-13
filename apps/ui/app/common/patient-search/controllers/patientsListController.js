@@ -342,6 +342,10 @@ angular.module('bahmni.common.patientSearch')
                     $rootScope.dtpCaseExists = true;
                     $rootScope.dtpNotCount = searchType.patientCount;
                     $scope.dtpCaseNotifications = data;
+                } else {
+                    $rootScope.dtpCaseExists = false;
+                    $rootScope.dtpNotCount = 0;
+                    $scope.dtpCaseNotifications = [];
                 }
             }
         };
@@ -368,7 +372,11 @@ angular.module('bahmni.common.patientSearch')
                     }
                     updateNotifications(searchType, response.data);
                     return getPatientCountSeriallyBySearchIndex(index + 1);
+                }, function () {
+                    return getPatientCountSeriallyBySearchIndex(index + 1);
                 });
+            } else {
+                return getPatientCountSeriallyBySearchIndex(index + 1);
             }
         };
         initialize();

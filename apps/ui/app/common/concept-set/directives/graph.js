@@ -104,6 +104,40 @@ angular.module('bahmni.common.conceptSet')
                     };
                 }
 
+                let customGraphConfig = $scope.observation.conceptUIConfig && $scope.observation.conceptUIConfig.graphConfig;
+                if (customGraphConfig && (customGraphConfig.graphType === "custom" || (Array.isArray(customGraphConfig.series) && customGraphConfig.series.length > 0))) {
+                    rowInit = (customGraphConfig.yMin !== undefined && customGraphConfig.yMin !== null && customGraphConfig.yMin !== '') ? Number(customGraphConfig.yMin) : 0;
+                    rowTerm = (customGraphConfig.yMax !== undefined && customGraphConfig.yMax !== null && customGraphConfig.yMax !== '') ? Number(customGraphConfig.yMax) : 100;
+                    rowValue = (customGraphConfig.yStep !== undefined && Number(customGraphConfig.yStep) > 0) ? Number(customGraphConfig.yStep) : 10;
+                    rows = Math.max(1, Math.round((rowTerm - rowInit) / rowValue));
+                    $scope.graphType = "custom";
+                    otherLines = [];
+                    $scope.inputTypes = (Array.isArray(customGraphConfig.series) && customGraphConfig.series.length > 0)
+                        ? customGraphConfig.series.map(function (s) {
+                            let c = s.color || "#2b6cb0";
+                            return {
+                                name: s.name,
+                                currentData: rowInit,
+                                color: c,
+                                style: { "background-color": c }
+                            };
+                        })
+                        : [{
+                            name: $scope.observation.concept.name,
+                            currentData: rowInit,
+                            color: "#2b6cb0",
+                            style: { "background-color": "#2b6cb0" }
+                        }];
+                    let warnLow = (customGraphConfig.warnLow !== undefined && customGraphConfig.warnLow !== null && customGraphConfig.warnLow !== '') ? Number(customGraphConfig.warnLow) : null;
+                    let warnHigh = (customGraphConfig.warnHigh !== undefined && customGraphConfig.warnHigh !== null && customGraphConfig.warnHigh !== '') ? Number(customGraphConfig.warnHigh) : null;
+                    $scope.isWarning = function (givenPoint) {
+                        if (givenPoint.fixed) return false;
+                        if (warnHigh !== null && givenPoint.value >= warnHigh) return true;
+                        if (warnLow !== null && givenPoint.value <= warnLow) return true;
+                        return false;
+                    };
+                }
+
                 var fetchData = function (patientUuid, formGroup, customRepresentation) {
                     var params = {
                         patient: patientUuid,
@@ -280,43 +314,79 @@ angular.module('bahmni.common.conceptSet')
 
                 let getDateTime = function (time) {
                     if (!time) return null;
-                    let strippedDateTime = new Date(0);
-                    strippedDateTime.setMinutes(time.split(":")[1]);
-                    strippedDateTime.setHours(time.split(":")[0]);
-                    return strippedDateTime;
+                    if (time instanceof Date) return new Date(time.getTime());
+                    if (typeof time === "string" && time.indexOf(":") !== -1 && time.indexOf("T") === -1 && time.indexOf("-") === -1) {
+                        let strippedDateTime = new Date(0);
+                        strippedDateTime.setMinutes(time.split(":")[1]);
+                        strippedDateTime.setHours(time.split(":")[0]);
+                        return strippedDateTime;
+                    }
+                    let parsed = new Date(time);
+                    return isNaN(parsed.getTime()) ? null : parsed;
+                };
+
+                let resolveStartTime = function (createIfMissing) {
+                    if ($scope.startTimeFixed) {
+                        return new Date($scope.startTimeFixed);
+                    }
+                    if (points && points._startTime) {
+                        let savedStart = new Date(points._startTime);
+                        if (!isNaN(savedStart.getTime())) {
+                            $scope.startTimeFixed = savedStart;
+                            return savedStart;
+                        }
+                    }
+                    let targetStartConcept = (customGraphConfig && customGraphConfig.startTimeConcept) ? customGraphConfig.startTimeConcept : "Partograph Start Time";
+                    let members = ($scope.roo && $scope.roo.groupMembers) ? $scope.roo.groupMembers : [];
+                    let found = members.filter(function (gm) {
+                        return gm && ((gm.concept && gm.concept.name === targetStartConcept) || (gm.label && gm.label.includes(targetStartConcept)));
+                    });
+                    if (found.length > 0 && found[0].value) {
+                        let dt = getDateTime(found[0].value);
+                        if (dt && !isNaN(dt.getTime())) {
+                            return dt;
+                        }
+                    }
+                    if (createIfMissing) {
+                        let fallbackStart = getDateTime($scope.currentTime.value) || new Date();
+                        $scope.startTimeFixed = fallbackStart;
+                        return fallbackStart;
+                    }
+                    return null;
                 };
 
                 $scope.addCurrent = function () {
                     $scope.resultMessage = { message: "", style: "" };
-                    let diffMs = 0;
-                    if ($scope.startTimeFixed) {
-                        $scope.startTime = new Date($scope.startTimeFixed);
-                    }
-                    else {
-                        let startTimeb = getDateTime($scope.roo?.groupMembers.filter(gm => gm.label.includes("Partograph Start Time"))[0].value);
-                        $scope.startTime = new Date(startTimeb);
-                    }
-                    // $scope.startTime = $scope.startTimeFixed || getDateTime($scope.roo.groupMembers.filter(gm => gm.label.includes("Partograph Start Time"))[0].value);
-                    diffMs = Math.round((getDateTime($scope.currentTime.value) - $scope.startTime) / 60000);
+                    let resolved = resolveStartTime(true);
+                    $scope.startTime = resolved;
+                    let curDt = getDateTime($scope.currentTime.value) || new Date();
+                    let diffMs = Math.round((curDt - $scope.startTime) / 60000);
                     let validity = {};
                     $scope.inputTypes.every(element => {
-                        validity = checkValid(diffMs + timeShift, points[element.name].length, element.name, element.currentData);
+                        validity = checkValid(diffMs + timeShift, (points[element.name] || []).length, element.name, element.currentData);
                         return validity.valid;
                     });
                     if (validity.valid) {
+                        if ($scope.graphType === "custom" && !points._startTime && $scope.startTime) {
+                            points._startTime = $scope.startTime.toISOString();
+                        }
                         $scope.inputTypes.forEach(element => {
-                            points[element.name].push({ time: diffMs, value: element.currentData, color: element.color, noCheck: element.noCheck });
+                            if (!points[element.name]) points[element.name] = [];
+                            points[element.name].push({ time: diffMs, value: Number(element.currentData), color: element.color, noCheck: element.noCheck });
                             points[element.name].sort(function (a, b) { return a.time - b.time; });
                         });
-                        $scope.observation.groupMembers[0].value = JSON.stringify(points);
+                        if ($scope.observation.groupMembers && $scope.observation.groupMembers[0]) {
+                            $scope.observation.groupMembers[0].value = JSON.stringify(points);
+                        }
                         drawAll();
+                        $scope.timeLabels = generateTimeLabels();
                     }
                     $scope.resultMessage = validity;
                 };
 
                 var checkValid = function (diffMs, pointsLen, label, currentData) {
-                    if (!currentData || currentData > rowTerm || currentData < rowInit) {
-                        return { valid: false, message: `The value you entered for ${label} is invalid`, style: { "background-color": "rgba(255, 0, 0, 0.25)" } };
+                    if (currentData === undefined || currentData === null || currentData === '' || isNaN(Number(currentData)) || Number(currentData) > rowTerm || Number(currentData) < rowInit) {
+                        return { valid: false, message: `The value you entered for ${label} is invalid (${rowInit} - ${rowTerm})`, style: { "background-color": "rgba(255, 0, 0, 0.25)" } };
                     }
                     if (pointsLen === 0 && $scope.graphType === "cd") {
                         if (diffMs !== 0) {
@@ -325,7 +395,7 @@ angular.module('bahmni.common.conceptSet')
                     }
                     else {
                         if (diffMs < timeShift || diffMs > 720) {
-                            return { valid: false, message: "The time entered must be in the 12 hour period after the partograph start time.", style: { "background-color": "rgba(255, 0, 0, 0.25)" } };
+                            return { valid: false, message: "The time entered must be in the 12 hour period after the start time.", style: { "background-color": "rgba(255, 0, 0, 0.25)" } };
                         }
                     }
                     return { valid: true, message: "Data added to graph", style: { "background-color": "rgba(0, 255, 0, 0.25)" } };
@@ -342,6 +412,9 @@ angular.module('bahmni.common.conceptSet')
                 };
 
                 let draw = function (givenPoints, name) {
+                    if (!Array.isArray(givenPoints) || givenPoints.length === 0) {
+                        return;
+                    }
                     if (name === "Cervix (cm)") {
                         timeShift = (givenPoints[0].value - 4) * 60;
                         $scope.timeLabels = generateTimeLabels();
@@ -448,14 +521,15 @@ angular.module('bahmni.common.conceptSet')
                 });
 
                 fetchData($scope.patient.uuid, [$scope.observation.concept.name], "custom:(groupMembers)").then(res => {
-                    if ($scope.observation.groupMembers[0].value) {
+                    if ($scope.observation.groupMembers && $scope.observation.groupMembers[0] && $scope.observation.groupMembers[0].value) {
                         points = JSON.parse($scope.observation.groupMembers[0].value);
                         drawAll();
                     }
-                    else if (res.data.results.length) {
+                    else if (res.data.results.length && res.data.results[0].groupMembers && res.data.results[0].groupMembers[0] && res.data.results[0].groupMembers[0].value) {
                         points = JSON.parse(res.data.results[0].groupMembers[0].value);
-                        let targetObs = $scope.observation.groupMembers[0];
-                        targetObs.value = JSON.stringify(points);
+                        if ($scope.observation.groupMembers && $scope.observation.groupMembers[0]) {
+                            $scope.observation.groupMembers[0].value = JSON.stringify(points);
+                        }
                         drawAll();
                     }
                     else {
@@ -467,14 +541,14 @@ angular.module('bahmni.common.conceptSet')
                     }
                 });
                 if ($scope.graphType !== "an") {
-                    fetchData($scope.patient.uuid, ["Partograph Start Time"], "custom:(value)").then(res => {
-                        if (res.data.results.length) {
+                    let startLookup = (customGraphConfig && customGraphConfig.startTimeConcept) ? customGraphConfig.startTimeConcept : "Partograph Start Time";
+                    fetchData($scope.patient.uuid, [startLookup], "custom:(value)").then(res => {
+                        if (res.data.results.length && res.data.results[0].value) {
                             $scope.startTimeFixed = new Date(res.data.results[0].value.split("+")[0]);
                             $scope.$root.$broadcast("refreshTime", { "time": res.data.results[0].value });
-                            $scope.timeLabels = generateTimeLabels()
+                            $scope.timeLabels = generateTimeLabels();
                         }
-                    })
-
+                    });
                 }
                 if ($scope.graphType === "pbp") {
                     fetchData($scope.patient.uuid, ["Labor starting time"], "custom:(value)").then(res => {
@@ -490,15 +564,8 @@ angular.module('bahmni.common.conceptSet')
                 }
                 var generateTimeLabels = function () {
                     let timeLabels = [];
-                    let startTime;
-                    if ($scope.startTimeFixed) {
-                        startTime = new Date($scope.startTimeFixed);
-                    }
-                    else {
-                        let startTimeb = getDateTime($scope.roo?.groupMembers.filter(gm => gm.label.includes("Partograph Start Time"))[0].value);
-                        startTime = new Date(startTimeb);
-                    }
-                    if (!startTime) {
+                    let startTime = resolveStartTime(false);
+                    if (!startTime || isNaN(startTime.getTime())) {
                         return timeLabels;
                     }
                     startTime.setMinutes(startTime.getMinutes() - timeShift);

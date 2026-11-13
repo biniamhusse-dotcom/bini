@@ -1,0 +1,634 @@
+<div class="drug-management-wrapper" style="padding: 20px 25px; background: #f7fafc; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+    <!-- Top Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="#/dashboard" style="background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 6px; padding: 7px 12px; color: #4a5568; text-decoration: none; font-size: 13px; font-weight: 600;">
+                <i class="fa fa-arrow-left"></i> Admin Home
+            </a>
+            <div>
+                <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #1a202c;">
+                    <i class="fa fa-medkit" style="color: #2b6cb0; margin-right: 8px;"></i> Drug, Supply & Reagent Management
+                </h2>
+                <span style="font-size: 12px; color: #718096;">Manage hospital formulary, classifications (Medicine, Supply, Reagent), and Physician-Only prescribing restrictions</span>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" ng-click="openCreateModal()"
+                    style="background: #2b6cb0; color: #fff; border: none; font-weight: 700; font-size: 13px; padding: 7px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <i class="fa fa-plus-circle"></i> Add Item
+            </button>
+            <button type="button" class="btn" ng-click="openImportModal()"
+                    style="background: #059669; color: #ffffff; border: none; border-radius: 6px; padding: 7px 14px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <i class="fa fa-upload"></i> Import CSV
+            </button>
+            <button type="button" class="btn" ng-click="exportCsv()"
+                    style="background: #ffffff; border: 1px solid #059669; color: #059669; border-radius: 6px; padding: 7px 13px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-file-excel-o"></i> Export CSV
+            </button>
+            <button type="button" class="btn" ng-click="exportPdf()"
+                    style="background: #dc2626; color: #ffffff; border: none; border-radius: 6px; padding: 7px 13px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <i class="fa fa-file-pdf-o"></i> Export PDF (A4)
+            </button>
+            <button type="button" class="btn" ng-click="init()" ng-disabled="loading"
+                    style="background: #fff; border: 1px solid #cbd5e0; color: #4a5568; font-weight: 600; font-size: 13px; padding: 7px 13px; border-radius: 6px; cursor: pointer;">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px;">
+        <!-- Total Items -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 4px solid #3182ce; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <div style="font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase;">Total Items</div>
+            <div style="font-size: 24px; font-weight: 800; color: #2d3748; margin-top: 4px;">{{ stats.total }}</div>
+            <div style="font-size: 11px; color: #a0aec0; margin-top: 2px;">Formulary Drugs & Supplies</div>
+        </div>
+
+        <!-- Medicines -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 4px solid #2b6cb0; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;"
+             ng-click="selectedCategory = 'Medicine'; applyFilters()" title="Click to filter Medicines">
+            <div style="font-size: 11px; font-weight: 700; color: #2b6cb0; text-transform: uppercase;">Medicines</div>
+            <div style="font-size: 24px; font-weight: 800; color: #2b6cb0; margin-top: 4px;">{{ stats.medicines }}</div>
+            <div style="font-size: 11px; color: #718096; margin-top: 2px;">Oral, Injections, Topical</div>
+        </div>
+
+        <!-- Supplies -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 4px solid #38a169; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;"
+             ng-click="selectedCategory = 'Supply'; applyFilters()" title="Click to filter Supplies">
+            <div style="font-size: 11px; font-weight: 700; color: #38a169; text-transform: uppercase;">Medical Supplies</div>
+            <div style="font-size: 24px; font-weight: 800; color: #276749; margin-top: 4px;">{{ stats.supplies }}</div>
+            <div style="font-size: 11px; color: #718096; margin-top: 2px;">Consumables, Blades, Gauze</div>
+        </div>
+
+        <!-- Reagents -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 4px solid #805ad5; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;"
+             ng-click="selectedCategory = 'Reagent'; applyFilters()" title="Click to filter Reagents">
+            <div style="font-size: 11px; font-weight: 700; color: #805ad5; text-transform: uppercase;">Lab Reagents</div>
+            <div style="font-size: 24px; font-weight: 800; color: #553c9a; margin-top: 4px;">{{ stats.reagents }}</div>
+            <div style="font-size: 11px; color: #718096; margin-top: 2px;">Rapid Tests, Stains, Kits</div>
+        </div>
+
+        <!-- Restricted / Physician Only -->
+        <div style="background: #fff5f5; border-radius: 8px; border: 1px solid #feb2b2; border-left: 4px solid #e53e3e; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;"
+             ng-click="selectedRestriction = 'restricted'; applyFilters()" title="Click to filter Restricted Items">
+            <div style="font-size: 11px; font-weight: 700; color: #e53e3e; text-transform: uppercase;">
+                <i class="fa fa-lock"></i> Physician Only
+            </div>
+            <div style="font-size: 24px; font-weight: 800; color: #9b2c2c; margin-top: 4px;">{{ stats.restricted }}</div>
+            <div style="font-size: 11px; color: #c53030; margin-top: 2px;">Opioids & Restricted Drugs</div>
+        </div>
+
+        <!-- Retired -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 4px solid #a0aec0; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;"
+             ng-click="selectedStatus = 'retired'; applyFilters()" title="Click to filter Retired Items">
+            <div style="font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase;">Retired Items</div>
+            <div style="font-size: 24px; font-weight: 800; color: #4a5568; margin-top: 4px;">{{ stats.retired }}</div>
+            <div style="font-size: 11px; color: #a0aec0; margin-top: 2px;">Inactive / Deleted Items</div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+            <!-- Search text -->
+            <div style="flex: 1; min-width: 240px;">
+                <label style="display: block; font-size: 11px; font-weight: 700; color: #4a5568; margin-bottom: 4px;">
+                    Search Drug / Supply Name, UUID, Strength or Generic:
+                </label>
+                <div style="position: relative;">
+                    <i class="fa fa-search" style="position: absolute; left: 10px; top: 10px; color: #a0aec0;"></i>
+                    <input type="text" ng-model="searchQuery" ng-change="applyFilters()"
+                           placeholder="Search by name, drug UUID (e.g. 896b282d...), strength, generic concept..."
+                           style="width: 100%; padding: 7px 10px 7px 32px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;" />
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div style="width: 150px;">
+                <label style="display: block; font-size: 11px; font-weight: 700; color: #4a5568; margin-bottom: 4px;">Category:</label>
+                <select ng-model="selectedCategory" ng-change="onCategoryFilterChange()"
+                        style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    <option value="">All Categories</option>
+                    <option ng-repeat="cat in categories" value="{{ cat }}">{{ cat }}</option>
+                </select>
+            </div>
+
+            <!-- Subcategory Filter -->
+            <div style="width: 190px;">
+                <label style="display: block; font-size: 11px; font-weight: 700; color: #4a5568; margin-bottom: 4px;">Subcategory:</label>
+                <select ng-model="selectedSubcategory" ng-change="applyFilters()"
+                        style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    <option value="">All Subcategories</option>
+                    <option ng-repeat="subcat in (subcategoriesMap[selectedCategory] || subcategoriesMap['Medicine'])" value="{{ subcat }}">{{ subcat }}</option>
+                </select>
+            </div>
+
+            <!-- Restriction Filter -->
+            <div style="width: 160px;">
+                <label style="display: block; font-size: 11px; font-weight: 700; color: #4a5568; margin-bottom: 4px;">Prescribing Access:</label>
+                <select ng-model="selectedRestriction" ng-change="applyFilters()"
+                        style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    <option value="">All Access Levels</option>
+                    <option value="restricted">Physician Only (Restricted)</option>
+                    <option value="unrestricted">Open / Unrestricted</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div style="width: 130px;">
+                <label style="display: block; font-size: 11px; font-weight: 700; color: #4a5568; margin-bottom: 4px;">Status:</label>
+                <select ng-model="selectedStatus" ng-change="applyFilters()"
+                        style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    <option value="active">Active Formulary</option>
+                    <option value="retired">Retired / Inactive</option>
+                    <option value="">All Items</option>
+                </select>
+            </div>
+
+            <!-- Reset Button -->
+            <div>
+                <button type="button" class="btn" ng-click="clearFilters()"
+                        style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-times"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 12px; color: #718096; border-top: 1px dashed #e2e8f0; padding-top: 8px;">
+            <div>
+                Showing <strong>{{ filteredDrugs.length }}</strong> matching item(s) out of <strong>{{ drugs.length }}</strong>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <span>Page Size:</span>
+                <select ng-model="pageSize" ng-change="currentPage = 1" style="padding: 2px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px;">
+                    <option ng-repeat="sz in pageSizes" value="{{ sz }}">{{ sz }}</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drug / Item Table -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+        <table class="table" style="width: 100%; border-collapse: collapse; margin-bottom: 0; font-size: 12px;">
+            <thead>
+                <tr style="background: #edf2f7; color: #2d3748; text-align: left; font-weight: 700; border-bottom: 2px solid #cbd5e0;">
+                    <th style="padding: 10px 12px; width: 45px; text-align: center;">#</th>
+                    <th style="padding: 10px 12px; min-width: 200px;">Item Name & Strength</th>
+                    <th style="padding: 10px 12px; width: 150px;">Drug UUID</th>
+                    <th style="padding: 10px 12px; width: 120px;">Dosage Form</th>
+                    <th style="padding: 10px 12px; width: 110px;">Category</th>
+                    <th style="padding: 10px 12px; width: 160px;">Subcategory</th>
+                    <th style="padding: 10px 12px; width: 150px; text-align: center;">Prescription Access</th>
+                    <th style="padding: 10px 12px; width: 85px; text-align: center;">Status</th>
+                    <th style="padding: 10px 12px; width: 120px; text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-if="loading">
+                    <td colspan="9" style="text-align: center; padding: 40px; color: #718096; font-size: 14px;">
+                        <i class="fa fa-spinner fa-spin" style="font-size: 24px; margin-right: 8px; color: #2b6cb0;"></i> Loading drug & supply catalog...
+                    </td>
+                </tr>
+                <tr ng-if="!loading && filteredDrugs.length === 0">
+                    <td colspan="9" style="text-align: center; padding: 40px; color: #a0aec0; font-size: 14px;">
+                        <i class="fa fa-info-circle" style="font-size: 20px; margin-bottom: 6px; display: block;"></i>
+                        No matching items found with the selected filters.
+                    </td>
+                </tr>
+                <tr ng-repeat="drug in getPaginatedDrugs()"
+                    style="border-bottom: 1px solid #e2e8f0; transition: background 0.15s;"
+                    ng-style="{'background': drug.retired ? '#faf5ff' : ($index % 2 === 0 ? '#ffffff' : '#f7fafc')}">
+                    
+                    <td style="padding: 9px 12px; text-align: center; color: #718096; font-weight: 600;">
+                        {{ ($parent.currentPage - 1) * $parent.pageSize + $index + 1 }}
+                    </td>
+
+                    <!-- Name & Strength -->
+                    <td style="padding: 9px 12px;">
+                        <div style="font-weight: 700; color: #2d3748; font-size: 13px;">
+                            {{ drug.name }}
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 2px; align-items: center; flex-wrap: wrap;">
+                            <span ng-if="drug.strength" style="color: #4a5568; font-size: 11px; background: #edf2f7; padding: 1px 6px; border-radius: 3px;">
+                                Strength: <strong>{{ drug.strength }}</strong>
+                            </span>
+                            <span ng-if="drug.concept" style="color: #718096; font-size: 11px;" title="Generic Concept">
+                                <em>Generic: {{ drug.concept }}</em>
+                            </span>
+                        </div>
+                    </td>
+
+                    <!-- Drug UUID -->
+                    <td style="padding: 9px 12px; font-family: monospace; font-size: 11px; color: #4a5568; vertical-align: middle;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="background: #edf2f7; border: 1px solid #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 11px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #4a5568;"
+                                  title="{{ drug.uuid }}">
+                                {{ drug.uuid }}
+                            </span>
+                            <button type="button" class="btn btn-xs" ng-click="copyToClipboard(drug.uuid)" title="Copy full UUID to clipboard"
+                                    style="background: #fff; border: 1px solid #cbd5e0; color: #4a5568; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 11px; line-height: 1;">
+                                <i class="fa fa-clipboard"></i>
+                            </button>
+                        </div>
+                    </td>
+
+                    <!-- Dosage Form -->
+                    <td style="padding: 9px 12px; color: #4a5568;">
+                        <span style="font-weight: 600;">{{ drug.dosageForm || '—' }}</span>
+                    </td>
+
+                    <!-- Category (Select / Badge) -->
+                    <td style="padding: 9px 12px;">
+                        <span class="badge"
+                              ng-style="{
+                                'background': drug.category === 'Medicine' ? '#ebf8ff' : (drug.category === 'Supply' ? '#f0fff4' : (drug.category === 'Reagent' ? '#faf5ff' : '#f7fafc')),
+                                'color': drug.category === 'Medicine' ? '#2b6cb0' : (drug.category === 'Supply' ? '#276749' : (drug.category === 'Reagent' ? '#6b46c1' : '#4a5568')),
+                                'border': '1px solid ' + (drug.category === 'Medicine' ? '#bee3f8' : (drug.category === 'Supply' ? '#c6f6d5' : (drug.category === 'Reagent' ? '#e9d8fd' : '#e2e8f0'))),
+                                'padding': '3px 8px',
+                                'border-radius': '4px',
+                                'font-weight': '700',
+                                'font-size': '11px',
+                                'display': 'inline-block'
+                              }">
+                            <i class="fa" ng-class="{'fa-medkit': drug.category === 'Medicine', 'fa-wrench': drug.category === 'Supply', 'fa-flask': drug.category === 'Reagent', 'fa-tag': drug.category === 'Other'}"></i>
+                            {{ drug.category }}
+                        </span>
+                    </td>
+
+                    <!-- Subcategory -->
+                    <td style="padding: 9px 12px;">
+                        <span style="background: #edf2f7; color: #2d3748; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; display: inline-block;">
+                            {{ drug.subcategory || 'General' }}
+                        </span>
+                    </td>
+
+                    <!-- Prescribing Access / Restriction -->
+                    <td style="padding: 9px 12px; text-align: center;">
+                        <span ng-if="drug.isRestricted"
+                              style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 3px 9px; border-radius: 4px; font-weight: 800; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"
+                              title="{{ drug.restrictionNote || 'Restricted drug - authorized Physician prescription only' }}">
+                            <i class="fa fa-lock" style="color: #e53e3e;"></i>
+                            <span>{{ drug.restrictionTag || 'Physician Only' }}</span>
+                        </span>
+                        <span ng-if="!drug.isRestricted" style="color: #718096; font-size: 11px;">
+                            <i class="fa fa-unlock-alt" style="color: #38a169;"></i> Open
+                        </span>
+                    </td>
+
+                    <!-- Status -->
+                    <td style="padding: 9px 12px; text-align: center;">
+                        <span ng-if="!drug.retired" style="background: #f0fff4; color: #22543d; border: 1px solid #c6f6d5; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 10px;">
+                            ACTIVE
+                        </span>
+                        <span ng-if="drug.retired" style="background: #edf2f7; color: #a0aec0; border: 1px solid #cbd5e0; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 10px;"
+                              title="{{ drug.retireReason }}">
+                            RETIRED
+                        </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td style="padding: 9px 12px; text-align: center;">
+                        <div style="display: flex; gap: 6px; justify-content: center;">
+                            <button type="button" class="btn btn-sm" ng-click="openEditModal(drug)" title="Edit Drug Details & Classification"
+                                    style="background: #edf2f7; border: 1px solid #cbd5e0; color: #2b6cb0; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                <i class="fa fa-pencil"></i> Edit
+                            </button>
+                            <button ng-if="!drug.retired" type="button" class="btn btn-sm" ng-click="retireDrug(drug)" title="Retire / Deactivate Item"
+                                    style="background: #fff5f5; border: 1px solid #feb2b2; color: #e53e3e; padding: 4px 7px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                            <button ng-if="drug.retired" type="button" class="btn btn-sm" ng-click="unretireDrug(drug)" title="Restore / Activate Item"
+                                    style="background: #f0fff4; border: 1px solid #c6f6d5; color: #276749; padding: 4px 7px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                <i class="fa fa-undo"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Table Footer / Pagination -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f7fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #718096; flex-wrap: wrap; gap: 8px;">
+            <div>
+                Page <strong>{{ currentPage }}</strong> of <strong>{{ totalPages() }}</strong>
+            </div>
+
+            <div style="display: flex; gap: 4px; align-items: center;">
+                <button type="button" class="btn" ng-click="goToPage(1)" ng-disabled="currentPage === 1"
+                        style="padding: 4px 8px; border: 1px solid #cbd5e0; background: #fff; border-radius: 4px; cursor: pointer;" title="First Page">
+                    <i class="fa fa-angle-double-left"></i>
+                </button>
+                <button type="button" class="btn" ng-click="goToPage(currentPage - 1)" ng-disabled="currentPage === 1"
+                        style="padding: 4px 8px; border: 1px solid #cbd5e0; background: #fff; border-radius: 4px; cursor: pointer;" title="Previous Page">
+                    <i class="fa fa-angle-left"></i> Prev
+                </button>
+                <span style="padding: 4px 10px; font-weight: 700; color: #2d3748;">
+                    {{ currentPage }} / {{ totalPages() }}
+                </span>
+                <button type="button" class="btn" ng-click="goToPage(currentPage + 1)" ng-disabled="currentPage === totalPages()"
+                        style="padding: 4px 8px; border: 1px solid #cbd5e0; background: #fff; border-radius: 4px; cursor: pointer;" title="Next Page">
+                    Next <i class="fa fa-angle-right"></i>
+                </button>
+                <button type="button" class="btn" ng-click="goToPage(totalPages())" ng-disabled="currentPage === totalPages()"
+                        style="padding: 4px 8px; border: 1px solid #cbd5e0; background: #fff; border-radius: 4px; cursor: pointer;" title="Last Page">
+                    <i class="fa fa-angle-double-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit / Create Modal Dialog -->
+    <div ng-if="modal.isOpen"
+         style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.55); z-index: 1050; display: flex; align-items: center; justify-content: center; padding: 15px;">
+        
+        <div style="background: #ffffff; border-radius: 10px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid #cbd5e0;">
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #f7fafc; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #1a202c; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa" ng-class="modal.isNew ? 'fa-plus-circle' : 'fa-pencil'" style="color: #2b6cb0;"></i>
+                    {{ modal.isNew ? 'Add New Drug, Supply or Reagent' : 'Edit Drug & Prescribing Restrictions' }}
+                </h3>
+                <button type="button" ng-click="closeModal()" style="border: none; background: transparent; font-size: 18px; color: #a0aec0; cursor: pointer;">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding: 20px;">
+                <!-- Drug UUID Banner in Edit Modal -->
+                <div ng-if="!modal.isNew && modal.data.uuid" style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 11px; color: #718096;">
+                        <strong style="color: #4a5568;">Drug UUID:</strong> <code style="color: #2b6cb0; font-weight: bold; font-family: monospace;">{{ modal.data.uuid }}</code>
+                    </div>
+                    <button type="button" class="btn btn-xs" ng-click="copyToClipboard(modal.data.uuid)" style="background: #fff; border: 1px solid #cbd5e0; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; color: #4a5568;">
+                        <i class="fa fa-clipboard"></i> Copy UUID
+                    </button>
+                </div>
+
+                <!-- Basic Properties Group -->
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 700; font-size: 12px; color: #2d3748; margin-bottom: 4px;">
+                        Drug / Supply / Reagent Name <span style="color: #e53e3e;">*</span>:
+                    </label>
+                    <input type="text" ng-model="modal.data.name" placeholder="e.g. Morphine Sulphate, Amoxicillin, Surgical Scalpel Blade No.15"
+                           style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;" required />
+                </div>
+
+                <div style="display: flex; gap: 14px; margin-bottom: 16px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-weight: 700; font-size: 12px; color: #2d3748; margin-bottom: 4px;">Strength:</label>
+                        <input type="text" ng-model="modal.data.strength" placeholder="e.g. 10mg/ml, 250mg, 500mg, 50ml"
+                               style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;" />
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-weight: 700; font-size: 12px; color: #2d3748; margin-bottom: 4px;">Dosage Form:</label>
+                        <select ng-model="modal.data.dosageFormUuid"
+                                style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                            <option value="">-- Select Dosage Form --</option>
+                            <option ng-repeat="df in dosageForms" value="{{ df.uuid }}">{{ df.name }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Generic Concept Lookup (only needed for new, or displays existing) -->
+                <div style="margin-bottom: 16px; background: #f7fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <label style="display: block; font-weight: 700; font-size: 12px; color: #2d3748; margin-bottom: 4px;">
+                        OpenMRS Generic / Formulation Concept:
+                    </label>
+                    <div ng-if="!modal.isNew">
+                        <span style="font-weight: 600; color: #2b6cb0;">{{ modal.data.concept || 'Not linked to concept' }}</span>
+                        <span style="color: #a0aec0; font-size: 11px; margin-left: 8px;">(UUID: {{ modal.data.conceptUuid }})</span>
+                    </div>
+                    <div ng-if="modal.isNew">
+                        <input type="text" ng-model="conceptSearchTerm" ng-change="searchConcepts(conceptSearchTerm)"
+                               placeholder="Type 2+ letters to search concept in OpenMRS..."
+                               style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;" />
+                        <div ng-if="conceptSearchResults.length > 0"
+                             style="margin-top: 6px; max-height: 120px; overflow-y: auto; background: #fff; border: 1px solid #cbd5e0; border-radius: 6px;">
+                            <div ng-repeat="c in conceptSearchResults" ng-click="selectConcept(c)"
+                                 style="padding: 6px 10px; cursor: pointer; border-bottom: 1px solid #edf2f7; font-size: 12px;"
+                                 onmouseover="this.style.background='#ebf8ff'" onmouseout="this.style.background='#fff'">
+                                <strong>{{ c.display || c.name.name }}</strong>
+                            </div>
+                        </div>
+                        <div ng-if="modal.data.conceptUuid" style="margin-top: 6px; color: #276749; font-weight: 700; font-size: 12px;">
+                            <i class="fa fa-check"></i> Selected: {{ modal.data.concept }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category & Subcategory -->
+                <div style="display: flex; gap: 14px; margin-bottom: 16px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-weight: 700; font-size: 12px; color: #2d3748; margin-bottom: 4px;">Category <span style="color: #e53e3e;">*</span>:</label>
+                        <select ng-model="modal.data.category" ng-change="onModalCategoryChange()"
+                                style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; font-weight: 600;">
+                            <option ng-repeat="cat in categories" value="{{ cat }}">{{ cat }}</option>
+                        </select>
+                    </div>
+
+                    <div style="flex: 1;">
+                        <label style="display: block; font-weight: 700; font-size: 12px; color: #2d3748; margin-bottom: 4px;">Subcategory <span style="color: #e53e3e;">*</span>:</label>
+                        <select ng-model="modal.data.subcategory"
+                                style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                            <option ng-repeat="subcat in (subcategoriesMap[modal.data.category] || subcategoriesMap['Medicine'])" value="{{ subcat }}">{{ subcat }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Prescribing Restriction & Privilege Box -->
+                <div style="border: 2px solid #feb2b2; background: #fffaf0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: #9b2c2c; cursor: pointer;">
+                            <input type="checkbox" ng-model="modal.data.isRestricted" style="width: 18px; height: 18px;" />
+                            <i class="fa fa-lock" style="color: #e53e3e;"></i> Restrict Prescribing to Authorized Physicians Only
+                        </label>
+                        <span class="badge" style="background: #e53e3e; color: #fff; font-size: 11px;" ng-if="modal.data.isRestricted">
+                            PROTECTED DRUG
+                        </span>
+                    </div>
+                    <div style="font-size: 11px; color: #744210; margin-top: 4px; line-height: 1.4;">
+                        When checked, non-physician providers (e.g. nurses, health officers) who attempt to prescribe this drug will be blocked with an unauthorized alert dialog.
+                    </div>
+
+                    <!-- Additional Restriction Fields if enabled -->
+                    <div ng-if="modal.data.isRestricted" style="margin-top: 12px; border-top: 1px solid #feebc8; padding-top: 12px;">
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; font-weight: 700; font-size: 11px; color: #744210; margin-bottom: 4px;">Restriction Tag Label:</label>
+                            <select ng-model="modal.data.restrictionTag"
+                                    style="width: 100%; padding: 7px 10px; border: 1px solid #fbd38d; border-radius: 6px; font-size: 12px;">
+                                <option ng-repeat="rt in restrictionTags" value="{{ rt }}">{{ rt }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 700; font-size: 11px; color: #744210; margin-bottom: 4px;">Warning Alert Note to Display:</label>
+                            <input type="text" ng-model="modal.data.restrictionNote"
+                                   placeholder="e.g. Controlled substance narcotic - only authorized physicians can prescribe."
+                                   style="width: 100%; padding: 7px 10px; border: 1px solid #fbd38d; border-radius: 6px; font-size: 12px; box-sizing: border-box;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid #e2e8f0; background: #f7fafc; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+                <button type="button" class="btn" ng-click="closeModal()" ng-disabled="modal.submitting"
+                        style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-primary" ng-click="saveDrugForm()" ng-disabled="modal.submitting"
+                        style="background: #2b6cb0; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-spinner fa-spin" ng-if="modal.submitting"></i>
+                    <i class="fa fa-save" ng-if="!modal.submitting"></i>
+                    {{ modal.submitting ? 'Saving...' : 'Save Changes' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV Batch Import Modal Dialog -->
+    <div ng-if="importModal.isOpen" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.65); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #ffffff; border-radius: 10px; width: 820px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+            
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #f0fdf4;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa fa-upload"></i> Import Drug, Medicine & Supply Formulary via CSV
+                </h3>
+                <button type="button" ng-click="closeImportModal()" style="border: none; background: transparent; font-size: 18px; color: #64748b; cursor: pointer; padding: 4px;">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding: 20px; flex: 1;">
+                
+                <!-- Guidelines & Sample Download -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e0; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 12px; color: #334155; line-height: 1.5;">
+                        <strong>Supported Columns:</strong> <code>Drug / Item Name</code>, <code>Strength</code>, <code>Dosage Form</code>, <code>Category</code>, <code>Subcategory</code>, <code>Prescription Access</code>, <code>Restriction Tag</code>, <code>Drug UUID</code>.
+                        <div style="color: #64748b; font-size: 11px; margin-top: 2px;">
+                            Categories: <strong>Medicine</strong>, <strong>Supply</strong>, <strong>Reagent</strong>. Access: <em>Physician Only</em> or <em>Open / Unrestricted</em>.
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm" ng-click="downloadSampleTemplate()"
+                            style="background: #ffffff; border: 1px solid #059669; color: #059669; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 6px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-download"></i> Download Template (.csv)
+                    </button>
+                </div>
+
+                <!-- File Selector -->
+                <div style="border: 2px dashed #cbd5e0; border-radius: 8px; padding: 20px; text-align: center; background: #fafafa; margin-bottom: 16px;">
+                    <i class="fa fa-file-text-o" style="font-size: 32px; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
+                    <label style="font-size: 13px; font-weight: 700; color: #0f172a; display: block; margin-bottom: 4px;">
+                        Select CSV File to Upload
+                    </label>
+                    <input type="file" accept=".csv" onchange="angular.element(this).scope().handleCsvFile(this)"
+                           style="margin-top: 8px; font-size: 12px; display: inline-block;" />
+                    <div ng-if="importModal.fileName" style="font-size: 12px; color: #059669; font-weight: 600; margin-top: 8px;">
+                        Selected: {{ importModal.fileName }} ({{ importModal.stats.total }} rows detected)
+                    </div>
+                </div>
+
+                <!-- Preview Table -->
+                <div ng-if="importModal.rows.length > 0">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12px; font-weight: 700; color: #334155;">
+                            Formulary Preview & Classification:
+                        </span>
+                        <div style="font-size: 11px;">
+                            <span style="color: #166534; font-weight: 700; background: #dcfce7; padding: 2px 6px; border-radius: 3px; margin-right: 6px;">
+                                {{ importModal.stats.valid }} Valid
+                            </span>
+                            <span style="color: #991b1b; font-weight: 700; background: #fee2e2; padding: 2px 6px; border-radius: 3px;" ng-if="importModal.stats.invalid > 0">
+                                {{ importModal.stats.invalid }} Invalid
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="max-height: 240px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                            <thead>
+                                <tr style="background: #f1f5f9; position: sticky; top: 0; z-index: 2;">
+                                    <th style="padding: 6px 8px; text-align: center; width: 30px;">#</th>
+                                    <th style="padding: 6px 10px; text-align: left;">Item Name</th>
+                                    <th style="padding: 6px 8px; text-align: center; width: 70px;">Strength</th>
+                                    <th style="padding: 6px 8px; text-align: center; width: 75px;">Category</th>
+                                    <th style="padding: 6px 8px; text-align: left; width: 110px;">Subcategory</th>
+                                    <th style="padding: 6px 8px; text-align: center; width: 100px;">Access</th>
+                                    <th style="padding: 6px 8px; text-align: center; width: 50px;">Valid</th>
+                                    <th style="padding: 6px 6px; text-align: center; width: 30px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="row in importModal.rows" style="border-bottom: 1px solid #f1f5f9; background: {{ row.valid ? '#ffffff' : '#fff1f2' }}">
+                                    <td style="padding: 5px 8px; text-align: center; color: #94a3b8;">{{ $index + 1 }}</td>
+                                    <td style="padding: 5px 10px; font-weight: 700; color: {{ row.valid ? '#0f172a' : '#dc2626' }};">
+                                        {{ row.name || '[Missing Name]' }}
+                                    </td>
+                                    <td style="padding: 5px 8px; text-align: center; color: #475569;">{{ row.strength || '—' }}</td>
+                                    <td style="padding: 5px 8px; text-align: center;">
+                                        <span style="background: #ebf8ff; color: #2b6cb0; padding: 2px 6px; border-radius: 3px; font-weight: 600;">
+                                            {{ row.category }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 5px 8px; color: #475569;">{{ row.subcategory || '—' }}</td>
+                                    <td style="padding: 5px 8px; text-align: center;">
+                                        <span ng-if="row.isRestricted" style="background: #fffaf0; color: #c05621; padding: 2px 5px; border-radius: 3px; font-weight: 700; font-size: 10px;">
+                                            Physician Only
+                                        </span>
+                                        <span ng-if="!row.isRestricted" style="background: #f0fff4; color: #276749; padding: 2px 5px; border-radius: 3px; font-weight: 600; font-size: 10px;">
+                                            Open
+                                        </span>
+                                    </td>
+                                    <td style="padding: 5px 8px; text-align: center;">
+                                        <i class="fa fa-check-circle" style="color: #16a34a;" ng-if="row.valid"></i>
+                                        <i class="fa fa-times-circle" style="color: #dc2626;" ng-if="!row.valid"></i>
+                                    </td>
+                                    <td style="padding: 5px 6px; text-align: center;">
+                                        <button type="button" ng-click="removeImportRow($index)" title="Remove row"
+                                                style="border: none; background: transparent; color: #ef4444; cursor: pointer; padding: 2px;">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Result Message if completed -->
+                <div ng-if="importModal.result" style="margin-top: 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #065f46;">
+                    <strong><i class="fa fa-check-circle"></i> Import Complete:</strong>
+                    Created {{ importModal.result.created }} new drugs, updated {{ importModal.result.updated }} existing drugs in formulary.
+                    <div ng-if="importModal.result.errors.length > 0" style="margin-top: 6px; color: #991b1b; font-size: 11px;">
+                        <strong>Errors ({{ importModal.result.errors.length }}):</strong>
+                        <ul style="margin: 4px 0 0 16px; padding: 0;">
+                            <li ng-repeat="err in importModal.result.errors | limitTo: 5">{{ err }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding: 14px 20px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn" ng-click="closeImportModal()"
+                        style="background: #ffffff; border: 1px solid #cbd5e0; color: #4a5568; padding: 7px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                    {{ importModal.result ? 'Close' : 'Cancel' }}
+                </button>
+                <button type="button" class="btn" ng-click="executeImport()" ng-disabled="importModal.importing || importModal.stats.valid === 0"
+                        style="background: #059669; border: none; color: #ffffff; padding: 7px 20px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-upload" ng-if="!importModal.importing"></i>
+                    <i class="fa fa-spinner fa-spin" ng-if="importModal.importing"></i>
+                    {{ importModal.importing ? 'Importing Formulary...' : 'Run Batch Import' }}
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+</div>

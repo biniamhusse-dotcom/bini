@@ -560,6 +560,18 @@
             },
             "WHO Trauma, Left Without Treatment": {
                 "buttonSelect": true
+            },
+            "Chief Complaint": {
+                "autocomplete": true
+            },
+            "ANC Visit Number": {
+                "multiSelect": true
+            },
+            "Estimated date of confinement": {
+                "allowFutureDates": true
+            },
+            "Return visit date": {
+                "allowFutureDates": true
             }
         },
         "visitPage": {

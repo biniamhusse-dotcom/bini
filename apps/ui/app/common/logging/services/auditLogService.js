@@ -1,6 +1,6 @@
 'use strict';
 angular.module('bahmni.common.logging')
-    .service('auditLogService', ['$http', '$translate', 'configurationService', function ($http, $translate, configurationService) {
+    .service('auditLogService', ['$http', '$translate', 'configurationService', '$q', function ($http, $translate, configurationService, $q) {
         var DateUtil = Bahmni.Common.Util.DateUtil;
 
         var convertToLocalDate = function (date) {
@@ -23,8 +23,14 @@ angular.module('bahmni.common.logging')
         };
 
         this.log = function (patientUuid, eventType, messageParams, module) {
+            if (!eventType || !Bahmni.Common.AuditLogEventDetails || !Bahmni.Common.AuditLogEventDetails[eventType]) {
+                return $q ? $q.when() : undefined;
+            }
             return configurationService.getConfigurations(['enableAuditLog']).then(function (result) {
                 if (result.enableAuditLog) {
+                    if (!eventType || !Bahmni.Common.AuditLogEventDetails || !Bahmni.Common.AuditLogEventDetails[eventType]) {
+                        return;
+                    }
                     var params = {};
                     params.patientUuid = patientUuid;
                     params.eventType = Bahmni.Common.AuditLogEventDetails[eventType].eventType;
@@ -33,6 +39,8 @@ angular.module('bahmni.common.logging')
                     params.module = module;
                     return $http.post(Bahmni.Common.Constants.auditLogUrl, params, {withCredentials: true});
                 }
+            }).catch(function (err) {
+                console.warn("Audit log error ignored:", err);
             });
         };
     }]);

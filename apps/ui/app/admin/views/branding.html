@@ -87,6 +87,39 @@
                            style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 14px; background: #fff;">
                 </div>
 
+                <!-- Administrative Location Hierarchy (Ethiopian MOH Hierarchy: Region, Zone, Woreda) -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; margin-bottom: 16px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #00796d; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-map-marker"></i> Administrative Hierarchy (MOH Registers &amp; Reporting)
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+                                Region
+                            </label>
+                            <input type="text" ng-model="branding.region" placeholder="e.g. Amhara"
+                                   style="width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; background: #fff;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+                                Zone
+                            </label>
+                            <input type="text" ng-model="branding.zone" placeholder="e.g. South Wollo"
+                                   style="width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; background: #fff;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+                                Woreda
+                            </label>
+                            <input type="text" ng-model="branding.woreda" placeholder="e.g. Dessie"
+                                   style="width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; background: #fff;">
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 6px;">
+                        Used automatically across official register books (e.g. Health Facility Dispensing Registration Book), MOH reports, and prescription headers.
+                    </div>
+                </div>
+
                 <!-- Contact & Location Grid -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
                     <div>

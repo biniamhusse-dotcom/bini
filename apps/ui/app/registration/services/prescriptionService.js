@@ -35,6 +35,7 @@ angular.module('bahmni.registration')
             }).catch(function (error) {
                 console.error("Error posting OBS:", error);
                 messagingService.showMessage('error', "Failed to update prescription!");
+                return $q.reject(error);
             });
         };
 
@@ -81,14 +82,15 @@ angular.module('bahmni.registration')
 
                         Promise.all(deletePromises)
                             .then(() => {
-                                postPrescriptionObs(obsData, "Paid prescription discarded and observations replaced.");
-                                resolve();
+                                return postPrescriptionObs(obsData);
                             })
+                            .then(() => resolve())
                             .catch(err => reject(err));
 
                     } else {
-                        postPrescriptionObs(obsData, "Paid prescription discarded (no previous observations).");
-                        resolve();
+                        postPrescriptionObs(obsData)
+                            .then(() => resolve())
+                            .catch(err => reject(err));
                     }
                 }, function error(err) {
                     console.error("Error fetching obs:", err);
@@ -429,7 +431,8 @@ angular.module('bahmni.registration')
                         route: row.route_name || "",
                         instructions: row.instructions || "",
                         prescription_date: row.prescription_date || "",
-                        provider_name: row.provider_name || ""
+                        provider_name: row.provider_name || "",
+                        status: row.rx_status || "ISSUED"
                     });
                 });
 
@@ -486,10 +489,19 @@ angular.module('bahmni.registration')
             });
         };
 
+        var getDispensingRegister = function () {
+            return $http.get("/openmrs/ws/rest/v1/bahmnicore/sql", {
+                method: "GET",
+                params: { q: "emr.prescription.dispensingRegister" },
+                withCredentials: true
+            });
+        };
+
         return {
             getDrugPrescriptions: getDrugPrescriptions,
             handlePrescriptionAction: handlePrescriptionAction,
             getAllPrescribedPatients: getAllPrescribedPatients,
+            getDispensingRegister: getDispensingRegister,
             returnPrescriptionWithDtp: returnPrescriptionWithDtp,
             postPrescriptionObs: postPrescriptionObs
         };

@@ -1,10 +1,10 @@
 'use strict';
 
 angular.module('bahmni.clinical')
-    .controller('DrugOrderHistoryController', ['$q', '$scope', '$filter', '$stateParams', 'activeDrugOrders', 'appService',
-        'treatmentConfig', 'treatmentService', 'spinner', 'drugOrderHistoryHelper', 'visitHistory', '$translate', '$rootScope', 'providerService', 'observationsService', 'diagnosisService', 'allergyService', 'pharmacyIntegrationService',
-        function ($q, $scope, $filter, $stateParams, activeDrugOrders, appService, treatmentConfig, treatmentService, spinner,
-            drugOrderHistoryHelper, visitHistory, $translate, $rootScope, providerService, observationsService, diagnosisService, allergyService, pharmacyIntegrationService) {
+    .controller('DrugOrderHistoryController', ['$q', '$scope', '$filter', '$stateParams', '$state', 'activeDrugOrders', 'appService',
+        'treatmentConfig', 'treatmentService', 'spinner', 'drugOrderHistoryHelper', 'visitHistory', '$translate', '$rootScope', 'providerService', 'observationsService', 'diagnosisService', 'allergyService', 'pharmacyIntegrationService', 'ngDialog', 'dtpHistoryService',
+        function ($q, $scope, $filter, $stateParams, $state, activeDrugOrders, appService, treatmentConfig, treatmentService, spinner,
+            drugOrderHistoryHelper, visitHistory, $translate, $rootScope, providerService, observationsService, diagnosisService, allergyService, pharmacyIntegrationService, ngDialog, dtpHistoryService) {
             var DrugOrderViewModel = Bahmni.Clinical.DrugOrderViewModel;
             var DateUtil = Bahmni.Common.Util.DateUtil;
             var currentVisit = visitHistory.activeVisit;
@@ -258,6 +258,10 @@ angular.module('bahmni.clinical')
             };
 
             $scope.sendToPharmacy = function (drugOrder) {
+                if (drugOrder && drugOrder.dtpCases && !drugOrder.dtpOverride) {
+                    $scope.openDtpResponseModal(drugOrder, [drugOrder]);
+                    return;
+                }
                 var providerName = $rootScope.currentProvider ? $rootScope.currentProvider.display : '';
                 pharmacyIntegrationService.sendPrescriptionToPharmacy(drugOrder, $scope.patient, providerName);
             };
@@ -266,8 +270,204 @@ angular.module('bahmni.clinical')
                 if (!drugOrders || drugOrders.length === 0) {
                     return;
                 }
+                var activeOrders = drugOrders.filter(function (d) {
+                    return !d.isDiscontinuedOrStopped || !d.isDiscontinuedOrStopped();
+                });
+                if (activeOrders.length === 0) {
+                    return;
+                }
+                var unresolvedDtpOrder = _.find(activeOrders, function (d) {
+                    return d.dtpCases && !d.dtpOverride;
+                });
+                if (unresolvedDtpOrder) {
+                    $scope.openDtpResponseModal(unresolvedDtpOrder, activeOrders);
+                    return;
+                }
                 var providerName = $rootScope.currentProvider ? $rootScope.currentProvider.display : '';
-                pharmacyIntegrationService.sendBulkPrescriptionsToPharmacy(drugOrders, $scope.patient, providerName);
+                pharmacyIntegrationService.sendBulkPrescriptionsToPharmacy(activeOrders, $scope.patient, providerName);
+            };
+
+            $scope.openDtpResponseModal = function (drugOrder, drugOrders) {
+                $scope.dtpModal = {
+                    drugOrder: drugOrder,
+                    drugOrders: drugOrders || [drugOrder],
+                    physicianReason: drugOrder.dtpPhysicianResponse || '',
+                    resendFullPrescription: (drugOrders && drugOrders.length > 1),
+                    error: '',
+                    submitting: false
+                };
+                ngDialog.open({
+                    template: 'consultation/views/treatmentSections/dtpResponseModal.html',
+                    scope: $scope,
+                    className: 'ngdialog-theme-default'
+                });
+            };
+
+            $scope.closeDtpModal = function () {
+                ngDialog.close();
+            };
+
+            $scope.dtpEditFullDrug = function () {
+                var modalData = $scope.dtpModal;
+                ngDialog.close();
+                if (modalData && modalData.drugOrder) {
+                    $scope.revise(modalData.drugOrder, modalData.drugOrders);
+                }
+            };
+
+            $scope.submitDtpOverrideAndResend = function () {
+                var modalData = $scope.dtpModal;
+                if (!modalData.physicianReason || !modalData.physicianReason.trim()) {
+                    modalData.error = 'Please enter a physician reason and explanation before resending.';
+                    return;
+                }
+                modalData.error = '';
+                modalData.submitting = true;
+
+                var drugOrder = modalData.drugOrder;
+                var reason = modalData.physicianReason.trim();
+                drugOrder.dtpOverride = true;
+                drugOrder.dtpPhysicianResponse = reason;
+
+                var providerName = $rootScope.currentProvider ? $rootScope.currentProvider.display : '';
+                var drugDesc = (drugOrder.getDisplayName ? drugOrder.getDisplayName() : '') +
+                    (drugOrder.getDescriptionWithQuantity ? ' ' + drugOrder.getDescriptionWithQuantity() : '');
+
+                var historyEntry = {
+                    orderUuid: drugOrder.uuid || null,
+                    orderNumber: drugOrder.orderNumber || null,
+                    originalDrug: drugDesc.trim(),
+                    newDrug: drugDesc.trim(),
+                    dtpMessage: drugOrder.dtpCases || '',
+                    action: 'RESENT_WITH_REASON',
+                    physicianReason: reason,
+                    providerName: providerName
+                };
+
+                dtpHistoryService.saveDtpHistory($scope.patient.uuid, historyEntry).then(function () {
+                    var ordersToSend = modalData.resendFullPrescription
+                        ? modalData.drugOrders.filter(function (d) { return !d.isDiscontinuedOrStopped || !d.isDiscontinuedOrStopped(); })
+                        : [drugOrder];
+
+                    if (ordersToSend.length > 1) {
+                        return pharmacyIntegrationService.sendBulkPrescriptionsToPharmacy(ordersToSend, $scope.patient, providerName);
+                    }
+                    return pharmacyIntegrationService.sendPrescriptionToPharmacy(drugOrder, $scope.patient, providerName);
+                }).then(function () {
+                    modalData.submitting = false;
+                    ngDialog.close();
+                }).catch(function (err) {
+                    modalData.submitting = false;
+                    modalData.error = 'Failed to save DTP response: ' + ((err && err.data && err.data.error && err.data.error.message) || 'Unknown error');
+                });
+            };
+
+            $scope.generalRxIssues = [];
+            var loadGeneralRxIssues = function () {
+                if (!$stateParams.patientUuid) return;
+                dtpHistoryService.getGeneralRxIssues($stateParams.patientUuid).then(function (issues) {
+                    $scope.generalRxIssues = issues || [];
+                });
+            };
+            loadGeneralRxIssues();
+
+            $scope.resolveGeneralRxIssue = function (issue) {
+                $scope.generalFixModal = {
+                    issue: issue,
+                    physicianReply: '',
+                    resendFullPrescription: true,
+                    error: '',
+                    submitting: false
+                };
+                ngDialog.open({
+                    template: 'consultation/views/treatmentSections/generalRxFixModal.html',
+                    scope: $scope,
+                    className: 'ngdialog-theme-default'
+                });
+            };
+
+            $scope.closeGeneralFixModal = function () {
+                ngDialog.close();
+            };
+
+            $scope.goToConsultationTab = function (tabName) {
+                ngDialog.close();
+                if ($state && $state.go) {
+                    if (tabName === 'observations') {
+                        $state.go('patient.dashboard.show.observations', { conceptSetGroupName: 'observations' });
+                    } else {
+                        $state.go('patient.dashboard.show.' + tabName);
+                    }
+                }
+            };
+
+            var getActiveNonDuplicateOrders = function () {
+                var groups = ($scope.consultation && $scope.consultation.drugOrderGroups) || [];
+                var candidateOrders = groups.length > 0 && groups[0].drugOrders ? groups[0].drugOrders : ($scope.consultation.activeAndScheduledDrugOrders || []);
+                var revisedPreviousUuids = {};
+                candidateOrders.forEach(function (d) {
+                    if (d.previousOrderUuid) {
+                        revisedPreviousUuids[d.previousOrderUuid] = true;
+                    }
+                });
+                var seenUuids = {};
+                return candidateOrders.filter(function (d) {
+                    if (!d || !d.uuid || seenUuids[d.uuid] || revisedPreviousUuids[d.uuid]) {
+                        return false;
+                    }
+                    if (d.isDiscontinuedOrStopped && d.isDiscontinuedOrStopped()) {
+                        return false;
+                    }
+                    seenUuids[d.uuid] = true;
+                    return true;
+                });
+            };
+
+            $scope.submitGeneralRxFix = function () {
+                var modal = $scope.generalFixModal;
+                if (!modal.physicianReply || !modal.physicianReply.trim()) {
+                    modal.error = 'Please enter a physician fix note / explanation.';
+                    return;
+                }
+                modal.error = '';
+                modal.submitting = true;
+
+                var reply = modal.physicianReply.trim();
+                var issue = modal.issue;
+                var providerName = $rootScope.currentProvider ? $rootScope.currentProvider.display : '';
+
+                dtpHistoryService.saveDtpHistory($stateParams.patientUuid, {
+                    issueObsUuid: issue.obsUuid,
+                    originalDrug: 'General Prescription Evaluation',
+                    newDrug: '',
+                    dtpMessage: issue.summary,
+                    action: 'GENERAL_RX_RESOLVED',
+                    physicianReason: reply,
+                    providerName: providerName
+                }).then(function () {
+                    issue.resolved = true;
+                    issue.physicianReply = reply;
+
+                    if (modal.resendFullPrescription) {
+                        var activeOrders = getActiveNonDuplicateOrders();
+                        if (activeOrders.length > 0) {
+                            activeOrders.forEach(function (d) {
+                                d.dtpOverride = true;
+                                d.dtpPhysicianResponse = reply;
+                            });
+                            if (activeOrders.length > 1) {
+                                return pharmacyIntegrationService.sendBulkPrescriptionsToPharmacy(activeOrders, $scope.patient, providerName);
+                            }
+                            return pharmacyIntegrationService.sendPrescriptionToPharmacy(activeOrders[0], $scope.patient, providerName);
+                        }
+                    }
+                }).then(function () {
+                    modal.submitting = false;
+                    ngDialog.close();
+                }).catch(function (err) {
+                    modal.submitting = false;
+                    modal.error = 'Failed to save fix: ' + ((err && err.data && err.data.error && err.data.error.message) || 'Unknown error');
+                });
             };
 
             $scope.revise = function (drugOrder, drugOrders) {

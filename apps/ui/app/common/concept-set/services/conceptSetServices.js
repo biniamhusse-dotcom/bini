@@ -22,6 +22,16 @@ angular.module('bahmni.common.conceptSet')
             });
         };
 
+        var getConceptByUuid = function (uuid, params, cache) {
+            var locale = (params && params['locale']) || $bahmniTranslate.use() || 'en';
+            var queryParams = angular.copy(params || {});
+            queryParams['locale'] = locale;
+            return $http.get(Bahmni.Common.Constants.conceptUrl + '/' + uuid, {
+                params: queryParams,
+                cache: cache
+            });
+        };
+
         var getComputedValue = function (encounterData) {
             var url = Bahmni.Common.Constants.encounterModifierUrl;
             return $http.post(url, encounterData, {
@@ -43,6 +53,7 @@ angular.module('bahmni.common.conceptSet')
 
         return {
             getConcept: getConcept,
+            getConceptByUuid: getConceptByUuid,
             getComputedValue: getComputedValue,
             getObsTemplatesForProgram: getObsTemplatesForProgram
         };

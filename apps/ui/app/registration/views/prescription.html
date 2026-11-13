@@ -176,6 +176,8 @@
     .rx-btn-success:hover { background: #1e8449; }
     .rx-btn-warning { background: #f39c12; color: #fff; }
     .rx-btn-warning:hover { background: #d68910; }
+    .rx-btn-danger { background: #e74c3c; color: #fff; }
+    .rx-btn-danger:hover { background: #c0392b; }
     .rx-btn-sm { padding: 3px 8px; font-size: 9px; }
     .rx-table-wrapper {
         overflow: auto;
@@ -376,14 +378,34 @@
             </div>
             <div class="rx-card-body">
                 <div class="rx-toolbar" ng-if="!isHistoricalView">
-                    <div class="rx-toolbar-left">
-                        <label style="font-size:10px;font-weight:600;color:#2c3e50;">Filter:</label>
-                        <input type="date" class="rx-date-input" ng-model="selectedDate" ng-change="filterPrescriptions(selectedDate)" />
+                    <div class="rx-toolbar-left" style="display: flex; gap: 6px; align-items: center;">
+                        <label style="font-size:11px;font-weight:700;color:#2c3e50;">Filter (ቀን):</label>
+                        <ethiopian-date-selector date="selectedDate" change="filterPrescriptions(selectedDate)" allow-future-dates="true" placeholder="'ቀን (dd/mm/yyyy)'" style="width: 145px;"></ethiopian-date-selector>
+                        <button type="button" class="rx-btn rx-btn-primary" ng-click="refreshPrescriptions(false)" ng-disabled="loadingPrescriptions" title="Refresh prescriptions, vitals, and DTP messages">
+                            <i class="fa fa-refresh" ng-class="{'fa-spin': loadingPrescriptions}"></i>
+                            {{ loadingPrescriptions ? 'Loading...' : 'Refresh' }}
+                        </button>
+                        <button type="button" class="rx-btn rx-btn-primary" ng-click="refreshPrescriptions(true)" ng-disabled="loadingPrescriptions" title="Load all prescribed drugs across all dates">
+                            <i class="fa fa-list"></i> Load All Drugs
+                        </button>
                     </div>
-                    <div class="rx-toolbar-right">
+                    <div class="rx-toolbar-right" style="display: flex; gap: 8px; align-items: center;">
+                        <button type="button" class="rx-btn rx-btn-warning" ng-click="openGeneralRxIssueModal()">
+                            <i class="fa fa-envelope"></i> Message Physician (General Rx Issue)
+                        </button>
                         <button class="rx-btn rx-btn-success" ng-if="pharmacyConfig.enabled" ng-click="sendAllToPharmacy()">
                             <i class="fa fa-paper-plane"></i> Send All to Pharmacy
                         </button>
+                    </div>
+                </div>
+                <div ng-if="generalRxIssues && generalRxIssues.length > 0"
+                     style="background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #d97706; color: #92400e; padding: 8px 12px; margin: 0 0 10px 0; border-radius: 4px; font-size: 12px;">
+                    <strong><i class="fa fa-exclamation-triangle"></i> General Rx Evaluation Messages Sent to Physician:</strong>
+                    <div ng-repeat="issue in generalRxIssues" style="margin-top: 4px;">
+                        <span>[{{issue.priority || 'Normal'}}] {{issue.summary}}</span>
+                        <span ng-if="issue.reportedBy"> — <em>by {{issue.reportedBy}}</em></span>
+                        <span ng-if="issue.resolved" style="color: #15803d; font-weight: bold;"> (Resolved: {{issue.physicianReply}})</span>
+                        <span ng-if="!issue.resolved" style="color: #b45309; font-weight: bold;"> (Pending Physician Fix)</span>
                     </div>
                 </div>
                 <div class="rx-table-wrapper">
@@ -418,7 +440,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="prescription in prescriptions">
+                            <tr ng-repeat-start="prescription in prescriptions">
                                 <td style="font-weight:600;color:#1a5276;">{{ prescription.uuid.substring(0,8) }}</td>
                                 <td>{{ prescription.prescriber }}</td>
                                 <td style="font-weight:600;">{{ prescription.drug_name || prescription.non_coded_drug_name }}</td>
@@ -498,16 +520,16 @@
                                                 {{state.label}}
                                             </option>
                                         </select>
-                                        <button type="button" class="rx-btn rx-btn-sm"
+                                        <button type="button" class="rx-btn rx-btn-sm rx-btn-danger"
                                             title="Flag Drug Therapy Problem (DTP) & Return to Prescriber"
-                                            style="background-color: #e74c3c; color: white; padding: 2px 6px; font-size: 11px; font-weight: bold; border-radius: 3px;"
+                                            style="padding: 2px 6px; font-size: 11px; font-weight: bold;"
                                             ng-if="prescription.status !== 'DISPENSED' && prescription.status !== 'DISCARDED' && prescription.status !== 'RETURNED_DTP'"
                                             ng-click="openDtpModal(prescription)">
                                             <i class="fa fa-reply"></i> DTP
                                         </button>
-                                        <button type="button" class="rx-btn rx-btn-sm"
+                                        <button type="button" class="rx-btn rx-btn-sm rx-btn-primary"
                                             title="View DTP Clinical Details"
-                                            style="background-color: #3182ce; color: white; padding: 2px 6px; font-size: 11px;"
+                                            style="padding: 2px 6px; font-size: 11px;"
                                             ng-if="prescription.status === 'RETURNED_DTP' || prescription.dtp"
                                             ng-click="viewDtpDetails(prescription)">
                                             <i class="fa fa-info-circle"></i> View DTP
@@ -524,6 +546,29 @@
                                         ng-disabled="prescription.pharmacy_synced">
                                         <i class="fa fa-paper-plane"></i>
                                     </button>
+                                </td>
+                            </tr>
+                            <tr ng-repeat-end ng-if="prescription.dtpFootnote" style="background-color: #fff8e1;">
+                                <td colspan="18" style="padding: 4px 10px; font-size: 11px; border-top: none; border-bottom: 2px solid #f6e05e; text-align: left;">
+                                    <span style="color: #9b2c2c; font-weight: 600;">
+                                        <i class="fa fa-exclamation-circle"></i> DTP:
+                                    </span>
+                                    <span style="color: #742a2a;">{{ prescription.dtpFootnote.dtpMessage }}</span>
+                                    <span ng-if="prescription.dtpFootnote.actionLabel" style="margin-left: 10px; color: #22543d; font-weight: 600;">
+                                        <i class="fa fa-reply"></i> Physician Response ({{ prescription.dtpFootnote.actionLabel }}):
+                                    </span>
+                                    <span ng-if="prescription.dtpFootnote.physicianReason" style="color: #276749;">
+                                        {{ prescription.dtpFootnote.physicianReason }}
+                                    </span>
+                                    <span ng-if="prescription.dtpFootnote.actionLabel && !prescription.dtpFootnote.physicianReason" style="color: #276749;">
+                                        Updated &amp; resent
+                                    </span>
+                                    <span ng-if="prescription.dtpFootnote.originalDrug && prescription.dtpFootnote.actionLabel === 'Drug Changed'" style="color: #555; margin-left: 6px;">
+                                        (Previously: {{ prescription.dtpFootnote.originalDrug }})
+                                    </span>
+                                    <span ng-if="prescription.dtpFootnote.providerName" style="color: #666; margin-left: 6px;">
+                                        — <em>{{ prescription.dtpFootnote.providerName }}</em>
+                                    </span>
                                 </td>
                             </tr>
                         </tbody>
@@ -882,5 +927,69 @@
             Close
         </button>
     </div>
+</div>
+</script>
+
+<!-- General Prescription Evaluation Issue Modal -->
+<script type="text/ng-template" id="views/generalRxIssueModal.html">
+<div class="dtp-modal-content" style="padding: 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div style="background: linear-gradient(135deg, #b45309, #d97706); color: white; padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa fa-envelope" style="font-size: 20px;"></i>
+            <div>
+                <div style="font-weight: 700; font-size: 15px;">Message Physician: General Prescription Evaluation</div>
+                <small style="opacity: 0.9; font-size: 12px;">Notify prescriber about missing diagnosis, incomplete patient profile, or general Rx issues</small>
+            </div>
+        </div>
+        <button type="button" ng-click="closeGeneralRxIssueModal()" style="background: transparent; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
+    </div>
+
+    <form ng-submit="submitGeneralRxIssue()">
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-weight: 600; font-size: 13px; color: #2d3748; margin-bottom: 6px;">
+                Select Evaluation Problem(s) Found:
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                <label ng-repeat="opt in generalRxIssueOptions" style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; font-weight: normal; margin: 0;">
+                    <input type="checkbox" ng-model="generalRxIssueForm.selectedIssues[opt.id]" />
+                    <span>{{opt.label}}</span>
+                </label>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-weight: 600; font-size: 13px; color: #2d3748; margin-bottom: 4px;">
+                Message / Explanation to Physician <span style="color: #e53e3e;">*</span>
+            </label>
+            <textarea ng-model="generalRxIssueForm.message" rows="3"
+                      placeholder="Describe what needs to be fixed (e.g., Diagnosis missing for Amoxicillin, please update weight and patient phone number)..."
+                      style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px;"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 14px;">
+            <div style="flex: 1;">
+                <label style="display: block; font-weight: 600; font-size: 12px; color: #2d3748; margin-bottom: 4px;">Priority</label>
+                <select ng-model="generalRxIssueForm.priority" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px;">
+                    <option value="Urgent (Hold Rx)">Urgent (Hold Rx)</option>
+                    <option value="Normal">Normal</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <label style="display: block; font-weight: 600; font-size: 12px; color: #2d3748; margin-bottom: 4px;">Reported By</label>
+                <input type="text" ng-model="generalRxIssueForm.reportedBy" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px;" />
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+            <button type="button" ng-click="closeGeneralRxIssueModal()"
+                    style="padding: 8px 16px; background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; border-radius: 4px; font-weight: 600; cursor: pointer;">
+                Cancel
+            </button>
+            <button type="submit" ng-disabled="generalRxIssueSubmitting"
+                    style="padding: 8px 18px; background: #d97706; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
+                <i class="fa fa-paper-plane"></i> {{generalRxIssueSubmitting ? 'Sending...' : 'Send Message to Physician'}}
+            </button>
+        </div>
+    </form>
 </div>
 </script>

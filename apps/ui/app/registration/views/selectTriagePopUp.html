@@ -1,10 +1,16 @@
 <div class="retro-date-widget-panel">
     <div class="input-container">
-    <label class="retro-date-label">Select Triage Type</label>
-    <select class="form-control" ng-model="selectedTriageType" ng-init="selectedTriageType='Adult ER'" style="height: 40px;" ng-options="id for id in triageType">
-    </select>
+        <label class="retro-date-label">Select Triage Type</label>
+        <select class="form-control" ng-model="selectedTriageType" style="height: 40px;" ng-options="id for id in triageType" ng-show="triageType && triageType.length > 0">
+        </select>
+        <div ng-if="selectedTriageType && getMappedLocationName(selectedTriageType)" style="margin-top: 6px; font-size: 12px; color: #2b6cb0;">
+            Location: <strong>{{getMappedLocationName(selectedTriageType)}}</strong>
+        </div>
+        <div ng-if="!triageType || triageType.length === 0" style="margin-top: 8px; font-size: 12px; color: #c53030;">
+            No triage types configured. Please configure them in Admin &rarr; ER Triage Config.
+        </div>
     </div>
     <div class="retro-widget-button-wrapper">
-    <button type="submit" class="retro-widget-button ok_btn start-visit-button" ng-click="selectedTriage(selectedTriageType)">Open -></button>
+        <button type="submit" class="retro-widget-button ok_btn start-visit-button" ng-disabled="!selectedTriageType" ng-click="selectedTriage(selectedTriageType)">Open -></button>
     </div>
-    </div>
+</div>

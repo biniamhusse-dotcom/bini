@@ -10,6 +10,10 @@ angular.module('bahmni.registration')
                 $location.url(url);
             };
 
+            $scope.isCurrentPath = function (path) {
+                return $location.path() === path;
+            };
+
             $scope.htmlLabel = function (label) {
                 return $sce.trustAsHtml(label);
             };

@@ -3,7 +3,7 @@
 angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateTimeSelector', ['ethiopianGregorianService', function (ethiopianGregorianService) {
     return {
         restrict: 'E',
-        template: '<div class="field-value"><input ng-required="required" ng-disabled="disabled" placeholder=" ቀን"/></div>' +
+        template: '<div class="field-value eth-date-input-wrap"><input ng-required="required" ng-disabled="disabled" placeholder="ቀን (dd/mm/yyyy)"/><span class="eth-date-icon" ng-click="openPicker()" title="Open Ethiopian Calendar"><i class="fa fa-calendar"></i></span></div>' +
                "<div>" +
                     "<input type='time' ng-disabled='observation.disabled' />" +
                 "</div>",
@@ -39,6 +39,9 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateTi
             var calendar = $.calendars.instance('ethiopian', 'am');
             $(element[0].childNodes[0].childNodes[0]).calendarsPicker({
                 calendar: calendar,
+                yearRange: 'c-100:c+20',
+                showOtherMonths: true,
+                selectOtherMonths: true,
                 onSelect: function (dates) {
                     if (!dates || !dates[0]) return;
                     var ethDate = dates[0];
@@ -47,7 +50,13 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateTi
                     var greg = DateUtil.parse(ethiopianGregorianService.ethToGreg(eth));
                     scope.date = greg;
                     scope.model = greg.getFullYear() + "-" + (greg.getMonth() + 1) + "-" +  greg.getDate() + " " + scope.time;
-                    scope.handler();
+                    scope.openPicker = function () {
+                if (!scope.disabled) {
+                    $(element[0].childNodes[0].childNodes[0]).calendarsPicker('show');
+                }
+            };
+
+            scope.handler();
                     scope.$apply();
                 },
                 minDate: minDate ? ethiopianGregorianService.gregToEth((minDate.getMonth() + 1) + "/" + minDate.getDate() + "/" + minDate.getFullYear()) : null,
@@ -67,11 +76,23 @@ angular.module('bahmni.common.ethiopianDateSelector').directive('ethiopianDateTi
                 scope.time = e.target.value;
                 scope.model = scope.date.getFullYear() + "-" + (scope.date.getMonth() + 1) + "-" +  scope.date.getDate() + " " + scope.time;
                     scope.$apply();
-                    scope.handler();
+                    scope.openPicker = function () {
+                if (!scope.disabled) {
+                    $(element[0].childNodes[0].childNodes[0]).calendarsPicker('show');
+                }
+            };
+
+            scope.handler();
                     scope.$apply();
             
             });
             
+            scope.openPicker = function () {
+                if (!scope.disabled) {
+                    $(element[0].childNodes[0].childNodes[0]).calendarsPicker('show');
+                }
+            };
+
             scope.handler();
         }
     };

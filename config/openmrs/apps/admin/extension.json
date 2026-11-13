@@ -69,7 +69,7 @@
         "url": "#/backupRestore",
         "icon": "fa-database",
         "order": 6,
-        "requiredPrivilege": "app:admin"
+        "requiredPrivilege": "app:admin:backupRestore"
     },
     "branding":{
         "id": "bahmni.admin.branding",
@@ -81,7 +81,7 @@
         "url": "#/branding",
         "icon": "fa-paint-brush",
         "order": 7,
-        "requiredPrivilege": "app:admin"
+        "requiredPrivilege": "app:admin:branding"
     },
     "paymentConfig":{
         "id": "bahmni.admin.paymentConfig",
@@ -93,6 +93,78 @@
         "url": "#/paymentConfig",
         "icon": "fa-credit-card",
         "order": 8,
-        "requiredPrivilege": "app:admin"
+        "requiredPrivilege": "app:admin:paymentConfig"
+    },
+    "erTriageConfig":{
+        "id": "bahmni.admin.erTriageConfig",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {
+        },
+        "label": "ER Triage Config",
+        "url": "#/erTriageConfig",
+        "icon": "fa-ambulance",
+        "order": 9,
+        "requiredPrivilege": "app:admin:erTriageConfig"
+    },
+    "locationVisitMapping":{
+        "id": "bahmni.admin.locationVisitMapping",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {
+        },
+        "label": "Location & Visit Mapping",
+        "url": "#/locationVisitMapping",
+        "icon": "fa-map-marker",
+        "order": 10,
+        "requiredPrivilege": "app:admin:locationVisitMapping"
+    },
+    "dashboardConfig":{
+        "id": "bahmni.admin.dashboardConfig",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {
+        },
+        "label": "Dashboard & Forms",
+        "url": "#/dashboardConfig",
+        "icon": "fa-th-large",
+        "order": 11,
+        "requiredPrivilege": "app:admin:dashboardConfig"
+    },
+    "obsFormManager":{
+        "id": "bahmni.admin.obsFormManager",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {
+        },
+        "label": "Observation Form Builder",
+        "url": "#/obsFormManager",
+        "icon": "fa-list-alt",
+        "order": 12,
+        "requiredPrivilege": "app:admin:obsFormManager"
+    },
+    "drugManagement":{
+        "id": "bahmni.admin.drugManagement",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {
+        },
+        "label": "Drug & Supply Management",
+        "url": "#/drugManagement",
+        "icon": "fa-medkit",
+        "order": 13,
+        "requiredPrivilege": "app:admin:drugManagement"
+    },
+    "diagnosisManagement":{
+        "id": "bahmni.admin.diagnosisManagement",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {
+        },
+        "label": "Diagnosis & ICD-11 Management",
+        "url": "#/diagnosisManagement",
+        "icon": "fa-stethoscope",
+        "order": 14,
+        "requiredPrivilege": "app:admin:diagnosisManagement"
     }
 }

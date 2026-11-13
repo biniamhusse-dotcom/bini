@@ -294,6 +294,12 @@ angular.module('bahmni.common.conceptSet')
                     if (!(scope.$root.$$phase || scope.$$phase)) {
                         scope.$apply();
                     }
+                    try {
+                        var latestSkip = JSON.parse(localStorage.getItem('skipLogicConfigs'));
+                        if (latestSkip) {
+                            scope.skipLogicConfigs = latestSkip;
+                        }
+                    } catch (e) {}
                     scope.triggerAndTarget = Bahmni.Common.skipLogicProcessor.filterDependentFields(scope.observation, scope.skipLogicConfigs, scope.calculationwithoutFormulaConfigs, scope.rootObservation, scope.patientHistory);
 
                     if (!(scope.$root.$$phase || scope.$$phase)) {

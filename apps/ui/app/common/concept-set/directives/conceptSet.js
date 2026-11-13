@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('bahmni.common.conceptSet')
-    .directive('conceptSet', ['contextChangeHandler', 'appService', '$http', 'observationsService', 'messagingService', 'conceptSetService', 'conceptSetUiConfigService', 'spinner',
-        function (contextChangeHandler, appService, $http, observationsService, messagingService, conceptSetService, conceptSetUiConfigService, spinner) {
+    .directive('conceptSet', ['contextChangeHandler', 'appService', '$http', '$q', '$rootScope', 'observationsService', 'messagingService', 'conceptSetService', 'conceptSetUiConfigService', 'LogicAndConditionConfigsLoader', 'spinner',
+        function (contextChangeHandler, appService, $http, $q, $rootScope, observationsService, messagingService, conceptSetService, conceptSetUiConfigService, LogicAndConditionConfigsLoader, spinner) {
             var controller = function ($scope) {
                 var conceptSetName = $scope.conceptSetName;
                 var ObservationUtil = Bahmni.Common.Obs.ObservationUtil;
@@ -319,12 +319,37 @@ angular.module('bahmni.common.conceptSet')
                         withCredentials: true
                     });
                 };
+                var pickBestConcept = function (results, targetName) {
+                    if (!results || !results.length) {
+                        return null;
+                    }
+                    if ($scope.conceptSetUuid) {
+                        var byUuid = _.find(results, { uuid: $scope.conceptSetUuid });
+                        if (byUuid) {
+                            return byUuid;
+                        }
+                    }
+                    return _.find(results, function (c) {
+                        return c.set === true && c.name && c.name.name === targetName;
+                    }) || _.find(results, { set: true }) || _.find(results, function (c) {
+                        return c.name && c.name.name === targetName;
+                    }) || results[0];
+                };
+
                 var init = function () {
-                    return conceptSetService.getConcept({
-                        name: conceptSetName,
-                        v: "bahmni"
-                    }).then(function (response) {
-                        $scope.conceptSet = response.data.results[0];
+                    var conceptPromise = $scope.conceptSetUuid
+                        ? conceptSetService.getConceptByUuid($scope.conceptSetUuid, { v: "bahmni" }).then(function (resp) {
+                            return { data: { results: resp.data ? [resp.data] : [] } };
+                        }, function () {
+                            return conceptSetService.getConcept({ name: conceptSetName, v: "bahmni" });
+                        })
+                        : conceptSetService.getConcept({
+                            name: conceptSetName,
+                            v: "bahmni"
+                        });
+
+                    return conceptPromise.then(function (response) {
+                        $scope.conceptSet = pickBestConcept(response.data && response.data.results, conceptSetName);
                         multiSelectableConcepts().then(function (multiSelectableResponse) {
                             autocompleteConcepts().then(function (autocompleteResponse) {
                                 dropdownConcepts().then(function (dropdownResponse) {
@@ -351,26 +376,50 @@ angular.module('bahmni.common.conceptSet')
                                             }
                                         }
 
-                                        conceptSetUIConfig = { ...resultObject, ...conceptSetUIConfig };
-                                        $scope.rootObservation = $scope.conceptSet ? observationMapper.map($scope.observations, $scope.conceptSet, conceptSetUIConfig) : null;
-                                        if ($scope.rootObservation) {
-                                            $scope.rootObservation.conceptSetName = $scope.conceptSetName;
-                                            focusFirstObs();
-                                            updateObservationsOnRootScope();
-                                            var currentTemplateObs = getObservationsOfCurrentTemplate();
-                                            var groupMembers = (currentTemplateObs && currentTemplateObs.length > 0 && currentTemplateObs[0].groupMembers)
-                                                ? currentTemplateObs[0].groupMembers
-                                                : ($scope.rootObservation.groupMembers || []);
-                                            var defaults = getDefaults();
-                                            addDummyImage();
-                                            if (groupMembers && defaults) {
-                                                setDefaultsForGroupMembers(groupMembers, defaults);
-                                            }
-                                            var observationsOfCurrentTemplate = getObservationsOfCurrentTemplate();
-                                            updateFormConditions(observationsOfCurrentTemplate, $scope.rootObservation);
-                                        } else {
-                                            $scope.showEmptyConceptSetMessage = true;
+                                        var refreshPromises = [];
+                                        if (LogicAndConditionConfigsLoader && LogicAndConditionConfigsLoader.loadSkipLogicConfigs) {
+                                            refreshPromises.push(
+                                                LogicAndConditionConfigsLoader.loadSkipLogicConfigs().then(function (freshSkipLogics) {
+                                                    if (freshSkipLogics) {
+                                                        $rootScope.skipLogicConfigs = freshSkipLogics;
+                                                        try {
+                                                            localStorage.setItem('skipLogicConfigs', JSON.stringify(freshSkipLogics));
+                                                        } catch (e) {}
+                                                    }
+                                                }, function () {})
+                                            );
                                         }
+                                        refreshPromises.push(
+                                            $http.get('/bahmni_config/openmrs/apps/clinical/app.json?t=' + Date.now()).then(function (appResp) {
+                                                var freshUI = appResp.data && appResp.data.config && appResp.data.config.conceptSetUI;
+                                                if (freshUI) {
+                                                    conceptSetUIConfig = freshUI;
+                                                }
+                                            }, function () {})
+                                        );
+
+                                        $q.all(refreshPromises).then(function () {
+                                            conceptSetUIConfig = { ...resultObject, ...conceptSetUIConfig };
+                                            $scope.rootObservation = $scope.conceptSet ? observationMapper.map($scope.observations, $scope.conceptSet, conceptSetUIConfig) : null;
+                                            if ($scope.rootObservation) {
+                                                $scope.rootObservation.conceptSetName = $scope.conceptSetName;
+                                                focusFirstObs();
+                                                updateObservationsOnRootScope();
+                                                var currentTemplateObs = getObservationsOfCurrentTemplate();
+                                                var groupMembers = (currentTemplateObs && currentTemplateObs.length > 0 && currentTemplateObs[0].groupMembers)
+                                                    ? currentTemplateObs[0].groupMembers
+                                                    : ($scope.rootObservation.groupMembers || []);
+                                                var defaults = getDefaults();
+                                                addDummyImage();
+                                                if (groupMembers && defaults) {
+                                                    setDefaultsForGroupMembers(groupMembers, defaults);
+                                                }
+                                                var observationsOfCurrentTemplate = getObservationsOfCurrentTemplate();
+                                                updateFormConditions(observationsOfCurrentTemplate, $scope.rootObservation);
+                                            } else {
+                                                $scope.showEmptyConceptSetMessage = true;
+                                            }
+                                        });
                                     });
                                 });
                             });
@@ -494,6 +543,7 @@ angular.module('bahmni.common.conceptSet')
                 restrict: 'E',
                 scope: {
                     conceptSetName: "=",
+                    conceptSetUuid: "=?",
                     observations: "=?",
                     required: "=?",
                     showTitle: "&",

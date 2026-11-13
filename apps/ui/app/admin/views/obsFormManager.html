@@ -1,0 +1,1338 @@
+<div class="obs-form-manager-page" style="padding: 20px 24px; max-width: 1420px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #2d3748;">
+
+    <!-- Top Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 style="margin: 0; font-size: 23px; color: #1a365d; display: flex; align-items: center; gap: 10px;">
+                <i class="fa fa-list-alt" style="color: #2b6cb0;"></i> Observation Form Builder &amp; Conditional Sections
+            </h2>
+            <p style="margin: 5px 0 0 0; color: #718096; font-size: 13px;">
+                Manage existing Observation Forms, create new forms &amp; sections (canvases), configure Coded Button Lists vs Dropdown Lists, and make sections display conditionally from Coded and/or Dropdown selections.
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <a href="#/dashboard" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-arrow-left"></i> Admin Home
+            </a>
+            <button type="button" ng-click="loadAll()" ng-disabled="loading || saving" style="background: #fff; color: #2d3748; border: 1px solid #cbd5e0; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i> Reload
+            </button>
+            <button type="button" ng-click="openNewFormModal()" ng-disabled="loading" style="background: #2b6cb0; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-plus"></i> New Observation Form
+            </button>
+            <button type="button" ng-click="saveConfigToDisk(false)" ng-disabled="saving || loading"
+                    style="background: {{ dirtyConfig ? '#2f855a' : '#3182ce' }}; color: #fff; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
+                <i class="fa fa-spin fa-spinner" ng-if="saving"></i>
+                <i class="fa fa-save" ng-if="!saving"></i>
+                {{ saving ? 'Saving...' : (dirtyConfig ? 'Save Rules & UI Config*' : 'Save Config') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Banners -->
+    <div ng-if="savedBanner" style="background: #f0fff4; border-left: 4px solid #38a169; border-radius: 6px; padding: 11px 16px; margin-bottom: 14px; color: #22543d; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+        <span><i class="fa fa-check-circle" style="color: #38a169;"></i> {{ savedBanner }}</span>
+        <button type="button" ng-click="savedBanner = ''" style="background: none; border: none; color: #22543d; cursor: pointer; font-weight: bold;">&times;</button>
+    </div>
+
+    <div ng-if="errorBanner" style="background: #fff5f5; border-left: 4px solid #e53e3e; border-radius: 6px; padding: 11px 16px; margin-bottom: 14px; color: #9b2c2c; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+        <span><i class="fa fa-exclamation-triangle" style="color: #e53e3e;"></i> {{ errorBanner }}</span>
+        <button type="button" ng-click="errorBanner = ''" style="background: none; border: none; color: #9b2c2c; cursor: pointer; font-weight: bold;">&times;</button>
+    </div>
+
+    <div ng-if="dirtyConfig && !savedBanner" style="background: #fffaf0; border-left: 4px solid #dd6b20; border-radius: 6px; padding: 10px 16px; margin-bottom: 14px; color: #7b341e; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+        <span><i class="fa fa-info-circle"></i> You have unsaved UI Display (Dropdown/Coded List), Consultation Extension, or Skip Logic changes. Click <strong>Save Rules &amp; UI Config*</strong> to persist to disk &amp; Bahmni web.</span>
+    </div>
+
+    <!-- Initial Loading -->
+    <div ng-if="loading" style="text-align: center; padding: 70px 0; color: #718096;">
+        <i class="fa fa-spinner fa-spin fa-3x" style="color: #3182ce; margin-bottom: 12px;"></i>
+        <div style="font-size: 15px;">Loading Observation Templates, UI Config, and Conditional Skip Logic Rules...</div>
+    </div>
+
+    <!-- Main Two-Column Workspace -->
+    <div ng-if="!loading" style="display: flex; gap: 18px; align-items: flex-start;">
+
+        <!-- Left Sidebar: Forms Directory -->
+        <div style="width: 320px; flex-shrink: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-weight: 700; font-size: 14px; color: #1a365d;">
+                    Observation Forms ({{ filteredForms.length }})
+                </span>
+            </div>
+
+            <input type="text" ng-model="formSearch.query" ng-change="rebuildFilteredForms()" placeholder="Filter forms by name..."
+                   style="width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; margin-bottom: 8px;">
+
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4a5568; margin-bottom: 10px; cursor: pointer;">
+                <input type="checkbox" ng-model="formSearch.onlyConsultation" ng-change="rebuildFilteredForms()">
+                Only show Consultation-enabled forms
+            </label>
+
+            <div style="max-height: 640px; overflow-y: auto; border-top: 1px solid #edf2f7; padding-top: 6px;">
+                <div ng-if="filteredForms.length === 0" style="padding: 20px 10px; text-align: center; color: #a0aec0; font-size: 13px;">
+                    No matching observation forms found.
+                </div>
+
+                <div ng-repeat="f in filteredForms track by f.uuid"
+                     ng-click="selectForm(f.uuid)"
+                     style="padding: 9px 10px; border-radius: 7px; margin-bottom: 5px; cursor: pointer; border: 1px solid {{ selectedFormUuid === f.uuid ? '#3182ce' : '#edf2f7' }}; background: {{ selectedFormUuid === f.uuid ? '#ebf8ff' : '#fff' }};">
+                    <div style="font-weight: 600; font-size: 13px; color: {{ selectedFormUuid === f.uuid ? '#1a365d' : '#2d3748' }}; word-break: break-word;">
+                        {{ f.name }}
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+                        <span ng-if="f.inConsultation" style="font-size: 10px; font-weight: 600; background: #e6fffa; color: #234e52; padding: 1px 6px; border-radius: 10px;">
+                            Consultation
+                        </span>
+                        <span ng-if="f.defaultOpen" style="font-size: 10px; font-weight: 600; background: #fefcbf; color: #744210; padding: 1px 6px; border-radius: 10px;">
+                            Auto-Open
+                        </span>
+                        <span ng-if="f.defaultLocation" style="font-size: 10px; background: #edf2f7; color: #4a5568; padding: 1px 6px; border-radius: 10px;">
+                            {{ f.defaultLocation }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Workspace: Selected Form Editor -->
+        <div style="flex: 1; min-width: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px;">
+
+            <div ng-if="loadingForm" style="text-align: center; padding: 60px 0; color: #718096;">
+                <i class="fa fa-spinner fa-spin fa-2x" style="color: #3182ce;"></i>
+                <div style="margin-top: 8px; font-size: 14px;">Loading Observation Form tree from OpenMRS...</div>
+            </div>
+
+            <div ng-if="!loadingForm && !selectedForm" style="text-align: center; padding: 60px 0; color: #a0aec0;">
+                Select an Observation Form on the left or click <strong>New Observation Form</strong>.
+            </div>
+
+            <div ng-if="!loadingForm && selectedForm">
+                <!-- Selected Form Header & Consultation Controls -->
+                <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 19px; color: #1a365d; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span>{{ selectedForm.name && selectedForm.name.name ? selectedForm.name.name : selectedForm.display }}</span>
+                                <span ng-if="!formHealth.checking && formHealth.issues.length === 0"
+                                      style="background: #c6f6d5; color: #22543d; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">
+                                    <i class="fa fa-check-circle"></i> Health OK
+                                </span>
+                                <span ng-if="!formHealth.checking && formHealth.issues.length > 0"
+                                      style="background: #fed7d7; color: #9b2c2c; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">
+                                    <i class="fa fa-exclamation-triangle"></i> {{ formHealth.issues.length }} Conflict / Form Issue(s)
+                                </span>
+                            </h3>
+                            <div style="font-size: 11px; color: #718096; margin-top: 3px;">
+                                OpenMRS Concept UUID: <code>{{ selectedForm.uuid }}</code>
+                                &bull; Set: <strong>{{ selectedForm.set ? 'true' : 'false' }}</strong>
+                                &bull; Sections (Canvases): <strong>{{ formSectionsOnly.length }}</strong>
+                                &bull; Fields: <strong>{{ formTriggerOptions.length }}</strong>
+                                &bull; Skip Rules: <strong>{{ formSkipRules.length }}</strong>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" ng-click="runFormHealthCheck()" ng-disabled="formHealth.checking"
+                                    style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 7px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-stethoscope" ng-class="{'fa-spin': formHealth.checking}"></i> Check Health
+                            </button>
+                            <button type="button" ng-click="openRenameFormModal()"
+                                    style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 7px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-pencil"></i> Rename Form
+                            </button>
+                            <button type="button" ng-click="openAddMemberPanel(selectedForm.uuid, (selectedForm.name && selectedForm.name.name) || selectedForm.display, 'Section')"
+                                    style="background: #2b6cb0; color: #fff; border: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-folder-o"></i> + Add Section (Canvas)
+                            </button>
+                            <button type="button" ng-click="openAddMemberPanel(selectedForm.uuid, (selectedForm.name && selectedForm.name.name) || selectedForm.display, 'CodedButtons')"
+                                    style="background: #38a169; color: #fff; border: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-plus-circle"></i> + Add Coded / Dropdown / Field
+                            </button>
+                            <button type="button" ng-click="startNewSkipRule('')"
+                                    style="background: #805ad5; color: #fff; border: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-code-fork"></i> + Add Section Display Rule
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Consultation Availability Strip -->
+                    <div ng-if="selectedFormConsultation" style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e0; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 12px;">
+                        <label style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #2d3748; cursor: pointer;">
+                            <input type="checkbox" ng-model="selectedFormConsultation.enabled" ng-change="onConsultationSettingsChange()">
+                            Show in Clinical Consultation Observations Tab
+                        </label>
+
+                        <span ng-if="selectedFormConsultation.enabled" style="display: inline-flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                            <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" ng-model="selectedFormConsultation.defaultOpen" ng-change="onConsultationSettingsChange()">
+                                Auto-Open
+                            </label>
+                            <div style="position: relative; display: inline-flex; align-items: center; gap: 5px;">
+                                <span>Locations:</span>
+                                <button type="button" ng-click="selectedFormConsultation.locDropdownOpen = !selectedFormConsultation.locDropdownOpen"
+                                        style="padding: 4px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff; color: #2d3748; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-width: 170px; justify-content: space-between;">
+                                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;">{{ selectedFormConsultation.selectedLocationsSummary }}</span>
+                                    <i class="fa fa-caret-down"></i>
+                                </button>
+                                <div ng-if="selectedFormConsultation.locDropdownOpen"
+                                     style="position: absolute; top: 100%; left: 60px; margin-top: 4px; width: 250px; background: #fff; border: 1px solid #cbd5e0; border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); z-index: 2000; padding: 8px;">
+                                    <input type="text" ng-model="selectedFormConsultation.locSearch" placeholder="Filter locations..."
+                                           style="width: 100%; box-sizing: border-box; padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; margin-bottom: 6px;">
+                                    <div style="max-height: 210px; overflow-y: auto;">
+                                        <label style="display: flex; align-items: center; gap: 7px; padding: 4px 6px; border-bottom: 1px solid #edf2f7; font-weight: 700; color: #2b6cb0; cursor: pointer; font-size: 12px;">
+                                            <input type="checkbox" ng-checked="selectedFormConsultation.selectedLocationsMap['All']"
+                                                   ng-click="toggleLocationSelection(selectedFormConsultation, 'All', true)">
+                                            All Locations (All)
+                                        </label>
+                                        <label ng-repeat="loc in locations track by loc.uuid"
+                                               ng-show="!selectedFormConsultation.locSearch || loc.name.toLowerCase().indexOf(selectedFormConsultation.locSearch.toLowerCase()) !== -1"
+                                               style="display: flex; align-items: center; gap: 7px; padding: 4px 6px; cursor: pointer; font-size: 12px; color: #2d3748;">
+                                            <input type="checkbox" ng-checked="selectedFormConsultation.selectedLocationsMap[loc.name]"
+                                                   ng-click="toggleLocationSelection(selectedFormConsultation, loc.name, true)">
+                                            <span>{{ loc.name }}</span>
+                                        </label>
+                                    </div>
+                                    <div style="border-top: 1px solid #edf2f7; padding-top: 6px; margin-top: 4px; text-align: right;">
+                                        <button type="button" ng-click="selectedFormConsultation.locDropdownOpen = false"
+                                                style="background: #2b6cb0; color: #fff; border: none; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                            Done
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <label style="display: inline-flex; align-items: center; gap: 5px;">
+                                Order:
+                                <input type="number" ng-model="selectedFormConsultation.order" ng-change="onConsultationSettingsChange()"
+                                       style="width: 56px; padding: 3px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px;">
+                            </label>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Form Health & Duplicate Concept Fix Panel -->
+                <div ng-if="formHealth.issues.length > 0"
+                     style="background: #fff5f5; border: 1px solid #feb2b2; border-left: 5px solid #e53e3e; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                        <strong style="font-size: 14px; color: #9b2c2c;">
+                            <i class="fa fa-exclamation-triangle"></i> OpenMRS Concept Conflicts / Opening Issues Detected for "{{ formHealth.checkedName }}"
+                        </strong>
+                        <button type="button" ng-click="openRenameFormModal()"
+                                style="background: #fff; color: #9b2c2c; border: 1px solid #feb2b2; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                            Or Rename This Form Template
+                        </button>
+                    </div>
+
+                    <div ng-repeat="issue in formHealth.issues track by issue.id"
+                         style="background: #fff; border: 1px solid {{ issue.severity === 'critical' ? '#feb2b2' : '#fbd38d' }}; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                        <div style="flex: 1; min-width: 260px;">
+                            <div style="font-size: 13px; font-weight: 700; color: {{ issue.severity === 'critical' ? '#9b2c2c' : '#744210' }};">
+                                {{ issue.title }}
+                            </div>
+                            <div style="font-size: 12px; color: #4a5568; margin-top: 3px;">
+                                {{ issue.description }}
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                            <button ng-if="issue.type === 'duplicate_full_name'" type="button"
+                                    ng-click="fixRetireDuplicateConcept(issue)" ng-disabled="formHealth.fixing"
+                                    style="background: #c53030; color: #fff; border: none; padding: 6px 11px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-ban"></i> Retire Duplicate
+                            </button>
+                            <button ng-if="issue.type === 'duplicate_full_name' || issue.type === 'short_name_collision'" type="button"
+                                    ng-click="fixRenameDuplicateConcept(issue)" ng-disabled="formHealth.fixing"
+                                    style="background: #2b6cb0; color: #fff; border: none; padding: 6px 11px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-pencil"></i> Rename Conflicting Name
+                            </button>
+                            <button ng-if="issue.type === 'short_name_collision'" type="button"
+                                    ng-click="fixRemoveConflictingShortName(issue)" ng-disabled="formHealth.fixing"
+                                    style="background: #dd6b20; color: #fff; border: none; padding: 6px 11px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-eraser"></i> Remove SHORT Alias
+                            </button>
+                            <button ng-if="issue.type === 'not_set_flag'" type="button"
+                                    ng-click="fixConceptSetFlag(issue)" ng-disabled="formHealth.fixing"
+                                    style="background: #2f855a; color: #fff; border: none; padding: 6px 11px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-wrench"></i> Fix set=true
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-navigation Tabs -->
+                <div style="display: flex; gap: 6px; border-bottom: 2px solid #e2e8f0; margin-bottom: 16px;">
+                    <button type="button" ng-click="activeTab = 'structure'"
+                            style="padding: 9px 16px; border: none; background: {{ activeTab === 'structure' ? '#2b6cb0' : '#edf2f7' }}; color: {{ activeTab === 'structure' ? '#fff' : '#4a5568' }}; border-radius: 6px 6px 0 0; font-weight: 600; font-size: 13px; cursor: pointer;">
+                        <i class="fa fa-sitemap"></i> Form Structure, Sections &amp; Field Types
+                    </button>
+                    <button type="button" ng-click="activeTab = 'rules'"
+                            style="padding: 9px 16px; border: none; background: {{ activeTab === 'rules' ? '#805ad5' : '#edf2f7' }}; color: {{ activeTab === 'rules' ? '#fff' : '#4a5568' }}; border-radius: 6px 6px 0 0; font-weight: 600; font-size: 13px; cursor: pointer;">
+                        <i class="fa fa-code-fork"></i> Conditional Section (Canvas) Rules ({{ formSkipRules.length }})
+                    </button>
+                    <button type="button" ng-click="activeTab = 'preview'; recomputePreview()"
+                            style="padding: 9px 16px; border: none; background: {{ activeTab === 'preview' ? '#2f855a' : '#edf2f7' }}; color: {{ activeTab === 'preview' ? '#fff' : '#4a5568' }}; border-radius: 6px 6px 0 0; font-weight: 600; font-size: 13px; cursor: pointer;">
+                        <i class="fa fa-eye"></i> Live Interactive Form Preview
+                    </button>
+                </div>
+
+                <!-- TAB 1: FORM STRUCTURE, SECTIONS (CANVASES) & CODED/DROPDOWN UI -->
+                <div ng-if="activeTab === 'structure'">
+                    <div ng-if="formTreeNodes.length === 0" style="padding: 36px; text-align: center; background: #f7fafc; border: 1px dashed #cbd5e0; border-radius: 8px; color: #718096;">
+                        <p style="margin: 0 0 10px 0;">This Observation Form has no Sections or Fields yet.</p>
+                        <button type="button" ng-click="openAddMemberPanel(selectedForm.uuid, (selectedForm.name && selectedForm.name.name) || selectedForm.display, 'Section')"
+                                style="background: #2b6cb0; color: #fff; border: none; padding: 7px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-right: 8px;">
+                            + Add First Section (Canvas)
+                        </button>
+                        <button type="button" ng-click="openAddMemberPanel(selectedForm.uuid, (selectedForm.name && selectedForm.name.name) || selectedForm.display, 'CodedDropdown')"
+                                style="background: #38a169; color: #fff; border: none; padding: 7px 14px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                            + Add Trigger Field (Coded / Dropdown)
+                        </button>
+                    </div>
+
+                    <div ng-repeat="node in formTreeNodes track by (node.uuid + '_' + $index)"
+                         style="border: 1px solid {{ node.isSection ? '#bee3f8' : '#e2e8f0' }}; border-radius: 8px; margin-bottom: 12px; background: {{ node.isSection ? '#f8fbff' : '#fff' }}; overflow: hidden;">
+
+                        <!-- Level 0 Row (Section / Canvas OR Top-level Field) -->
+                        <div style="padding: 11px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: {{ node.isSection ? '#ebf8ff' : '#fff' }};">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span ng-if="node.isGraph" style="background: #6b46c1; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">
+                                    <i class="fa fa-line-chart"></i> Time-Series Graph
+                                </span>
+                                <span ng-if="node.isSection && !node.isGraph" style="background: #2b6cb0; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">
+                                    Section / Canvas
+                                </span>
+                                <span ng-if="!node.isSection" style="background: #edf2f7; color: #2d3748; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">
+                                    {{ node.datatype }}
+                                </span>
+                                <strong style="font-size: 14px; color: #1a365d;">{{ node.name }}</strong>
+                                <span ng-if="node.skipRuleCount > 0"
+                                      ng-click="activeTab = 'rules'"
+                                      style="background: #faf5ff; color: #6b46c1; border: 1px solid #d6bcfa; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; cursor: pointer;">
+                                    <i class="fa fa-code-fork"></i> Conditional ({{ node.skipRuleCount }} rule)
+                                </span>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <!-- Coded Field Display Mode Switcher (Coded Button List vs Dropdown vs Multi-Select) -->
+                                <select ng-if="node.isCoded" ng-model="node.displayMode" ng-change="updateNodeUiMode(node)"
+                                        ng-options="m.id as m.label for m in codedModes"
+                                        style="padding: 4px 8px; border: 1px solid #90cdf4; background: #fff; border-radius: 5px; font-size: 12px; font-weight: 600; color: #2b6cb0;">
+                                </select>
+                                <!-- Date Field Mode Switcher (Today & Past Only vs Full Ethiopian Calendar) -->
+                                <select ng-if="node.isDateType" ng-model="node.dateMode" ng-change="updateNodeUiMode(node)"
+                                        ng-options="dm.id as dm.label for dm in dateModes"
+                                        style="padding: 4px 8px; border: 1px solid #81e6d9; background: #fff; border-radius: 5px; font-size: 12px; font-weight: 600; color: #234e52;">
+                                </select>
+
+                                <label ng-if="!node.isSection" style="font-size: 11px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+                                    <input type="checkbox" ng-model="node.required" ng-change="updateNodeUiMode(node)"> Req
+                                </label>
+                                <label style="font-size: 11px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;" title="Enable allowAddMore in Bahmni Observations page">
+                                    <input type="checkbox" ng-model="node.allowAddMore" ng-change="updateNodeUiMode(node)"> {{ node.isSection ? 'Add Section Button (+)' : 'Add Field Button (+)' }}
+                                </label>
+
+                                <button ng-if="node.isGraph" type="button" ng-click="openGraphConfigModal(node)"
+                                        style="background: #6b46c1; color: #fff; border: none; padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                    <i class="fa fa-sliders"></i> Configure Graph
+                                </button>
+                                <button ng-if="node.isCoded" type="button" ng-click="openAddAnswerModal(node)"
+                                        style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                    + Answer ({{ node.answers.length }})
+                                </button>
+                                <button ng-if="node.isSection" type="button" ng-click="openAddMemberPanel(node.uuid, node.name, 'Section')"
+                                        style="background: #2b6cb0; color: #fff; border: none; padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                    + Add Section
+                                </button>
+                                <button ng-if="node.isSection" type="button" ng-click="openAddMemberPanel(node.uuid, node.name, 'CodedButtons')"
+                                        style="background: #38a169; color: #fff; border: none; padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                    + Add Field
+                                </button>
+                                <button ng-if="node.isSection" type="button" ng-click="startNewSkipRule(node.name)"
+                                        style="background: #805ad5; color: #fff; border: none; padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                    <i class="fa fa-code-fork"></i> Display Rule
+                                </button>
+
+                                <button type="button" ng-click="moveMember(node.parentUuid, node.index, -1)" ng-disabled="node.index === 0" title="Move Up"
+                                        style="background: #fff; border: 1px solid #cbd5e0; padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                                    <i class="fa fa-arrow-up"></i>
+                                </button>
+                                <button type="button" ng-click="moveMember(node.parentUuid, node.index, 1)" ng-disabled="node.index === node.total - 1" title="Move Down"
+                                        style="background: #fff; border: 1px solid #cbd5e0; padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                                    <i class="fa fa-arrow-down"></i>
+                                </button>
+                                <button type="button" ng-click="removeMember(node.parentUuid, node.uuid, node.name)" title="Remove from form"
+                                        style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Coded Answers Preview Chips for Top-level Coded Field -->
+                        <div ng-if="!node.isSection && node.isCoded && node.answers.length > 0" style="padding: 6px 14px 10px 14px; background: #fcfcfd; border-top: 1px solid #edf2f7; display: flex; flex-wrap: wrap; gap: 5px; align-items: center;">
+                            <span style="font-size: 11px; color: #718096; margin-right: 4px;">Options:</span>
+                            <span ng-repeat="ans in node.answers track by (ans.uuid + '_' + $index)"
+                                  style="background: #edf2f7; color: #2d3748; font-size: 11px; padding: 2px 8px; border-radius: 12px;">
+                                {{ ans.name }}
+                            </span>
+                        </div>
+
+                        <!-- Nested Level 1 Members inside Section / Canvas -->
+                        <div ng-if="node.isSection" style="padding: 10px 14px 12px 24px;">
+                            <div ng-if="node.members.length === 0" style="font-size: 12px; color: #718096; font-style: italic; padding: 6px 0;">
+                                Empty section. Click <strong>+ Add Field</strong> above to add fields into this Canvas.
+                            </div>
+
+                            <div ng-repeat="child in node.members track by (child.uuid + '_' + $index)"
+                                 style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 9px 12px; margin-bottom: 8px; background: #fff;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
+                                        <span ng-if="child.isSection" style="background: #3182ce; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                            Sub-Section
+                                        </span>
+                                        <span ng-if="!child.isSection" style="background: #edf2f7; color: #2d3748; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                            {{ child.datatype }}
+                                        </span>
+                                        <strong style="font-size: 13px; color: #2d3748;">{{ child.name }}</strong>
+                                        <span ng-if="child.skipRuleCount > 0"
+                                              ng-click="activeTab = 'rules'"
+                                              style="background: #faf5ff; color: #6b46c1; border: 1px solid #d6bcfa; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; cursor: pointer;">
+                                            Conditional ({{ child.skipRuleCount }})
+                                        </span>
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                        <select ng-if="child.isCoded" ng-model="child.displayMode" ng-change="updateNodeUiMode(child)"
+                                                ng-options="m.id as m.label for m in codedModes"
+                                                style="padding: 3px 7px; border: 1px solid #90cdf4; border-radius: 4px; font-size: 11px; font-weight: 600; color: #2b6cb0;">
+                                        </select>
+                                        <select ng-if="child.isDateType" ng-model="child.dateMode" ng-change="updateNodeUiMode(child)"
+                                                ng-options="dm.id as dm.label for dm in dateModes"
+                                                style="padding: 3px 7px; border: 1px solid #81e6d9; border-radius: 4px; font-size: 11px; font-weight: 600; color: #234e52;">
+                                        </select>
+                                        <label ng-if="!child.isSection" style="font-size: 11px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+                                            <input type="checkbox" ng-model="child.required" ng-change="updateNodeUiMode(child)"> Req
+                                        </label>
+                                        <label style="font-size: 11px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;" title="Enable allowAddMore in Bahmni Observations page">
+                                            <input type="checkbox" ng-model="child.allowAddMore" ng-change="updateNodeUiMode(child)"> {{ child.isSection ? 'Add Section Button (+)' : 'Add Field Button (+)' }}
+                                        </label>
+                                        <button ng-if="child.isGraph" type="button" ng-click="openGraphConfigModal(child)"
+                                                style="background: #6b46c1; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                            <i class="fa fa-sliders"></i> Configure Graph
+                                        </button>
+                                        <button ng-if="child.isCoded" type="button" ng-click="openAddAnswerModal(child)"
+                                                style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 3px 7px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                            + Answer ({{ child.answers.length }})
+                                        </button>
+                                        <button ng-if="child.isSection" type="button" ng-click="openAddMemberPanel(child.uuid, child.name, 'Section')"
+                                                style="background: #2b6cb0; color: #fff; border: none; padding: 3px 7px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                            + Add Section
+                                        </button>
+                                        <button ng-if="child.isSection" type="button" ng-click="openAddMemberPanel(child.uuid, child.name, 'CodedButtons')"
+                                                style="background: #38a169; color: #fff; border: none; padding: 3px 7px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                            + Add Field
+                                        </button>
+                                        <button type="button" ng-click="moveMember(child.parentUuid, child.index, -1)" ng-disabled="child.index === 0"
+                                                style="background: #fff; border: 1px solid #cbd5e0; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer;">
+                                            <i class="fa fa-arrow-up"></i>
+                                        </button>
+                                        <button type="button" ng-click="moveMember(child.parentUuid, child.index, 1)" ng-disabled="child.index === child.total - 1"
+                                                style="background: #fff; border: 1px solid #cbd5e0; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer;">
+                                            <i class="fa fa-arrow-down"></i>
+                                        </button>
+                                        <button type="button" ng-click="removeMember(child.parentUuid, child.uuid, child.name)"
+                                                style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer;">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div ng-if="!child.isSection && child.isCoded && child.answers.length > 0" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
+                                    <span ng-repeat="ans in child.answers track by (ans.uuid + '_' + $index)"
+                                          style="background: #edf2f7; color: #4a5568; font-size: 11px; padding: 1px 7px; border-radius: 10px;">
+                                        {{ ans.name }}
+                                    </span>
+                                </div>
+
+                                <!-- Level 2 (Grandchild inside sub-section) -->
+                                <div ng-if="child.isSection && child.members.length > 0" style="margin-top: 8px; padding-left: 16px; border-left: 2px solid #cbd5e0;">
+                                    <div ng-repeat="gc in child.members track by (gc.uuid + '_' + $index)"
+                                         style="display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; font-size: 12px;">
+                                        <span><strong>{{ gc.name }}</strong> <small style="color: #718096;">({{ gc.datatype }})</small></span>
+                                        <div style="display: flex; gap: 6px; align-items: center;">
+                                            <select ng-if="gc.isCoded" ng-model="gc.displayMode" ng-change="updateNodeUiMode(gc)"
+                                                    ng-options="m.id as m.label for m in codedModes"
+                                                    style="padding: 2px 6px; border: 1px solid #90cdf4; border-radius: 4px; font-size: 11px;">
+                                            </select>
+                                            <select ng-if="gc.isDateType" ng-model="gc.dateMode" ng-change="updateNodeUiMode(gc)"
+                                                    ng-options="dm.id as dm.label for dm in dateModes"
+                                                    style="padding: 2px 6px; border: 1px solid #81e6d9; border-radius: 4px; font-size: 11px; color: #234e52;">
+                                            </select>
+                                            <label ng-if="!gc.isSection" style="font-size: 11px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+                                                <input type="checkbox" ng-model="gc.required" ng-change="updateNodeUiMode(gc)"> Req
+                                            </label>
+                                            <label style="font-size: 11px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+                                                <input type="checkbox" ng-model="gc.allowAddMore" ng-change="updateNodeUiMode(gc)"> {{ gc.isSection ? 'Add Section Button (+)' : 'Add Field Button (+)' }}
+                                            </label>
+                                            <button type="button" ng-click="removeMember(gc.parentUuid, gc.uuid, gc.name)"
+                                                    style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 2px 5px; border-radius: 4px; font-size: 10px; cursor: pointer;">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: CONDITIONAL SECTION (CANVAS) DISPLAY RULES -->
+                <div ng-if="activeTab === 'rules'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h4 style="margin: 0; font-size: 15px; color: #1a365d;">
+                                Section (Canvas) Display Rules for this Form
+                            </h4>
+                            <p style="margin: 3px 0 0 0; font-size: 12px; color: #718096;">
+                                Configure any Section (Canvas) or Field to show or hide dynamically when a user selects an option from a <strong>Coded Button List</strong> and/or a <strong>Dropdown List</strong>.
+                            </p>
+                        </div>
+                        <button type="button" ng-click="startNewSkipRule('')"
+                                style="background: #805ad5; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer;">
+                            <i class="fa fa-plus"></i> New Conditional Section Rule
+                        </button>
+                    </div>
+
+                    <!-- Rule Editor Card -->
+                    <div ng-if="editingRule" style="background: #faf5ff; border: 2px solid #b794f4; border-radius: 8px; padding: 16px; margin-bottom: 18px;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 15px; color: #44337a;">
+                            <i class="fa fa-magic"></i> {{ editingRule.isNew ? 'Create Conditional Section / Field Display Rule' : ('Edit Rule #' + editingRule.logic_key) }}
+                        </h4>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 14px;">
+                            <div>
+                                <label style="display: block; font-size: 12px; font-weight: 700; color: #2d3748; margin-bottom: 4px;">
+                                    1. Target Section (Canvas) or Field:
+                                </label>
+                                <select ng-model="editingRule.dependent"
+                                        ng-options="t.name as t.label for t in formTargetOptions"
+                                        style="width: 100%; padding: 7px 9px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                                    <option value="">-- Select Target Section / Field --</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-size: 12px; font-weight: 700; color: #2d3748; margin-bottom: 4px;">
+                                    2. Visibility Action:
+                                </label>
+                                <select ng-model="editingRule.action"
+                                        style="width: 100%; padding: 7px 9px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                                    <option value="show">Show Section / Field when matched (Hidden by default)</option>
+                                    <option value="hide">Hide Section / Field when matched (Visible by default)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-size: 12px; font-weight: 700; color: #2d3748; margin-bottom: 4px;">
+                                    3. Multiple Conditions Match Logic:
+                                </label>
+                                <select ng-model="editingRule.conditionType"
+                                        style="width: 100%; padding: 7px 9px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                                    <option value="either">OR — Show/Hide when ANY condition matches (Coded OR Dropdown)</option>
+                                    <option value="all">AND — Show/Hide only when ALL conditions match (Coded AND Dropdown)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Trigger Conditions List -->
+                        <div style="background: #fff; border: 1px solid #e9d8fd; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong style="font-size: 13px; color: #44337a;">Trigger Conditions (Coded List and/or Dropdown List)</strong>
+                                <button type="button" ng-click="addConditionRow()"
+                                        style="background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; padding: 4px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                    + Add Trigger Condition
+                                </button>
+                            </div>
+
+                            <div ng-repeat="cond in editingRule.logics track by $index"
+                                 style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #edf2f7;">
+                                <span style="font-size: 11px; font-weight: 700; color: #805ad5; min-width: 28px;">
+                                    {{ $index === 0 ? 'IF' : (editingRule.conditionType === 'either' ? 'OR' : 'AND') }}
+                                </span>
+
+                                <select ng-model="cond.trigger" ng-change="onTriggerConceptChanged(cond)"
+                                        ng-options="tr.name as tr.label for tr in formTriggerOptions"
+                                        style="flex: 2; min-width: 220px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px;">
+                                </select>
+
+                                <!-- Quick Toggle Coded List <-> Dropdown List right inside rule builder -->
+                                <button ng-if="cond.trigger && cond.triggerDisplayMode !== 'dropdown'" type="button"
+                                        ng-click="switchTriggerDisplayMode(cond, 'dropdown')" title="Switch this trigger field to render as a Dropdown List"
+                                        style="background: #edf2f7; color: #2b6cb0; border: 1px solid #90cdf4; padding: 5px 8px; border-radius: 5px; font-size: 11px; cursor: pointer;">
+                                    Use Dropdown
+                                </button>
+                                <button ng-if="cond.trigger && cond.triggerDisplayMode === 'dropdown'" type="button"
+                                        ng-click="switchTriggerDisplayMode(cond, 'buttons')" title="Switch this trigger field to render as a Coded Button List"
+                                        style="background: #e6fffa; color: #234e52; border: 1px solid #81e6d9; padding: 5px 8px; border-radius: 5px; font-size: 11px; cursor: pointer;">
+                                    Use Coded List
+                                </button>
+
+                                <select ng-model="cond.operator" ng-options="op as op for op in operators"
+                                        style="width: 65px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px;">
+                                </select>
+
+                                <!-- Coded Answer Dropdown when trigger has answers -->
+                                <select ng-if="cond.availableAnswers && cond.availableAnswers.length > 0"
+                                        ng-model="cond.value"
+                                        ng-options="ans.name as ans.name for ans in cond.availableAnswers"
+                                        style="flex: 2; min-width: 190px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px;">
+                                </select>
+
+                                <!-- Text fallback when non-coded field -->
+                                <input ng-if="!cond.availableAnswers || cond.availableAnswers.length === 0"
+                                       type="text" ng-model="cond.value" placeholder="Exact answer / numeric value"
+                                       style="flex: 2; min-width: 180px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px;">
+
+                                <button type="button" ng-click="removeConditionRow($index)" ng-disabled="editingRule.logics.length <= 1"
+                                        style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 5px 8px; border-radius: 5px; cursor: pointer; font-size: 11px;">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" ng-click="cancelEditSkipRule()"
+                                    style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                Cancel
+                            </button>
+                            <button type="button" ng-click="saveEditingRule()" ng-disabled="saving"
+                                    style="background: #6b46c1; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-spin fa-spinner" ng-if="saving"></i>
+                                <i class="fa fa-check" ng-if="!saving"></i> Save &amp; Apply Rule
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Existing Form Skip Rules Table -->
+                    <div ng-if="formSkipRules.length === 0" style="padding: 30px; text-align: center; background: #f7fafc; border: 1px dashed #cbd5e0; border-radius: 8px; color: #718096; font-size: 13px;">
+                        No conditional rules are attached to fields or sections in this form yet. Click <strong>New Conditional Section Rule</strong> to bind a Section (Canvas) to a Coded List and/or Dropdown selection.
+                    </div>
+
+                    <div ng-repeat="r in formSkipRules track by r.logic_key"
+                         style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: #fff; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                                <span style="background: #edf2f7; color: #4a5568; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                    Rule #{{ r.logic_key }}
+                                </span>
+                                <span style="background: {{ r.action === 'show' ? '#e6fffa' : '#fff5f5' }}; color: {{ r.action === 'show' ? '#234e52' : '#c53030' }}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase;">
+                                    {{ r.action === 'show' ? 'SHOW' : 'HIDE' }}
+                                </span>
+                                <strong style="font-size: 14px; color: #1a365d;">{{ r.dependent }}</strong>
+                                <span ng-if="r.dependentIsSection" style="background: #ebf8ff; color: #2b6cb0; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">
+                                    Section / Canvas
+                                </span>
+                                <span style="background: #faf5ff; color: #6b46c1; font-size: 11px; padding: 1px 7px; border-radius: 10px;">
+                                    Match: {{ r.conditionType === 'either' ? 'ANY (OR)' : 'ALL (AND)' }}
+                                </span>
+                            </div>
+
+                            <div style="padding-left: 8px; font-size: 12px; color: #4a5568;">
+                                <div ng-repeat="lg in r.logics track by $index" style="margin-bottom: 3px;">
+                                    <span style="font-weight: 700; color: #805ad5;">{{ $index === 0 ? 'When' : (r.conditionType === 'either' ? 'OR' : 'AND') }}</span>
+                                    <strong>{{ lg.trigger }}</strong>
+                                    <span style="background: #edf2f7; font-size: 10px; padding: 1px 5px; border-radius: 4px; color: #4a5568;">{{ lg.triggerModeLabel }}</span>
+                                    <code>{{ lg.operator }}</code>
+                                    <span style="background: #fefcbf; color: #744210; font-weight: 600; padding: 1px 7px; border-radius: 4px;">{{ lg.value }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" ng-click="editSkipRule(r)"
+                                    style="background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                                <i class="fa fa-pencil"></i> Edit
+                            </button>
+                            <button type="button" ng-click="deleteSkipRule(r.logic_key)"
+                                    style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Global skipLogics toggle -->
+                    <div ng-if="otherSkipRules.length > 0" style="margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                        <button type="button" ng-click="showAllGlobalRules = !showAllGlobalRules"
+                                style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                            {{ showAllGlobalRules ? 'Hide' : 'Show' }} Other Global Rules in skipLogics.json ({{ otherSkipRules.length }})
+                        </button>
+                        <div ng-if="showAllGlobalRules" style="margin-top: 10px; max-height: 280px; overflow-y: auto; border: 1px solid #edf2f7; border-radius: 6px; padding: 8px; background: #f7fafc; font-size: 12px;">
+                            <div ng-repeat="gr in otherSkipRules track by gr.logic_key" style="padding: 5px 0; border-bottom: 1px solid #e2e8f0;">
+                                <strong>#{{ gr.logic_key }}</strong> [{{ gr.action }} &rarr; {{ gr.dependent }}] ({{ gr.conditionType }})
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: LIVE INTERACTIVE FORM PREVIEW (MATCHING CLINICAL OBSERVATIONS PAGE) -->
+                <div ng-if="activeTab === 'preview'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #f0fff4; border: 1px solid #c6f6d5; padding: 9px 14px; border-radius: 6px; flex-wrap: wrap; gap: 10px;">
+                        <span style="font-size: 12px; color: #22543d;">
+                            <i class="fa fa-eye"></i> Clinical Observations Preview &mdash; mirrors OpenMRS order, short names, control types, and live Section/Field conditional rules.
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <label style="font-size: 12px; color: #2d3748; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="checkbox" ng-model="previewShowHiddenOutline">
+                                Show hidden rules outline
+                            </label>
+                            <button type="button" ng-click="resetPreview()"
+                                    style="background: #fff; color: #22543d; border: 1px solid #9ae6b4; padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                Reset Inputs
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bahmni Observations Form Shell -->
+                    <div style="border: 1px solid #4e6c75; border-radius: 4px; background: #fff; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                        <!-- Bahmni Teal Form Title Header -->
+                        <div style="background: #4e6c75; color: #fff; padding: 9px 14px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 600; font-size: 14px;">
+                                {{ selectedForm.name && selectedForm.name.name ? selectedForm.name.name : selectedForm.display }}
+                            </span>
+                            <span style="font-size: 12px; opacity: 0.9; display: inline-flex; gap: 10px; align-items: center;">
+                                <i class="fa fa-expand"></i>
+                                <i class="fa fa-compress"></i>
+                                <i class="fa fa-thumb-tack"></i>
+                            </span>
+                        </div>
+
+                        <!-- Form Canvas Body (Exact OpenMRS setMembers Order) -->
+                        <div style="padding: 16px 20px; background: #fff;">
+                            <div ng-if="previewItems.length === 0" style="padding: 30px; text-align: center; color: #a0aec0; font-size: 13px;">
+                                This form has no fields or sections configured yet.
+                            </div>
+
+                            <div ng-repeat="item in previewItems track by (item.uuid + '_' + $index)"
+                                 ng-if="item.visible || previewShowHiddenOutline"
+                                 style="margin-bottom: 12px; opacity: {{ item.visible ? 1 : 0.42 }};">
+
+                                <!-- Debug / Rule Banner if Show Hidden Outline is checked -->
+                                <div ng-if="previewShowHiddenOutline && item.hasRule"
+                                     style="font-size: 10px; font-weight: 700; margin-bottom: 3px; color: {{ item.visible ? '#22543d' : '#9b2c2c' }};">
+                                    [{{ item.visible ? 'SHOWN' : 'HIDDEN' }}: {{ item.reason }}]
+                                </div>
+
+                                <!-- A0) TIME-SERIES GRAPH PREVIEW -->
+                                <div ng-if="item.kind === 'graph'"
+                                     style="border: 1px solid #cbd5e0; border-radius: 6px; padding: 12px 14px; background: #f8fafc;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <strong style="font-size: 13px; color: #1a365d;"><i class="fa fa-line-chart" style="color: #6b46c1;"></i> {{ item.displayLabel }}</strong>
+                                        <span style="font-size: 11px; color: #6b46c1; font-weight: 600;">Custom Time-Series Graph</span>
+                                    </div>
+                                    <div style="display: flex; border: 1px solid #cbd5e0; background: #fff; height: 150px; overflow: hidden;">
+                                        <div style="width: 44px; border-right: 1px solid #94a3b8; display: flex; flex-direction: column; justify-content: space-between; padding: 4px 6px; font-size: 10px; color: #475569; text-align: right; background: #f1f5f9;">
+                                            <span ng-repeat="yl in item.graphYLabels track by $index">{{ yl }}</span>
+                                        </div>
+                                        <div style="flex: 1; background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px); background-size: 24px 20px;"></div>
+                                    </div>
+                                    <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 12px;">
+                                        <span ng-repeat="gs in item.graphSeries track by $index" style="display: inline-flex; align-items: center; gap: 5px;">
+                                            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: {{ gs.color }};"></span>
+                                            <span>{{ gs.name }}:</span>
+                                            <input type="number" placeholder="0" style="width: 60px; padding: 2px 5px; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 11px;">
+                                        </span>
+                                        <button type="button" style="padding: 3px 10px; background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 11px;">Add to Graph</button>
+                                    </div>
+                                </div>
+
+                                <!-- A) SECTION / CANVAS (fieldset.hasLegend) -->
+                                <fieldset ng-if="item.kind === 'section'"
+                                          style="border: 1px solid #d2d6dc; border-radius: 4px; padding: 10px 14px 12px 14px; margin: 8px 0 4px 0; background: #fff;">
+                                    <legend ng-click="togglePreviewSectionCollapse(item.name)"
+                                            style="width: auto; border: 1px solid #d2d6dc; border-radius: 12px; padding: 2px 12px; font-size: 12px; font-weight: 700; color: #333; background: #fff; cursor: pointer; margin-bottom: 6px;">
+                                        <i class="fa" ng-class="item.collapsed ? 'fa-caret-right' : 'fa-caret-down'"></i>
+                                        {{ item.displayLabel }}
+                                        <button ng-if="item.allowAddMore" type="button" ng-click="$event.stopPropagation()"
+                                                style="margin-left: 8px; font-size: 11px; background: #f3f7ed; color: #4f7d38; border: 1px solid #9bc269; border-radius: 3px; padding: 1px 7px; font-weight: 600;">
+                                            <i class="fa fa-plus"></i> Add Section
+                                        </button>
+                                    </legend>
+
+                                    <div ng-if="!item.collapsed">
+                                        <div ng-repeat="child in item.children track by (child.uuid + '_' + $index)"
+                                             ng-if="child.visible || previewShowHiddenOutline"
+                                             style="margin-bottom: 10px; opacity: {{ child.visible ? 1 : 0.42 }};">
+
+                                            <div ng-if="previewShowHiddenOutline && child.hasRule"
+                                                 style="font-size: 10px; font-weight: 700; margin-bottom: 2px; color: {{ child.visible ? '#22543d' : '#9b2c2c' }};">
+                                                [{{ child.visible ? 'SHOWN' : 'HIDDEN' }}: {{ child.reason }}]
+                                            </div>
+
+                                            <!-- Nested Image Upload inside Section (e.g., Consultation Images -> Image) -->
+                                            <div ng-if="child.kind === 'image'" style="padding: 4px 0;">
+                                                <div style="width: 110px; height: 110px; border: 1px dashed #cbd5e0; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafafa; color: #718096; cursor: pointer;">
+                                                    <i class="fa fa-upload fa-2x"></i>
+                                                    <span style="font-size: 10px; margin-top: 5px;">{{ child.displayLabel }}</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Nested Sub-section (Level 2) -->
+                                            <fieldset ng-if="child.kind === 'section'" style="border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 12px; margin: 6px 0;">
+                                                <legend style="width: auto; font-size: 12px; font-weight: 700; padding: 0 6px; color: #333;">{{ child.displayLabel }}</legend>
+                                                <div ng-repeat="gc in child.children track by (gc.uuid + '_' + $index)" ng-if="gc.visible || previewShowHiddenOutline"
+                                                     style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px;">
+                                                    <label style="width: 28%; text-align: right; font-size: 12px; font-weight: 600; color: #333; padding-top: 5px;">
+                                                        {{ gc.displayLabel }} <span ng-if="gc.required" style="color: #e53e3e;">*</span>
+                                                    </label>
+                                                    <div style="flex: 1;">
+                                                        <select ng-if="gc.isCoded && gc.displayMode === 'dropdown'" ng-model="previewValues[gc.triggerConceptName]" ng-change="recomputePreview()"
+                                                                style="width: 260px; max-width: 100%; padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 12px;">
+                                                            <option value="">Choose Answer</option>
+                                                            <option ng-repeat="a in gc.answers track by a.uuid" value="{{ a.name }}">{{ a.displayLabel }}</option>
+                                                        </select>
+                                                        <div ng-if="gc.isCoded && gc.displayMode !== 'dropdown'" style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                                            <button type="button" ng-repeat="a in gc.answers track by a.uuid"
+                                                                    ng-click="togglePreviewButton(gc.triggerConceptName, a.name, gc.displayMode === 'multiSelect' || gc.displayMode === 'multiAutocomplete')"
+                                                                    style="min-width: 110px; padding: 5px 10px; border-radius: 3px; font-size: 12px; cursor: pointer; border: 1px solid {{ (previewValues[gc.triggerConceptName] === a.name || (previewMultiValues[gc.triggerConceptName] && previewMultiValues[gc.triggerConceptName][a.name])) ? '#4f7d38' : '#ccc' }}; background: {{ (previewValues[gc.triggerConceptName] === a.name || (previewMultiValues[gc.triggerConceptName] && previewMultiValues[gc.triggerConceptName][a.name])) ? '#6aa04d' : 'linear-gradient(to bottom, #f9f9f9, #e6e6e6)' }}; color: {{ (previewValues[gc.triggerConceptName] === a.name || (previewMultiValues[gc.triggerConceptName] && previewMultiValues[gc.triggerConceptName][a.name])) ? '#fff' : '#333' }};">
+                                                                {{ a.displayLabel }}
+                                                            </button>
+                                                        </div>
+                                                        <input ng-if="!gc.isCoded" type="text" ng-model="previewValues[gc.triggerConceptName]" ng-change="recomputePreview()"
+                                                               style="width: 260px; max-width: 100%; padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 12px;">
+                                                    </div>
+                                                </div>
+                                            </fieldset>
+
+                                            <!-- Standard Horizontal Row inside Section -->
+                                            <div ng-if="child.kind !== 'image' && child.kind !== 'section'" style="display: flex; align-items: flex-start; gap: 14px;">
+                                                <label style="width: 28%; flex-shrink: 0; text-align: right; font-size: 12px; color: #333; padding-top: 6px;">
+                                                    <span>{{ child.displayLabel }}</span>
+                                                    <span ng-if="child.units" style="color: #718096;"> ({{ child.units }})</span>
+                                                    <span ng-if="child.required" style="color: #e53e3e; font-weight: bold;"> *</span>
+                                                    <i ng-if="child.description" class="fa fa-question-circle" style="color: #718096; margin-left: 3px;" title="{{ child.description }}"></i>
+                                                </label>
+                                                <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px;">
+                                                    <select ng-if="child.isCoded && (child.kind === 'dropdown' || child.kind === 'autocomplete' || child.kind === 'multiAutocomplete')"
+                                                            ng-model="previewValues[child.triggerConceptName]" ng-change="recomputePreview()"
+                                                            style="width: 300px; max-width: 100%; padding: 5px 8px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px; background: #fff;">
+                                                        <option value="">Choose Answer</option>
+                                                        <option ng-repeat="a in child.answers track by a.uuid" value="{{ a.name }}">{{ a.displayLabel }}</option>
+                                                    </select>
+                                                    <div ng-if="child.isCoded && (child.kind === 'buttons' || child.kind === 'multiSelect')" style="display: flex; flex-wrap: wrap; gap: 6px; max-width: 560px;">
+                                                        <button type="button" ng-repeat="a in child.answers track by a.uuid"
+                                                                ng-click="togglePreviewButton(child.triggerConceptName, a.name, child.kind === 'multiSelect')"
+                                                                style="min-width: 150px; padding: 6px 12px; border-radius: 3px; font-size: 12px; cursor: pointer; text-align: center; border: 1px solid {{ (previewValues[child.triggerConceptName] === a.name || (previewMultiValues[child.triggerConceptName] && previewMultiValues[child.triggerConceptName][a.name])) ? '#4f7d38' : '#c8c8c8' }}; background: {{ (previewValues[child.triggerConceptName] === a.name || (previewMultiValues[child.triggerConceptName] && previewMultiValues[child.triggerConceptName][a.name])) ? '#6aa04d' : 'linear-gradient(to bottom, #fafafa, #e5e5e5)' }}; color: {{ (previewValues[child.triggerConceptName] === a.name || (previewMultiValues[child.triggerConceptName] && previewMultiValues[child.triggerConceptName][a.name])) ? '#fff' : '#333' }};">
+                                                            {{ a.displayLabel }}
+                                                        </button>
+                                                    </div>
+                                                    <textarea ng-if="child.kind === 'textarea'" rows="2" ng-model="previewValues[child.triggerConceptName]" ng-change="recomputePreview()"
+                                                              style="width: 360px; max-width: 100%; padding: 6px 8px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px;"></textarea>
+                                                    <input ng-if="child.kind === 'conciseText'" type="text" ng-model="previewValues[child.triggerConceptName]" ng-change="recomputePreview()"
+                                                           style="width: 280px; max-width: 100%; padding: 5px 8px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px;">
+                                                    <div ng-if="child.kind === 'numeric' || child.kind === 'stepper'" style="display: inline-flex; align-items: center; gap: 4px;">
+                                                        <button ng-if="child.kind === 'stepper'" type="button" ng-click="stepPreviewNumeric(child.triggerConceptName, -1)" style="padding: 4px 8px; border: 1px solid #bbb; background: #f7fafc; cursor: pointer;">-</button>
+                                                        <input type="number" ng-model="previewValues[child.triggerConceptName]" ng-change="recomputePreview()"
+                                                               style="width: 130px; padding: 5px 8px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px;">
+                                                        <button ng-if="child.kind === 'stepper'" type="button" ng-click="stepPreviewNumeric(child.triggerConceptName, 1)" style="padding: 4px 8px; border: 1px solid #bbb; background: #f7fafc; cursor: pointer;">+</button>
+                                                    </div>
+                                                    <div ng-if="child.kind === 'boolean'" style="display: flex; gap: 6px;">
+                                                        <button type="button" ng-click="togglePreviewButton(child.triggerConceptName, true, false)"
+                                                                style="padding: 5px 14px; border-radius: 3px; font-size: 12px; cursor: pointer; border: 1px solid {{ previewValues[child.triggerConceptName] === true ? '#4f7d38' : '#c8c8c8' }}; background: {{ previewValues[child.triggerConceptName] === true ? '#6aa04d' : '#f2f2f2' }}; color: {{ previewValues[child.triggerConceptName] === true ? '#fff' : '#333' }};">Yes</button>
+                                                        <button type="button" ng-click="togglePreviewButton(child.triggerConceptName, false, false)"
+                                                                style="padding: 5px 14px; border-radius: 3px; font-size: 12px; cursor: pointer; border: 1px solid {{ previewValues[child.triggerConceptName] === false ? '#4f7d38' : '#c8c8c8' }}; background: {{ previewValues[child.triggerConceptName] === false ? '#6aa04d' : '#f2f2f2' }}; color: {{ previewValues[child.triggerConceptName] === false ? '#fff' : '#333' }};">No</button>
+                                                    </div>
+                                                    <input ng-if="child.kind === 'date' || child.kind === 'datetime' || child.kind === 'time'"
+                                                           type="text" ng-model="previewValues[child.triggerConceptName]" ng-change="recomputePreview()"
+                                                           placeholder="{{ child.datatype }}"
+                                                           style="width: 220px; padding: 5px 8px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px;">
+                                                    <span ng-if="child.allowAddMore" title="Add More" style="color: #4f7d38; font-size: 15px; padding-top: 4px;"><i class="fa fa-plus-square"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <!-- B) TOP-LEVEL FREE TEXT AUTOCOMPLETE / OBSERVATION NODE (e.g., Chief Complaint Data) -->
+                                <div ng-if="item.kind === 'freeTextAutocomplete'" style="display: flex; align-items: flex-start; gap: 14px;">
+                                    <label style="width: 28%; flex-shrink: 0; text-align: right; font-size: 12px; color: #333; padding-top: 6px;">
+                                        <span>{{ item.displayLabel }}</span>
+                                        <span ng-if="item.required" style="color: #e53e3e; font-weight: bold;"> *</span>
+                                        <i ng-if="item.description" class="fa fa-question-circle" style="color: #718096; margin-left: 3px;" title="{{ item.description }}"></i>
+                                    </label>
+                                    <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                                        <select ng-model="previewValues[item.triggerConceptName]" ng-change="onPreviewFreeTextSelect(item)"
+                                                style="width: 220px; padding: 5px 8px; border: 1px solid #8bb1d8; border-radius: 3px; font-size: 12px; background: #fff;">
+                                            <option value="">Type or choose coded value...</option>
+                                            <option ng-repeat="a in item.answers track by a.uuid" value="{{ a.name }}">{{ a.displayLabel }}</option>
+                                        </select>
+                                        <button type="button" style="padding: 4px 10px; border: 1px solid #ccc; border-radius: 3px; background: linear-gradient(to bottom, #f7f7f7, #e2e2e2); font-size: 12px; color: #333;">Accept</button>
+                                        <span ng-if="item.hasDuration" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #4a5568;">
+                                            <span>for</span>
+                                            <input type="number" ng-model="previewDurationValues[item.name]" style="width: 48px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; background: #f2f2f2;">
+                                            <select ng-model="previewDurationUnits[item.name]" ng-options="u as u for u in durationUnitsList"
+                                                    style="width: 115px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; background: #f2f2f2;">
+                                                <option value=""></option>
+                                            </select>
+                                        </span>
+                                        <span ng-if="item.allowAddMore" style="color: #4f7d38; font-size: 15px;"><i class="fa fa-plus-square"></i></span>
+                                        <span style="border: 1px solid #ccc; padding: 3px 6px; border-radius: 3px; color: #4f7d38; background: #f9f9f9;"><i class="fa fa-file-o"></i></span>
+                                    </div>
+                                </div>
+
+                                <!-- C) TOP-LEVEL IMAGE / VIDEO UPLOAD -->
+                                <div ng-if="item.kind === 'image' || item.kind === 'video'" style="display: flex; align-items: flex-start; gap: 14px;">
+                                    <label style="width: 28%; flex-shrink: 0; text-align: right; font-size: 12px; color: #333; padding-top: 6px;">
+                                        <span>{{ item.displayLabel }}</span>
+                                    </label>
+                                    <div style="flex: 1;">
+                                        <div style="width: 110px; height: 90px; border: 1px dashed #cbd5e0; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafafa; color: #718096;">
+                                            <i class="fa" ng-class="item.kind === 'video' ? 'fa-video-camera fa-lg' : 'fa-upload fa-lg'"></i>
+                                            <span style="font-size: 10px; margin-top: 4px;">{{ item.kind === 'video' ? 'Upload Video' : 'Upload File' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- D) TOP-LEVEL STANDARD FIELD (Text, Coded Buttons, Dropdown, MultiSelect, Numeric, Boolean, Date) -->
+                                <div ng-if="item.kind !== 'section' && item.kind !== 'freeTextAutocomplete' && item.kind !== 'image' && item.kind !== 'video'"
+                                     style="display: flex; align-items: flex-start; gap: 14px;">
+                                    <label style="width: 28%; flex-shrink: 0; text-align: right; font-size: 12px; color: #333; padding-top: 6px;">
+                                        <span>{{ item.displayLabel }}</span>
+                                        <span ng-if="item.units" style="color: #718096;"> ({{ item.units }})</span>
+                                        <span ng-if="item.required" style="color: #e53e3e; font-weight: bold;"> *</span>
+                                        <i ng-if="item.description" class="fa fa-question-circle" style="color: #718096; margin-left: 3px;" title="{{ item.description }}"></i>
+                                    </label>
+                                    <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px;">
+                                        <!-- Dropdown List -->
+                                        <select ng-if="item.isCoded && (item.kind === 'dropdown' || item.kind === 'autocomplete' || item.kind === 'multiAutocomplete')"
+                                                ng-model="previewValues[item.triggerConceptName]" ng-change="recomputePreview()"
+                                                style="width: 320px; max-width: 100%; padding: 6px 9px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px; background: #fff;">
+                                            <option value="">Choose Answer</option>
+                                            <option ng-repeat="a in item.answers track by a.uuid" value="{{ a.name }}">{{ a.displayLabel }}</option>
+                                        </select>
+
+                                        <!-- Coded Button List / Multi-Select -->
+                                        <div ng-if="item.isCoded && (item.kind === 'buttons' || item.kind === 'multiSelect')"
+                                             style="display: flex; flex-wrap: wrap; gap: 6px; max-width: 560px;">
+                                            <button type="button" ng-repeat="a in item.answers track by a.uuid"
+                                                    ng-click="togglePreviewButton(item.triggerConceptName, a.name, item.kind === 'multiSelect')"
+                                                    style="min-width: 165px; padding: 6px 12px; border-radius: 3px; font-size: 12px; cursor: pointer; text-align: center; border: 1px solid {{ (previewValues[item.triggerConceptName] === a.name || (previewMultiValues[item.triggerConceptName] && previewMultiValues[item.triggerConceptName][a.name])) ? '#4f7d38' : '#c8c8c8' }}; background: {{ (previewValues[item.triggerConceptName] === a.name || (previewMultiValues[item.triggerConceptName] && previewMultiValues[item.triggerConceptName][a.name])) ? '#6aa04d' : 'linear-gradient(to bottom, #fafafa, #e5e5e5)' }}; color: {{ (previewValues[item.triggerConceptName] === a.name || (previewMultiValues[item.triggerConceptName] && previewMultiValues[item.triggerConceptName][a.name])) ? '#fff' : '#333' }};">
+                                                {{ a.displayLabel }}
+                                            </button>
+                                        </div>
+
+                                        <!-- Textarea (default for Text concepts in Bahmni) -->
+                                        <textarea ng-if="item.kind === 'textarea'" rows="2" ng-model="previewValues[item.triggerConceptName]" ng-change="recomputePreview()"
+                                                  style="width: 420px; max-width: 100%; padding: 6px 9px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px;"></textarea>
+
+                                        <!-- Concise Text -->
+                                        <input ng-if="item.kind === 'conciseText' || item.kind === 'text'" type="text" ng-model="previewValues[item.triggerConceptName]" ng-change="recomputePreview()"
+                                               style="width: 320px; max-width: 100%; padding: 6px 9px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px;">
+
+                                        <!-- Numeric / Stepper -->
+                                        <div ng-if="item.kind === 'numeric' || item.kind === 'stepper'" style="display: inline-flex; align-items: center; gap: 4px;">
+                                            <button ng-if="item.kind === 'stepper'" type="button" ng-click="stepPreviewNumeric(item.triggerConceptName, -1)" style="padding: 5px 10px; border: 1px solid #bbb; background: #f7fafc; cursor: pointer;">-</button>
+                                            <input type="number" ng-model="previewValues[item.triggerConceptName]" ng-change="recomputePreview()"
+                                                   style="width: 140px; padding: 6px 9px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px;">
+                                            <button ng-if="item.kind === 'stepper'" type="button" ng-click="stepPreviewNumeric(item.triggerConceptName, 1)" style="padding: 5px 10px; border: 1px solid #bbb; background: #f7fafc; cursor: pointer;">+</button>
+                                        </div>
+
+                                        <!-- Boolean -->
+                                        <div ng-if="item.kind === 'boolean'" style="display: flex; gap: 6px;">
+                                            <button type="button" ng-click="togglePreviewButton(item.triggerConceptName, true, false)"
+                                                    style="min-width: 80px; padding: 6px 14px; border-radius: 3px; font-size: 12px; cursor: pointer; border: 1px solid {{ previewValues[item.triggerConceptName] === true ? '#4f7d38' : '#c8c8c8' }}; background: {{ previewValues[item.triggerConceptName] === true ? '#6aa04d' : 'linear-gradient(to bottom, #fafafa, #e5e5e5)' }}; color: {{ previewValues[item.triggerConceptName] === true ? '#fff' : '#333' }};">Yes</button>
+                                            <button type="button" ng-click="togglePreviewButton(item.triggerConceptName, false, false)"
+                                                    style="min-width: 80px; padding: 6px 14px; border-radius: 3px; font-size: 12px; cursor: pointer; border: 1px solid {{ previewValues[item.triggerConceptName] === false ? '#4f7d38' : '#c8c8c8' }}; background: {{ previewValues[item.triggerConceptName] === false ? '#6aa04d' : 'linear-gradient(to bottom, #fafafa, #e5e5e5)' }}; color: {{ previewValues[item.triggerConceptName] === false ? '#fff' : '#333' }};">No</button>
+                                        </div>
+
+                                        <!-- Date / Datetime / Time -->
+                                        <input ng-if="item.kind === 'date' || item.kind === 'datetime' || item.kind === 'time'"
+                                               type="text" ng-model="previewValues[item.triggerConceptName]" ng-change="recomputePreview()"
+                                               placeholder="{{ item.datatype }}"
+                                               style="width: 240px; padding: 6px 9px; border: 1px solid #bbb; border-radius: 3px; font-size: 12px;">
+
+                                        <span ng-if="item.allowAddMore" title="Add More" style="color: #4f7d38; font-size: 15px; padding-top: 5px;"><i class="fa fa-plus-square"></i></span>
+                                        <span ng-if="item.kind !== 'textarea'" style="border: 1px solid #ccc; padding: 3px 6px; border-radius: 3px; color: #4f7d38; background: #f9f9f9;"><i class="fa fa-file-o"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE NEW OBSERVATION FORM -->
+    <div ng-if="newFormModal.open" style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background: #fff; border-radius: 10px; max-width: 580px; width: 100%; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 18px; color: #1a365d;"><i class="fa fa-plus-circle" style="color: #2b6cb0;"></i> Add New Observation Form</h3>
+                <button type="button" ng-click="closeNewFormModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #718096;">&times;</button>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                <button type="button" ng-click="newFormModal.mode = 'create'"
+                        style="flex: 1; padding: 7px; border-radius: 6px; border: 1px solid #cbd5e0; font-weight: 600; font-size: 12px; cursor: pointer; background: {{ newFormModal.mode === 'create' ? '#2b6cb0' : '#f7fafc' }}; color: {{ newFormModal.mode === 'create' ? '#fff' : '#4a5568' }};">
+                    Create New Form Concept
+                </button>
+                <button type="button" ng-click="newFormModal.mode = 'existing'"
+                        style="flex: 1; padding: 7px; border-radius: 6px; border: 1px solid #cbd5e0; font-weight: 600; font-size: 12px; cursor: pointer; background: {{ newFormModal.mode === 'existing' ? '#2b6cb0' : '#f7fafc' }}; color: {{ newFormModal.mode === 'existing' ? '#fff' : '#4a5568' }};">
+                    Attach Existing OpenMRS ConceptSet
+                </button>
+            </div>
+
+            <div ng-if="newFormModal.mode === 'create'">
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Form Name (OpenMRS Concept Name) *</label>
+                    <input type="text" ng-model="newFormModal.name" placeholder="e.g., Cardiology Intake Assessment"
+                           style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Short Name (Optional)</label>
+                        <input type="text" ng-model="newFormModal.shortName" placeholder="e.g., Cardiology"
+                               style="width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    </div>
+                    <div style="width: 90px;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Tab Order</label>
+                        <input type="number" ng-model="newFormModal.order"
+                               style="width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Description (Optional)</label>
+                    <input type="text" ng-model="newFormModal.description" placeholder="Brief purpose of form..."
+                           style="width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+
+            <div ng-if="newFormModal.mode === 'existing'" style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Search Existing OpenMRS ConceptSet</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" ng-model="newFormModal.existingSearchQuery" placeholder="Type concept name..."
+                           style="flex: 1; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    <button type="button" ng-click="searchExistingFormConcepts()" style="background: #2b6cb0; color: #fff; border: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                        Search
+                    </button>
+                </div>
+                <div ng-if="newFormModal.existingSearchResults.length > 0" style="margin-top: 8px; max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <div ng-repeat="c in newFormModal.existingSearchResults track by c.uuid"
+                         style="display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-bottom: 1px solid #edf2f7; font-size: 12px;">
+                        <span><strong>{{ c.display }}</strong> <small style="color: #718096;">({{ c.conceptClass && c.conceptClass.name }})</small></span>
+                        <button type="button" ng-click="linkExistingFormTemplate(c)" ng-disabled="creating"
+                                style="background: #38a169; color: #fff; border: none; padding: 4px 9px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                            Attach
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consultation Settings for New Form -->
+            <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; margin-bottom: 16px; font-size: 12px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; margin-bottom: 6px;">
+                    <input type="checkbox" ng-model="newFormModal.enableInConsultation">
+                    Make available in Clinical Consultation Observations Tab
+                </label>
+                <div ng-if="newFormModal.enableInConsultation" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <label style="display: inline-flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" ng-model="newFormModal.defaultOpen"> Auto-Open
+                    </label>
+                    <div style="position: relative; display: inline-flex; align-items: center; gap: 6px;">
+                        <span>Locations:</span>
+                        <button type="button" ng-click="newFormModal.locDropdownOpen = !newFormModal.locDropdownOpen"
+                                style="padding: 4px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff; color: #2d3748; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-width: 170px; justify-content: space-between;">
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 210px;">{{ newFormModal.selectedLocationsSummary }}</span>
+                            <i class="fa fa-caret-down"></i>
+                        </button>
+                        <div ng-if="newFormModal.locDropdownOpen"
+                             style="position: absolute; bottom: 100%; left: 56px; margin-bottom: 4px; width: 240px; background: #fff; border: 1px solid #cbd5e0; border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,0.18); z-index: 10050; padding: 8px;">
+                            <input type="text" ng-model="newFormModal.locSearch" placeholder="Filter locations..."
+                                   style="width: 100%; box-sizing: border-box; padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; margin-bottom: 6px;">
+                            <div style="max-height: 180px; overflow-y: auto;">
+                                <label style="display: flex; align-items: center; gap: 7px; padding: 4px 6px; border-bottom: 1px solid #edf2f7; font-weight: 700; color: #2b6cb0; cursor: pointer; font-size: 12px;">
+                                    <input type="checkbox" ng-checked="newFormModal.selectedLocationsMap['All']"
+                                           ng-click="toggleLocationSelection(newFormModal, 'All', false)">
+                                    All Locations (All)
+                                </label>
+                                <label ng-repeat="loc in locations track by loc.uuid"
+                                       ng-show="!newFormModal.locSearch || loc.name.toLowerCase().indexOf(newFormModal.locSearch.toLowerCase()) !== -1"
+                                       style="display: flex; align-items: center; gap: 7px; padding: 4px 6px; cursor: pointer; font-size: 12px; color: #2d3748;">
+                                    <input type="checkbox" ng-checked="newFormModal.selectedLocationsMap[loc.name]"
+                                           ng-click="toggleLocationSelection(newFormModal, loc.name, false)">
+                                    <span>{{ loc.name }}</span>
+                                </label>
+                            </div>
+                            <div style="border-top: 1px solid #edf2f7; padding-top: 6px; margin-top: 4px; text-align: right;">
+                                <button type="button" ng-click="newFormModal.locDropdownOpen = false"
+                                        style="background: #2b6cb0; color: #fff; border: none; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" ng-click="closeNewFormModal()" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                    Cancel
+                </button>
+                <button ng-if="newFormModal.mode === 'create'" type="button" ng-click="createNewObservationForm()" ng-disabled="creating"
+                        style="background: #2b6cb0; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-spin fa-spinner" ng-if="creating"></i> Create Observation Form
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD SECTION (CANVAS) OR FIELD TO FORM / SECTION -->
+    <div ng-if="addMemberPanel.open" style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background: #fff; border-radius: 10px; max-width: 600px; width: 100%; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 17px; color: #1a365d;">Add Section (Canvas) or Field</h3>
+                    <div style="font-size: 12px; color: #718096;">Parent container: <strong>{{ addMemberPanel.targetParentName }}</strong></div>
+                </div>
+                <button type="button" ng-click="closeAddMemberPanel()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #718096;">&times;</button>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                <button type="button" ng-click="addMemberPanel.mode = 'create'"
+                        style="flex: 1; padding: 7px; border-radius: 6px; border: 1px solid #cbd5e0; font-weight: 600; font-size: 12px; cursor: pointer; background: {{ addMemberPanel.mode === 'create' ? '#38a169' : '#f7fafc' }}; color: {{ addMemberPanel.mode === 'create' ? '#fff' : '#4a5568' }};">
+                    Create New Section / Field
+                </button>
+                <button type="button" ng-click="addMemberPanel.mode = 'existing'"
+                        style="flex: 1; padding: 7px; border-radius: 6px; border: 1px solid #cbd5e0; font-weight: 600; font-size: 12px; cursor: pointer; background: {{ addMemberPanel.mode === 'existing' ? '#2b6cb0' : '#f7fafc' }}; color: {{ addMemberPanel.mode === 'existing' ? '#fff' : '#4a5568' }};">
+                    Pick Existing OpenMRS Concept
+                </button>
+            </div>
+
+            <div ng-if="addMemberPanel.mode === 'create'">
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Element Type *</label>
+                    <select ng-model="addMemberPanel.itemType"
+                            ng-options="t.id as t.label for t in newItemTypes"
+                            style="width: 100%; padding: 7px 9px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Name *</label>
+                    <input type="text" ng-model="addMemberPanel.name" placeholder="e.g., Obstetric Details Canvas OR Screening Method"
+                           style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                </div>
+
+                <div ng-if="addMemberPanel.itemType === 'CodedButtons' || addMemberPanel.itemType === 'CodedDropdown' || addMemberPanel.itemType === 'CodedMulti'" style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;">
+                        Coded Answers (comma or newline separated)
+                    </label>
+                    <textarea ng-model="addMemberPanel.answersText" rows="3" placeholder="e.g., Normal, Abnormal, Follow-up Needed"
+                              style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;"></textarea>
+                    <div style="font-size: 11px; color: #718096; margin-top: 3px;">Each answer will be matched or created in OpenMRS automatically.</div>
+                </div>
+
+                <!-- Custom Graph Config inside Create Modal -->
+                <div ng-if="addMemberPanel.itemType === 'CustomGraph'" style="background: #faf5ff; border: 1px solid #d6bcfa; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                    <div style="font-weight: 700; font-size: 12px; color: #44337a; margin-bottom: 8px;">
+                        <i class="fa fa-line-chart"></i> Custom Graph Axes &amp; Series
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; font-size: 12px;">
+                        <div>
+                            <label style="display: block; font-weight: 600;">Y-Min</label>
+                            <input type="number" ng-model="addMemberPanel.graphConfig.yMin" style="width: 100%; box-sizing: border-box; padding: 5px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600;">Y-Max</label>
+                            <input type="number" ng-model="addMemberPanel.graphConfig.yMax" style="width: 100%; box-sizing: border-box; padding: 5px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600;">Y-Step</label>
+                            <input type="number" step="any" ng-model="addMemberPanel.graphConfig.yStep" style="width: 100%; box-sizing: border-box; padding: 5px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; font-size: 12px;">
+                        <div>
+                            <label style="display: block; font-weight: 600;">Warn Low</label>
+                            <input type="number" step="any" ng-model="addMemberPanel.graphConfig.warnLow" placeholder="Optional" style="width: 100%; box-sizing: border-box; padding: 5px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600;">Warn High</label>
+                            <input type="number" step="any" ng-model="addMemberPanel.graphConfig.warnHigh" placeholder="Optional" style="width: 100%; box-sizing: border-box; padding: 5px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600;">Start Time Field</label>
+                            <input type="text" ng-model="addMemberPanel.graphConfig.startTimeConcept" placeholder="Auto on 1st point" style="width: 100%; box-sizing: border-box; padding: 5px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <strong style="font-size: 12px; color: #44337a;">Plotted Series / Lines</strong>
+                        <button type="button" ng-click="addGraphSeriesRow(addMemberPanel.graphConfig)" style="background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">+ Add Line</button>
+                    </div>
+                    <div ng-repeat="s in addMemberPanel.graphConfig.series track by $index" style="display: flex; gap: 6px; align-items: center; margin-bottom: 5px;">
+                        <input type="text" ng-model="s.name" placeholder="Series label (e.g., Temp)" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px;">
+                        <input type="color" ng-model="s.color" style="width: 34px; height: 28px; border: 1px solid #cbd5e0; padding: 1px; border-radius: 4px;">
+                        <button type="button" ng-click="removeGraphSeriesRow(addMemberPanel.graphConfig, $index)" ng-disabled="addMemberPanel.graphConfig.series.length <= 1"
+                                style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 3px 7px; border-radius: 4px; font-size: 11px; cursor: pointer;">&times;</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 14px; margin-bottom: 16px; font-size: 12px;">
+                    <label ng-if="addMemberPanel.itemType !== 'Section'" style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" ng-model="addMemberPanel.required"> Required field
+                    </label>
+                    <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" ng-model="addMemberPanel.allowAddMore"> {{ addMemberPanel.itemType === 'Section' ? 'Enable "Add Section" Button (+ Add Section)' : 'Enable "Add Field" Button (+)' }}
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" ng-click="closeAddMemberPanel()" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="button" ng-click="createAndAddMember()" ng-disabled="creating"
+                            style="background: #38a169; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        <i class="fa fa-spin fa-spinner" ng-if="creating"></i> Create &amp; Add
+                    </button>
+                </div>
+            </div>
+
+            <div ng-if="addMemberPanel.mode === 'existing'">
+                <div style="display: flex; gap: 14px; margin-bottom: 10px; font-size: 12px;">
+                    <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" ng-model="addMemberPanel.required"> Required (for fields)
+                    </label>
+                    <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" ng-model="addMemberPanel.allowAddMore"> Enable Add Field / Add Section Button (+)
+                    </label>
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <input type="text" ng-model="addMemberPanel.searchQuery" placeholder="Search OpenMRS concepts by name..."
+                           style="flex: 1; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                    <button type="button" ng-click="searchExistingConceptsForMember()" style="background: #2b6cb0; color: #fff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                        Search
+                    </button>
+                </div>
+                <div style="max-height: 240px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <div ng-if="addMemberPanel.searchResults.length === 0" style="padding: 16px; text-align: center; color: #a0aec0; font-size: 12px;">
+                        Enter a keyword and click Search to find existing OpenMRS concepts or sections.
+                    </div>
+                    <div ng-repeat="c in addMemberPanel.searchResults track by c.uuid"
+                         style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #edf2f7; font-size: 12px;">
+                        <span><strong>{{ c.display }}</strong> <small style="color: #718096;">({{ c.datatype && c.datatype.name }} / {{ c.conceptClass && c.conceptClass.name }})</small></span>
+                        <button type="button" ng-click="attachExistingConceptMember(c)" ng-disabled="creating"
+                                style="background: #2b6cb0; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                            Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD CODED ANSWERS TO FIELD -->
+    <div ng-if="addAnswerModal.open" style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background: #fff; border-radius: 10px; max-width: 480px; width: 100%; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 16px; color: #1a365d;">Add Coded Answers &mdash; {{ addAnswerModal.conceptName }}</h3>
+                <button type="button" ng-click="closeAddAnswerModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #718096;">&times;</button>
+            </div>
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px;">
+                Enter answer label(s), comma or newline separated:
+            </label>
+            <textarea ng-model="addAnswerModal.answerText" rows="3" placeholder="e.g., Mild, Moderate, Severe"
+                      style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; margin-bottom: 14px;"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" ng-click="closeAddAnswerModal()" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 7px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="saveNewAnswersToConcept()" ng-disabled="creating"
+                        style="background: #2b6cb0; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-spin fa-spinner" ng-if="creating"></i> Save Answers
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RENAME OBSERVATION FORM -->
+    <div ng-if="renameFormModal.open" style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background: #fff; border-radius: 10px; max-width: 480px; width: 100%; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 16px; color: #1a365d;">Rename Observation Form Template</h3>
+                <button type="button" ng-click="closeRenameFormModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #718096;">&times;</button>
+            </div>
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px;">
+                New Unique Form Name (updates OpenMRS Concept &amp; Clinical Extension):
+            </label>
+            <input type="text" ng-model="renameFormModal.newName"
+                   style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" ng-click="closeRenameFormModal()" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 7px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="renameSelectedForm()" ng-disabled="renameFormModal.saving"
+                        style="background: #2b6cb0; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-spin fa-spinner" ng-if="renameFormModal.saving"></i> Save New Name
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFIGURE / CUSTOMIZE GRAPH -->
+    <div ng-if="graphModal.open" style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background: #fff; border-radius: 10px; max-width: 560px; width: 100%; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 17px; color: #1a365d;"><i class="fa fa-line-chart" style="color: #6b46c1;"></i> Customize Graph</h3>
+                    <div style="font-size: 12px; color: #718096;">Concept: <strong>{{ graphModal.conceptName }}</strong></div>
+                </div>
+                <button type="button" ng-click="closeGraphConfigModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #718096;">&times;</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; font-size: 12px;">
+                <div>
+                    <label style="display: block; font-weight: 700; margin-bottom: 3px;">Y-Axis Min</label>
+                    <input type="number" step="any" ng-model="graphModal.yMin" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 700; margin-bottom: 3px;">Y-Axis Max</label>
+                    <input type="number" step="any" ng-model="graphModal.yMax" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 700; margin-bottom: 3px;">Y-Axis Step</label>
+                    <input type="number" step="any" ng-model="graphModal.yStep" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; font-size: 12px;">
+                <div>
+                    <label style="display: block; font-weight: 700; margin-bottom: 3px;">Warn Low (&le;)</label>
+                    <input type="number" step="any" ng-model="graphModal.warnLow" placeholder="Optional" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 700; margin-bottom: 3px;">Warn High (&ge;)</label>
+                    <input type="number" step="any" ng-model="graphModal.warnHigh" placeholder="Optional" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 700; margin-bottom: 3px;">Start Time Concept</label>
+                    <input type="text" ng-model="graphModal.startTimeConcept" placeholder="Auto on 1st point" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px;">
+                </div>
+            </div>
+
+            <div style="background: #faf5ff; border: 1px solid #e9d8fd; border-radius: 6px; padding: 10px; margin-bottom: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="font-size: 12px; color: #44337a;">Plotted Series / Lines</strong>
+                    <button type="button" ng-click="addGraphSeriesRow(graphModal)" style="background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">+ Add Line</button>
+                </div>
+                <div ng-repeat="s in graphModal.series track by $index" style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                    <input type="text" ng-model="s.name" placeholder="Series label" style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px;">
+                    <input type="color" ng-model="s.color" style="width: 38px; height: 30px; border: 1px solid #cbd5e0; padding: 1px; border-radius: 4px;">
+                    <button type="button" ng-click="removeGraphSeriesRow(graphModal, $index)" ng-disabled="graphModal.series.length <= 1"
+                            style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">&times;</button>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" ng-click="closeGraphConfigModal()" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 7px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="saveGraphConfig()" ng-disabled="saving"
+                        style="background: #6b46c1; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-check"></i> Save Graph Config
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -10,6 +10,7 @@ Bahmni.Registration.StateNameEvenTypeMap = {
     "erSearch": "VIEWED_REGISTRATION_ERPATIENT_SEARCH",
     "crSearch": "VIEWED_REGISTRATION_CRPATIENT_SEARCH",
     "prescriptionSearch": "VIEWED_PRESCRIPTION_PAGE",
+    "dispensingRegister": "VIEWED_DISPENSING_REGISTER_PAGE",
     "triagePatientDashboard": "VIEWED_TRIAGE_PATIENT_PAGE",
     "newERTriagePatient": "VIEWED_ER_TRIAGE_PATIENT_PAGE",
     "newCRTriagePatient": "VIEWED_CR_TRIAGE_PATIENT_PAGE",

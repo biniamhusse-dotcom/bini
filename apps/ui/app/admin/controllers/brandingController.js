@@ -12,7 +12,10 @@ angular.module('admin')
             $scope.applyMainLogoToAll = true;
 
             $scope.branding = {
-                facilityName: 'Boru Meda General Hospital',
+                facilityName: 'Dessie HC',
+                region: 'Amhara',
+                zone: 'South Wollo',
+                woreda: 'Dessie',
                 tagline: 'General Hospital EMR System',
                 welcomeMessage: 'WELCOME TO BORU MEDA GENERAL HOSPITAL EMR System',
                 address: 'Boru Meda, Dessie, Amhara, Ethiopia',
@@ -137,6 +140,9 @@ angular.module('admin')
 
                 var dataToSend = {
                     facilityName: $scope.branding.facilityName,
+                    region: $scope.branding.region,
+                    zone: $scope.branding.zone,
+                    woreda: $scope.branding.woreda,
                     tagline: $scope.branding.tagline,
                     welcomeMessage: $scope.branding.welcomeMessage,
                     address: $scope.branding.address,

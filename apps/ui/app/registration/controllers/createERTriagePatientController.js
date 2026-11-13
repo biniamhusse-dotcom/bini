@@ -3,9 +3,9 @@
 angular.module('bahmni.registration')
     .controller('CreateERTriagePatientController', ['$scope', '$rootScope', '$state', 'patientService', 'patient',
         'spinner', 'appService', 'messagingService', 'ngDialog', '$q', '$bahmniCookieStore', 'encounterService', '$translate',
-        'visitService', 'auditLogService', '$location', 'commonNameDictionaryService', 'patientAttributeService',
+        'visitService', 'auditLogService', '$location', 'commonNameDictionaryService', 'patientAttributeService', 'erTriageConfigService',
         function ($scope, $rootScope, $state, patientService, patient, spinner, appService, messagingService, ngDialog, $q,
-                  $bahmniCookieStore, encounterService, $translate, visitService, auditLogService, $location, commonNameDictionaryService, patientAttributeService) {
+                  $bahmniCookieStore, encounterService, $translate, visitService, auditLogService, $location, commonNameDictionaryService, patientAttributeService, erTriageConfigService) {
             var dateUtil = Bahmni.Common.Util.DateUtil;
             $scope.actions = {};
             var errorMessage;
@@ -152,32 +152,47 @@ angular.module('bahmni.registration')
                 $scope.patient.newlyAddedRelationships = [{}];
                 $scope.actions.followUpAction(patientProfileData);
             };
+            $scope.getMappedLocationName = function (triageName) {
+                var mapped = erTriageConfigService.getMappedLocationInfo(triageName);
+                return mapped ? (mapped.locationName || '') : '';
+            };
+
             $scope.selectedTriage = function (triageSelected) {
+                if (!triageSelected) {
+                    messagingService.showMessage("error", "Please select a triage type.");
+                    return;
+                }
                 $scope.triageSelected = triageSelected;
-                var selectedVisitType = $scope.visitControl.visitTypes.filter(function (visitType) {
-                    return visitType.name === $scope.triageSelected;
-                })[0];
+                var selectedVisitType = erTriageConfigService.resolveVisitTypeForTriage(
+                    $scope.triageSelected,
+                    $scope.visitControl.visitTypes,
+                    defaultVisitType
+                );
+                $scope.targetVisitLocationUuid = erTriageConfigService.resolveVisitLocationForTriage(
+                    $scope.triageSelected,
+                    $rootScope.visitLocation
+                );
                 $scope.visitControl.startVisit(selectedVisitType);
-                    return spinner.forPromise(createPromise()).then(function (response) {
-                        if (errorMessage) {
-                            messagingService.showMessage("error", errorMessage);
-                            errorMessage = undefined;
-                        }
-                        ngDialog.close();
+                return spinner.forPromise(createPromise()).then(function (response) {
+                    if (errorMessage) {
+                        messagingService.showMessage("error", errorMessage);
+                        errorMessage = undefined;
+                    }
+                    ngDialog.close();
+                });
+            };
+
+            $scope.selectTriage = function () {
+                erTriageConfigService.refreshConfig().finally(function () {
+                    $scope.triageType = erTriageConfigService.getTriageTypesForPatient($scope.patient);
+                    $scope.selectedTriageType = ($scope.triageType && $scope.triageType.length > 0) ? $scope.triageType[0] : undefined;
+                    $scope.dialog = ngDialog.open({
+                        template: 'views/selectTriagePopUp.html',
+                        className: 'test ngdialog-theme-default',
+                        scope: $scope
                     });
-            }
-            $scope.selectTriage = function (){
-                $scope.dialog = ngDialog.open({
-                    template: 'views/selectTriagePopUp.html', 
-                    className: 'test ngdialog-theme-default',
-                    scope: $scope});
                     $('body').addClass('show-controller-back');
-                    if($scope.patient.gender != "M"){
-                        $scope.triageType = $scope.erTriageVisitTypes.Otherr;
-                    }
-                    else{
-                        $scope.triageType = $scope.erTriageVisitTypes.Malee;
-                    }
+                });
             };
             var createPatient = function (jumpAccepted) {
                 return patientService.create($scope.patient, jumpAccepted).then(function (response) {
@@ -271,13 +286,14 @@ angular.module('bahmni.registration')
             };
 
             var createVisit = function (patientProfileData, forwardUrl) {
-                if (isEmptyVisitLocation()) {
+                var targetVisitLocation = $scope.targetVisitLocationUuid || $rootScope.visitLocation;
+                if (_.isEmpty(targetVisitLocation)) {
                     $state.go('patient.edit', {patientUuid: $scope.patient.uuid}).then(function () {
                         messagingService.showMessage("error", "NO_LOCATION_TAGGED_TO_VISIT_LOCATION");
                     });
                     return;
                 }
-                spinner.forPromise($scope.visitControl.createVisitOnly(patientProfileData.patient.uuid, $rootScope.visitLocation).then(function (response) {
+                spinner.forPromise($scope.visitControl.createVisitOnly(patientProfileData.patient.uuid, targetVisitLocation).then(function (response) {
                     auditLogService.log(patientProfileData.patient.uuid, "OPEN_VISIT", {visitUuid: response.data.uuid, visitType: response.data.visitType.display}, 'MODULE_LABEL_REGISTRATION_KEY');
                     if (forwardUrl) {
                         var updatedForwardUrl = appService.getAppDescriptor().formatUrl(forwardUrl, {'patientUuid': patientProfileData.patient.uuid});

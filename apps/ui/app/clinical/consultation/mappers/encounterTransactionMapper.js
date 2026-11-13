@@ -190,6 +190,57 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
                 });
                 encounterData.observations = encounterData.observations.concat(_.flatten(orderAttributes));
             }
+
+            var dtpHistoryConcept = {
+                uuid: "07d93800-d822-4229-996c-2fd05091563e",
+                name: "DTP Case Concept"
+            };
+            var handledDtpOrderUuids = {};
+            if (newlyAddedTreatments) {
+                newlyAddedTreatments.forEach(function (treatment) {
+                    if (treatment.isDtpEdit) {
+                        handledDtpOrderUuids[treatment.dtpOriginalOrderUuid] = true;
+                        var newDrugDesc = (treatment.getDisplayName ? treatment.getDisplayName() : (treatment.drugNameDisplay || '')) +
+                            (treatment.getDescriptionWithQuantity ? ' ' + treatment.getDescriptionWithQuantity() : '');
+                        var historyEntry = {
+                            orderUuid: treatment.dtpOriginalOrderUuid || null,
+                            orderNumber: treatment.dtpOriginalOrderNumber || null,
+                            originalDrug: (treatment.dtpOriginalDrugName || '') + (treatment.dtpOriginalDescription ? ' ' + treatment.dtpOriginalDescription : ''),
+                            newDrug: newDrugDesc.trim(),
+                            dtpMessage: treatment.dtpCases || '',
+                            action: treatment.dtpActionTaken || 'REGIMEN_EDITED',
+                            physicianReason: treatment.dtpPhysicianReason || '',
+                            timestamp: new Date().toISOString()
+                        };
+                        encounterData.observations.push({
+                            concept: dtpHistoryConcept,
+                            value: '[DTP_HISTORY]' + JSON.stringify(historyEntry),
+                            observationDateTime: encounterData.encounterDateTime || null
+                        });
+                    }
+                });
+            }
+            if (consultation.discontinuedDrugs) {
+                consultation.discontinuedDrugs.forEach(function (drugOrder) {
+                    if (drugOrder.dtpCases && !drugOrder.dtpHandledByDrugChange && !handledDtpOrderUuids[drugOrder.uuid]) {
+                        var historyEntry = {
+                            orderUuid: drugOrder.uuid || null,
+                            orderNumber: drugOrder.orderNumber || null,
+                            originalDrug: (drugOrder.getDisplayName ? drugOrder.getDisplayName() : '') + (drugOrder.getDescriptionWithQuantity ? ' ' + drugOrder.getDescriptionWithQuantity() : ''),
+                            newDrug: '',
+                            dtpMessage: drugOrder.dtpCases || '',
+                            action: 'DISCONTINUED',
+                            physicianReason: drugOrder.orderReasonText || '',
+                            timestamp: new Date().toISOString()
+                        };
+                        encounterData.observations.push({
+                            concept: dtpHistoryConcept,
+                            value: '[DTP_HISTORY]' + JSON.stringify(historyEntry),
+                            observationDateTime: encounterData.encounterDateTime || null
+                        });
+                    }
+                });
+            }
         };
 
         addObservationsToEncounter();

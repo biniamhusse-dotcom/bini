@@ -1,0 +1,65 @@
+<section class="block dashboard-section">
+    <h2 class="section-title">
+        <span>{{params.title || 'DTP History'}}</span>
+    </h2>
+    <div ng-if="noDtpMessage" class="placeholder-text">
+        <p>No Drug Therapy Problem (DTP) history recorded for this patient.</p>
+    </div>
+    <div ng-if="!noDtpMessage" class="dtp-history-list">
+        <div ng-repeat="record in dtpRecords track by $index"
+             style="border: 1px solid #e0e0e0; border-left: 4px solid {{record.latestReaction ? '#28a745' : '#d9534f'}}; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; background: #fff;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <div>
+                    <strong style="color: #333;">{{record.drugName}}</strong>
+                    <span ng-if="record.orderNumber" style="color: #666; font-size: 11px;"> (#{{record.orderNumber}})</span>
+                    <div style="font-size: 11px; color: #777; margin-top: 2px;">
+                        DTP Date: {{record.dtpDate | bahmniDateTime}}
+                    </div>
+                </div>
+                <div>
+                    <span ng-if="record.latestReaction"
+                          ng-style="getActionBadgeStyle(record.latestReaction.action)"
+                          style="padding: 2px 7px; border-radius: 3px; font-size: 11px; font-weight: bold; white-space: nowrap;">
+                        {{formatActionLabel(record.latestReaction.action)}}
+                    </span>
+                    <span ng-if="!record.latestReaction"
+                          style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 2px 7px; border-radius: 3px; font-size: 11px; font-weight: bold; white-space: nowrap;">
+                        Pending Physician Action
+                    </span>
+                </div>
+            </div>
+
+            <div style="margin-top: 6px; padding: 6px 8px; background-color: #fff5f5; border-radius: 3px; font-size: 12px; color: #721c24;">
+                <strong>Pharmacy DTP:</strong> {{record.dtpMessage}}
+            </div>
+
+            <div ng-if="record.latestReaction" style="margin-top: 6px; padding: 6px 8px; background-color: #f4fbf6; border-radius: 3px; font-size: 12px; color: #155724;">
+                <div>
+                    <strong>Physician Reaction:</strong> {{formatActionLabel(record.latestReaction.action)}}
+                    <span ng-if="record.latestReaction.providerName"> by {{record.latestReaction.providerName}}</span>
+                    <span ng-if="record.latestReaction.timestamp"> on {{record.latestReaction.timestamp | bahmniDateTime}}</span>
+                </div>
+                <div ng-if="record.latestReaction.newDrug && record.latestReaction.action !== 'RESENT_WITH_REASON'" style="margin-top: 3px;">
+                    <strong>Updated Prescription:</strong> {{record.latestReaction.newDrug}}
+                </div>
+                <div ng-if="record.latestReaction.physicianReason" style="margin-top: 3px;">
+                    <strong>Reason / Explanation:</strong> {{record.latestReaction.physicianReason}}
+                </div>
+            </div>
+
+            <div ng-if="record.reactions.length > 1" style="margin-top: 4px;">
+                <a href="javascript:void(0)" ng-click="toggleDetails($index)" style="font-size: 11px; color: #007bff;">
+                    {{expandedRecords[$index] ? 'Hide' : 'Show'}} previous reactions ({{record.reactions.length - 1}})
+                </a>
+                <div ng-if="expandedRecords[$index]" style="margin-top: 4px; padding-left: 8px; border-left: 2px solid #ccc;">
+                    <div ng-repeat="r in record.reactions.slice(1)" style="font-size: 11px; color: #555; margin-bottom: 4px;">
+                        <strong>{{formatActionLabel(r.action)}}</strong>
+                        <span ng-if="r.providerName"> ({{r.providerName}})</span>
+                        - {{r.timestamp | bahmniDateTime}}
+                        <span ng-if="r.physicianReason">: {{r.physicianReason}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

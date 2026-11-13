@@ -1,0 +1,365 @@
+<div class="location-visit-mapping-page" style="padding: 24px; max-width: 1320px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #2c3e50;">
+
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 style="margin: 0; font-size: 24px; color: #1a365d; display: flex; align-items: center; gap: 10px;">
+                <i class="fa fa-map-marker" style="color: #2b6cb0;"></i> Location &amp; Visit Type Management
+            </h2>
+            <p style="margin: 6px 0 0 0; color: #718096; font-size: 14px;">
+                Manage OpenMRS locations, visit types, and login-location-to-visit-type mappings (<code>loginlocation_visittype</code>).
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="#/dashboard" class="btn" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-arrow-left"></i> Admin Dashboard
+            </a>
+            <button type="button" ng-click="loadAll()" ng-disabled="loading || saving" style="background: #fff; color: #2d3748; border: 1px solid #cbd5e0; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i> Refresh
+            </button>
+            <button type="button" ng-if="activeTab === 'mapping'" ng-click="saveAllMappings()" ng-disabled="loading || saving" style="background: #2b6cb0; color: #fff; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-check"></i> Save All Mapping Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Saved Banner -->
+    <div ng-if="savedBanner" style="background: #f0fff4; border-left: 4px solid #38a169; border-radius: 6px; padding: 12px 16px; margin-bottom: 18px; color: #22543d; font-size: 14px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa fa-check-circle fa-lg" style="color: #38a169;"></i>
+        <span>{{ savedBanner }}</span>
+    </div>
+
+    <!-- Summary Cards -->
+    <div ng-if="!loading" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <div style="font-size: 12px; color: #718096; font-weight: 600;">Active Locations</div>
+            <div style="font-size: 24px; font-weight: 700; color: #1a365d; margin-top: 2px;">{{ stats.totalLocations }}</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <div style="font-size: 12px; color: #718096; font-weight: 600;">Mapped Locations</div>
+            <div style="font-size: 24px; font-weight: 700; color: #2f855a; margin-top: 2px;">{{ stats.mappedCount }}</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <div style="font-size: 12px; color: #718096; font-weight: 600;">Unmapped Locations</div>
+            <div style="font-size: 24px; font-weight: 700; color: {{ stats.unmappedCount > 0 ? '#c05621' : '#718096' }}; margin-top: 2px;">{{ stats.unmappedCount }}</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <div style="font-size: 12px; color: #718096; font-weight: 600;">Active Visit Types</div>
+            <div style="font-size: 24px; font-weight: 700; color: #2b6cb0; margin-top: 2px;">{{ stats.totalVisitTypes }}</div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div style="display: flex; gap: 6px; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px;">
+        <button type="button" ng-click="setTab('mapping')"
+                style="padding: 10px 18px; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; font-size: 13px; background: {{ activeTab === 'mapping' ? '#2b6cb0' : '#edf2f7' }}; color: {{ activeTab === 'mapping' ? '#fff' : '#4a5568' }};">
+            <i class="fa fa-exchange"></i> Location &harr; Visit Mapping
+        </button>
+        <button type="button" ng-click="setTab('locations')"
+                style="padding: 10px 18px; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; font-size: 13px; background: {{ activeTab === 'locations' ? '#2b6cb0' : '#edf2f7' }}; color: {{ activeTab === 'locations' ? '#fff' : '#4a5568' }};">
+            <i class="fa fa-hospital-o"></i> Manage Locations
+        </button>
+        <button type="button" ng-click="setTab('visittypes')"
+                style="padding: 10px 18px; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; font-size: 13px; background: {{ activeTab === 'visittypes' ? '#2b6cb0' : '#edf2f7' }}; color: {{ activeTab === 'visittypes' ? '#fff' : '#4a5568' }};">
+            <i class="fa fa-tags"></i> Manage Visit Types
+        </button>
+    </div>
+
+    <!-- Loading -->
+    <div ng-if="loading" style="text-align: center; padding: 60px 0; color: #718096;">
+        <i class="fa fa-spinner fa-spin fa-3x" style="color: #3182ce; margin-bottom: 12px;"></i>
+        <div style="font-size: 16px;">Loading OpenMRS locations, visit types, and mappings...</div>
+    </div>
+
+    <!-- TAB 1: LOCATION <-> VISIT MAPPING -->
+    <div ng-if="!loading && activeTab === 'mapping'">
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <input type="text" ng-model="mappingFilter.query" ng-change="applyMappingFilters()" placeholder="Search location, tag, or visit type..."
+                       style="padding: 7px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; min-width: 260px;">
+                <select ng-model="mappingFilter.mode" ng-change="applyMappingFilters()"
+                        style="padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                    <option value="all">All Active Locations</option>
+                    <option value="login">Login Locations Only</option>
+                    <option value="unmapped">Unmapped Locations Only</option>
+                </select>
+            </div>
+            <div style="font-size: 12px; color: #718096;">
+                Showing <strong>{{ filteredMappingRows.length }}</strong> of {{ mappingRows.length }} locations
+            </div>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568;">
+                        <th style="padding: 11px 14px;">Location</th>
+                        <th style="padding: 11px 14px;">Tags</th>
+                        <th style="padding: 11px 14px;">Mapped Visit Type(s)</th>
+                        <th style="padding: 11px 14px;">Add / Change Visit Type</th>
+                        <th style="padding: 11px 14px; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-if="filteredMappingRows.length === 0">
+                        <td colspan="5" style="padding: 28px; text-align: center; color: #718096;">
+                            No locations match your filter.
+                        </td>
+                    </tr>
+                    <tr ng-repeat="row in filteredMappingRows track by row.locationUuid" style="border-bottom: 1px solid #edf2f7; background: {{ row.dirty ? '#fffaf0' : '#fff' }};">
+                        <td style="padding: 11px 14px; vertical-align: top;">
+                            <div style="font-weight: 700; color: #1a202c;">{{ row.name }}</div>
+                            <div ng-if="row.parentName" style="font-size: 11px; color: #718096; margin-top: 2px;">Parent: {{ row.parentName }}</div>
+                        </td>
+                        <td style="padding: 11px 14px; vertical-align: top; max-width: 260px;">
+                            <span ng-if="row.tags.length === 0" style="font-size: 12px; color: #a0aec0;">No tags</span>
+                            <span ng-repeat="t in row.tags track by t.uuid"
+                                  style="display: inline-block; background: {{ t.name === 'Login Location' ? '#ebf8ff' : (t.name === 'Visit Location' ? '#e6fffa' : '#edf2f7') }}; color: {{ t.name === 'Login Location' ? '#2b6cb0' : (t.name === 'Visit Location' ? '#285e61' : '#4a5568') }}; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; margin: 0 4px 4px 0;">
+                                {{ t.name }}
+                            </span>
+                        </td>
+                        <td style="padding: 11px 14px; vertical-align: top;">
+                            <div ng-if="row.mappedVisitTypes.length === 0" style="font-size: 12px; color: #c05621; font-weight: 600;">
+                                Not mapped
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                <span ng-repeat="vt in row.mappedVisitTypes track by vt.uuid"
+                                      style="display: inline-flex; align-items: center; gap: 6px; background: #f0fff4; border: 1px solid #9ae6b4; color: #22543d; padding: 3px 9px; border-radius: 14px; font-size: 12px; font-weight: 600;">
+                                    {{ vt.name }}
+                                    <button type="button" ng-click="removeVisitTypeFromRow(row, $index)" title="Remove mapping"
+                                            style="background: none; border: none; color: #c53030; cursor: pointer; font-weight: 700; padding: 0 2px; line-height: 1;">&times;</button>
+                                </span>
+                            </div>
+                        </td>
+                        <td style="padding: 11px 14px; vertical-align: top;">
+                            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                <select ng-model="row.pendingVisitTypeUuid" style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 12px; background: #fff; min-width: 170px;">
+                                    <option value="">-- Select Visit Type --</option>
+                                    <option ng-repeat="vt in activeVisitTypes track by vt.uuid" value="{{vt.uuid}}">{{vt.name}}</option>
+                                </select>
+                                <button type="button" ng-click="addVisitTypeToRow(row)" ng-disabled="!row.pendingVisitTypeUuid"
+                                        style="background: #3182ce; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                    + Map
+                                </button>
+                                <button type="button" ng-if="!row.hasMatchingVisitType" ng-click="createAndMapMatchingVisitType(row)" ng-disabled="row.saving"
+                                        title="Create a Visit Type named '{{row.name}}' and map it to this location"
+                                        style="background: #edf2f7; color: #2b6cb0; border: 1px solid #bee3f8; padding: 5px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                    + Create "{{row.name}}" VT
+                                </button>
+                            </div>
+                        </td>
+                        <td style="padding: 11px 14px; text-align: right; vertical-align: top;">
+                            <button type="button" ng-click="saveRowMapping(row)" ng-disabled="row.saving || !row.dirty"
+                                    style="background: {{ row.dirty ? '#2f855a' : '#edf2f7' }}; color: {{ row.dirty ? '#fff' : '#718096' }}; border: none; padding: 6px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-spin fa-spinner" ng-if="row.saving"></i>
+                                {{ row.dirty ? 'Save' : 'Saved' }}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 2: MANAGE LOCATIONS -->
+    <div ng-if="!loading && activeTab === 'locations'">
+        <!-- Create New Location Card -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 14px 0; font-size: 16px; color: #1a365d;">
+                <i class="fa fa-plus-circle" style="color: #3182ce;"></i> Create New Location
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Location Name <span style="color: #e53e3e;">*</span></label>
+                    <input type="text" ng-model="newLocation.name" placeholder="e.g. Eye Clinic OPD"
+                           style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Description</label>
+                    <input type="text" ng-model="newLocation.description" placeholder="Optional description"
+                           style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Parent Location</label>
+                    <select ng-model="newLocation.parentLocationUuid" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                        <option value="">-- None --</option>
+                        <option ng-repeat="loc in activeLocations track by loc.uuid" value="{{loc.uuid}}">{{loc.name}}</option>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">Location Tags</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px 16px;">
+                    <label ng-repeat="tag in locationTags track by tag.uuid" style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" ng-model="newLocation.tagMap[tag.uuid]"> {{ tag.name }}
+                    </label>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-top: 1px solid #edf2f7; padding-top: 12px;">
+                <label style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #2b6cb0; cursor: pointer; margin: 0;">
+                    <input type="checkbox" ng-model="newLocation.createAndMapVisitType"> Also create matching Visit Type &amp; map to this location
+                </label>
+                <button type="button" ng-click="createLocation()" ng-disabled="saving"
+                        style="background: #2b6cb0; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-plus"></i> Create Location
+                </button>
+            </div>
+        </div>
+
+        <!-- Edit Location Panel -->
+        <div ng-if="editingLocation" style="background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #2b6cb0;">
+                <i class="fa fa-pencil"></i> Edit Location: {{ editingLocation.name }}
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Location Name</label>
+                    <input type="text" ng-model="editingLocation.name" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Description</label>
+                    <input type="text" ng-model="editingLocation.description" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Parent Location</label>
+                    <select ng-model="editingLocation.parentLocationUuid" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; background: #fff;">
+                        <option value="">-- None --</option>
+                        <option ng-repeat="loc in activeLocations track by loc.uuid" value="{{loc.uuid}}">{{loc.name}}</option>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">Location Tags</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px 16px;">
+                    <label ng-repeat="tag in locationTags track by tag.uuid" style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" ng-model="editingLocation.tagMap[tag.uuid]"> {{ tag.name }}
+                    </label>
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button type="button" ng-click="cancelEditLocation()" style="background: #fff; color: #4a5568; border: 1px solid #cbd5e0; padding: 7px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="saveEditLocation()" ng-disabled="saving" style="background: #2b6cb0; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Save Changes</button>
+            </div>
+        </div>
+
+        <!-- Locations List -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <input type="text" ng-model="locFilter.query" ng-change="applyLocationFilters()" placeholder="Search locations or tags..."
+                   style="padding: 7px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; min-width: 250px;">
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; margin: 0;">
+                <input type="checkbox" ng-model="locFilter.showRetired" ng-change="applyLocationFilters()"> Show Retired Locations
+            </label>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568;">
+                        <th style="padding: 10px 14px;">Name</th>
+                        <th style="padding: 10px 14px;">Parent</th>
+                        <th style="padding: 10px 14px;">Tags</th>
+                        <th style="padding: 10px 14px;">Status</th>
+                        <th style="padding: 10px 14px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="loc in filteredLocations track by loc.uuid" style="border-bottom: 1px solid #edf2f7; opacity: {{ loc.retired ? 0.65 : 1 }};">
+                        <td style="padding: 10px 14px; font-weight: 600;">{{ loc.name }}</td>
+                        <td style="padding: 10px 14px; color: #718096;">{{ loc.parentName || '—' }}</td>
+                        <td style="padding: 10px 14px; font-size: 12px; color: #4a5568;">{{ loc.tagNamesText || '—' }}</td>
+                        <td style="padding: 10px 14px;">
+                            <span style="padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; background: {{ loc.retired ? '#fed7d7' : '#c6f6d5' }}; color: {{ loc.retired ? '#9b2c2c' : '#22543d' }};">
+                                {{ loc.retired ? 'Retired' : 'Active' }}
+                            </span>
+                        </td>
+                        <td style="padding: 10px 14px; text-align: right; white-space: nowrap;">
+                            <button type="button" ng-click="startEditLocation(loc)" style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 4px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; margin-right: 6px;">Edit</button>
+                            <button type="button" ng-click="toggleRetireLocation(loc)" style="background: {{ loc.retired ? '#ebf8ff' : '#fff5f5' }}; color: {{ loc.retired ? '#2b6cb0' : '#c53030' }}; border: 1px solid {{ loc.retired ? '#90cdf4' : '#feb2b2' }}; padding: 4px 10px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                                {{ loc.retired ? 'Restore' : 'Retire' }}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: MANAGE VISIT TYPES -->
+    <div ng-if="!loading && activeTab === 'visittypes'">
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #1a365d;">
+                <i class="fa fa-plus-circle" style="color: #3182ce;"></i> Create New Visit Type
+            </h3>
+            <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Visit Type Name <span style="color: #e53e3e;">*</span></label>
+                    <input type="text" ng-model="newVisitType.name" placeholder="e.g. Eye Clinic OPD"
+                           style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div style="flex: 1.5; min-width: 240px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Description</label>
+                    <input type="text" ng-model="newVisitType.description" placeholder="Optional description"
+                           style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <button type="button" ng-click="createVisitType()" ng-disabled="saving"
+                        style="background: #2b6cb0; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-plus"></i> Create Visit Type
+                </button>
+            </div>
+        </div>
+
+        <div ng-if="editingVisitType" style="background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 10px 0; font-size: 15px; color: #2b6cb0;">Edit Visit Type: {{ editingVisitType.name }}</h3>
+            <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Name</label>
+                    <input type="text" ng-model="editingVisitType.name" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <div style="flex: 1.5; min-width: 240px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Description</label>
+                    <input type="text" ng-model="editingVisitType.description" style="width: 100%; padding: 7px 10px; border: 1px solid #90cdf4; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+                <button type="button" ng-click="cancelEditVisitType()" style="background: #fff; color: #4a5568; border: 1px solid #cbd5e0; padding: 7px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="saveEditVisitType()" ng-disabled="saving" style="background: #2b6cb0; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Save</button>
+            </div>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <input type="text" ng-model="vtFilter.query" ng-change="applyVisitTypeFilters()" placeholder="Search visit types..."
+                   style="padding: 7px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; min-width: 250px;">
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; margin: 0;">
+                <input type="checkbox" ng-model="vtFilter.showRetired" ng-change="applyVisitTypeFilters()"> Show Retired Visit Types
+            </label>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #4a5568;">
+                        <th style="padding: 10px 14px;">Visit Type Name</th>
+                        <th style="padding: 10px 14px;">Description</th>
+                        <th style="padding: 10px 14px;">Status</th>
+                        <th style="padding: 10px 14px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="vt in filteredVisitTypes track by vt.uuid" style="border-bottom: 1px solid #edf2f7; opacity: {{ vt.retired ? 0.65 : 1 }};">
+                        <td style="padding: 10px 14px; font-weight: 600;">{{ vt.name }}</td>
+                        <td style="padding: 10px 14px; color: #718096;">{{ vt.description || '—' }}</td>
+                        <td style="padding: 10px 14px;">
+                            <span style="padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; background: {{ vt.retired ? '#fed7d7' : '#c6f6d5' }}; color: {{ vt.retired ? '#9b2c2c' : '#22543d' }};">
+                                {{ vt.retired ? 'Retired' : 'Active' }}
+                            </span>
+                        </td>
+                        <td style="padding: 10px 14px; text-align: right; white-space: nowrap;">
+                            <button type="button" ng-click="startEditVisitType(vt)" style="background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 4px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; margin-right: 6px;">Edit</button>
+                            <button type="button" ng-click="toggleRetireVisitType(vt)" style="background: {{ vt.retired ? '#ebf8ff' : '#fff5f5' }}; color: {{ vt.retired ? '#2b6cb0' : '#c53030' }}; border: 1px solid {{ vt.retired ? '#90cdf4' : '#feb2b2' }}; padding: 4px 10px; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                                {{ vt.retired ? 'Restore' : 'Retire' }}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

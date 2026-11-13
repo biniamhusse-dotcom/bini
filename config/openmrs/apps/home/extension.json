@@ -123,6 +123,17 @@
     "order": 10,
     "requiredPrivilege": "app:prescription"
   },
+  "dispensingRegister": {
+    "id": "bahmni.dispensingRegister",
+    "extensionPointId": "org.bahmni.home.dashboard",
+    "type": "link",
+    "label": "Dispensing Register Book",
+    "translationKey": "Dispensing Register Book",
+    "url": "../registration/index.html#/dispensingRegister",
+    "icon": "fa-book",
+    "order": 11,
+    "requiredPrivilege": "app:dispensingRegister"
+  },
   "reports": {
     "id": "bahmni.reports",
     "extensionPointId": "org.bahmni.home.dashboard",

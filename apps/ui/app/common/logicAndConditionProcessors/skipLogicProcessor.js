@@ -15,10 +15,12 @@ Bahmni.Common.skipLogicProcessor = (function () {
 
 
     function filterDependentFields(observation, configs, calculationConfigs, rootObs, patientHistory) {
-        const selfUpdatingFields = JSON.parse(localStorage.getItem('selfUpdatingFields'));
-        const fieldsNeedPageRefresh = JSON.parse(localStorage.getItem('fieldsNeedPageRefresh'));
+        const selfUpdatingFields = JSON.parse(localStorage.getItem('selfUpdatingFields')) || [];
+        const fieldsNeedPageRefresh = JSON.parse(localStorage.getItem('fieldsNeedPageRefresh')) || [{ atFirst: [] }, { duringEachUpdate: [] }];
+        calculationConfigs = calculationConfigs || [];
+        configs = configs || (function () { try { return JSON.parse(localStorage.getItem('skipLogicConfigs')) || []; } catch (e) { return []; } })();
 
-        const hidenFields = configs[0].logics[0].hiddenFields;
+        const hidenFields = (configs[0] && configs[0].logics && configs[0].logics[0] && configs[0].logics[0].hiddenFields) || [];
 
         const nameValueSet = new Set(JSON.parse(localStorage.getItem(SKIP_LOGIC_TRIGGERS_KEY)) || []);
         let nameValueArray = Array.from(nameValueSet);
@@ -102,11 +104,11 @@ Bahmni.Common.skipLogicProcessor = (function () {
                     case "between, <=, <":
                         return fieldValue >= logic.minValue && fieldValue < logic.maxValue;
                     case "=":
-                        return fieldValue === logic.value;
+                        return fieldValue === logic.value || (fieldValue !== undefined && fieldValue !== null && logic.value !== undefined && logic.value !== null && String(fieldValue) === String(logic.value));
                     case "exclude":
                         return decideSkipLogicBasedOnExcludeOperator(fieldValue, logic, nameValueArray);
                     case "!=":
-                        return fieldValue !== logic.value;
+                        return fieldValue !== logic.value && String(fieldValue) !== String(logic.value);
                     case "OR":
                         if (Array.isArray(logic.orValues)) {
                             return logic.orValues.includes(fieldValue);
@@ -137,6 +139,45 @@ Bahmni.Common.skipLogicProcessor = (function () {
             }
         }
 
+        function extractConceptAnswerName(val) {
+            if (val === undefined || val === null || val === '') {
+                return '';
+            }
+            if (typeof val === 'string') {
+                return val;
+            }
+            if (typeof val === 'boolean' || typeof val === 'number') {
+                return val;
+            }
+            if (val.concept) {
+                if (typeof val.concept.name === 'string') {
+                    return val.concept.name;
+                }
+                if (val.concept.name && typeof val.concept.name.name === 'string') {
+                    return val.concept.name.name;
+                }
+                if (val.concept.displayString) {
+                    return val.concept.displayString;
+                }
+            }
+            if (typeof val.name === 'string') {
+                return val.name;
+            }
+            if (val.name && typeof val.name.name === 'string') {
+                return val.name.name;
+            }
+            if (val.displayString) {
+                return val.displayString;
+            }
+            if (val.label) {
+                return val.label;
+            }
+            if (val.value !== undefined && val.value !== val) {
+                return extractConceptAnswerName(val.value);
+            }
+            return '';
+        }
+
         function addOrUpdateNameValueSet(trigger, value, dataType) {
 
             let existingObjectIndex, existingDefaultObjectIndex;
@@ -144,7 +185,7 @@ Bahmni.Common.skipLogicProcessor = (function () {
             if (dataType === "multiSelect") {
                 existingObjectIndex = Array.from(nameValueSet).findIndex(obj => obj.trigger === trigger && obj.value === value);
 
-                if (existingObjectIndex === -1 && value !== '' && value !== null) {
+                if (existingObjectIndex === -1 && value !== '' && value !== null && value !== undefined) {
                     nameValueSet.add({ trigger, value });
                 }
             } else {
@@ -153,13 +194,13 @@ Bahmni.Common.skipLogicProcessor = (function () {
                 const nameValueArray = Array.from(nameValueSet);
 
                 if (existingObjectIndex !== -1) {
-                    if (value === null || value === '' && existingDefaultObjectIndex !== -1) {
+                    if ((value === null || value === '') && existingDefaultObjectIndex !== -1) {
                         nameValueSet.delete(Array.from(nameValueSet)[existingObjectIndex]);
-                    } else {
+                    } else if (value !== null && value !== '' && value !== undefined) {
                         nameValueArray[existingObjectIndex].value = value;
                     }
                 } else {
-                    if (value !== '' && value !== null) {
+                    if (value !== '' && value !== null && value !== undefined) {
                         nameValueSet.add({ trigger, value });
                     }
                 }
@@ -167,7 +208,7 @@ Bahmni.Common.skipLogicProcessor = (function () {
         }
 
         function removeNameValueSet(trigger, conceptValue, observation) {
-            const isSelectedFalseObjectIndex = Array.from(nameValueSet).findIndex(item => item.trigger === trigger && item.value === conceptValue && observation.selectedObs[conceptValue] === undefined && item.type !== "default");
+            const isSelectedFalseObjectIndex = Array.from(nameValueSet).findIndex(item => item.trigger === trigger && item.value === conceptValue && (!observation.selectedObs || observation.selectedObs[conceptValue] === undefined) && item.type !== "default");
 
             if (isSelectedFalseObjectIndex !== -1) {
                 const updatedNameValueSet = new Set(Array.from(nameValueSet));
@@ -180,10 +221,16 @@ Bahmni.Common.skipLogicProcessor = (function () {
 
         function getConceptValue(observation, conceptName, dataType) {
             let conceptValue;
-            if (dataType === "Coded" && observation.conceptUIConfig.multiSelect !== undefined) {
-                observation.possibleAnswers.forEach(answer => {
-                    conceptValue = answer.name;
-                    const isSelected = observation.selectedObs && observation.selectedObs[conceptValue] !== undefined;
+            const uiCfg = observation.conceptUIConfig || {};
+            const isMulti = !!(uiCfg.multiSelect || observation.isMultiSelect);
+            const rawValue = (observation.value !== undefined && observation.value !== null)
+                ? observation.value
+                : (observation.primaryObs ? observation.primaryObs.value : undefined);
+
+            if (dataType === "Coded" && isMulti) {
+                (observation.possibleAnswers || []).forEach(answer => {
+                    conceptValue = extractConceptAnswerName(answer);
+                    const isSelected = observation.selectedObs && observation.selectedObs[conceptValue] !== undefined && !observation.selectedObs[conceptValue].voided;
 
                     if (isSelected) {
                         addOrUpdateNameValueSet(conceptName, conceptValue, "multiSelect");
@@ -192,40 +239,18 @@ Bahmni.Common.skipLogicProcessor = (function () {
                         removeNameValueSet(conceptName, conceptValue, observation);
                     }
                 });
-            } else if (dataType === "Coded" && observation.conceptUIConfig.multiSelect === undefined) {
-                if (observation.conceptUIConfig.dropdown !== undefined) {
-                    if (observation.value && observation.value.concept !== undefined) {
-                        conceptValue = observation.value.concept.name;
-                    } else if (observation.value !== undefined && observation.value.concept === undefined) {
-                        conceptValue = observation.value.name;
-                    } else {
-                        conceptValue = '';
-                    }
-
-                } else {
-                    if (typeof observation.value === "object" && observation.value !== undefined) {
-                        if (observation.conceptUIConfig.autocomplete !== undefined && observation.value.concept) {
-                            conceptValue = observation.value.concept.name;
-                        } else {
-                            conceptValue = observation.value.name.name;
-                        }
-
-                    } else {
-                        conceptValue = '';
-                    }
-
-                }
-
+            } else if (dataType === "Coded" && !isMulti) {
+                conceptValue = extractConceptAnswerName(rawValue);
                 if (conceptValue !== undefined) {
                     addOrUpdateNameValueSet(conceptName, conceptValue, dataType);
                 }
             } else if (['N/A', 'Text', 'Numeric', 'Boolean', 'Date'].includes(dataType)) {
-                conceptValue = observation.value;
+                conceptValue = rawValue;
 
-                if (conceptValue !== undefined) {
+                if (conceptValue !== undefined && conceptValue !== null) {
                     addOrUpdateNameValueSet(conceptName, conceptValue, dataType);
                 } else {
-                    addOrUpdateNameValueSet(conceptName, '', dataType)
+                    addOrUpdateNameValueSet(conceptName, '', dataType);
                 }
             }
             nameValueArray = Array.from(nameValueSet);
@@ -427,12 +452,13 @@ Bahmni.Common.skipLogicProcessor = (function () {
         }
 
         function updateGroupMembersVisibility(groupMembers, logicKeys) {
-            const duringEachUpdate = fieldsNeedPageRefresh[1].duringEachUpdate;
-            const atFirst = fieldsNeedPageRefresh[0].atFirst;
+            const duringEachUpdate = (fieldsNeedPageRefresh && fieldsNeedPageRefresh[1] && fieldsNeedPageRefresh[1].duringEachUpdate) || [];
+            const atFirst = (fieldsNeedPageRefresh && fieldsNeedPageRefresh[0] && fieldsNeedPageRefresh[0].atFirst) || [];
             const conditionallyRequiredFieldsSet = new Set(JSON.parse(localStorage.getItem('conditionallyRequiredFields')) || []);
             let conditionallyRequiredFields = Array.from(conditionallyRequiredFieldsSet) || [];
             const hiddenMandatoryFieldsSet = new Set(JSON.parse(localStorage.getItem('hiddenMandatoryFields')) || []);
             let hiddenMandatoryFields = Array.from(hiddenMandatoryFieldsSet) || [];
+            const safeLogicKeys = Array.isArray(logicKeys) ? logicKeys : [];
             groupMembers.forEach(groupMember => {
                 if (duringEachUpdate.includes(groupMember.concept.name)) {
                     manageConceptsNeedPageReload(groupMember);
@@ -442,13 +468,13 @@ Bahmni.Common.skipLogicProcessor = (function () {
                 }
                 let specialHiding;
                 const currentConceptName = groupMember.concept.name;
-                const optionOneShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && logicKeys.includes(logic.logic_key) && logic.action === "show");
-                const optionTwoShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !logicKeys.includes(logic.logic_key) && logic.action === "hide");
-                const optionThreeShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !logicKeys.includes(logic.logic_key) && logic.action === "hideThenShow");
-                const optionOneHideMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !logicKeys.includes(logic.logic_key) && logic.action === "show");
-                const optionTwoHideMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && logicKeys.includes(logic.logic_key) && logic.action === "hide");
-                const makeRequired = configs.find(logic => logic.dependent === currentConceptName && logicKeys.includes(logic.logic_key) && logic.action === "required");
-                const makeNoneRequired = configs.find(logic => logic.dependent === currentConceptName && logicKeys.includes(logic.logic_key) && logic.action === "noneRequired");
+                const optionOneShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && safeLogicKeys.includes(logic.logic_key) && logic.action === "show");
+                const optionTwoShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !safeLogicKeys.includes(logic.logic_key) && logic.action === "hide");
+                const optionThreeShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !safeLogicKeys.includes(logic.logic_key) && logic.action === "hideThenShow");
+                const optionOneHideMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !safeLogicKeys.includes(logic.logic_key) && logic.action === "show");
+                const optionTwoHideMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && safeLogicKeys.includes(logic.logic_key) && logic.action === "hide");
+                const makeRequired = configs.find(logic => logic.dependent === currentConceptName && safeLogicKeys.includes(logic.logic_key) && logic.action === "required");
+                const makeNoneRequired = configs.find(logic => logic.dependent === currentConceptName && safeLogicKeys.includes(logic.logic_key) && logic.action === "noneRequired");
                 if (hidenFields && hidenFields.length > 0) {
                     specialHiding = hidenFields.includes(currentConceptName);
                 }
@@ -461,7 +487,7 @@ Bahmni.Common.skipLogicProcessor = (function () {
                 if (optionOneShowMatchingConfig || optionTwoShowMatchingConfig) {
                     groupMember.hide = false;
                     if (groupMember.groupMembers && groupMember.groupMembers.length > 0) {
-                        updateGroupMembersVisibility(groupMember.groupMembers, currentConceptName);
+                        updateGroupMembersVisibility(groupMember.groupMembers, safeLogicKeys);
                     }
                 } else if (optionOneHideMatchingConfig || optionTwoHideMatchingConfig || specialHiding) {
                     groupMember.hide = true;

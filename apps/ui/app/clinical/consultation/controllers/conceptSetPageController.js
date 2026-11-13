@@ -155,11 +155,32 @@ angular.module('bahmni.clinical')
                 }));
             };
 
+            var matchesLocation = function (defaultForms, locName) {
+                if (!defaultForms) return false;
+                if (defaultForms.defaultLocation === "All") return true;
+                if (Array.isArray(defaultForms.defaultLocations) && defaultForms.defaultLocations.length > 0) {
+                    if (defaultForms.defaultLocations.indexOf("All") !== -1) return true;
+                    return defaultForms.defaultLocations.some(function (loc) {
+                        return loc && loc.replace(/[\s_]*\d+$/, '') === locName;
+                    });
+                }
+                if (typeof defaultForms.defaultLocation === "string" && defaultForms.defaultLocation.trim() !== "") {
+                    if (defaultForms.defaultLocation.indexOf(",") !== -1) {
+                        return defaultForms.defaultLocation.split(",").some(function (part) {
+                            var clean = part.trim();
+                            return clean === "All" || clean.replace(/[\s_]*\d+$/, '') === locName;
+                        });
+                    }
+                    return defaultForms.defaultLocation === locName || defaultForms.defaultLocation.replace(/[\s_]*\d+$/, '') === locName;
+                }
+                return false;
+            };
+
             var createConceptSections = function (allTemplates, loggedInLocationName) {
                 _.map(allTemplates, function (template) {
                     var conceptSetExtension = _.find(extensions, function (extension) {
                         const defaultForms = extension.extensionParams;
-                        return defaultForms.conceptName === template.name.name && (defaultForms.defaultLocation === loggedInLocationName || defaultForms.defaultLocation === "All");
+                        return defaultForms.conceptName === template.name.name && matchesLocation(defaultForms, loggedInLocationName);
                     }) || {};
                     var conceptSetConfig = configs[template.name.name] || {};
                     var observationsForTemplate = getObservationsForTemplate(template);

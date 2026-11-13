@@ -58,26 +58,69 @@
             "Gynecology Emergency",
             "Ward C(female only)"
         ],
+        "erTriageAgeCutoff": 10,
+        "erTriageRules": [
+            {
+                "name": "Adult ER",
+                "genders": [
+                    "M",
+                    "F",
+                    "O"
+                ],
+                "minAge": 18,
+                "maxAge": null
+            },
+            {
+                "name": "Pediatrics ER",
+                "genders": [
+                    "M",
+                    "F",
+                    "O"
+                ],
+                "minAge": 0,
+                "maxAge": 18
+            },
+            {
+                "name": "Gynecology Emergency",
+                "genders": [
+                    "F",
+                    "O"
+                ],
+                "minAge": 11,
+                "maxAge": null
+            },
+            {
+                "name": "Labour Ward",
+                "genders": [
+                    "F",
+                    "O"
+                ],
+                "minAge": 11,
+                "maxAge": null
+            }
+        ],
         "erTriageVisitTypes": {
             "Male": [
                 "Adult ER",
                 "Pediatrics ER"
             ],
             "adultMale": [
-                "Adult ER"
+                "Adult ER",
+                "Pediatrics ER"
             ],
             "pediatricsMale": [
                 "Pediatrics ER"
             ],
             "Other": [
-                "Gynecology Emergency",
                 "Adult ER",
-                "Labour Ward",
-                "Pediatrics ER"
+                "Pediatrics ER",
+                "Gynecology Emergency",
+                "Labour Ward"
             ],
             "adultFemale": [
-                "Gynecology Emergency",
                 "Adult ER",
+                "Pediatrics ER",
+                "Gynecology Emergency",
                 "Labour Ward"
             ],
             "pediatricsFemale": [
@@ -89,22 +132,52 @@
             "payment window": 30
         },
         "erTriageFormLookup": {
-            "Gynecology Emergency": [
-                "edconfig",
-                "edforms"
-            ],
             "Adult ER": [
                 "erconfig",
                 "erforms"
             ],
-            "Labour Ward": [
-                "obconfig",
-                "obforms"
-            ],
             "Pediatrics ER": [
                 "pdconfig",
                 "pdforms"
+            ],
+            "Gynecology Emergency": [
+                "edconfig",
+                "edforms"
+            ],
+            "Labour Ward": [
+                "obconfig",
+                "obforms"
             ]
+        },
+        "erTriageLocationMap": {
+            "Adult ER": {
+                "locationUuid": "b5da9afd-b29a-4cbf-91c9-ccf2aa5f799e",
+                "locationName": "Emergency OPD",
+                "visitLocationUuid": "b5da9afd-b29a-4cbf-91c9-ccf2aa5f799e",
+                "visitTypeUuid": "493ebb53-b2bd-4ced-b444-e0965804d771",
+                "visitTypeName": "Emergency OPD"
+            },
+            "Pediatrics ER": {
+                "locationUuid": "4935194e-1c9c-4ace-b807-724c234926d7",
+                "locationName": "Under Five",
+                "visitLocationUuid": "4935194e-1c9c-4ace-b807-724c234926d7",
+                "visitTypeUuid": "c09ff070-e080-4265-b1f8-97131e35c75c",
+                "visitTypeName": "Under Five"
+            },
+            "Gynecology Emergency": {
+                "locationUuid": "b5da9afd-b29a-4cbf-91c9-ccf2aa5f799e",
+                "locationName": "Emergency OPD",
+                "visitLocationUuid": "b5da9afd-b29a-4cbf-91c9-ccf2aa5f799e",
+                "visitTypeUuid": "493ebb53-b2bd-4ced-b444-e0965804d771",
+                "visitTypeName": "Emergency OPD"
+            },
+            "Labour Ward": {
+                "locationUuid": "a81b3946-5129-454d-8811-edd9858362fe",
+                "locationName": "Delivery Room",
+                "visitLocationUuid": "a81b3946-5129-454d-8811-edd9858362fe",
+                "visitTypeUuid": "2808766f-efeb-49f1-ba1a-e610e108589b",
+                "visitTypeName": "Delivery Room"
+            }
         },
         "patientInformation": {
             "freeInformation": {
@@ -327,7 +400,7 @@
         "prescription_config": {
             "drug_code_concept": "96d6c097-b66f-4f64-9f1f-d5cc5434aefd",
             "drug_price_concept": "a5649925-c963-4253-8e21-a7f806b340e3",
-            "dtp_concept": "99516581-a4a3-439c-a16c-e451e9e25783",
+            "dtp_concept": "07d93800-d822-4229-996c-2fd05091563e",
             "prescription_state_concept": "97a9b0ad-ca27-44bb-96c8-fc0502ce09e6",
             "prescription_state_options": [
                 {
