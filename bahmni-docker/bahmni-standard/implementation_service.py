@@ -133,12 +133,33 @@ def verify_openelis_user(username: str, plain_password: str):
     GROUP BY lu.login_name, lu.password, lu.is_admin, lu.account_locked, lu.account_disabled;
     """
     cmd = [
-        "docker", "exec", "-i", "bahmni-standard-openelisdb-1",
+        "docker", "exec", "bahmni-standard-openelisdb-1",
         "psql", "-U", "clinlims", "-d", "clinlims", "-At", "-F", "|", "-c", sql
     ]
 
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
+        last_err = None
+        res = None
+        for attempt in range(2):
+            try:
+                res = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    stdin=subprocess.DEVNULL,
+                    timeout=30
+                )
+                if res.returncode == 0:
+                    break
+                last_err = res.stderr.strip() or f"Process exited with code {res.returncode}"
+                time.sleep(0.5)
+            except subprocess.TimeoutExpired:
+                last_err = "Database query timed out (Docker container bahmni-standard-openelisdb-1 busy or waking up)"
+                time.sleep(0.5)
+
+        if res is None or res.returncode != 0:
+            return False, {"error": f"Failed to contact OpenELIS database: {last_err or 'Database connection error'}"}
+
         out = res.stdout.strip()
         if not out:
             return False, {"error": "User not found in OpenELIS database."}
@@ -871,8 +892,8 @@ def update_system_health():
             # OpenELIS DB
             try:
                 res = subprocess.run(
-                    ["docker", "exec", "-i", "bahmni-standard-openelisdb-1", "psql", "-U", "clinlims", "-d", "clinlims", "-At", "-c", "SELECT count(*) FROM clinlims.login_user;"],
-                    capture_output=True, text=True, timeout=10
+                    ["docker", "exec", "bahmni-standard-openelisdb-1", "psql", "-U", "clinlims", "-d", "clinlims", "-At", "-c", "SELECT count(*) FROM clinlims.login_user;"],
+                    capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=15
                 )
                 if res.returncode == 0 and res.stdout.strip().isdigit():
                     SYSTEM_HEALTH["openelis_db"] = True
@@ -885,8 +906,8 @@ def update_system_health():
             # OpenMRS DB
             try:
                 res = subprocess.run(
-                    ["docker", "exec", "-i", "bahmni-standard-openmrsdb-1", "mysql", "-uroot", "-padminAdmin!123", "-D", "openmrs", "-sN", "-e", "SELECT count(*) FROM patient WHERE voided = 0;"],
-                    capture_output=True, text=True, timeout=10
+                    ["docker", "exec", "bahmni-standard-openmrsdb-1", "mysql", "-uroot", "-padminAdmin!123", "-D", "openmrs", "-sN", "-e", "SELECT count(*) FROM patient WHERE voided = 0;"],
+                    capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=15
                 )
                 if res.returncode == 0 and res.stdout.strip().isdigit():
                     SYSTEM_HEALTH["openmrs_db"] = True
@@ -899,8 +920,8 @@ def update_system_health():
             # Staging DB check
             try:
                 res = subprocess.run(
-                    ["docker", "exec", "-i", "bahmni-standard-openmrsdb-1", "mysql", "-uroot", "-padminAdmin!123", "-D", "openmrs_legacy_stage", "-sN", "-e", "SELECT count(*) FROM patient WHERE voided = 0;"],
-                    capture_output=True, text=True, timeout=10
+                    ["docker", "exec", "bahmni-standard-openmrsdb-1", "mysql", "-uroot", "-padminAdmin!123", "-D", "openmrs_legacy_stage", "-sN", "-e", "SELECT count(*) FROM patient WHERE voided = 0;"],
+                    capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=15
                 )
                 if res.returncode == 0 and res.stdout.strip().isdigit():
                     SYSTEM_HEALTH["staging_patients_count"] = int(res.stdout.strip())
@@ -913,7 +934,7 @@ def update_system_health():
             try:
                 res = subprocess.run(
                     ["docker", "ps", "--format", "{{.Names}}#{{.Status}}"],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=15
                 )
                 if res.returncode == 0:
                     c_dict = {}
