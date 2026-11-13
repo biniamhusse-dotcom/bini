@@ -1140,7 +1140,9 @@ angular.module('bahmni.registration')
                     $scope.allRegisterRows = $scope.allRegisterRows || [];
                     $scope.registerRows = $scope.registerRows || [];
                     $scope.loadingRegister = false;
-                    messagingService.showMessage('error', "Failed to load Dispensing Registration Book!");
+                    if ($scope.tabState && $scope.tabState.active === 'register') {
+                        messagingService.showMessage('error', "Failed to load Dispensing Registration Book!");
+                    }
                 });
             };
 
@@ -1156,11 +1158,11 @@ angular.module('bahmni.registration')
                 }
             };
 
-            // Pre-load dispensing register immediately in background for instant responsiveness without lag
-            try {
+            // Only load dispensing register on-demand when actively navigating to the register view
+            if ($location.path && $location.path().indexOf('/dispensingRegister') !== -1) {
+                $scope.tabState.active = 'register';
+                $scope.activePrescriptionTab = 'register';
                 $scope.loadDispensingRegister();
-            } catch (e) {
-                console.warn("Background register pre-load deferred:", e);
             }
 
             $scope.printDispensingRegister = function () {

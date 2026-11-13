@@ -26,6 +26,7 @@ openmrs_logs.txt
 
 # Database backups
 *.sql
+!migrations/*.sql
 backups/
 
 # Cache & tools

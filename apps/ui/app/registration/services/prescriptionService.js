@@ -493,7 +493,8 @@ angular.module('bahmni.registration')
             return $http.get("/openmrs/ws/rest/v1/bahmnicore/sql", {
                 method: "GET",
                 params: { q: "emr.prescription.dispensingRegister" },
-                withCredentials: true
+                withCredentials: true,
+                ignoreErrors: true
             });
         };
 
