@@ -133,7 +133,7 @@ angular.module('admin')
                         { uuid: '1518AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', name: 'Suppository' },
                         { uuid: '7436b5fa-b44e-4301-909d-389d08a82efd', name: 'Eye drop (Solution)' },
                         { uuid: '67e0a1e4-bae8-4ad7-8eed-f7b7b8af4bed', name: 'Eye/Ear drop' },
-                        { uuid: 'fd08aa37-e18d-415d-be41-f8bbbc81bea3', name: 'N/A (Supply / Reagent)' }
+                        { uuid: '8cf89033-94c2-4c03-b454-bc6ff20b1b4b', name: 'N/A (Supply / Reagent)' }
                     ];
                 }).catch(function () {});
             };

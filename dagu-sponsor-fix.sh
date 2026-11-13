@@ -56,9 +56,10 @@ echo "[3/3] Populating common.sponsor_mapping ..."
 $PSQL <<'SQL'
 DELETE FROM common.sponsor_mapping;
 
--- N/A concept -> NULL sponsor
+-- N/A concept -> NULL sponsor (support both standard and legacy fallback UUIDs)
 INSERT INTO common.sponsor_mapping (openmrs_concept_uuid, dagu_sponsor_id, description)
-VALUES ('fd08aa37-e18d-415d-be41-f8bbbc81bea3', NULL, 'N/A - No sponsor');
+VALUES ('8cf89033-94c2-4c03-b454-bc6ff20b1b4b', NULL, 'N/A - No sponsor'),
+       ('fd08aa37-e18d-415d-be41-f8bbbc81bea3', NULL, 'N/A - No sponsor');
 
 -- All CreditCompany employer/organization concepts -> NULL sponsor
 -- (No direct 1:1 match with Dagu sponsors; pharmacy staff selects manually)

@@ -510,8 +510,13 @@ angular.module('bahmni.registration')
                                     conditionallyRequiredPersonAttributes = conditionallyRequiredPersonAttributes.filter(attrbt => attrbt.name !== attribute.name);
                                 }
                                 if (logic.defaultTriggerValue && $scope.patient[logic.trigger] && logic.defaultTriggerValue.includes($scope.patient[logic.trigger].value)) {
-                                    $scope.patient[logic.dependent] = logic.defaultValue;
-                                } else if ($scope.patient[logic.dependent] && logic.defaultValue && $scope.patient[logic.dependent].value === logic.defaultValue.value) {
+                                    var defVal = logic.defaultValue;
+                                    if (defVal && typeof defVal === 'object' && defVal.conceptUuid === 'fd08aa37-e18d-415d-be41-f8bbbc81bea3') {
+                                        defVal = angular.copy(defVal);
+                                        defVal.conceptUuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b';
+                                    }
+                                    $scope.patient[logic.dependent] = defVal;
+                                } else if ($scope.patient[logic.dependent] && logic.defaultValue && ($scope.patient[logic.dependent].value === logic.defaultValue.value || ($scope.patient[logic.dependent].conceptUuid && $scope.patient[logic.dependent].conceptUuid === logic.defaultValue.conceptUuid))) {
                                     delete $scope.patient[logic.dependent];
                                 }
                             }
@@ -582,8 +587,13 @@ angular.module('bahmni.registration')
                                     conditionallyRequiredPersonAttributes = conditionallyRequiredPersonAttributes.filter(attrbt => attrbt.name !== attribute.name);
                                 }
                                 if (logic.defaultTriggerValue && $scope.patient[logic.trigger] && logic.defaultTriggerValue.includes($scope.patient[logic.trigger].value)) {
-                                    $scope.patient[logic.dependent] = logic.defaultValue;
-                                } else if ($scope.patient[logic.dependent] && logic.defaultValue && $scope.patient[logic.dependent].value === logic.defaultValue.value) {
+                                    var defVal = logic.defaultValue;
+                                    if (defVal && typeof defVal === 'object' && defVal.conceptUuid === 'fd08aa37-e18d-415d-be41-f8bbbc81bea3') {
+                                        defVal = angular.copy(defVal);
+                                        defVal.conceptUuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b';
+                                    }
+                                    $scope.patient[logic.dependent] = defVal;
+                                } else if ($scope.patient[logic.dependent] && logic.defaultValue && ($scope.patient[logic.dependent].value === logic.defaultValue.value || ($scope.patient[logic.dependent].conceptUuid && $scope.patient[logic.dependent].conceptUuid === logic.defaultValue.conceptUuid))) {
                                     delete $scope.patient[logic.dependent];
                                 }
                             }

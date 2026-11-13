@@ -33,11 +33,14 @@ angular.module('bahmni.common.logging')
                     }
                     var params = {};
                     params.patientUuid = patientUuid;
-                    params.eventType = Bahmni.Common.AuditLogEventDetails[eventType].eventType;
-                    params.message = Bahmni.Common.AuditLogEventDetails[eventType].message;
-                    params.message = messageParams ? params.message + '~' + JSON.stringify(messageParams) : params.message;
-                    params.module = module;
-                    return $http.post(Bahmni.Common.Constants.auditLogUrl, params, {withCredentials: true});
+                    params.eventType = Bahmni.Common.AuditLogEventDetails[eventType].eventType || eventType;
+                    var baseMessage = Bahmni.Common.AuditLogEventDetails[eventType].message || eventType || "AUDIT_EVENT";
+                    params.message = messageParams ? baseMessage + '~' + JSON.stringify(messageParams) : baseMessage;
+                    if (!params.message) {
+                        params.message = eventType || "AUDIT_EVENT";
+                    }
+                    params.module = module || "MODULE_LABEL_DEFAULT";
+                    return $http.post(Bahmni.Common.Constants.auditLogUrl, params, {withCredentials: true, ignoreErrors: true});
                 }
             }).catch(function (err) {
                 console.warn("Audit log error ignored:", err);

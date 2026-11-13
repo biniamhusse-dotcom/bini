@@ -103,7 +103,11 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
         if (value === "" || value === null || value === undefined || isConceptEmpty) {
             attr.voided = true;
         } else if (isConcept) {
-            attr.hydratedObject = (typeof value === 'object') ? value.conceptUuid : value;
+            var conceptUuid = (typeof value === 'object') ? value.conceptUuid : value;
+            if (conceptUuid === 'fd08aa37-e18d-415d-be41-f8bbbc81bea3') {
+                conceptUuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b';
+            }
+            attr.hydratedObject = conceptUuid;
         } else if (attributeType.format === "org.openmrs.util.AttributableDate" || attributeType.format === "org.openmrs.customdatatype.datatype.DateDatatype") {
             var mnt = moment(value);
             attr.value = mnt.isValid() ? mnt.format('YYYY-MM-DDTHH:mm:ss.SSSZZ') : null;

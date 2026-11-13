@@ -1,11 +1,11 @@
 {
-  "facilityName": "Dessie HC",
+  "facilityName": "Boru meda General Hospital",
   "region": "Amhara",
-  "zone": "South Wollo",
+  "zone": "Dessie",
   "woreda": "Dessie",
   "browserTitle": "Bahmni",
-  "tagline": "HC EMR System",
-  "welcomeMessage": "WELCOME TO Dessie HC EMR System",
+  "tagline": "Hospital EMR System",
+  "welcomeMessage": "WELCOME TO Boru meda General Hospital EMR System",
   "address": "Dessie, Dessie, Amhara, Ethiopia",
   "phone": "+251 33 111 2233",
   "email": "info@borumedahospital.gov.et",
@@ -17,5 +17,5 @@
   "footerLogoUrl": "/bahmni/images/cdhiLogo.png",
   "footerText": "powered by",
   "footerLink": "https://uog.edu.et/",
-  "updatedAt": "2026-11-04T18:31:57.064411"
+  "updatedAt": "2026-11-13T10:27:02.648158"
 }

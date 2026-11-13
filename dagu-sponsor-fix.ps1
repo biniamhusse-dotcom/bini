@@ -47,7 +47,8 @@ $sql = @"
 DELETE FROM common.sponsor_mapping;
 
 INSERT INTO common.sponsor_mapping (openmrs_concept_uuid, dagu_sponsor_id, description)
-VALUES ('fd08aa37-e18d-415d-be41-f8bbbc81bea3', NULL, 'N/A - No sponsor');
+VALUES ('8cf89033-94c2-4c03-b454-bc6ff20b1b4b', NULL, 'N/A - No sponsor'),
+       ('fd08aa37-e18d-415d-be41-f8bbbc81bea3', NULL, 'N/A - No sponsor');
 
 INSERT INTO common.sponsor_mapping (openmrs_concept_uuid, dagu_sponsor_id, description) VALUES
 ('482a0e3e-c7f2-4605-9ced-05e56ef7dcd1', NULL, 'Carvico Ethiopia PLC'),
