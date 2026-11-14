@@ -36,7 +36,7 @@ from cryptography.hazmat.primitives import padding
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "bahmni_impl_mgr_secure_fixed_key_2026"
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

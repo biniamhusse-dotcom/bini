@@ -193,8 +193,13 @@ angular.module('admin')
 
             $scope.loadAll = function () {
                 $scope.loading = true;
+                var loadDashboardPromise = $http.get(API_BASE + '/dashboard-config', { params: { t: Date.now() } })
+                    .catch(function () {
+                        return $http.get('/bahmni_config/openmrs/apps/clinical/dashboard.json', { params: { t: Date.now() } });
+                    });
+
                 $q.all([
-                    $http.get(API_BASE + '/dashboard-config', { params: { t: Date.now() } }),
+                    loadDashboardPromise,
                     $http.get('/bahmni_config/openmrs/i18n/clinical/locale_en.json', { params: { t: Date.now() } }).catch(function () { return { data: {} }; }),
                     $http.get(OPENMRS_BASE + '/concept', {
                         params: { name: 'All Observation Templates', v: 'custom:(uuid,display,setMembers:(uuid,display,name:(name)))' },
@@ -204,6 +209,9 @@ angular.module('admin')
                 ]).then(function (responses) {
                     var respData = (responses[0] && responses[0].data) || {};
                     $scope.dashboard = respData.dashboard ? respData.dashboard : respData;
+                    if ($scope.dashboard && $scope.dashboard.dashboard) {
+                        delete $scope.dashboard.dashboard;
+                    }
                     $scope.i18nMap = (responses[1] && responses[1].data) || {};
 
                     var tplResults = (responses[2] && responses[2].data && responses[2].data.results) || [];

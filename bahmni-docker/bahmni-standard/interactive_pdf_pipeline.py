@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """
-Bahmni Interactive Clinical Summary PDF Pipeline
-- Restores backup into staging database (openmrs_legacy_stage) if needed
-- Extracts clinical encounters, observations, diagnoses, medications, and orders
-- Groups observations by Form Name
-- Sorts concepts by concept_id (ascending) within each form
-- Formats clinical summaries into high-quality PDFs with ReportLab
+Bahmni Standard Clinical History PDF Pipeline
+- Restores & verifies staging database (openmrs_legacy_stage) directly from CentOS backup
+- Ensures CentOS concept_name and drug dictionary tables are active in staging
+- Parses clinical observations into standard Hospital Medical History (H&P) structure:
+    * Chief Complaint & Duration (converted from minutes to days/hours)
+    * History of Present Illness (HPI narrative notes)
+    * Past Medical / Surgical / Chronic History & Allergies
+    * Vital Signs (Temperature, Pulse, Blood Pressure, Respiratory Rate)
+    * Physical Examination (Positive findings highlighted, systematic NAD summarized)
+    * Clinical Impression, ICD Coded Diagnoses & Disposition
+    * Prescribed Medications with dose, duration, and instructions
+    * Orders, Lab Investigations & Specialized Program Forms
+- Generates high-quality clinical summary PDFs with ReportLab
 - Automatically attaches generated PDFs into Bahmni Patient Documents
 - Cross-platform compatible (Windows & Linux)
 """
@@ -27,10 +34,11 @@ from reportlab.lib import colors
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_BACKUP_CANDIDATES = [
     "/home/hphc/Documents/Harbu bak/openmrs20261002_160501.sql.gz",
+    "/opt/emr/CentOS Bahmni backups/openmrs20261002_160501.sql.gz",
     os.path.join(BASE_DIR, "..", "..", "CentOS Bahmni backups", "openmrs20261002_160501.sql.gz"),
     os.path.join(BASE_DIR, "..", "..", "backups", "bahmni_full_backup_20261114_030024", "openmrs.sql"),
-    os.path.join(BASE_DIR, "..", "..", "backups", "bahmni", "openmrs_20260616_111046.sql.gz"),
 ]
+
 
 def find_default_backup():
     for p in DEFAULT_BACKUP_CANDIDATES:
@@ -38,6 +46,7 @@ def find_default_backup():
         if os.path.exists(abs_p):
             return abs_p
     return os.path.abspath(DEFAULT_BACKUP_CANDIDATES[0])
+
 
 DEFAULT_BACKUP = find_default_backup()
 DEFAULT_PDF_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "backups", "patient_summary_pdfs"))
@@ -58,8 +67,6 @@ MYSQL_USER = "root"
 MYSQL_PASS = "adminAdmin!123"
 STAGE_DB = "openmrs_legacy_stage"
 TARGET_DB = "openmrs"
-CONTAINER_CLINICAL_FORMS = "/home/bahmni/clinical_forms"
-HOST_CLINICAL_FORMS = os.path.join(BASE_DIR, "clinical_forms_cache")
 
 
 def run_sql(query, db=STAGE_DB):
@@ -105,10 +112,71 @@ def get_working_db():
     return STAGE_DB
 
 
-def restore_backup(archive_path, target_db=STAGE_DB):
-    print(f"[*] Staging {target_db} from archive: {archive_path}...", flush=True)
-    run_sql(f"DROP DATABASE IF EXISTS {target_db}; CREATE DATABASE {target_db} CHARACTER SET utf8mb4;", "mysql")
+def ensure_backup_metadata_loaded(archive_path, target_db=STAGE_DB):
+    """Ensures concept_name and drug tables in staging use the real CentOS backup metadata."""
+    chk_concept = run_sql("SELECT name FROM concept_name WHERE concept_id = 160 LIMIT 1;", target_db).strip()
+    chk_drug = run_sql("SELECT count(*) FROM drug WHERE drug_id < 3500;", target_db).strip()
 
+    if "History Notes" in chk_concept and chk_drug.isdigit() and int(chk_drug) > 500:
+        print("[✔] CentOS clinical metadata dictionary verified active in staging.", flush=True)
+        return
+
+    print("[*] Loading authentic CentOS concept names and drug inventory into staging...", flush=True)
+    if not os.path.exists(archive_path):
+        print(f"[!] Backup archive not found: {archive_path}", file=sys.stderr, flush=True)
+        return
+
+    setup_sql = """
+    SET FOREIGN_KEY_CHECKS=0;
+    DROP TABLE IF EXISTS backup_concept_name;
+    CREATE TABLE backup_concept_name (
+        concept_name_id INT NOT NULL,
+        concept_id INT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        locale VARCHAR(50) DEFAULT 'en',
+        locale_preferred TINYINT(1) DEFAULT 0,
+        creator INT DEFAULT 1,
+        date_created DATETIME,
+        concept_name_type VARCHAR(50),
+        voided TINYINT(1) DEFAULT 0,
+        voided_by INT,
+        date_voided DATETIME,
+        void_reason VARCHAR(255),
+        uuid CHAR(38),
+        date_changed DATETIME,
+        changed_by INT,
+        PRIMARY KEY (concept_name_id),
+        KEY (concept_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    DROP TABLE IF EXISTS backup_drug;
+    CREATE TABLE backup_drug (
+        drug_id INT NOT NULL,
+        concept_id INT NOT NULL DEFAULT '0',
+        name VARCHAR(255) DEFAULT NULL,
+        combination TINYINT(1) NOT NULL DEFAULT '0',
+        dosage_form INT DEFAULT NULL,
+        maximum_daily_dose DOUBLE DEFAULT NULL,
+        minimum_daily_dose DOUBLE DEFAULT NULL,
+        route INT DEFAULT NULL,
+        creator INT NOT NULL DEFAULT '0',
+        date_created DATETIME NOT NULL,
+        retired TINYINT(1) NOT NULL DEFAULT '0',
+        changed_by INT DEFAULT NULL,
+        date_changed DATETIME DEFAULT NULL,
+        retired_by INT DEFAULT NULL,
+        date_retired DATETIME DEFAULT NULL,
+        retire_reason VARCHAR(255) DEFAULT NULL,
+        uuid CHAR(38) NOT NULL,
+        strength VARCHAR(255) DEFAULT NULL,
+        PRIMARY KEY (drug_id),
+        KEY (concept_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    SET FOREIGN_KEY_CHECKS=1;
+    """
+    run_sql(setup_sql, target_db)
+
+    # Stream from backup archive
     opener = open
     if archive_path.endswith(".gz"):
         import gzip
@@ -117,17 +185,34 @@ def restore_backup(archive_path, target_db=STAGE_DB):
     cmd = [
         "docker", "exec", "-i", OPENMRS_CONTAINER,
         "mysql", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}", "--default-character-set=utf8mb4",
-        "--force", target_db
+        "-D", target_db
     ]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    with opener(archive_path, "rt", encoding="utf-8", errors="replace") as f_in:
+    with opener(archive_path, "rt", encoding="latin-1", errors="replace") as f_in:
         for line in f_in:
-            if "DEFINER=" in line:
-                line = re.sub(r'DEFINER=`[^`]+`@`[^`]+`', '', line)
-            proc.stdin.write(line.encode("utf-8"))
+            if "INSERT INTO `concept_name`" in line or "INSERT INTO concept_name" in line:
+                fixed_line = line.replace("INSERT INTO `concept_name`", "INSERT INTO `backup_concept_name`").replace("INSERT INTO concept_name", "INSERT INTO backup_concept_name")
+                proc.stdin.write(fixed_line.encode("utf-8"))
+            elif "INSERT INTO `drug`" in line or "INSERT INTO drug" in line:
+                fixed_line = line.replace("INSERT INTO `drug`", "INSERT INTO `backup_drug`").replace("INSERT INTO drug", "INSERT INTO backup_drug")
+                proc.stdin.write(fixed_line.encode("utf-8"))
     proc.stdin.close()
     proc.wait()
-    print(f"[✔] Staging restoration completed.", flush=True)
+
+    apply_sql = """
+    SET FOREIGN_KEY_CHECKS=0;
+    DROP TABLE IF EXISTS ciel_concept_name;
+    RENAME TABLE concept_name TO ciel_concept_name;
+    RENAME TABLE backup_concept_name TO concept_name;
+
+    INSERT INTO drug (drug_id, concept_id, name, combination, dosage_form, maximum_daily_dose, minimum_daily_dose, route, creator, date_created, retired, changed_by, date_changed, retired_by, date_retired, retire_reason, uuid, strength)
+    SELECT drug_id, concept_id, name, combination, dosage_form, maximum_daily_dose, minimum_daily_dose, route, creator, date_created, retired, changed_by, date_changed, retired_by, date_retired, retire_reason, uuid, strength
+    FROM backup_drug
+    ON DUPLICATE KEY UPDATE name=VALUES(name), concept_id=VALUES(concept_id);
+    SET FOREIGN_KEY_CHECKS=1;
+    """
+    run_sql(apply_sql, target_db)
+    print("[✔] Clinical dictionary and drug inventory updated successfully.", flush=True)
 
 
 def verify_and_stage():
@@ -138,6 +223,7 @@ def verify_and_stage():
     chk = run_sql("SELECT COUNT(*) FROM patient;", STAGE_DB).strip()
     if chk and chk.isdigit() and int(chk) > 0:
         print(f"[✔] Staging database `{STAGE_DB}` verified ready with {chk} patients.", flush=True)
+        ensure_backup_metadata_loaded(SPECIFIC_BACKUP, STAGE_DB)
         return
 
     # Check if target_db has patients
@@ -150,48 +236,53 @@ def verify_and_stage():
         print(f"[!] Archive file not found: {SPECIFIC_BACKUP}", file=sys.stderr, flush=True)
         sys.exit(1)
 
-    restore_backup(SPECIFIC_BACKUP, STAGE_DB)
+    print(f"[*] Staging {STAGE_DB} from archive: {SPECIFIC_BACKUP}...", flush=True)
+    run_sql(f"DROP DATABASE IF EXISTS {STAGE_DB}; CREATE DATABASE {STAGE_DB} CHARACTER SET utf8mb4;", "mysql")
+
+    opener = open
+    if SPECIFIC_BACKUP.endswith(".gz"):
+        import gzip
+        opener = gzip.open
+
+    cmd = [
+        "docker", "exec", "-i", OPENMRS_CONTAINER,
+        "mysql", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}", "--default-character-set=utf8mb4",
+        "--force", STAGE_DB
+    ]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    with opener(SPECIFIC_BACKUP, "rt", encoding="utf-8", errors="replace") as f_in:
+        for line in f_in:
+            if "DEFINER=" in line:
+                line = re.sub(r'DEFINER=`[^`]+`@`[^`]+`', '', line)
+            proc.stdin.write(line.encode("utf-8"))
+    proc.stdin.close()
+    proc.wait()
+    print("[✔] Staging restoration completed.", flush=True)
+    ensure_backup_metadata_loaded(SPECIFIC_BACKUP, STAGE_DB)
 
 
-def load_form_definitions():
-    """Load Bahmni Clinical Forms JSON from container / cache to resolve concept -> Form Name."""
-    concept_to_form = {}
-    if not os.path.exists(HOST_CLINICAL_FORMS) or not glob.glob(os.path.join(HOST_CLINICAL_FORMS, "*.json")):
-        os.makedirs(HOST_CLINICAL_FORMS, exist_ok=True)
-        subprocess.run(
-            ["docker", "cp", f"{APP_CONTAINER}:{CONTAINER_CLINICAL_FORMS}/.", HOST_CLINICAL_FORMS],
-            capture_output=True, stdin=subprocess.DEVNULL
-        )
-
-    for path in glob.glob(os.path.join(HOST_CLINICAL_FORMS, "*.json")):
-        try:
-            with open(path, encoding="utf-8") as f:
-                data = json.load(f)
-            form_name = data.get("name")
-            if not form_name:
-                continue
-
-            def extract(obj):
-                if isinstance(obj, dict):
-                    c = obj.get("concept")
-                    if isinstance(c, dict):
-                        cn = c.get("name")
-                        cu = c.get("uuid")
-                        if cn:
-                            concept_to_form[cn.lower()] = form_name
-                        if cu:
-                            concept_to_form[cu] = form_name
-                    for v in obj.values():
-                        extract(v)
-                elif isinstance(obj, list):
-                    for item in obj:
-                        extract(item)
-
-            extract(data)
-        except Exception:
-            pass
-
-    return concept_to_form
+def format_duration(val_str):
+    """Converts symptom duration in minutes to human-readable days or hours."""
+    try:
+        val = int(float(val_str))
+        if val <= 0:
+            return val_str
+        if val >= 1440:
+            days = val // 1440
+            rem_mins = val % 1440
+            if rem_mins >= 60:
+                return f"{days} day(s) {rem_mins // 60} hr(s)"
+            return f"{days} day(s)"
+        elif val >= 60:
+            hrs = val // 60
+            rem = val % 60
+            if rem > 0:
+                return f"{hrs} hr(s) {rem} min(s)"
+            return f"{hrs} hr(s)"
+        else:
+            return f"{val} min(s)"
+    except Exception:
+        return val_str
 
 
 def parse_instruction(raw_instr):
@@ -200,20 +291,21 @@ def parse_instruction(raw_instr):
     if raw_instr.startswith("{") and "instructions" in raw_instr:
         try:
             data = json.loads(raw_instr)
-            return data.get("instructions", "")
+            return data.get("instructions") or data.get("additionalInstructions") or ""
         except Exception:
             pass
     return raw_instr.replace('{"instructions":"', '').replace('"}', '').strip()
 
 
-def fetch_patient_data(pid, form_definitions, db_name):
+def fetch_patient_data(pid, db_name):
+    """Fetches and parses clinical data for a patient into standardized clinical sections."""
     enc_sql = f"""
     SELECT 
         e.encounter_id,
         DATE_FORMAT(e.encounter_datetime, '%Y-%m-%d') as enc_date,
         DATE_FORMAT(e.encounter_datetime, '%H:%i') as enc_time,
         COALESCE(et.name, 'Consultation') as enc_type,
-        COALESCE(CONCAT(pn.given_name, ' ', pn.family_name), 'Super User') as provider_name,
+        COALESCE(CONCAT(pn.given_name, ' ', pn.family_name), 'Healthcare Provider') as provider_name,
         COALESCE(l.name, 'Outpatient Department') as location_name
     FROM encounter e
     LEFT JOIN encounter_type et ON e.encounter_type = et.encounter_type_id
@@ -225,275 +317,307 @@ def fetch_patient_data(pid, form_definitions, db_name):
     ORDER BY e.encounter_datetime DESC;
     """
     enc_out = run_sql(enc_sql, db_name)
+    enc_rows = [line.split("\t") for line in enc_out.splitlines() if line.strip()]
+
+    # Skip SQL header if present
+    if enc_rows and enc_rows[0][0] == "encounter_id":
+        enc_rows = enc_rows[1:]
+
     date_groups = {}
 
-    for eline in enc_out.splitlines():
-        eparts = eline.split("\t")
-        if len(eparts) >= 6:
-            eid, edate, etime, etype, eprovider, elocation = eparts[:6]
+    for row in enc_rows:
+        if len(row) < 6:
+            continue
+        eid, edate, etime, etype, eprov, eloc = row[:6]
 
-            # Observations query: concept_id, concept_name, answer value, and hierarchical form ancestors
-            obs_sql = f"""
-            SELECT 
-                o.concept_id,
-                COALESCE(cq.name, CONCAT('Concept ', o.concept_id)) as concept_name,
-                cq.uuid as concept_uuid,
-                COALESCE(
-                    ca.name,
-                    o.value_text,
-                    CAST(o.value_numeric AS CHAR),
-                    DATE_FORMAT(o.value_datetime, '%Y-%m-%d %H:%i'),
-                    ''
-                ) as answer_val,
-                p1_cq.name as p1_name,
-                p1_cq.uuid as p1_uuid,
-                p2_cq.name as p2_name,
-                p2_cq.uuid as p2_uuid,
-                p3_cq.name as p3_name,
-                p3_cq.uuid as p3_uuid,
-                f.name as form_table_name,
-                et.name as enc_type
-            FROM obs o
-            JOIN encounter e ON o.encounter_id = e.encounter_id
-            LEFT JOIN form f ON e.form_id = f.form_id
-            LEFT JOIN encounter_type et ON e.encounter_type = et.encounter_type_id
-            LEFT JOIN concept_name cq ON o.concept_id = cq.concept_id 
-                AND cq.locale = 'en' AND cq.concept_name_type = 'FULLY_SPECIFIED' AND cq.voided = 0
-            LEFT JOIN concept_name ca ON o.value_coded = ca.concept_id 
-                AND ca.locale = 'en' AND (ca.concept_name_type = 'FULLY_SPECIFIED' OR ca.locale_preferred = 1) AND ca.voided = 0
-            LEFT JOIN obs p1 ON o.obs_group_id = p1.obs_id
-            LEFT JOIN concept_name p1_cq ON p1.concept_id = p1_cq.concept_id 
-                AND p1_cq.locale = 'en' AND p1_cq.concept_name_type = 'FULLY_SPECIFIED' AND p1_cq.voided = 0
-            LEFT JOIN obs p2 ON p1.obs_group_id = p2.obs_id
-            LEFT JOIN concept_name p2_cq ON p2.concept_id = p2_cq.concept_id 
-                AND p2_cq.locale = 'en' AND p2_cq.concept_name_type = 'FULLY_SPECIFIED' AND p2_cq.voided = 0
-            LEFT JOIN obs p3 ON p2.obs_group_id = p3.obs_id
-            LEFT JOIN concept_name p3_cq ON p3.concept_id = p3_cq.concept_id 
-                AND p3_cq.locale = 'en' AND p3_cq.concept_name_type = 'FULLY_SPECIFIED' AND p3_cq.voided = 0
-            WHERE o.encounter_id = {eid} AND o.voided = 0
-              AND (o.value_coded IS NOT NULL OR o.value_text IS NOT NULL OR o.value_numeric IS NOT NULL OR o.value_datetime IS NOT NULL)
-            ORDER BY o.concept_id ASC;
-            """
-            obs_out = run_sql(obs_sql, db_name)
-            form_obs = {}
-            for oline in obs_out.splitlines():
-                oparts = oline.split("\t")
-                if len(oparts) >= 12:
-                    cid_val = int(oparts[0]) if oparts[0].isdigit() else 0
-                    cname = oparts[1].strip()
-                    cuuid = oparts[2].strip()
-                    aval = oparts[3].strip()
-                    p1_name = oparts[4].strip() if oparts[4] != "NULL" else ""
-                    p1_uuid = oparts[5].strip() if oparts[5] != "NULL" else ""
-                    p2_name = oparts[6].strip() if oparts[6] != "NULL" else ""
-                    p2_uuid = oparts[7].strip() if oparts[7] != "NULL" else ""
-                    p3_name = oparts[8].strip() if oparts[8] != "NULL" else ""
-                    p3_uuid = oparts[9].strip() if oparts[9] != "NULL" else ""
-                    form_tbl = oparts[10].strip() if oparts[10] != "NULL" else ""
-                    enc_type = oparts[11].strip() if oparts[11] != "NULL" else "Consultation"
+        obs_sql = f"""
+        SELECT 
+            o.concept_id,
+            COALESCE(cq.name, CONCAT('Concept ', o.concept_id)) as concept_name,
+            COALESCE(ca.name, o.value_text, CAST(o.value_numeric AS CHAR), DATE_FORMAT(o.value_datetime, '%Y-%m-%d %H:%i'), '') as answer_val,
+            COALESCE(p1_cq.name, '') as p1_name,
+            COALESCE(f.name, '') as form_tbl_name
+        FROM obs o
+        JOIN encounter e ON o.encounter_id = e.encounter_id
+        LEFT JOIN form f ON e.form_id = f.form_id
+        LEFT JOIN concept_name cq ON o.concept_id = cq.concept_id 
+            AND cq.locale = 'en' AND cq.concept_name_type = 'FULLY_SPECIFIED' AND cq.voided = 0
+        LEFT JOIN concept_name ca ON o.value_coded = ca.concept_id 
+            AND ca.locale = 'en' AND (ca.concept_name_type = 'FULLY_SPECIFIED' OR ca.locale_preferred = 1) AND ca.voided = 0
+        LEFT JOIN obs p1 ON o.obs_group_id = p1.obs_id
+        LEFT JOIN concept_name p1_cq ON p1.concept_id = p1_cq.concept_id 
+            AND p1_cq.locale = 'en' AND p1_cq.concept_name_type = 'FULLY_SPECIFIED' AND p1_cq.voided = 0
+        WHERE o.encounter_id = {eid} AND o.voided = 0
+          AND (o.value_coded IS NOT NULL OR o.value_text IS NOT NULL OR o.value_numeric IS NOT NULL OR o.value_datetime IS NOT NULL)
+        ORDER BY o.concept_id ASC;
+        """
+        obs_lines = [l.split("\t") for l in run_sql(obs_sql, db_name).splitlines() if l.strip()]
+        if obs_lines and obs_lines[0][0] == "concept_id":
+            obs_lines = obs_lines[1:]
 
-                    if not aval or aval.lower() in ["null", "none", "undefined"]:
-                        continue
+        chief_complaint = ""
+        duration = ""
+        hpi_narrative = ""
+        past_history = ""
+        allergies = ""
+        vitals = {}
+        exam_positive = {}
+        exam_normal = []
+        diagnoses = []
+        disposition = ""
+        other_forms = {}
 
-                    # Determine Form Name
-                    form_name = form_tbl
-                    if not form_name:
-                        form_name = form_definitions.get(cuuid) or form_definitions.get(cname.lower())
-                    if not form_name and p1_name:
-                        form_name = form_definitions.get(p1_uuid) or form_definitions.get(p1_name.lower())
-                    if not form_name and p2_name:
-                        form_name = form_definitions.get(p2_uuid) or form_definitions.get(p2_name.lower())
-                    if not form_name and p3_name:
-                        form_name = form_definitions.get(p3_uuid) or form_definitions.get(p3_name.lower())
-                    if not form_name:
-                        form_name = p3_name or p2_name or p1_name or enc_type or "Clinical Examination"
+        for ol in obs_lines:
+            if len(ol) < 3:
+                continue
+            cid = int(ol[0]) if ol[0].isdigit() else 0
+            cname = ol[1].strip()
+            ans = ol[2].strip()
+            p1 = ol[3].strip() if len(ol) > 3 else ""
+            form_tbl = ol[4].strip() if len(ol) > 4 else ""
 
-                    form_obs.setdefault(form_name, []).append({
-                        "concept_id": cid_val,
-                        "concept_name": cname,
-                        "answer": aval
-                    })
+            if not ans or ans.lower() in ["null", "none", "undefined"]:
+                continue
 
-            # Medications
-            safe_med_sql = f"""
-            SELECT 
-                COALESCE(d.name, cn_pref.name, cn_fs.name, 'Medication') as drug_name,
-                COALESCE(CAST(do.dose AS CHAR), '') as dose,
-                COALESCE(do.dosing_instructions, o.instructions, '') as instructions,
-                COALESCE(CAST(do.duration AS CHAR), '') as duration
-            FROM orders o
-            JOIN drug_order do ON o.order_id = do.order_id
-            LEFT JOIN drug d ON do.drug_inventory_id = d.drug_id
-            LEFT JOIN concept_name cn_pref ON o.concept_id = cn_pref.concept_id AND cn_pref.locale = 'en' AND cn_pref.locale_preferred = 1 AND cn_pref.voided = 0
-            LEFT JOIN concept_name cn_fs ON o.concept_id = cn_fs.concept_id AND cn_fs.locale = 'en' AND cn_fs.concept_name_type = 'FULLY_SPECIFIED' AND cn_fs.voided = 0
-            WHERE o.encounter_id = {eid} AND o.voided = 0;
-            """
-            med_out = run_sql(safe_med_sql, db_name)
-            med_items = []
-            for mline in med_out.splitlines():
-                mparts = mline.split("\t")
-                if len(mparts) >= 4:
-                    d_name, d_dose, d_inst, d_dur = mparts[0].strip(), mparts[1].strip(), mparts[2].strip(), mparts[3].strip()
-                    med_items.append({
-                        "name": d_name,
-                        "dose": d_dose,
-                        "units": "Tablet" if d_dose and d_dose.isdigit() and int(d_dose) >= 100 else "",
-                        "duration": d_dur,
-                        "duration_units": "Days" if d_dur else "",
-                        "instructions": parse_instruction(d_inst)
-                    })
+            if cid in (155, 157, 159):
+                chief_complaint = ans
+            elif cid == 158:
+                duration = format_duration(ans)
+            elif cid == 160:
+                hpi_narrative = ans
+            elif cid == 2701:
+                past_history = ans
+            elif cid == 2855:
+                allergies = ans
+            elif cid in (124, 128, 131, 134, 137):
+                vname = "Heart Rate" if cid == 124 else ("Systolic" if cid == 128 else ("Diastolic" if cid == 131 else ("Temperature" if cid == 134 else "Respiratory Rate")))
+                unit = "bpm" if cid == 124 else ("°C" if cid == 134 else ("breaths/min" if cid == 137 else "mmHg"))
+                vitals[vname] = f"{ans} {unit}"
+            elif cid in (7721, 10145, 10146, 10147, 10148, 10149, 10150, 10153, 10647, 10648):
+                short_name = cname.replace("ACIF SAE PE ", "").replace("Lymphoglandular Systems (LGS)", "Neck / Lymph Nodes").replace("Respiratory System (RS)", "Respiratory").replace("Cardiovascular System (CVS)", "Cardiovascular").replace("The Abdomen and Pelvis", "Abdomen").replace("Genitourinary System (GUS)", "Genitourinary").replace("Musculoskeletal System (MSS)", "Musculoskeletal").replace("Integumentary System (IS)", "Skin").replace("Nervous System (NS)", "Neurological")
+                if ans.upper() in ["NAD", "NORMAL", "N/A", "AORMAL", "AD", "ADN", "DNA"]:
+                    exam_normal.append(short_name)
+                else:
+                    exam_positive[short_name] = ans
+            elif cid in (14, 15):
+                if ans and ans not in diagnoses:
+                    diagnoses.append(ans)
+            elif cid in (25, 27):
+                if ans and ans not in ["Confirmed", "Coded Diagnosis", "False", "True"]:
+                    disposition = ans
+            elif cid in (13, 16, 19, 51, 125, 129, 132, 135, 11198):
+                pass  # Internal form navigation and status flags
+            else:
+                fname = form_tbl or p1 or "Additional Clinical Observations"
+                other_forms.setdefault(fname, []).append((cid, cname, ans))
 
-            # Lab Orders
-            ord_sql = f"""
-            SELECT 
-                COALESCE(ot.name, 'Investigation') as order_type,
-                COALESCE(cn.name, 'Order') as order_name,
-                COALESCE(
-                    ca.name,
-                    res_obs.value_text,
-                    CAST(res_obs.value_numeric AS CHAR),
-                    DATE_FORMAT(res_obs.value_datetime, '%Y-%m-%d %H:%i'),
-                    ''
-                ) as result_value
-            FROM orders o
-            LEFT JOIN order_type ot ON o.order_type_id = ot.order_type_id
-            LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
-            LEFT JOIN obs res_obs ON o.order_id = res_obs.order_id AND res_obs.voided = 0
-            LEFT JOIN concept_name ca ON res_obs.value_coded = ca.concept_id AND ca.locale = 'en' AND (ca.concept_name_type = 'FULLY_SPECIFIED' OR ca.locale_preferred = 1) AND ca.voided = 0
-            WHERE o.encounter_id = {eid} 
-              AND o.order_id NOT IN (SELECT order_id FROM drug_order)
-              AND o.voided = 0;
-            """
-            ord_out = run_sql(ord_sql, db_name)
-            ord_items = []
-            for orline in ord_out.splitlines():
-                orparts = orline.split("\t")
-                if len(orparts) >= 3:
-                    ord_items.append({
-                        "type": orparts[0].strip(),
-                        "name": orparts[1].strip(),
-                        "result": orparts[2].strip()
-                    })
+        # Prescribed Medications
+        med_sql = f"""
+        SELECT 
+            COALESCE(d.name, cn.name, 'Medication') as drug_name,
+            COALESCE(CAST(do.dose AS CHAR), '') as dose,
+            COALESCE(CAST(do.duration AS CHAR), '') as duration,
+            COALESCE(do.dosing_instructions, o.instructions, '') as instructions
+        FROM orders o
+        JOIN drug_order do ON o.order_id = do.order_id
+        LEFT JOIN drug d ON do.drug_inventory_id = d.drug_id
+        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale='en' AND cn.concept_name_type='FULLY_SPECIFIED'
+        WHERE o.encounter_id = {eid} AND o.voided = 0;
+        """
+        med_lines = [l.split("\t") for l in run_sql(med_sql, db_name).splitlines() if l.strip()]
+        if med_lines and med_lines[0][0] == "drug_name":
+            med_lines = med_lines[1:]
 
-            enc_dict = {
-                "id": eid,
-                "date": edate,
-                "time": etime,
-                "type": etype,
-                "provider": eprovider,
-                "location": elocation,
-                "form_observations": form_obs,
-                "medications": med_items,
-                "orders": ord_items
-            }
-            date_groups.setdefault(edate, []).append(enc_dict)
+        med_items = []
+        for ml in med_lines:
+            if len(ml) < 4:
+                continue
+            d_name, d_dose, d_dur, d_instr = ml[:4]
+            # Ignore placeholder non-medication concepts
+            if any(ign in d_name.lower() for ign in ["exposure to fluids", "measurement", "haemorrhage due", "number of sex acts"]):
+                continue
+            instr_clean = parse_instruction(d_instr)
+            med_items.append({
+                "name": d_name,
+                "dose": d_dose,
+                "duration": d_dur,
+                "instructions": instr_clean
+            })
+
+        # Lab Orders & Investigations
+        ord_sql = f"""
+        SELECT 
+            COALESCE(ot.name, 'Investigation') as order_type,
+            COALESCE(cn.name, 'Order') as order_name,
+            COALESCE(ca.name, res_obs.value_text, CAST(res_obs.value_numeric AS CHAR), '') as result_val
+        FROM orders o
+        LEFT JOIN order_type ot ON o.order_type_id = ot.order_type_id
+        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+        LEFT JOIN obs res_obs ON o.order_id = res_obs.order_id AND res_obs.voided = 0
+        LEFT JOIN concept_name ca ON res_obs.value_coded = ca.concept_id AND ca.locale = 'en' AND (ca.concept_name_type = 'FULLY_SPECIFIED' OR ca.locale_preferred = 1) AND ca.voided = 0
+        WHERE o.encounter_id = {eid} 
+          AND o.order_id NOT IN (SELECT order_id FROM drug_order)
+          AND o.voided = 0;
+        """
+        ord_lines = [l.split("\t") for l in run_sql(ord_sql, db_name).splitlines() if l.strip()]
+        if ord_lines and ord_lines[0][0] == "order_type":
+            ord_lines = ord_lines[1:]
+
+        ord_items = []
+        for orl in ord_lines:
+            if len(orl) < 3:
+                continue
+            otype, oname, ores = orl[:3]
+            if "registration fee" in oname.lower():
+                continue
+            ord_items.append({
+                "type": otype,
+                "name": oname,
+                "result": ores
+            })
+
+        # Skip empty administrative encounters with 0 clinical content
+        if not chief_complaint and not hpi_narrative and not vitals and not exam_positive and not diagnoses and not med_items and not ord_items and not other_forms:
+            continue
+
+        enc_summary = {
+            "id": eid, "date": edate, "time": etime, "type": etype,
+            "provider": eprov, "location": eloc,
+            "chief_complaint": chief_complaint, "duration": duration,
+            "hpi": hpi_narrative, "past_history": past_history, "allergies": allergies,
+            "vitals": vitals,
+            "exam_positive": exam_positive, "exam_normal": exam_normal,
+            "diagnoses": diagnoses, "disposition": disposition,
+            "medications": med_items,
+            "orders": ord_items,
+            "other_forms": other_forms
+        }
+        date_groups.setdefault(edate, []).append(enc_summary)
 
     return date_groups
 
 
 def generate_pdf(patient, date_groups, filepath):
+    """Compiles patient encounters into an elegant, standardized clinical summary PDF."""
     doc = SimpleDocTemplate(filepath, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=32, bottomMargin=32)
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=13, leading=16, textColor=colors.HexColor("#1A2B4C"), spaceAfter=3)
-    patient_meta_style = ParagraphStyle('PatMeta', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=11, textColor=colors.HexColor("#333333"))
-    date_header_style = ParagraphStyle('DateH', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=11, leading=14, textColor=colors.HexColor("#1A2B4C"), spaceBefore=8, spaceAfter=2)
-    enc_strip_style = ParagraphStyle('EncStrip', parent=styles['Heading3'], fontName='Helvetica-Bold', fontSize=8, leading=10, textColor=colors.HexColor("#0B3C5D"), spaceBefore=3, spaceAfter=2)
-    form_title_style = ParagraphStyle('FormTitle', parent=styles['Heading4'], fontName='Helvetica-Bold', fontSize=8.5, leading=11, textColor=colors.HexColor("#154360"), spaceBefore=4, spaceAfter=1)
-    concept_item_style = ParagraphStyle('ConceptItem', parent=styles['Normal'], fontName='Helvetica', fontSize=7.5, leading=10, textColor=colors.HexColor("#222222"), leftIndent=10, spaceBefore=0.5, spaceAfter=0.5)
+    title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=14, leading=17, textColor=colors.HexColor("#1A2B4C"), spaceAfter=2)
+    meta_style = ParagraphStyle('PatMeta', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, leading=12, textColor=colors.HexColor("#2D3748"))
+    date_header_style = ParagraphStyle('DateH', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=11, leading=14, textColor=colors.HexColor("#1A2B4C"), spaceBefore=7, spaceAfter=2)
+    enc_banner_style = ParagraphStyle('EncBanner', parent=styles['Heading3'], fontName='Helvetica-Bold', fontSize=8.5, leading=11, textColor=colors.HexColor("#0B3C5D"), spaceBefore=3, spaceAfter=2)
+    sec_head_style = ParagraphStyle('SecHead', parent=styles['Heading4'], fontName='Helvetica-Bold', fontSize=8.5, leading=11, textColor=colors.HexColor("#2B6CB0"), spaceBefore=3, spaceAfter=1)
+    body_style = ParagraphStyle('BodyText', parent=styles['Normal'], fontName='Helvetica', fontSize=8, leading=10.5, textColor=colors.HexColor("#2D3748"), leftIndent=8, spaceBefore=0.5, spaceAfter=0.5)
 
     story = []
     p_name = f"{patient['given_name']} {patient['family_name']}".strip() or "Unknown Patient"
     story.append(Paragraph(f"<b>PATIENT CLINICAL SUMMARY — {escape(p_name.upper())}</b>", title_style))
-    story.append(Paragraph(f"<b>MRN:</b> {escape(patient['mrn'])} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Gender:</b> {escape(patient['gender'])} &nbsp;&nbsp;|&nbsp;&nbsp; <b>DOB:</b> {escape(patient['birthdate'])}", patient_meta_style))
+    story.append(Paragraph(
+        f"<b>MRN:</b> {escape(patient['mrn'])} &nbsp;&nbsp;|&nbsp;&nbsp; "
+        f"<b>Gender:</b> {escape(patient['gender'])} &nbsp;&nbsp;|&nbsp;&nbsp; "
+        f"<b>DOB:</b> {escape(patient['birthdate'])} &nbsp;&nbsp;|&nbsp;&nbsp; "
+        f"<b>Documented Clinical Dates:</b> {len(date_groups)}",
+        meta_style
+    ))
     story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1A2B4C"), spaceBefore=3, spaceAfter=5))
 
     total_encounters_rendered = 0
 
-    for date_str, encounters in date_groups.items():
-        date_story = []
+    for d_str, encs in date_groups.items():
+        story.append(Paragraph(f"<b>CLINICAL ENCOUNTER DATE: {d_str}</b>", date_header_style))
+        story.append(HRFlowable(width="100%", thickness=0.75, color=colors.HexColor("#CBD5E0"), spaceBefore=1, spaceAfter=3))
 
-        for enc in encounters:
-            form_obs = enc.get('form_observations', {})
-            meds = enc.get('medications', [])
-            orders = enc.get('orders', [])
-
-            if not form_obs and not meds and not orders:
-                continue
-
+        for enc in encs:
             total_encounters_rendered += 1
-            enc_meta = f"Encounter #{enc['id']} ({enc['type']}) | Provider: {escape(enc['provider'])} | Time: {enc['time']} | Location: {escape(enc['location'])}"
-            date_story.append(Paragraph(enc_meta, enc_strip_style))
+            banner = f"Encounter #{enc['id']} ({enc['type']}) &nbsp;|&nbsp; Provider: {escape(enc['provider'])} &nbsp;|&nbsp; Time: {enc['time']} &nbsp;|&nbsp; Location: {escape(enc['location'])}"
+            story.append(Paragraph(banner, enc_banner_style))
 
-            # Observations grouped by Form Name, with concepts sorted by concept_id
-            for form_name in sorted(form_obs.keys()):
-                items = form_obs[form_name]
-                # Sort concepts by concept_id (ascending)
-                items_sorted = sorted(items, key=lambda x: x['concept_id'])
+            # 1. Chief Complaint & HPI
+            if enc['chief_complaint'] or enc['hpi'] or enc['past_history'] or enc['allergies']:
+                story.append(Paragraph("<b>CHIEF COMPLAINT & HISTORY:</b>", sec_head_style))
+                if enc['chief_complaint']:
+                    dur_text = f" (Duration: {enc['duration']})" if enc['duration'] else ""
+                    story.append(Paragraph(f"• <b>Chief Complaint:</b> {escape(enc['chief_complaint'])}{escape(dur_text)}", body_style))
+                if enc['hpi']:
+                    story.append(Paragraph(f"• <b>History of Present Illness (HPI):</b> {escape(enc['hpi'])}", body_style))
+                if enc['past_history']:
+                    story.append(Paragraph(f"• <b>Past Medical / Surgical History:</b> {escape(enc['past_history'])}", body_style))
+                if enc['allergies']:
+                    story.append(Paragraph(f"• <b>Allergies / Adverse Reactions:</b> {escape(enc['allergies'])}", body_style))
 
-                date_story.append(Paragraph(f"<b>[FORM: {escape(form_name.upper())}]</b>", form_title_style))
-                seen_lines = set()
-                for it in items_sorted:
-                    cid = it['concept_id']
-                    cname = it['concept_name']
-                    ans = it['answer']
-                    key = (cid, cname, ans)
-                    if key in seen_lines:
-                        continue
-                    seen_lines.add(key)
+            # 2. Vital Signs
+            if enc['vitals']:
+                story.append(Paragraph("<b>VITAL SIGNS:</b>", sec_head_style))
+                v_items = []
+                if "Systolic" in enc['vitals'] and "Diastolic" in enc['vitals']:
+                    v_items.append(f"<b>BP:</b> {enc['vitals']['Systolic'].replace(' mmHg', '')}/{enc['vitals']['Diastolic']}")
+                for vk, vv in enc['vitals'].items():
+                    if vk not in ["Systolic", "Diastolic"]:
+                        v_items.append(f"<b>{vk}:</b> {vv}")
+                story.append(Paragraph("• " + " &nbsp;|&nbsp; ".join(v_items), body_style))
 
-                    line_text = f"• [Concept ID: {cid}] <b>{escape(cname)}:</b> {escape(ans)}"
-                    date_story.append(Paragraph(line_text, concept_item_style))
-                date_story.append(Spacer(1, 2))
+            # 3. Physical Examination
+            if enc['exam_positive'] or enc['exam_normal']:
+                story.append(Paragraph("<b>PHYSICAL EXAMINATION:</b>", sec_head_style))
+                for sk, sv in enc['exam_positive'].items():
+                    story.append(Paragraph(f"• <b>{escape(sk)}:</b> {escape(sv)}", body_style))
+                if enc['exam_normal']:
+                    if not enc['exam_positive']:
+                        story.append(Paragraph("• <b>Systematic Exam:</b> Normal — No abnormality detected across all systems (NAD)", body_style))
+                    else:
+                        story.append(Paragraph(f"• <b>Other Systems:</b> Normal / NAD ({escape(', '.join(enc['exam_normal']))})", body_style))
 
-            # Medications
-            if meds:
-                date_story.append(Paragraph("<b>[FORM: MEDICATIONS & PRESCRIPTIONS]</b>", form_title_style))
-                seen_meds = set()
-                for m in meds:
-                    drug_title = m['name']
-                    details = []
-                    if m['dose']: details.append(f"Dose: {m['dose']} {m['units']}".strip())
-                    if m['duration']: details.append(f"Duration: {m['duration']} {m['duration_units']}".strip())
-                    if m['instructions']: details.append(f"Instructions: {m['instructions']}")
-                    detail_str = " | ".join(details) if details else "As prescribed"
-                    line = f"• <b>{escape(drug_title)}</b> — {escape(detail_str)}"
-                    if line not in seen_meds:
-                        seen_meds.add(line)
-                        date_story.append(Paragraph(line, concept_item_style))
-                date_story.append(Spacer(1, 2))
+            # 4. Diagnoses & Disposition
+            if enc['diagnoses'] or enc['disposition']:
+                story.append(Paragraph("<b>CLINICAL IMPRESSION & DIAGNOSIS:</b>", sec_head_style))
+                for diag in enc['diagnoses']:
+                    story.append(Paragraph(f"• <b>Diagnosis:</b> {escape(diag)}", body_style))
+                if enc['disposition']:
+                    story.append(Paragraph(f"• <b>Disposition:</b> {escape(enc['disposition'])}", body_style))
 
-            # Lab Orders
-            if orders:
-                date_story.append(Paragraph("<b>[FORM: ORDERS & LAB INVESTIGATIONS]</b>", form_title_style))
-                tbl_data = []
-                for ord_item in orders:
-                    res_val = ord_item['result'] if ord_item['result'] else "Status: Ordered"
-                    tbl_data.append([
-                        Paragraph(f"• <b>[{escape(ord_item['type'])}]</b> {escape(ord_item['name'])}", concept_item_style),
-                        Paragraph(escape(str(res_val)), concept_item_style)
+            # 5. Medications & Prescriptions
+            if enc['medications']:
+                story.append(Paragraph("<b>MEDICATIONS & PRESCRIPTIONS:</b>", sec_head_style))
+                for m in enc['medications']:
+                    det = []
+                    if m['dose']: det.append(f"Dose: {m['dose']}")
+                    if m['duration']: det.append(f"Duration: {m['duration']} days")
+                    if m['instructions']: det.append(f"Instructions: {m['instructions']}")
+                    det_str = " | ".join(det) if det else "As prescribed"
+                    story.append(Paragraph(f"• <b>{escape(m['name'])}</b> — {escape(det_str)}", body_style))
+
+            # 6. Lab Orders & Investigations
+            if enc['orders']:
+                story.append(Paragraph("<b>LABORATORY & INVESTIGATIONS:</b>", sec_head_style))
+                tdata = []
+                for o in enc['orders']:
+                    res_txt = o['result'] if o['result'] else "Status: Ordered"
+                    tdata.append([
+                        Paragraph(f"• <b>[{escape(o['type'])}]</b> {escape(o['name'])}", body_style),
+                        Paragraph(escape(str(res_txt)), body_style)
                     ])
-                if tbl_data:
-                    lab_table = Table(tbl_data[:30], colWidths=[300, 240])
-                    lab_table.setStyle(TableStyle([
+                if tdata:
+                    t = Table(tdata, colWidths=[320, 220])
+                    t.setStyle(TableStyle([
                         ('PADDING', (0,0), (-1,-1), 2),
                         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                         ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#E2E8F0")),
                         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
                     ]))
-                    date_story.append(lab_table)
-                date_story.append(Spacer(1, 2))
+                    story.append(t)
 
-            date_story.append(Spacer(1, 3))
+            # 7. Other Specialized Clinical Forms (Grouped by Form Name, Sorted by Concept ID)
+            if enc['other_forms']:
+                for fname in sorted(enc['other_forms'].keys()):
+                    fitems = sorted(enc['other_forms'][fname], key=lambda x: x[0])
+                    story.append(Paragraph(f"<b>[FORM: {escape(fname.upper())}]</b>", sec_head_style))
+                    for cid, cn, ca in fitems:
+                        story.append(Paragraph(f"• <b>[Concept ID: {cid}] {escape(cn)}:</b> {escape(ca)}", body_style))
 
-        if date_story:
-            story.append(Paragraph(f"<b>{date_str}</b>", date_header_style))
-            story.append(HRFlowable(width="100%", thickness=0.75, color=colors.HexColor("#A0AEC0"), spaceBefore=1, spaceAfter=3))
-            story.extend(date_story)
-            story.append(Spacer(1, 2))
+            story.append(Spacer(1, 4))
 
     if total_encounters_rendered == 0:
-        story.append(Paragraph("<i>No clinical observations or orders recorded.</i>", concept_item_style))
+        story.append(Paragraph("<i>No documented clinical observations or orders recorded.</i>", body_style))
 
     doc.build(story)
 
@@ -502,10 +626,6 @@ def main():
     verify_and_stage()
     db_name = get_working_db()
     os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
-
-    print("[*] Loading Bahmni form and concept definitions...", flush=True)
-    form_definitions = load_form_definitions()
-    print(f"[✔] Loaded {len(form_definitions)} form concept mappings.", flush=True)
 
     print(f"\n[*] Querying active patients with clinical encounters from `{db_name}`...", flush=True)
     full_sql = """
@@ -544,15 +664,8 @@ def main():
         mrn_clean = pat['mrn'].replace("/", "_")
         pdf_path = os.path.join(PDF_OUTPUT_DIR, f"patient_{mrn_clean}.pdf")
 
-        # Resume if already generated
-        if os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 1000:
-            skipped_count += 1
-            if idx % 50 == 0 or idx == total:
-                print(f"  [{idx}/{total}] MRN {pat['mrn']} already generated. (Skipped: {skipped_count}, Generated: {processed_count})...", flush=True)
-            continue
-
         try:
-            d_groups = fetch_patient_data(pat["person_id"], form_definitions, db_name)
+            d_groups = fetch_patient_data(pat["person_id"], db_name)
             generate_pdf(pat, d_groups, pdf_path)
             processed_count += 1
         except Exception as e:
@@ -560,9 +673,9 @@ def main():
             continue
 
         if idx % 25 == 0 or idx == total:
-            print(f"  [{idx}/{total}] Processed MRN {pat['mrn']} ({processed_count} newly generated, {skipped_count} existing)...", flush=True)
+            print(f"  [{idx}/{total}] Processed MRN {pat['mrn']} ({processed_count} generated)...", flush=True)
 
-    print(f"\n[✔] PDF generation complete! Total processed: {total} (New: {processed_count}, Cached: {skipped_count})", flush=True)
+    print(f"\n[✔] PDF generation complete! Total processed: {total} (Newly generated: {processed_count})", flush=True)
     print(f"[*] PDFs saved in: {PDF_OUTPUT_DIR}", flush=True)
 
     # Attach generated PDFs to Bahmni Patient Documents

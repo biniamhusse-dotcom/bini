@@ -1628,16 +1628,15 @@ def load_dashboard_config():
                 dash = json.load(f)
                 if isinstance(dash, dict) and "dashboard" in dash and len(dash) == 1:
                     dash = dash["dashboard"]
-                res = {"dashboard": dash}
-                if isinstance(dash, dict):
-                    res.update(dash)
-                return res
+                return {"dashboard": dash}
         except Exception as e:
             log(f"Warning loading dashboard.json: {e}")
     return {"dashboard": {}}
 
 def save_dashboard_config(payload):
     data_to_save = payload.get("dashboard", payload) if isinstance(payload, dict) else payload
+    if isinstance(data_to_save, dict) and "dashboard" in data_to_save and len(data_to_save) == 1:
+        data_to_save = data_to_save["dashboard"]
     dash_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical", "dashboard.json")
     write_file_safe(dash_file, json.dumps(data_to_save, indent=2, ensure_ascii=False) + "\n")
     sync_file_to_bahmni_web(dash_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/clinical/dashboard.json")
