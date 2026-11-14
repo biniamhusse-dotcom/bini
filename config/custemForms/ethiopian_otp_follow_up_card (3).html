@@ -1,0 +1,4078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FOLLOW UP: OTP — Ethiopian Outpatient Therapeutic Program Card</title>
+  <style>
+    :root {
+      --bg-page: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-subtle: #f8fafc;
+      --bg-muted: #e2e8f0;
+      --text-main: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --border-light: #e2e8f0;
+      --teal-900: #134e4a;
+      --teal-800: #115e59;
+      --teal-700: #0f766e;
+      --teal-600: #0d9488;
+      --teal-500: #14b8a6;
+      --teal-100: #ccfbf1;
+      --teal-50: #f0fdfa;
+      --amber-900: #78350f;
+      --amber-600: #d97706;
+      --amber-500: #f59e0b;
+      --amber-100: #fef3c7;
+      --amber-50: #fffbeb;
+      --rose-900: #881337;
+      --rose-700: #be123c;
+      --rose-600: #e11d48;
+      --rose-100: #ffe4e6;
+      --rose-50: #fff1f2;
+      --emerald-800: #065f46;
+      --emerald-600: #059669;
+      --emerald-100: #d1fae5;
+      --emerald-50: #ecfdf5;
+      --sky-800: #075985;
+      --sky-600: #0284c7;
+      --sky-100: #e0f2fe;
+      --sky-50: #f0f9ff;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.16);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.4;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 48px;
+    }
+
+    button, input, select {
+      font-family: inherit;
+    }
+
+    /* Top Navigation & Toolbar */
+    .app-header {
+      background: var(--slate-900);
+      color: #ffffff;
+      border-bottom: 1px solid var(--slate-800);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: var(--shadow-md);
+    }
+
+    .header-inner {
+      max-width: 1640px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      background: var(--teal-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    .brand-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .ec-live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(20, 184, 166, 0.18);
+      color: #5eead4;
+      border: 1px solid rgba(20, 184, 166, 0.35);
+    }
+
+    .brand-sub {
+      margin: 2px 0 0;
+      font-size: 11.5px;
+      color: #94a3b8;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-teal {
+      background: var(--teal-600);
+      color: #ffffff;
+    }
+    .btn-teal:hover {
+      background: var(--teal-500);
+    }
+
+    .btn-dark {
+      background: var(--slate-800);
+      color: #f1f5f9;
+      border-color: var(--slate-700);
+    }
+    .btn-dark:hover {
+      background: var(--slate-700);
+    }
+
+    .btn-danger-outline {
+      background: rgba(136, 19, 55, 0.45);
+      color: #fecdd3;
+      border-color: rgba(225, 29, 72, 0.45);
+    }
+    .btn-danger-outline:hover {
+      background: var(--rose-900);
+      color: #ffffff;
+    }
+
+    .btn-subtle {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      border-color: var(--border-color);
+    }
+    .btn-subtle:hover {
+      background: var(--bg-muted);
+    }
+
+    .btn-teal-soft {
+      background: var(--teal-50);
+      color: var(--teal-800);
+      border-color: #99f6e4;
+    }
+    .btn-teal-soft:hover {
+      background: var(--teal-100);
+    }
+
+    /* Inline Clear Confirmation Strip */
+    .inline-confirm-bar {
+      background: #4c0519;
+      border-top: 1px solid #881337;
+      padding: 8px 16px;
+      display: none;
+    }
+    .inline-confirm-bar.active {
+      display: block;
+    }
+    .inline-confirm-inner {
+      max-width: 1640px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12.5px;
+      color: #ffe4e6;
+    }
+
+    /* Main Layout Wrapper */
+    .main-container {
+      max-width: 1640px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Clinical Alerts Container */
+    .alerts-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .clinical-alert {
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      border: 1px solid;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .clinical-alert.danger {
+      background: var(--rose-50);
+      border-color: #fda4af;
+      color: var(--rose-900);
+    }
+    .clinical-alert.warning {
+      background: var(--amber-50);
+      border-color: #fcd34d;
+      color: var(--amber-900);
+    }
+    .clinical-alert.success {
+      background: var(--emerald-50);
+      border-color: #6ee7b7;
+      color: var(--emerald-800);
+    }
+
+    .alert-badge {
+      padding: 3px 7px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #ffffff;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .clinical-alert.danger .alert-badge { background: var(--rose-600); }
+    .clinical-alert.warning .alert-badge { background: var(--amber-600); }
+    .clinical-alert.success .alert-badge { background: var(--emerald-600); }
+
+    .alert-title {
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .alert-desc {
+      font-size: 12px;
+      margin-top: 2px;
+      opacity: 0.92;
+    }
+
+    /* Card Surface */
+    .card-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+    }
+
+    /* Patient Header Section */
+    .patient-header-top {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .moh-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: var(--teal-50);
+      color: var(--teal-800);
+      border: 1px solid #99f6e4;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
+    }
+
+    .card-main-heading {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--slate-900);
+    }
+
+    .patient-fields-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 10px;
+      flex: 1;
+      min-width: 280px;
+    }
+
+    @media (max-width: 1200px) {
+      .patient-fields-grid {
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+      }
+    }
+    @media (max-width: 680px) {
+      .patient-fields-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 7px 10px;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .field-box:focus-within {
+      background: #ffffff;
+      border-color: var(--teal-600);
+      box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+    }
+
+    .field-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .field-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      padding: 2px 0;
+    }
+    .field-input:focus {
+      outline: none;
+    }
+
+    .adm-date-trigger {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--teal-800);
+      padding: 2px 0;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .adm-date-trigger:hover {
+      color: var(--teal-600);
+    }
+
+    .helper-strip {
+      padding: 9px 18px;
+      background: var(--bg-subtle);
+      border-bottom-left-radius: var(--radius-lg);
+      border-bottom-right-radius: var(--radius-lg);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .helper-tools {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .save-indicator {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* 17-Column Clinical Matrix */
+    .matrix-wrapper {
+      overflow-x: auto;
+      position: relative;
+      border-radius: var(--radius-lg);
+    }
+
+    .matrix-wrapper::-webkit-scrollbar {
+      height: 10px;
+    }
+    .matrix-wrapper::-webkit-scrollbar-track {
+      background: #e2e8f0;
+      border-bottom-left-radius: var(--radius-lg);
+      border-bottom-right-radius: var(--radius-lg);
+    }
+    .matrix-wrapper::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 6px;
+    }
+    .matrix-wrapper::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    .otp-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12.5px;
+    }
+
+    .otp-table th,
+    .otp-table td {
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0;
+      vertical-align: middle;
+    }
+
+    .otp-table thead th {
+      background: var(--slate-800);
+      color: #ffffff;
+      font-weight: 800;
+      text-align: center;
+      padding: 8px 4px;
+      font-size: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 25;
+      border-bottom: 2px solid var(--slate-900);
+    }
+
+    .otp-table thead th.col-adm-head {
+      background: var(--teal-900);
+      color: #ccfbf1;
+    }
+
+    /* Sticky Left Group + Label Columns */
+    .sticky-grp {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      width: 38px;
+      min-width: 38px;
+      max-width: 38px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .sticky-lbl {
+      position: sticky;
+      left: 38px;
+      z-index: 20;
+      width: 215px;
+      min-width: 215px;
+      max-width: 215px;
+      background: #ffffff;
+      padding: 6px 10px !important;
+      text-align: left;
+      box-shadow: 4px 0 8px -2px rgba(15, 23, 42, 0.08);
+    }
+
+    .otp-table thead th.sticky-grp {
+      z-index: 35;
+      background: var(--slate-900);
+    }
+
+    .otp-table thead th.sticky-lbl {
+      z-index: 35;
+      background: var(--slate-800);
+      color: #ffffff;
+    }
+
+    .vertical-grp-label {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      white-space: nowrap;
+      margin: 0 auto;
+      padding: 6px 0;
+    }
+
+    .grp-timeline { background: #e2e8f0; color: #1e293b; }
+    .grp-anthro { background: #ccfbf1; color: #115e59; }
+    .grp-history { background: #e0f2fe; color: #075985; }
+    .grp-exam { background: #e0e7ff; color: #3730a3; }
+    .grp-feeding { background: #fef3c7; color: #92400e; }
+    .grp-action { background: #d1fae5; color: #065f46; }
+
+    .row-title {
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--slate-900);
+      line-height: 1.25;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .row-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .mini-autofill-btn {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--teal-600);
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .mini-autofill-btn:hover {
+      background: var(--teal-700);
+    }
+
+    /* Data Cells */
+    .week-cell {
+      min-width: 78px;
+      width: 78px;
+      height: 36px;
+      background: #ffffff;
+      text-align: center;
+      padding: 2px !important;
+    }
+    .week-cell.is-adm {
+      background: rgba(240, 253, 250, 0.55);
+    }
+    .otp-table tbody tr:hover .week-cell {
+      background: #f8fafc;
+    }
+    .otp-table tbody tr:hover .sticky-lbl {
+      background: #f8fafc;
+    }
+
+    .grid-input, .grid-select {
+      width: 100%;
+      height: 30px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: transparent;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate-900);
+      padding: 0 3px;
+      transition: all 0.12s ease;
+    }
+    .grid-select {
+      text-align-last: center;
+      cursor: pointer;
+    }
+    .grid-input:focus, .grid-select:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: var(--teal-600);
+      box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.18);
+    }
+    .grid-input::placeholder {
+      color: #cbd5e1;
+      font-weight: 400;
+    }
+
+    /* Date Trigger Button Inside Table */
+    .cell-date-btn {
+      width: 100%;
+      height: 30px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      transition: all 0.12s ease;
+    }
+    .cell-date-btn.empty {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      color: #94a3b8;
+    }
+    .cell-date-btn.empty:hover {
+      border-color: var(--teal-600);
+      color: var(--teal-700);
+      background: var(--teal-50);
+    }
+    .cell-date-btn.filled {
+      background: var(--teal-50);
+      border: 1px solid #5eead4;
+      color: var(--teal-900);
+    }
+    .cell-date-btn.filled:hover {
+      background: var(--teal-100);
+    }
+
+    /* Clinical Status Highlights inside Grid */
+    .flag-danger {
+      background: var(--rose-100) !important;
+      color: var(--rose-900) !important;
+      font-weight: 800 !important;
+    }
+    .flag-warning {
+      background: var(--amber-100) !important;
+      color: var(--amber-900) !important;
+      font-weight: 800 !important;
+    }
+    .flag-success {
+      background: var(--emerald-100) !important;
+      color: var(--emerald-800) !important;
+      font-weight: 800 !important;
+    }
+    .flag-info {
+      background: var(--sky-100) !important;
+      color: var(--sky-800) !important;
+      font-weight: 800 !important;
+    }
+
+    /* Embedded Protocol Rule Row */
+    .protocol-rule-row td {
+      background: var(--amber-50) !important;
+      border-bottom: 1px solid #fcd34d !important;
+      padding: 6px 10px !important;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--amber-900);
+    }
+
+    /* Summary KPI Strip */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 960px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(160px, 1fr));
+      }
+    }
+    @media (max-width: 520px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 13px 15px;
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-label {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--slate-900);
+      margin-top: 3px;
+    }
+    .kpi-meta {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .muac-progress-track {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-muted);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 7px;
+    }
+    .muac-progress-fill {
+      height: 100%;
+      background: var(--teal-600);
+      border-radius: 999px;
+      transition: width 0.25s ease, background-color 0.25s ease;
+    }
+
+    /* Bottom 2-Column Split: Action Log + SVG Growth Chart */
+    .bottom-modules-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 1150px) {
+      .bottom-modules-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .panel-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--slate-900);
+    }
+    .panel-subtitle {
+      margin: 2px 0 0;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .panel-body {
+      padding: 14px 16px;
+    }
+
+    /* Action Log Table */
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    .log-table th {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      text-align: left;
+      padding: 8px 10px;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .log-table td {
+      padding: 7px 6px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .log-date-btn {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      text-align: left;
+    }
+    .log-date-btn.empty {
+      background: var(--bg-subtle);
+      border: 1px dashed var(--border-color);
+      color: var(--text-muted);
+    }
+    .log-date-btn.filled {
+      background: var(--teal-50);
+      border: 1px solid #5eead4;
+      color: var(--teal-900);
+    }
+
+    .log-week-select, .log-note-input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-main);
+      background: #ffffff;
+    }
+    .log-week-select:focus, .log-note-input:focus {
+      outline: none;
+      border-color: var(--teal-600);
+    }
+
+    .icon-del-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .icon-del-btn:hover {
+      background: var(--rose-50);
+      color: var(--rose-600);
+      border-color: #fecdd3;
+    }
+
+    /* Visit Outcome Code Legend */
+    .legend-section {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-light);
+    }
+    .legend-heading {
+      margin: 0 0 8px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    @media (max-width: 720px) {
+      .legend-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    .legend-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 7px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    .legend-code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 10px;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    /* SVG Growth Chart Container */
+    .svg-chart-box {
+      position: relative;
+      width: 100%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px;
+    }
+
+    .chart-legend-pills {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--slate-900);
+      color: #ffffff;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.45;
+      box-shadow: var(--shadow-lg);
+      z-index: 30;
+      display: none;
+      min-width: 155px;
+      border: 1px solid var(--slate-700);
+    }
+
+    /* =========================================================================
+       COMPACT FLOATING ETHIOPIAN CALENDAR & TIME PICKER POPOVER (~274px WIDE)
+       ========================================================================= */
+    .eth-popover {
+      position: fixed;
+      z-index: 60;
+      width: 274px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      color: var(--text-main);
+      user-select: none;
+      display: none;
+      overflow: hidden;
+    }
+    .eth-popover.open {
+      display: block;
+    }
+
+    .eth-pop-header {
+      background: var(--slate-900);
+      color: #ffffff;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .eth-pop-target {
+      font-size: 11px;
+      font-weight: 700;
+      color: #5eead4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .eth-pop-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .eth-pop-close:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+
+    .eth-pop-body {
+      padding: 9px;
+    }
+
+    .eth-nav-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 7px;
+    }
+
+    .eth-nav-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .eth-nav-btn:hover {
+      background: var(--bg-muted);
+    }
+
+    .eth-month-sel {
+      flex: 1;
+      min-width: 0;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-main);
+      padding: 0 4px;
+      cursor: pointer;
+    }
+
+    .eth-year-sel {
+      width: 72px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-main);
+      padding: 0 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .eth-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .eth-wd {
+      font-size: 9.5px;
+      font-weight: 800;
+      color: var(--text-muted);
+      line-height: 1.15;
+    }
+    .eth-wd span {
+      display: block;
+      font-size: 8.5px;
+      font-weight: 600;
+    }
+    .eth-wd.sun { color: var(--rose-600); }
+    .eth-wd.sat { color: var(--teal-700); }
+
+    .eth-days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-bottom: 7px;
+    }
+
+    .eth-day-cell {
+      height: 26px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .eth-day-cell:hover {
+      background: var(--teal-50);
+      border-color: #99f6e4;
+    }
+    .eth-day-cell.is-today {
+      background: var(--amber-100);
+      border-color: var(--amber-500);
+      color: var(--amber-900);
+      font-weight: 800;
+    }
+    .eth-day-cell.is-selected {
+      background: var(--teal-600);
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    .eth-greg-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 2px;
+      border-top: 1px solid var(--border-light);
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .eth-today-link {
+      background: none;
+      border: none;
+      color: var(--teal-700);
+      font-weight: 800;
+      font-size: 10.5px;
+      cursor: pointer;
+      padding: 0;
+    }
+    .eth-today-link:hover {
+      text-decoration: underline;
+    }
+
+    .eth-time-section {
+      padding-top: 6px;
+      border-top: 1px solid var(--border-light);
+    }
+    .eth-time-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .eth-time-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .eth-time-selects {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .eth-time-selects.disabled {
+      opacity: 0.38;
+      pointer-events: none;
+    }
+    .eth-t-sel {
+      height: 23px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 0 3px;
+      color: var(--text-main);
+    }
+    .eth-time-hint {
+      font-size: 10px;
+      color: var(--teal-700);
+      font-weight: 700;
+      text-align: right;
+      margin-top: 3px;
+    }
+
+    .eth-pop-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 7px;
+      margin-top: 6px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .eth-clear-link {
+      background: none;
+      border: none;
+      color: var(--rose-600);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 3px 5px;
+      border-radius: 4px;
+    }
+    .eth-clear-link:hover {
+      background: var(--rose-50);
+    }
+
+    .eth-apply-btn {
+      background: var(--teal-600);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 11px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .eth-apply-btn:hover {
+      background: var(--teal-700);
+    }
+
+    /* Toast Notification */
+    .toast-box {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 70;
+      background: var(--slate-900);
+      color: #ffffff;
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: 1px solid var(--slate-700);
+      box-shadow: var(--shadow-lg);
+      font-size: 12.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+    .toast-box.visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .toast-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      flex-shrink: 0;
+    }
+
+    /* Official Print Form Container (Hidden on Screen, Rendered in @media print) */
+    .official-print-sheet {
+      display: none;
+    }
+
+    /* =========================================================================
+       PRINT STYLESHEET — OFFICIAL ETHIOPIAN OTP FOLLOW-UP CARD (A4 LANDSCAPE)
+       ========================================================================= */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 6mm 7mm;
+      }
+
+      html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      /* Hide entire screen UI */
+      .app-header,
+      .main-container,
+      .eth-popover,
+      .toast-box,
+      .no-print {
+        display: none !important;
+      }
+
+      /* Show exact paper OTP form */
+      .official-print-sheet {
+        display: block !important;
+        width: 100% !important;
+        color: #000000 !important;
+        background: #ffffff !important;
+      }
+
+      .print-top-title {
+        text-align: center;
+        font-size: 13pt;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        margin: 0 0 3px 0;
+        text-transform: uppercase;
+      }
+
+      .print-patient-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 18px;
+        margin-bottom: 4px;
+        font-size: 9pt;
+        font-weight: 700;
+      }
+
+      .print-field-line {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        flex: 1;
+      }
+
+      .print-field-line.right {
+        max-width: 38%;
+      }
+
+      .print-underline-val {
+        flex: 1;
+        border-bottom: 1px solid #000000;
+        min-height: 12pt;
+        padding: 0 4px 1px 4px;
+        font-weight: 700;
+        font-size: 9pt;
+      }
+
+      .print-otp-grid {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 7.2pt;
+        line-height: 1.1;
+      }
+
+      .print-otp-grid th,
+      .print-otp-grid td {
+        border: 1px solid #000000;
+        padding: 1.8px 2px;
+        color: #000000;
+        vertical-align: middle;
+        word-wrap: break-word;
+      }
+
+      .print-col-grp {
+        width: 22px;
+        text-align: center;
+        font-weight: 700;
+        padding: 1px !important;
+      }
+
+      .print-rot-text {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        white-space: nowrap;
+        display: inline-block;
+        font-size: 7pt;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .print-col-lbl {
+        width: 132px;
+        text-align: left;
+        font-weight: 700;
+        padding-left: 4px !important;
+        font-size: 7pt;
+      }
+
+      .print-col-wk {
+        text-align: center;
+        font-weight: 600;
+        font-size: 7pt;
+      }
+
+      .print-wk-head {
+        font-weight: 800;
+        font-size: 7.5pt;
+        background: #f8fafc !important;
+      }
+
+      .print-rule-banner {
+        text-align: center;
+        font-weight: 700;
+        font-size: 7pt;
+        padding: 2px 4px !important;
+        background: #ffffff !important;
+      }
+
+      /* Attached VISIT OUTCOME Legend Box */
+      .print-outcome-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: -1px;
+        font-size: 7pt;
+        line-height: 1.15;
+      }
+
+      .print-outcome-table td {
+        border: 1px solid #000000;
+        padding: 2.5px 5px;
+        vertical-align: middle;
+      }
+
+      .print-outcome-title-cell {
+        width: 154px; /* 22px + 132px aligns cleanly with main matrix label column */
+        font-weight: 800;
+        text-align: left;
+        padding-left: 5px !important;
+      }
+
+      .print-code-badge {
+        display: inline-block;
+        font-weight: 800;
+        border: 1px solid #000000;
+        padding: 0 3px;
+        margin-right: 2px;
+        font-size: 6.8pt;
+      }
+
+      .print-code-span {
+        margin-right: 12px;
+        white-space: nowrap;
+      }
+
+      /* Bottom Outreach Worker & Action Taken Ruled Lines */
+      .print-bottom-notes {
+        margin-top: 5px;
+        font-size: 8pt;
+      }
+
+      .print-outreach-row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .print-action-heading {
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+
+      .print-ruled-line {
+        border-bottom: 1px solid #000000;
+        min-height: 13pt;
+        line-height: 13pt;
+        padding: 0 4px;
+        font-size: 7.8pt;
+        font-weight: 600;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Dark Slate Header & Action Toolbar -->
+  <header class="app-header no-print">
+    <div class="header-inner">
+      <div class="brand-block">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title-row">
+            <h1 class="brand-title">Ethiopian OTP Follow-Up Card</h1>
+            <span class="ec-live-pill" id="liveEthDateBadge">Loading E.C. Date...</span>
+          </div>
+          <p class="brand-sub" id="liveGregDateSub">Federal Ministry of Health • Outpatient Therapeutic Program (CMAM)</p>
+        </div>
+      </div>
+
+      <div class="toolbar-actions">
+        <button type="button" class="btn btn-teal" id="btnLoadSample">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+          Load Sample Case
+        </button>
+
+        <button type="button" class="btn btn-dark" id="btnSaveCard">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Card
+        </button>
+
+        <button type="button" class="btn btn-dark" id="btnExportJson">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export JSON
+        </button>
+
+        <button type="button" class="btn btn-dark" id="btnImportJson">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import JSON
+        </button>
+        <input type="file" id="jsonFileInput" accept=".json,application/json" style="display:none;" />
+
+        <button type="button" class="btn btn-dark" id="btnPrintCard">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print Card
+        </button>
+
+        <button type="button" class="btn btn-danger-outline" id="btnClearCard">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Clear Card
+        </button>
+      </div>
+    </div>
+
+    <!-- Inline Sandbox-Safe Clear Confirmation Bar -->
+    <div class="inline-confirm-bar" id="inlineClearBar">
+      <div class="inline-confirm-inner">
+        <span><strong>Confirm Reset:</strong> Erase all patient details, 17-week follow-up entries, and outreach logs from this OTP card?</span>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-dark" id="btnCancelClear">Cancel</button>
+          <button type="button" class="btn" style="background:#e11d48; color:#fff;" id="btnConfirmClear">Yes, Clear All Data</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <!-- Live Clinical Decision Support Alerts -->
+    <div class="alerts-stack" id="clinicalAlertsStack"></div>
+
+    <!-- Patient Identification Card -->
+    <section class="card-panel">
+      <div class="patient-header-top">
+        <div>
+          <span class="moh-tag">MINISTRY OF HEALTH — ETHIOPIA • OTP CLINICAL RECORD</span>
+          <h2 class="card-main-heading">FOLLOW UP: OTP</h2>
+        </div>
+
+        <div class="patient-fields-grid">
+          <div class="field-box">
+            <label class="field-label" for="inputPatientName">NAME (Child / Patient)</label>
+            <input type="text" class="field-input" id="inputPatientName" placeholder="Full name..." />
+          </div>
+
+          <div class="field-box">
+            <label class="field-label" for="inputRegNo">Registration N°</label>
+            <input type="text" class="field-input" id="inputRegNo" placeholder="e.g. OTP-2019-084" />
+          </div>
+
+          <div class="field-box">
+            <label class="field-label" for="inputFacility">Health Facility / OTP Site</label>
+            <input type="text" class="field-input" id="inputFacility" placeholder="Health Post / Center..." />
+          </div>
+
+          <div class="field-box">
+            <label class="field-label" for="inputOutreachWorker">Name of Outreach Worker</label>
+            <input type="text" class="field-input" id="inputOutreachWorker" placeholder="HEW / Volunteer..." />
+          </div>
+
+          <div class="field-box">
+            <span class="field-label">Admission Date (E.C.)</span>
+            <button type="button" class="adm-date-trigger" id="btnHeaderAdmDate" title="Set Admission Date in Ethiopian Calendar">
+              <span id="headerAdmDateText">Set E.C. Date</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="helper-strip no-print">
+        <div class="helper-tools">
+          <strong>13-Month Ethiopian Calendar Tools:</strong>
+          <button type="button" class="btn btn-teal-soft" id="btnAutoFillWeeks" style="padding:4px 10px; font-size:11.5px;">
+            Auto-Fill +7 Days (Weeks 1–16)
+          </button>
+          <span>Click any <strong>Date (E.C.)</strong> cell to open the compact Ethiopian Calendar &amp; Time picker.</span>
+        </div>
+        <div class="save-indicator" id="saveStatusLabel">Ready • Auto-saves to browser</div>
+      </div>
+    </section>
+
+    <!-- 17-Column Clinical Matrix (ADM = 0 through Week 16) -->
+    <section class="card-panel">
+      <div class="matrix-wrapper">
+        <table class="otp-table" id="otpMatrixTable">
+          <thead>
+            <tr id="otpMatrixHeadRow">
+              <th class="sticky-grp">Grp</th>
+              <th class="sticky-lbl" style="text-align:left; padding-left:10px;">Week</th>
+              <!-- ADM (=0) and Weeks 1..16 injected via JS -->
+            </tr>
+          </thead>
+          <tbody id="otpMatrixBody">
+            <!-- Clinical rows injected via JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Clinical Summary KPI Strip -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Admission vs. Latest Weight</div>
+        <div class="kpi-value" id="kpiWeightVal">—</div>
+        <div class="kpi-meta" id="kpiWeightDelta">Awaiting weight records</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Latest MUAC (Discharge ≥ 12.5 cm)</div>
+        <div class="kpi-value" id="kpiMuacVal">—</div>
+        <div class="kpi-meta" id="kpiMuacMeta">Target ≥ 12.5 cm for cure</div>
+        <div class="muac-progress-track">
+          <div class="muac-progress-fill" id="kpiMuacBar" style="width:0%;"></div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Total RUTF Sachets Dispensed</div>
+        <div class="kpi-value" id="kpiRutfVal" style="color:var(--teal-700);">0 units</div>
+        <div class="kpi-meta" id="kpiRutfMeta">Across 0 recorded visits</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Latest Visit Outcome</div>
+        <div class="kpi-value" id="kpiOutcomeVal">—</div>
+        <div class="kpi-meta" id="kpiOutcomeMeta">No visit outcome recorded</div>
+      </div>
+    </section>
+
+    <!-- Bottom Modules: Action Log + SVG Growth Trajectory Chart -->
+    <section class="bottom-modules-grid">
+      <!-- Left: Action Taken During Follow-Up + Outcome Reference Legend -->
+      <div class="card-panel" style="margin-bottom:0;">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">Action taken during follow-up (include date)</h3>
+            <p class="panel-subtitle">Document home visits, SC referrals, appetite test follow-ups &amp; caregiver counseling</p>
+          </div>
+          <button type="button" class="btn btn-teal no-print" id="btnAddActionRow" style="padding:5px 10px; font-size:12px;">
+            + Add Action Row
+          </button>
+        </div>
+
+        <div class="panel-body">
+          <div style="overflow-x:auto;">
+            <table class="log-table">
+              <thead>
+                <tr>
+                  <th style="width:165px;">Ethiopian Date &amp; Time</th>
+                  <th style="width:105px;">Week</th>
+                  <th>Action Taken / Clinical &amp; Outreach Notes</th>
+                  <th class="no-print" style="width:36px;"></th>
+                </tr>
+              </thead>
+              <tbody id="actionLogTbody">
+                <!-- Dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Official OTP Visit Outcome Code Legend -->
+          <div class="legend-section">
+            <h4 class="legend-heading">Visit Outcome — Standard Ethiopian OTP Codes</h4>
+            <div class="legend-grid">
+              <div class="legend-item">
+                <span class="legend-code" style="background:#059669;">OK</span>
+                <span><strong>Continue</strong> treatment in OTP</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-code" style="background:#d97706;">A</span>
+                <span><strong>Absent</strong> from scheduled visit</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-code" style="background:#e11d48;">DF</span>
+                <span><strong>Defaulter</strong> (Absent 2 consecutive visits + confirmed by HV)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-code" style="background:#0284c7;">T</span>
+                <span><strong>Transfer</strong> (to SC or another OTP)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-code" style="background:#ea580c;">RR</span>
+                <span><strong>Refused referral</strong></span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-code" style="background:#0d9488;">C</span>
+                <span><strong>Cured</strong> (Discharged recovered)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-code" style="background:#7c3aed;">NR</span>
+                <span><strong>Non-responder</strong></span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-code" style="background:#4f46e5;">HV</span>
+                <span><strong>Home visit</strong> conducted</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-code" style="background:#1e293b;">D</span>
+                <span><strong>Died</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Interactive SVG Growth Trajectory Chart -->
+      <div class="card-panel" style="margin-bottom:0; display:flex; flex-direction:column;">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">Weight &amp; MUAC Growth Trajectory</h3>
+            <p class="panel-subtitle">Interactive recovery curve (ADM = 0 to Week 16) • Hover points for details</p>
+          </div>
+          <div class="chart-legend-pills">
+            <span style="color:var(--teal-700);">● Weight (kg)</span>
+            <span style="color:var(--amber-600);">◆ MUAC (cm)</span>
+          </div>
+        </div>
+
+        <div class="panel-body" style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+          <div class="svg-chart-box" id="svgChartContainer">
+            <svg id="growthSvg" viewBox="0 0 600 280" width="100%" height="280" style="display:block; overflow:visible;"></svg>
+            <div class="chart-tooltip" id="chartTooltip"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:8px; padding:0 4px;">
+            <span>Teal dashed line = Admission Weight baseline</span>
+            <span>Amber dashed line = 12.5 cm MUAC cure threshold</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Compact Floating Ethiopian Calendar & Time Picker Popover -->
+  <div class="eth-popover no-print" id="ethCalendarPopover" role="dialog" aria-label="Ethiopian Calendar and Time Picker">
+    <div class="eth-pop-header">
+      <span class="eth-pop-target" id="ethPopoverTargetTitle">Admission Date (E.C.)</span>
+      <button type="button" class="eth-pop-close" id="btnCloseEthPopover" aria-label="Close calendar">&times;</button>
+    </div>
+
+    <div class="eth-pop-body">
+      <div class="eth-nav-row">
+        <button type="button" class="eth-nav-btn" id="btnEthPrevMonth" title="Previous Month">&lsaquo;</button>
+        <select class="eth-month-sel" id="ethMonthSelect" aria-label="Ethiopian Month"></select>
+        <select class="eth-year-sel" id="ethYearSelect" aria-label="Ethiopian Year"></select>
+        <button type="button" class="eth-nav-btn" id="btnEthNextMonth" title="Next Month">&rsaquo;</button>
+      </div>
+
+      <div class="eth-weekdays">
+        <div class="eth-wd sun">እሁድ<span>Sun</span></div>
+        <div class="eth-wd">ሰኞ<span>Mon</span></div>
+        <div class="eth-wd">ማክ<span>Tue</span></div>
+        <div class="eth-wd">ረቡ<span>Wed</span></div>
+        <div class="eth-wd">ሐሙ<span>Thu</span></div>
+        <div class="eth-wd">ዓርብ<span>Fri</span></div>
+        <div class="eth-wd sat">ቅዳሜ<span>Sat</span></div>
+      </div>
+
+      <div class="eth-days-grid" id="ethDaysGrid"></div>
+
+      <div class="eth-greg-bar">
+        <span id="ethGregPreviewText">Greg: —</span>
+        <button type="button" class="eth-today-link" id="btnEthToday">Today</button>
+      </div>
+
+      <div class="eth-time-section">
+        <div class="eth-time-row">
+          <label class="eth-time-check">
+            <input type="checkbox" id="chkEthIncludeTime" />
+            <span>+ Time</span>
+          </label>
+          <div class="eth-time-selects disabled" id="ethTimeSelectsWrap">
+            <select class="eth-t-sel" id="selEthHour" aria-label="Ethiopian Hour"></select>
+            <span style="font-weight:800; font-size:11px;">:</span>
+            <select class="eth-t-sel" id="selEthMinute" aria-label="Minute"></select>
+            <select class="eth-t-sel" id="selEthPeriod" aria-label="Day or Night">
+              <option value="DAY">ቀን (Day)</option>
+              <option value="NIGHT">ማታ (Night)</option>
+            </select>
+          </div>
+        </div>
+        <div class="eth-time-hint" id="ethLocalTimeHint" style="display:none;"></div>
+      </div>
+
+      <div class="eth-pop-footer">
+        <button type="button" class="eth-clear-link" id="btnEthClearDate">Clear</button>
+        <button type="button" class="eth-apply-btn" id="btnEthApplyDate">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Feedback -->
+  <div class="toast-box no-print" id="toastBox">
+    <span class="toast-dot"></span>
+    <span id="toastText">Saved</span>
+  </div>
+
+  <!-- Dedicated Official Paper Print Form (Rendered only during @media print) -->
+  <section class="official-print-sheet" id="officialPrintSheet" aria-hidden="true"></section>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* =======================================================================
+         1. EXACT ETHIOPIAN CALENDAR CONVERSION ENGINE (JDN <-> E.C. <-> GREGORIAN)
+         ======================================================================= */
+      const ETH_MONTHS = [
+        { num: 1, en: "Meskerem", am: "መስከረም" },
+        { num: 2, en: "Tikimt", am: "ጥቅምት" },
+        { num: 3, en: "Hidar", am: "ኅዳር" },
+        { num: 4, en: "Tahsas", am: "ታኅሣሥ" },
+        { num: 5, en: "Tir", am: "ጥር" },
+        { num: 6, en: "Yekatit", am: "የካቲት" },
+        { num: 7, en: "Megabit", am: "መጋቢት" },
+        { num: 8, en: "Miazia", am: "ሚያዝያ" },
+        { num: 9, en: "Ginbot", am: "ግንቦት" },
+        { num: 10, en: "Sene", am: "ሰኔ" },
+        { num: 11, en: "Hamle", am: "ሐምሌ" },
+        { num: 12, en: "Nehase", am: "ነሐሴ" },
+        { num: 13, en: "Pagume", am: "ጳጉሜ" }
+      ];
+
+      const ETHIOPIAN_EPOCH_JDN = 1724221; // 1 Meskerem 1 E.C.
+
+      function isEthiopianLeapYear(ethYear) {
+        return ((ethYear % 4) + 4) % 4 === 3;
+      }
+
+      function getEthiopianMonthDays(ethYear, ethMonth) {
+        if (ethMonth >= 1 && ethMonth <= 12) return 30;
+        if (ethMonth === 13) return isEthiopianLeapYear(ethYear) ? 6 : 5;
+        return 30;
+      }
+
+      function gregorianToJDN(year, month, day) {
+        const a = Math.floor((14 - month) / 12);
+        const y = year + 4800 - a;
+        const m = month + 12 * a - 3;
+        return (
+          day +
+          Math.floor((153 * m + 2) / 5) +
+          365 * y +
+          Math.floor(y / 4) -
+          Math.floor(y / 100) +
+          Math.floor(y / 400) -
+          32045
+        );
+      }
+
+      function jdnToGregorian(jdn) {
+        const a = jdn + 32044;
+        const b = Math.floor((4 * a + 3) / 146097);
+        const c = a - Math.floor((146097 * b) / 4);
+        const d = Math.floor((4 * c + 3) / 1461);
+        const e = c - Math.floor((1461 * d) / 4);
+        const m = Math.floor((5 * e + 2) / 153);
+        const day = e - Math.floor((153 * m + 2) / 5) + 1;
+        const month = m + 3 - 12 * Math.floor(m / 10);
+        const year = 100 * b + d - 4800 + Math.floor(m / 10);
+        return { year, month, day };
+      }
+
+      function jdnToEthiopian(jdn) {
+        const r = (jdn - ETHIOPIAN_EPOCH_JDN) % 1461;
+        const n = (r % 365) + 365 * Math.floor(r / 1460);
+        const year =
+          4 * Math.floor((jdn - ETHIOPIAN_EPOCH_JDN) / 1461) +
+          Math.floor(r / 365) -
+          Math.floor(r / 1460);
+        const month = Math.floor(n / 30) + 1;
+        const day = (n % 30) + 1;
+        return { year, month, day };
+      }
+
+      function ethiopianToJDN(year, month, day) {
+        return (
+          ETHIOPIAN_EPOCH_JDN +
+          365 +
+          365 * (year - 1) +
+          Math.floor(year / 4) +
+          30 * month +
+          day -
+          31
+        );
+      }
+
+      function dateObjToEthiopian(dateObj) {
+        const jdn = gregorianToJDN(
+          dateObj.getFullYear(),
+          dateObj.getMonth() + 1,
+          dateObj.getDate()
+        );
+        return jdnToEthiopian(jdn);
+      }
+
+      function addDaysToEthiopian(ethDate, deltaDays) {
+        const jdn = ethiopianToJDN(ethDate.year, ethDate.month, ethDate.day) + deltaDays;
+        const res = jdnToEthiopian(jdn);
+        return {
+          year: res.year,
+          month: res.month,
+          day: res.day,
+          hasTime: Boolean(ethDate.hasTime),
+          hour: ethDate.hour || 3,
+          minute: ethDate.minute || 0,
+          period: ethDate.period || "DAY"
+        };
+      }
+
+      function formatEthShort(ethObj) {
+        if (!ethObj || !ethObj.year) return "";
+        const dd = String(ethObj.day).padStart(2, "0");
+        const mm = String(ethObj.month).padStart(2, "0");
+        const yy = String(ethObj.year).slice(-2);
+        let str = `${dd}/${mm}/${yy}`;
+        if (ethObj.hasTime) {
+          const hh = String(ethObj.hour).padStart(2, "0");
+          const min = String(ethObj.minute).padStart(2, "0");
+          const p = ethObj.period === "NIGHT" ? "ማታ" : "ቀን";
+          str += ` ${hh}:${min}${p}`;
+        }
+        return str;
+      }
+
+      function formatEthFull(ethObj) {
+        if (!ethObj || !ethObj.year) return "";
+        const mInfo = ETH_MONTHS[ethObj.month - 1];
+        const mName = mInfo ? `${mInfo.en} (${mInfo.am})` : ethObj.month;
+        let str = `${mName} ${ethObj.day}, ${ethObj.year} E.C.`;
+        if (ethObj.hasTime) {
+          const hh = String(ethObj.hour).padStart(2, "0");
+          const min = String(ethObj.minute).padStart(2, "0");
+          const p = ethObj.period === "NIGHT" ? "ማታ (Night)" : "ቀን (Day)";
+          str += ` • ${hh}:${min} ${p}`;
+        }
+        return str;
+      }
+
+      /* =======================================================================
+         2. OTP CLINICAL CARD DATA MODEL & ROW DEFINITIONS
+         ======================================================================= */
+      const TOTAL_WEEKS = 17; // 0 = ADM (=0), 1..16 = Weeks 1..16
+      const STORAGE_KEY = "eth_otp_card_complete_v2";
+
+      const CLINICAL_ROWS = [
+        {
+          key: "date",
+          group: "Timeline",
+          grpClass: "grp-timeline",
+          label: "Date (E.C.)",
+          sub: "Ethiopian Calendar",
+          type: "eth_date",
+          hasAutoFillBtn: true
+        },
+        {
+          key: "oedema",
+          group: "Anthropometry",
+          grpClass: "grp-anthro",
+          label: "Bilateral Pitting Oedema",
+          sub: "(++++++) • 0 / + / ++ / +++",
+          type: "select",
+          options: ["", "0", "+", "++", "+++"]
+        },
+        {
+          key: "muac",
+          group: "Anthropometry",
+          grpClass: "grp-anthro",
+          label: "MUAC (cm)",
+          sub: "<11.5 SAM • ≥12.5 Cured",
+          type: "number",
+          step: "0.1",
+          placeholder: "cm"
+        },
+        {
+          key: "weight",
+          group: "Anthropometry",
+          grpClass: "grp-anthro",
+          label: "Weight (kg)",
+          sub: "Weekly weight in kg",
+          type: "number",
+          step: "0.1",
+          placeholder: "kg"
+        },
+        {
+          key: "weightLoss",
+          group: "Anthropometry",
+          grpClass: "grp-anthro",
+          label: "Weight loss * (Y/N)",
+          sub: "Auto-evaluated (click to override)",
+          type: "select",
+          options: ["", "N", "Y"]
+        },
+        {
+          key: "height",
+          group: "Anthropometry",
+          grpClass: "grp-anthro",
+          label: "Height / length (cm)",
+          sub: "Length <87cm / Height ≥87cm",
+          type: "number",
+          step: "0.1",
+          placeholder: "cm"
+        },
+        {
+          key: "wfh",
+          group: "Anthropometry",
+          grpClass: "grp-anthro",
+          label: "Weight for Height/length",
+          sub: "Z-score category",
+          type: "select",
+          options: ["", "<-3 SD", "-3 to -2 SD", "≥-2 SD"]
+        },
+        {
+          key: "diarrhoea",
+          group: "History",
+          grpClass: "grp-history",
+          label: "Diarrhoea (# days)",
+          printLabel: "Diarrhoea (# days)",
+          sub: "0–7 or N",
+          type: "text",
+          placeholder: "N"
+        },
+        {
+          key: "vomiting",
+          group: "History",
+          grpClass: "grp-history",
+          label: "Vomiting (# days)",
+          printLabel: "Vomiting (# days)",
+          sub: "0–7 or N",
+          type: "text",
+          placeholder: "N"
+        },
+        {
+          key: "fever",
+          group: "History",
+          grpClass: "grp-history",
+          label: "Fever (# days)",
+          printLabel: "Fever (# days)",
+          sub: "0–7 or N",
+          type: "text",
+          placeholder: "N"
+        },
+        {
+          key: "cough",
+          group: "History",
+          grpClass: "grp-history",
+          label: "Cough (# days)",
+          printLabel: "Cough (# days)",
+          sub: "0–7 or N",
+          type: "text",
+          placeholder: "N"
+        },
+        {
+          key: "temperature",
+          group: "Physical exam",
+          printGroup: "Physical examination",
+          grpClass: "grp-exam",
+          label: "Temperature (°C)",
+          printLabel: "Temperature",
+          sub: "≥37.5 Fever • <35.5 Hypo",
+          type: "number",
+          step: "0.1",
+          placeholder: "36.8"
+        },
+        {
+          key: "respRate",
+          group: "Physical exam",
+          printGroup: "Physical examination",
+          grpClass: "grp-exam",
+          label: "Respiratory rate (#/min)",
+          printLabel: "Respiratory rate (#/min)",
+          sub: "≥50 (<12m) / ≥40 (12-59m)",
+          type: "number",
+          step: "1",
+          placeholder: "#/min"
+        },
+        {
+          key: "dehydrated",
+          group: "Physical exam",
+          printGroup: "Physical examination",
+          grpClass: "grp-exam",
+          label: "Dehydrated (Y/N)",
+          printLabel: "Dehydrated (Y/N)",
+          sub: "",
+          type: "select",
+          options: ["", "N", "Y"]
+        },
+        {
+          key: "anaemia",
+          group: "Physical exam",
+          printGroup: "Physical examination",
+          grpClass: "grp-exam",
+          label: "Anaemia / palmar pallor",
+          printLabel: "Anaemia / palmar pallor",
+          sub: "N / Mild / Severe",
+          type: "select",
+          options: ["", "N", "Mild", "Severe"]
+        },
+        {
+          key: "skinInfection",
+          group: "Physical exam",
+          printGroup: "Physical examination",
+          grpClass: "grp-exam",
+          label: "Skin infection (Y/N)",
+          printLabel: "Skin infection (Y/N)",
+          sub: "",
+          type: "select",
+          options: ["", "N", "Y"]
+        },
+        {
+          key: "rutfTest",
+          group: "Appetite / feeding",
+          printGroup: "Appetite test / feeding",
+          grpClass: "grp-feeding",
+          label: "RUTF test (Passed/Failed)",
+          printLabel: "RUTF test (Passed/Failed)",
+          sub: "Appetite test result",
+          type: "select",
+          options: ["", "Passed", "Failed"]
+        },
+        {
+          key: "rutfUnits",
+          group: "Appetite / feeding",
+          printGroup: "Appetite test / feeding",
+          grpClass: "grp-feeding",
+          label: "RUTF (# units given)",
+          printLabel: "RUTF (#units given)",
+          sub: "Sachets dispensed",
+          type: "number",
+          step: "1",
+          placeholder: "#"
+        },
+        {
+          key: "breastfeeding",
+          group: "Appetite / feeding",
+          printGroup: "Appetite test / feeding",
+          grpClass: "grp-feeding",
+          label: "Breastfeeding",
+          printLabel: "Breastfeeding",
+          sub: "Yes / No / N/A",
+          type: "select",
+          options: ["", "Yes", "No", "N/A"]
+        },
+        {
+          key: "actionNeeded",
+          group: "Action / follow up",
+          printGroup: "Action / follow up",
+          grpClass: "grp-action",
+          label: "ACTION NEEDED",
+          printLabel: "ACTION NEEDED (OTP/SC/Home follow up)",
+          sub: "(OTP / SC / Home follow up)",
+          type: "select",
+          options: ["", "OTP", "SC", "Home follow up"]
+        },
+        {
+          key: "otherMedication",
+          group: "Action / follow up",
+          printGroup: "Action / follow up",
+          grpClass: "grp-action",
+          label: "Other medication",
+          printLabel: "Other medication (see front of card)",
+          sub: "(see front of card)",
+          type: "text",
+          placeholder: "Amox 250mg"
+        },
+        {
+          key: "examinerName",
+          group: "Action / follow up",
+          printGroup: "Action / follow up",
+          grpClass: "grp-action",
+          label: "Name of examiner",
+          printLabel: "Name of examiner",
+          sub: "Clinician / HEW",
+          type: "text",
+          placeholder: "Initials"
+        },
+        {
+          key: "visitOutcome",
+          group: "Action / follow up",
+          printGroup: "Action / follow up",
+          grpClass: "grp-action",
+          label: "VISIT OUTCOME",
+          printLabel: "VISIT OUTCOME",
+          sub: "OK, A, DF, T, RR, C, NR, HV, D",
+          type: "select",
+          options: ["", "OK", "A", "DF", "T", "RR", "C", "NR", "HV", "D"]
+        }
+      ];
+
+      const OUTCOME_LABELS = {
+        OK: "OK — Continue OTP",
+        A: "A — Absent",
+        DF: "DF — Defaulter",
+        T: "T — Transfer",
+        RR: "RR — Refused referral",
+        C: "C — Cured",
+        NR: "NR — Non-responder",
+        HV: "HV — Home visit",
+        D: "D — Died"
+      };
+
+      function createEmptyState() {
+        const weeks = [];
+        for (let i = 0; i < TOTAL_WEEKS; i++) {
+          weeks.push({
+            date: null,
+            oedema: "",
+            muac: "",
+            weight: "",
+            weightLoss: "",
+            weightLossManual: false,
+            height: "",
+            wfh: "",
+            diarrhoea: "",
+            vomiting: "",
+            fever: "",
+            cough: "",
+            temperature: "",
+            respRate: "",
+            dehydrated: "",
+            anaemia: "",
+            skinInfection: "",
+            rutfTest: "",
+            rutfUnits: "",
+            breastfeeding: "",
+            actionNeeded: "",
+            otherMedication: "",
+            examinerName: "",
+            visitOutcome: ""
+          });
+        }
+        return {
+          patientName: "",
+          registrationNo: "",
+          facilityName: "",
+          outreachWorker: "",
+          weeks,
+          actionLogs: [
+            { id: 1, date: null, weekRef: "ADM (=0)", note: "" }
+          ]
+        };
+      }
+
+      let state = createEmptyState();
+
+      /* =======================================================================
+         3. RENDER 17-COLUMN CLINICAL MATRIX
+         ======================================================================= */
+      function buildMatrixHeader() {
+        const headRow = document.getElementById("otpMatrixHeadRow");
+        for (let col = 0; col < TOTAL_WEEKS; col++) {
+          const th = document.createElement("th");
+          if (col === 0) {
+            th.className = "col-adm-head";
+            th.innerHTML = `ADM<br><span style="font-size:10px; font-weight:600; opacity:0.85;">(=0)</span>`;
+          } else {
+            th.textContent = String(col);
+          }
+          headRow.appendChild(th);
+        }
+      }
+
+      function renderMatrixBody() {
+        const tbody = document.getElementById("otpMatrixBody");
+        tbody.innerHTML = "";
+
+        const groupSpanMap = {};
+        CLINICAL_ROWS.forEach((r) => {
+          groupSpanMap[r.group] = (groupSpanMap[r.group] || 0) + 1;
+        });
+        const seenGroups = new Set();
+
+        CLINICAL_ROWS.forEach((row) => {
+          const tr = document.createElement("tr");
+
+          if (!seenGroups.has(row.group)) {
+            seenGroups.add(row.group);
+            const grpTd = document.createElement("td");
+            grpTd.rowSpan = groupSpanMap[row.group];
+            grpTd.className = `sticky-grp ${row.grpClass}`;
+            grpTd.innerHTML = `<div class="vertical-grp-label">${row.group}</div>`;
+            tr.appendChild(grpTd);
+          }
+
+          const lblTd = document.createElement("td");
+          lblTd.className = "sticky-lbl";
+          lblTd.innerHTML = `
+            <div class="row-title">
+              <span>${row.label}</span>
+              ${
+                row.hasAutoFillBtn
+                  ? `<button type="button" class="mini-autofill-btn no-print" id="btnRowAutoFillDates" title="Auto-fill +7 days from first set date">+7d</button>`
+                  : ""
+              }
+            </div>
+            ${row.sub ? `<div class="row-sub">${row.sub}</div>` : ""}
+          `;
+          tr.appendChild(lblTd);
+
+          for (let col = 0; col < TOTAL_WEEKS; col++) {
+            const td = document.createElement("td");
+            td.className = `week-cell ${col === 0 ? "is-adm" : ""}`;
+            const val = state.weeks[col][row.key];
+
+            if (row.type === "eth_date") {
+              const shortStr = formatEthShort(val);
+              const fullStr = val ? formatEthFull(val) : "Click to pick Ethiopian Date";
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = `cell-date-btn ${shortStr ? "filled" : "empty"}`;
+              btn.title = fullStr;
+              btn.textContent = shortStr || "Set E.C.";
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                openEthPopover({ type: "cell", col }, btn);
+              });
+              td.appendChild(btn);
+            } else if (row.type === "select") {
+              const sel = document.createElement("select");
+              sel.className = "grid-select";
+              sel.dataset.col = String(col);
+              sel.dataset.key = row.key;
+
+              row.options.forEach((opt) => {
+                const o = document.createElement("option");
+                o.value = opt;
+                o.textContent = opt === "" ? "—" : opt;
+                if (val === opt) o.selected = true;
+                sel.appendChild(o);
+              });
+
+              applyCellVisualHighlight(sel, row.key, val, col);
+
+              sel.addEventListener("change", () => {
+                state.weeks[col][row.key] = sel.value;
+                if (row.key === "weightLoss") {
+                  state.weeks[col].weightLossManual = sel.value !== "";
+                }
+                applyCellVisualHighlight(sel, row.key, sel.value, col);
+                onClinicalStateChanged();
+              });
+
+              td.appendChild(sel);
+            } else {
+              const inp = document.createElement("input");
+              inp.type = row.type === "number" ? "number" : "text";
+              if (row.step) inp.step = row.step;
+              inp.placeholder = row.placeholder || "";
+              inp.value = val !== null && val !== undefined ? val : "";
+              inp.className = "grid-input";
+              inp.dataset.col = String(col);
+              inp.dataset.key = row.key;
+
+              applyCellVisualHighlight(inp, row.key, val, col);
+
+              inp.addEventListener("input", () => {
+                state.weeks[col][row.key] = inp.value;
+                if (row.key === "weight") {
+                  recalculateWeightLoss();
+                  refreshWeightHighlightCells();
+                }
+                applyCellVisualHighlight(inp, row.key, inp.value, col);
+                onClinicalStateChanged();
+              });
+
+              td.appendChild(inp);
+            }
+
+            tr.appendChild(td);
+          }
+
+          tbody.appendChild(tr);
+
+          // Embedded Clinical Protocol Rule Banner immediately below Weight for Height/length
+          if (row.key === "wfh") {
+            const ruleTr = document.createElement("tr");
+            ruleTr.className = "protocol-rule-row";
+            ruleTr.innerHTML = `
+              <td class="sticky-grp" style="background:#fef3c7;"></td>
+              <td class="sticky-lbl" style="background:#fef3c7; color:#78350f; font-weight:800;">CLINICAL RULE</td>
+              <td colspan="${TOTAL_WEEKS}">
+                ⚠️ If below admission weight on week 3 refer for home visit; If no weight gain by week 5 refer to SC
+              </td>
+            `;
+            tbody.appendChild(ruleTr);
+          }
+        });
+
+        const rowAutoBtn = document.getElementById("btnRowAutoFillDates");
+        if (rowAutoBtn) {
+          rowAutoBtn.addEventListener("click", autoFillWeeklyDates);
+        }
+      }
+
+      function applyCellVisualHighlight(el, key, val, col) {
+        el.classList.remove("flag-danger", "flag-warning", "flag-success", "flag-info");
+        if (val === "" || val === null || val === undefined) return;
+
+        if (key === "muac") {
+          const n = parseFloat(val);
+          if (!isNaN(n)) {
+            if (n < 11.5) el.classList.add("flag-danger");
+            else if (n < 12.5) el.classList.add("flag-warning");
+            else el.classList.add("flag-success");
+          }
+        } else if (key === "weight" && col > 0) {
+          const n = parseFloat(val);
+          const adm = parseFloat(state.weeks[0].weight);
+          if (!isNaN(n) && !isNaN(adm) && n < adm) {
+            el.classList.add("flag-danger");
+          }
+        } else if (key === "weightLoss") {
+          if (val === "Y") el.classList.add("flag-danger");
+        } else if (key === "oedema") {
+          if (val === "+++") el.classList.add("flag-danger");
+          else if (val === "+" || val === "++") el.classList.add("flag-warning");
+        } else if (key === "temperature") {
+          const t = parseFloat(val);
+          if (!isNaN(t) && (t >= 37.5 || t < 35.5)) {
+            el.classList.add("flag-danger");
+          }
+        } else if (key === "respRate") {
+          const rr = parseFloat(val);
+          if (!isNaN(rr)) {
+            if (rr >= 50) el.classList.add("flag-danger");
+            else if (rr >= 40) el.classList.add("flag-warning");
+          }
+        } else if (key === "dehydrated" || key === "skinInfection") {
+          if (val === "Y") el.classList.add("flag-warning");
+        } else if (key === "anaemia") {
+          if (val === "Severe") el.classList.add("flag-danger");
+          else if (val === "Mild") el.classList.add("flag-warning");
+        } else if (key === "rutfTest") {
+          if (val === "Passed") el.classList.add("flag-success");
+          else if (val === "Failed") el.classList.add("flag-danger");
+        } else if (key === "actionNeeded") {
+          if (val === "SC") el.classList.add("flag-danger");
+          else if (val === "Home follow up") el.classList.add("flag-warning");
+          else if (val === "OTP") el.classList.add("flag-success");
+        } else if (key === "visitOutcome") {
+          if (val === "OK" || val === "C") el.classList.add("flag-success");
+          else if (val === "A" || val === "HV") el.classList.add("flag-warning");
+          else if (val === "DF" || val === "RR" || val === "NR" || val === "D") el.classList.add("flag-danger");
+          else if (val === "T") el.classList.add("flag-info");
+        }
+      }
+
+      function refreshWeightHighlightCells() {
+        document.querySelectorAll('.grid-input[data-key="weight"]').forEach((inp) => {
+          const c = parseInt(inp.dataset.col, 10);
+          applyCellVisualHighlight(inp, "weight", inp.value, c);
+        });
+      }
+
+      function recalculateWeightLoss() {
+        const admW = parseFloat(state.weeks[0].weight);
+        let prevW = admW;
+
+        for (let col = 1; col < TOTAL_WEEKS; col++) {
+          const w = parseFloat(state.weeks[col].weight);
+          if (!isNaN(w)) {
+            if (!state.weeks[col].weightLossManual) {
+              const lostComparedToPrev = !isNaN(prevW) && w < prevW;
+              const lostComparedToAdm = !isNaN(admW) && w < admW;
+              state.weeks[col].weightLoss = lostComparedToPrev || lostComparedToAdm ? "Y" : "N";
+            }
+            prevW = w;
+          } else if (!state.weeks[col].weightLossManual) {
+            state.weeks[col].weightLoss = "";
+          }
+        }
+
+        document.querySelectorAll('.grid-select[data-key="weightLoss"]').forEach((sel) => {
+          const c = parseInt(sel.dataset.col, 10);
+          sel.value = state.weeks[c].weightLoss || "";
+          applyCellVisualHighlight(sel, "weightLoss", sel.value, c);
+        });
+      }
+
+      /* =======================================================================
+         4. CLINICAL DECISION SUPPORT ENGINE & KPI SUMMARY
+         ======================================================================= */
+      function evaluateClinicalRules() {
+        const stack = document.getElementById("clinicalAlertsStack");
+        stack.innerHTML = "";
+        const alerts = [];
+
+        const admW = parseFloat(state.weeks[0].weight);
+        const wk3W = parseFloat(state.weeks[3].weight);
+        const wk5W = parseFloat(state.weeks[5].weight);
+
+        // Rule 1: Below admission weight on Week 3 -> Home Visit
+        if (!isNaN(admW) && !isNaN(wk3W) && wk3W < admW) {
+          alerts.push({
+            level: "warning",
+            badge: "Week 3 Rule",
+            title: "Below Admission Weight at Week 3 — Refer for Home Visit",
+            desc: `Week 3 weight (${wk3W.toFixed(1)} kg) is below Admission weight (${admW.toFixed(1)} kg). Conduct Home Visit (HV) to assess RUTF sharing, feeding, and illness.`
+          });
+        }
+
+        // Rule 2: No weight gain by Week 5 -> Refer to SC
+        if (!isNaN(admW) && !isNaN(wk5W) && wk5W <= admW) {
+          alerts.push({
+            level: "danger",
+            badge: "Week 5 Rule",
+            title: "No Weight Gain by Week 5 — Refer to Stabilization Center (SC)",
+            desc: `Weight at Week 5 (${wk5W.toFixed(1)} kg) shows no gain over Admission (${admW.toFixed(1)} kg). Refer to inpatient SC for medical investigation.`
+          });
+        }
+
+        // Rule 3: 2 Consecutive Absences -> Defaulter (DF)
+        for (let c = 2; c < TOTAL_WEEKS; c++) {
+          if (state.weeks[c].visitOutcome === "A" && state.weeks[c - 1].visitOutcome === "A") {
+            alerts.push({
+              level: "danger",
+              badge: "Defaulter Risk",
+              title: `2 Consecutive Absences (Weeks ${c - 1} & ${c}) — Home Visit Required`,
+              desc: `Patient missed 2 consecutive scheduled visits. Dispatch outreach worker for Home Visit (HV) to confirm status before classifying as Defaulter (DF).`
+            });
+            break;
+          }
+        }
+
+        // Rule 4: Failed RUTF Appetite Test, Severe Oedema (+++), Severe Anaemia, or High Fever
+        state.weeks.forEach((wk, col) => {
+          const wkLabel = col === 0 ? "ADM (=0)" : `Week ${col}`;
+          if (wk.rutfTest === "Failed") {
+            alerts.push({
+              level: "danger",
+              badge: "SC Referral",
+              title: `Failed RUTF Appetite Test at ${wkLabel}`,
+              desc: `Child failed appetite test at ${wkLabel}. Immediate inpatient Stabilization Center (SC) referral is indicated.`
+            });
+          }
+          if (wk.oedema === "+++") {
+            alerts.push({
+              level: "danger",
+              badge: "SC Referral",
+              title: `Severe Bilateral Pitting Oedema (+++) at ${wkLabel}`,
+              desc: `Grade +++ oedema requires inpatient Stabilization Center (SC) management.`
+            });
+          }
+          if (wk.anaemia === "Severe") {
+            alerts.push({
+              level: "danger",
+              badge: "SC Referral",
+              title: `Severe Palmar Pallor / Anaemia at ${wkLabel}`,
+              desc: `Severe anaemia detected at ${wkLabel}. Refer urgently to SC / hospital.`
+            });
+          }
+          const temp = parseFloat(wk.temperature);
+          if (!isNaN(temp) && (temp >= 38.5 || temp < 35.5)) {
+            alerts.push({
+              level: "danger",
+              badge: "Danger Sign",
+              title: `Abnormal Body Temperature (${temp.toFixed(1)}°C) at ${wkLabel}`,
+              desc: `High fever (≥38.5°C) or hypothermia (<35.5°C) detected. Evaluate for sepsis/malaria and refer to SC if complicated.`
+            });
+          }
+        });
+
+        // Rule 5: Cure / Discharge Readiness (MUAC >= 12.5 cm & Oedema == 0 for 2 consecutive visits)
+        for (let c = 1; c < TOTAL_WEEKS; c++) {
+          const mCurr = parseFloat(state.weeks[c].muac);
+          const mPrev = parseFloat(state.weeks[c - 1].muac);
+          const oedCurr = state.weeks[c].oedema;
+          const oedPrev = state.weeks[c - 1].oedema;
+          if (
+            !isNaN(mCurr) &&
+            !isNaN(mPrev) &&
+            mCurr >= 12.5 &&
+            mPrev >= 12.5 &&
+            (oedCurr === "0" || oedCurr === "") &&
+            (oedPrev === "0" || oedPrev === "")
+          ) {
+            alerts.push({
+              level: "success",
+              badge: "Cure Criteria",
+              title: `Discharge / Cure Criteria Met at Week ${c}`,
+              desc: `MUAC ≥ 12.5 cm (${mPrev.toFixed(1)} cm → ${mCurr.toFixed(1)} cm) with no bilateral pitting oedema for 2 consecutive visits. Eligible to discharge as Cured (C).`
+            });
+            break;
+          }
+        }
+
+        alerts.forEach((a) => {
+          const div = document.createElement("div");
+          div.className = `clinical-alert ${a.level}`;
+          div.innerHTML = `
+            <span class="alert-badge">${a.badge}</span>
+            <div>
+              <div class="alert-title">${a.title}</div>
+              <div class="alert-desc">${a.desc}</div>
+            </div>
+          `;
+          stack.appendChild(div);
+        });
+      }
+
+      function updateSummaryKPIs() {
+        const admW = parseFloat(state.weeks[0].weight);
+        let latestW = NaN;
+        let latestWCol = -1;
+        let latestMuac = NaN;
+        let latestMuacCol = -1;
+        let totalRutf = 0;
+        let rutfVisits = 0;
+        let latestOutcome = "";
+        let latestOutcomeCol = -1;
+
+        state.weeks.forEach((wk, col) => {
+          const w = parseFloat(wk.weight);
+          if (!isNaN(w)) {
+            latestW = w;
+            latestWCol = col;
+          }
+          const m = parseFloat(wk.muac);
+          if (!isNaN(m)) {
+            latestMuac = m;
+            latestMuacCol = col;
+          }
+          const r = parseInt(wk.rutfUnits, 10);
+          if (!isNaN(r) && r > 0) {
+            totalRutf += r;
+            rutfVisits++;
+          }
+          if (wk.visitOutcome) {
+            latestOutcome = wk.visitOutcome;
+            latestOutcomeCol = col;
+          }
+        });
+
+        // Weight KPI
+        const kpiWVal = document.getElementById("kpiWeightVal");
+        const kpiWDelta = document.getElementById("kpiWeightDelta");
+        if (!isNaN(admW) && !isNaN(latestW) && latestWCol > 0) {
+          const diff = latestW - admW;
+          const pct = ((diff / admW) * 100).toFixed(1);
+          const sign = diff >= 0 ? "+" : "";
+          kpiWVal.textContent = `${admW.toFixed(1)} → ${latestW.toFixed(1)} kg`;
+          kpiWDelta.textContent = `${sign}${diff.toFixed(2)} kg (${sign}${pct}%) by Week ${latestWCol}`;
+          kpiWDelta.style.color = diff >= 0 ? "var(--emerald-600)" : "var(--rose-600)";
+        } else if (!isNaN(admW)) {
+          kpiWVal.textContent = `${admW.toFixed(1)} kg (ADM)`;
+          kpiWDelta.textContent = "Awaiting follow-up weights";
+          kpiWDelta.style.color = "var(--text-muted)";
+        } else if (!isNaN(latestW)) {
+          kpiWVal.textContent = `${latestW.toFixed(1)} kg (Wk ${latestWCol})`;
+          kpiWDelta.textContent = "Admission weight not entered";
+          kpiWDelta.style.color = "var(--text-muted)";
+        } else {
+          kpiWVal.textContent = "—";
+          kpiWDelta.textContent = "Awaiting weight records";
+          kpiWDelta.style.color = "var(--text-muted)";
+        }
+
+        // MUAC KPI
+        const kpiMVal = document.getElementById("kpiMuacVal");
+        const kpiMMeta = document.getElementById("kpiMuacMeta");
+        const kpiMBar = document.getElementById("kpiMuacBar");
+        if (!isNaN(latestMuac)) {
+          const wkStr = latestMuacCol === 0 ? "ADM" : `Week ${latestMuacCol}`;
+          kpiMVal.textContent = `${latestMuac.toFixed(1)} cm`;
+          const pctFill = Math.max(5, Math.min(100, ((latestMuac - 9.5) / (13.5 - 9.5)) * 100));
+          kpiMBar.style.width = `${pctFill}%`;
+
+          if (latestMuac >= 12.5) {
+            kpiMMeta.textContent = `Recovered range (≥12.5 cm) at ${wkStr}`;
+            kpiMMeta.style.color = "var(--emerald-600)";
+            kpiMBar.style.background = "var(--emerald-600)";
+          } else if (latestMuac >= 11.5) {
+            kpiMMeta.textContent = `Moderate (11.5–12.4 cm) at ${wkStr}`;
+            kpiMMeta.style.color = "var(--amber-600)";
+            kpiMBar.style.background = "var(--amber-500)";
+          } else {
+            kpiMMeta.textContent = `SAM (<11.5 cm) at ${wkStr}`;
+            kpiMMeta.style.color = "var(--rose-600)";
+            kpiMBar.style.background = "var(--rose-600)";
+          }
+        } else {
+          kpiMVal.textContent = "—";
+          kpiMMeta.textContent = "Target ≥ 12.5 cm for cure";
+          kpiMMeta.style.color = "var(--text-muted)";
+          kpiMBar.style.width = "0%";
+        }
+
+        // RUTF KPI
+        document.getElementById("kpiRutfVal").textContent = `${totalRutf} units`;
+        document.getElementById("kpiRutfMeta").textContent =
+          rutfVisits > 0
+            ? `Dispensed across ${rutfVisits} visit${rutfVisits > 1 ? "s" : ""}`
+            : "Across 0 recorded visits";
+
+        // Outcome KPI
+        const kpiOVal = document.getElementById("kpiOutcomeVal");
+        const kpiOMeta = document.getElementById("kpiOutcomeMeta");
+        if (latestOutcome) {
+          const wkStr = latestOutcomeCol === 0 ? "ADM (=0)" : `Week ${latestOutcomeCol}`;
+          kpiOVal.textContent = latestOutcome;
+          kpiOMeta.textContent = `${OUTCOME_LABELS[latestOutcome] || latestOutcome} (${wkStr})`;
+        } else {
+          kpiOVal.textContent = "—";
+          kpiOMeta.textContent = "No visit outcome recorded";
+        }
+      }
+
+      /* =======================================================================
+         5. RESPONSIVE INTERACTIVE SVG GROWTH CHART (WEIGHT & MUAC)
+         ======================================================================= */
+      function renderGrowthSvgChart() {
+        const svg = document.getElementById("growthSvg");
+        const tooltip = document.getElementById("chartTooltip");
+        const container = document.getElementById("svgChartContainer");
+        if (!svg) return;
+
+        const W = 600;
+        const H = 280;
+        const padL = 44;
+        const padR = 44;
+        const padT = 22;
+        const padB = 32;
+        const plotW = W - padL - padR;
+        const plotH = H - padT - padB;
+
+        const weights = state.weeks.map((wk) => parseFloat(wk.weight));
+        const muacs = state.weeks.map((wk) => parseFloat(wk.muac));
+
+        const validW = weights.filter((n) => !isNaN(n));
+        const validM = muacs.filter((n) => !isNaN(n));
+
+        const minW = validW.length ? Math.max(1, Math.floor(Math.min(...validW) - 0.6)) : 5;
+        const maxW = validW.length ? Math.ceil(Math.max(...validW) + 0.6) : 12;
+        const spanW = Math.max(1, maxW - minW);
+
+        const minM = validM.length ? Math.max(6, Math.floor(Math.min(...validM, 10.5) - 0.5)) : 10;
+        const maxM = validM.length ? Math.ceil(Math.max(...validM, 13.0) + 0.5) : 14;
+        const spanM = Math.max(1, maxM - minM);
+
+        const xForCol = (col) => padL + (plotW * col) / (TOTAL_WEEKS - 1);
+        const yForW = (w) => padT + plotH - ((w - minW) / spanW) * plotH;
+        const yForM = (m) => padT + plotH - ((m - minM) / spanM) * plotH;
+
+        let html = "";
+
+        // Horizontal gridlines & Left/Right Axis ticks
+        for (let i = 0; i <= 4; i++) {
+          const y = padT + (plotH * i) / 4;
+          const wTick = (maxW - (spanW * i) / 4).toFixed(1);
+          const mTick = (maxM - (spanM * i) / 4).toFixed(1);
+          html += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#e2e8f0" stroke-width="1" />`;
+          html += `<text x="${padL - 6}" y="${y + 3}" text-anchor="end" font-size="10" fill="#0f766e" font-weight="600">${wTick}</text>`;
+          html += `<text x="${W - padR + 6}" y="${y + 3}" text-anchor="start" font-size="10" fill="#d97706" font-weight="600">${mTick}</text>`;
+        }
+
+        // Axis Headers
+        html += `<text x="${padL - 6}" y="12" text-anchor="end" font-size="9.5" fill="#0f766e" font-weight="800">kg</text>`;
+        html += `<text x="${W - padR + 6}" y="12" text-anchor="start" font-size="9.5" fill="#d97706" font-weight="800">cm</text>`;
+
+        // X-axis Week Labels
+        for (let col = 0; col < TOTAL_WEEKS; col++) {
+          const x = xForCol(col);
+          html += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT + plotH}" stroke="#f1f5f9" stroke-width="1" />`;
+          if (col % 2 === 0 || col === TOTAL_WEEKS - 1) {
+            html += `<text x="${x}" y="${H - 10}" text-anchor="middle" font-size="10" fill="#64748b" font-weight="700">${col === 0 ? "ADM" : col}</text>`;
+          }
+        }
+
+        // 12.5 cm MUAC Cure Threshold Line
+        if (12.5 >= minM && 12.5 <= maxM) {
+          const yTargetM = yForM(12.5);
+          html += `<line x1="${padL}" y1="${yTargetM}" x2="${W - padR}" y2="${yTargetM}" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.8" />`;
+        }
+
+        // Admission Weight Baseline Line
+        if (!isNaN(weights[0])) {
+          const yAdmW = yForW(weights[0]);
+          html += `<line x1="${padL}" y1="${yAdmW}" x2="${W - padR}" y2="${yAdmW}" stroke="#0d9488" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.7" />`;
+        }
+
+        if (validW.length === 0 && validM.length === 0) {
+          html += `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="12.5" fill="#94a3b8" font-weight="600">Enter Weight (kg) or MUAC (cm) in the table to plot growth trajectory</text>`;
+          svg.innerHTML = html;
+          return;
+        }
+
+        // Weight Polyline
+        const wPts = [];
+        weights.forEach((w, col) => {
+          if (!isNaN(w)) wPts.push(`${xForCol(col)},${yForW(w)}`);
+        });
+        if (wPts.length > 1) {
+          html += `<polyline fill="none" stroke="#0d9488" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" points="${wPts.join(" ")}" />`;
+        }
+
+        // MUAC Polyline
+        const mPts = [];
+        muacs.forEach((m, col) => {
+          if (!isNaN(m)) mPts.push(`${xForCol(col)},${yForM(m)}`);
+        });
+        if (mPts.length > 1) {
+          html += `<polyline fill="none" stroke="#f59e0b" stroke-width="2.4" stroke-dasharray="5 3" stroke-linecap="round" stroke-linejoin="round" points="${mPts.join(" ")}" />`;
+        }
+
+        // Data Point Markers + Interactive Hover Columns
+        for (let col = 0; col < TOTAL_WEEKS; col++) {
+          const x = xForCol(col);
+          const w = weights[col];
+          const m = muacs[col];
+
+          if (!isNaN(w)) {
+            const yw = yForW(w);
+            html += `<circle cx="${x}" cy="${yw}" r="4.5" fill="#0d9488" stroke="#ffffff" stroke-width="1.5" />`;
+          }
+          if (!isNaN(m)) {
+            const ym = yForM(m);
+            html += `<polygon points="${x},${ym - 5} ${x + 5},${ym} ${x},${ym + 5} ${x - 5},${ym}" fill="#f59e0b" stroke="#ffffff" stroke-width="1.2" />`;
+          }
+
+          if (!isNaN(w) || !isNaN(m)) {
+            const hitW = plotW / TOTAL_WEEKS;
+            html += `<rect x="${x - hitW / 2}" y="${padT}" width="${hitW}" height="${plotH}" fill="transparent" style="cursor:pointer;" data-hover-col="${col}" />`;
+          }
+        }
+
+        svg.innerHTML = html;
+
+        // Bind hover tooltips
+        svg.querySelectorAll("[data-hover-col]").forEach((rectEl) => {
+          rectEl.addEventListener("mouseenter", (e) => {
+            const col = parseInt(rectEl.getAttribute("data-hover-col"), 10);
+            const wk = state.weeks[col];
+            const w = parseFloat(wk.weight);
+            const m = parseFloat(wk.muac);
+            const admW = parseFloat(state.weeks[0].weight);
+            const title = col === 0 ? "ADM (=0)" : `Week ${col}`;
+            const dateStr = wk.date ? formatEthShort(wk.date) + " E.C." : "No E.C. date";
+
+            let deltaStr = "";
+            if (!isNaN(w) && !isNaN(admW) && col > 0) {
+              const d = w - admW;
+              deltaStr = ` (${d >= 0 ? "+" : ""}${d.toFixed(2)} kg vs ADM)`;
+            }
+
+            tooltip.innerHTML = `
+              <div style="font-weight:800; color:#5eead4; margin-bottom:2px;">${title} • ${dateStr}</div>
+              <div>Weight: <strong>${!isNaN(w) ? w.toFixed(1) + " kg" : "—"}</strong>${deltaStr}</div>
+              <div>MUAC: <strong>${!isNaN(m) ? m.toFixed(1) + " cm" : "—"}</strong></div>
+              ${wk.oedema ? `<div>Oedema: <strong>${wk.oedema}</strong></div>` : ""}
+            `;
+            tooltip.style.display = "block";
+            positionChartTooltip(e);
+          });
+
+          rectEl.addEventListener("mousemove", positionChartTooltip);
+          rectEl.addEventListener("mouseleave", () => {
+            tooltip.style.display = "none";
+          });
+        });
+
+        function positionChartTooltip(e) {
+          const boxRect = container.getBoundingClientRect();
+          let left = e.clientX - boxRect.left + 12;
+          let top = e.clientY - boxRect.top - 14;
+          if (left + 175 > boxRect.width) {
+            left = e.clientX - boxRect.left - 180;
+          }
+          if (top < 6) top = 6;
+          tooltip.style.left = `${Math.max(6, left)}px`;
+          tooltip.style.top = `${top}px`;
+        }
+      }
+
+      /* =======================================================================
+         6. FOLLOW-UP ACTION LOG SECTION
+         ======================================================================= */
+      function renderActionLogTable() {
+        const tbody = document.getElementById("actionLogTbody");
+        tbody.innerHTML = "";
+
+        if (!state.actionLogs || state.actionLogs.length === 0) {
+          state.actionLogs = [{ id: Date.now(), date: null, weekRef: "ADM (=0)", note: "" }];
+        }
+
+        state.actionLogs.forEach((item, idx) => {
+          const tr = document.createElement("tr");
+
+          // 1. Ethiopian Date & Time Trigger
+          const tdDate = document.createElement("td");
+          const dateBtn = document.createElement("button");
+          dateBtn.type = "button";
+          const shortDate = formatEthShort(item.date);
+          dateBtn.className = `log-date-btn ${shortDate ? "filled" : "empty"}`;
+          dateBtn.title = item.date ? formatEthFull(item.date) : "Click to set Ethiopian Date & Time";
+          dateBtn.innerHTML = `
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${shortDate || "Pick E.C. Date"}</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          `;
+          dateBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openEthPopover({ type: "log", index: idx }, dateBtn);
+          });
+          tdDate.appendChild(dateBtn);
+          tr.appendChild(tdDate);
+
+          // 2. Week Reference Selector
+          const tdWeek = document.createElement("td");
+          const wkSel = document.createElement("select");
+          wkSel.className = "log-week-select";
+          const weekOpts = ["ADM (=0)"];
+          for (let w = 1; w <= 16; w++) weekOpts.push(`Week ${w}`);
+          weekOpts.forEach((opt) => {
+            const o = document.createElement("option");
+            o.value = opt;
+            o.textContent = opt;
+            if (item.weekRef === opt) o.selected = true;
+            wkSel.appendChild(o);
+          });
+          wkSel.addEventListener("change", () => {
+            state.actionLogs[idx].weekRef = wkSel.value;
+            saveStateToStorage(false);
+          });
+          tdWeek.appendChild(wkSel);
+          tr.appendChild(tdWeek);
+
+          // 3. Action Note Input
+          const tdNote = document.createElement("td");
+          const noteInp = document.createElement("input");
+          noteInp.type = "text";
+          noteInp.className = "log-note-input";
+          noteInp.placeholder = "Describe action taken, home visit findings, referral or counseling...";
+          noteInp.value = item.note || "";
+          noteInp.addEventListener("input", () => {
+            state.actionLogs[idx].note = noteInp.value;
+            saveStateToStorage(false);
+          });
+          tdNote.appendChild(noteInp);
+          tr.appendChild(tdNote);
+
+          // 4. Delete Row Button
+          const tdDel = document.createElement("td");
+          tdDel.className = "no-print";
+          tdDel.style.textAlign = "center";
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className = "icon-del-btn";
+          delBtn.title = "Delete action row";
+          delBtn.innerHTML = "&times;";
+          delBtn.addEventListener("click", () => {
+            if (state.actionLogs.length === 1) {
+              state.actionLogs[0] = { id: Date.now(), date: null, weekRef: "ADM (=0)", note: "" };
+            } else {
+              state.actionLogs.splice(idx, 1);
+            }
+            renderActionLogTable();
+            saveStateToStorage(false);
+          });
+          tdDel.appendChild(delBtn);
+          tr.appendChild(tdDel);
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* =======================================================================
+         7. COMPACT FLOATING ETHIOPIAN CALENDAR & TIME PICKER POPOVER
+         ======================================================================= */
+      let activePickerTarget = null; // { type: 'cell', col } | { type: 'header_adm' } | { type: 'log', index }
+      let activeAnchorElement = null;
+      let pickerDraft = {
+        year: 2019,
+        month: 3,
+        day: 5,
+        hasTime: false,
+        hour: 3,
+        minute: 0,
+        period: "DAY"
+      };
+
+      function initEthCalendarControls() {
+        const monthSel = document.getElementById("ethMonthSelect");
+        monthSel.innerHTML = ETH_MONTHS.map(
+          (m) => `<option value="${m.num}">${m.num}. ${m.en} (${m.am})</option>`
+        ).join("");
+
+        const yearSel = document.getElementById("ethYearSelect");
+        let yHtml = "";
+        for (let y = 2010; y <= 2030; y++) {
+          yHtml += `<option value="${y}">${y} E.C.</option>`;
+        }
+        yearSel.innerHTML = yHtml;
+
+        const hourSel = document.getElementById("selEthHour");
+        let hHtml = "";
+        for (let h = 1; h <= 12; h++) {
+          hHtml += `<option value="${h}">${String(h).padStart(2, "0")}</option>`;
+        }
+        hourSel.innerHTML = hHtml;
+
+        const minSel = document.getElementById("selEthMinute");
+        let mHtml = "";
+        for (let m = 0; m < 60; m += 5) {
+          mHtml += `<option value="${m}">${String(m).padStart(2, "0")}</option>`;
+        }
+        minSel.innerHTML = mHtml;
+
+        // Wire Popover Buttons
+        document.getElementById("btnCloseEthPopover").addEventListener("click", closeEthPopover);
+
+        document.getElementById("btnEthPrevMonth").addEventListener("click", () => {
+          let m = pickerDraft.month - 1;
+          let y = pickerDraft.year;
+          if (m < 1) {
+            m = 13;
+            y = Math.max(2010, y - 1);
+          }
+          pickerDraft.month = m;
+          pickerDraft.year = y;
+          clampDraftDay();
+          syncEthPopoverUI();
+          renderEthDaysGrid();
+          positionEthPopover();
+        });
+
+        document.getElementById("btnEthNextMonth").addEventListener("click", () => {
+          let m = pickerDraft.month + 1;
+          let y = pickerDraft.year;
+          if (m > 13) {
+            m = 1;
+            y = Math.min(2030, y + 1);
+          }
+          pickerDraft.month = m;
+          pickerDraft.year = y;
+          clampDraftDay();
+          syncEthPopoverUI();
+          renderEthDaysGrid();
+          positionEthPopover();
+        });
+
+        monthSel.addEventListener("change", () => {
+          pickerDraft.month = parseInt(monthSel.value, 10);
+          clampDraftDay();
+          renderEthDaysGrid();
+          positionEthPopover();
+        });
+
+        yearSel.addEventListener("change", () => {
+          pickerDraft.year = parseInt(yearSel.value, 10);
+          clampDraftDay();
+          renderEthDaysGrid();
+          positionEthPopover();
+        });
+
+        document.getElementById("btnEthToday").addEventListener("click", () => {
+          const todayEth = dateObjToEthiopian(new Date());
+          pickerDraft.year = todayEth.year;
+          pickerDraft.month = todayEth.month;
+          pickerDraft.day = todayEth.day;
+          syncEthPopoverUI();
+          renderEthDaysGrid();
+          if (!pickerDraft.hasTime) {
+            applyEthPopoverSelection();
+          }
+        });
+
+        document.getElementById("chkEthIncludeTime").addEventListener("change", (e) => {
+          pickerDraft.hasTime = e.target.checked;
+          syncEthTimeUI();
+          positionEthPopover();
+        });
+
+        ["selEthHour", "selEthMinute", "selEthPeriod"].forEach((id) => {
+          document.getElementById(id).addEventListener("change", () => {
+            pickerDraft.hour = parseInt(document.getElementById("selEthHour").value, 10);
+            pickerDraft.minute = parseInt(document.getElementById("selEthMinute").value, 10);
+            pickerDraft.period = document.getElementById("selEthPeriod").value;
+            updateLocalTimeHint();
+          });
+        });
+
+        document.getElementById("btnEthClearDate").addEventListener("click", () => {
+          if (!activePickerTarget) return;
+          if (activePickerTarget.type === "cell") {
+            state.weeks[activePickerTarget.col].date = null;
+            renderMatrixBody();
+            syncHeaderAdmDateDisplay();
+          } else if (activePickerTarget.type === "header_adm") {
+            state.weeks[0].date = null;
+            renderMatrixBody();
+            syncHeaderAdmDateDisplay();
+          } else if (activePickerTarget.type === "log") {
+            state.actionLogs[activePickerTarget.index].date = null;
+            renderActionLogTable();
+          }
+          saveStateToStorage(false);
+          closeEthPopover();
+        });
+
+        document.getElementById("btnEthApplyDate").addEventListener("click", applyEthPopoverSelection);
+      }
+
+      function clampDraftDay() {
+        const maxD = getEthiopianMonthDays(pickerDraft.year, pickerDraft.month);
+        if (pickerDraft.day > maxD) pickerDraft.day = maxD;
+      }
+
+      function openEthPopover(target, anchorEl) {
+        const popover = document.getElementById("ethCalendarPopover");
+
+        // Toggle closed if same trigger clicked again
+        if (
+          popover.classList.contains("open") &&
+          activeAnchorElement === anchorEl
+        ) {
+          closeEthPopover();
+          return;
+        }
+
+        activePickerTarget = target;
+        activeAnchorElement = anchorEl;
+
+        let existing = null;
+        let titleText = "Select Ethiopian Date";
+        if (target.type === "cell") {
+          existing = state.weeks[target.col].date;
+          titleText = target.col === 0 ? "ADM (=0) Date (E.C.)" : `Week ${target.col} Date (E.C.)`;
+        } else if (target.type === "header_adm") {
+          existing = state.weeks[0].date;
+          titleText = "Admission Date (E.C.)";
+        } else if (target.type === "log") {
+          existing = state.actionLogs[target.index].date;
+          titleText = "Action Date & Time (E.C.)";
+        }
+
+        document.getElementById("ethPopoverTargetTitle").textContent = titleText;
+
+        if (existing && existing.year) {
+          pickerDraft = {
+            year: existing.year,
+            month: existing.month,
+            day: existing.day,
+            hasTime: Boolean(existing.hasTime),
+            hour: existing.hour || 3,
+            minute: existing.minute || 0,
+            period: existing.period || "DAY"
+          };
+        } else {
+          const todayEth = dateObjToEthiopian(new Date());
+          pickerDraft = {
+            year: todayEth.year,
+            month: todayEth.month,
+            day: todayEth.day,
+            hasTime: target.type === "log",
+            hour: 3,
+            minute: 0,
+            period: "DAY"
+          };
+        }
+
+        syncEthPopoverUI();
+        renderEthDaysGrid();
+        popover.classList.add("open");
+        positionEthPopover();
+      }
+
+      function closeEthPopover() {
+        const popover = document.getElementById("ethCalendarPopover");
+        popover.classList.remove("open");
+        activePickerTarget = null;
+        activeAnchorElement = null;
+      }
+
+      function positionEthPopover() {
+        const popover = document.getElementById("ethCalendarPopover");
+        if (!popover.classList.contains("open")) return;
+
+        const popW = 274;
+        const popH = popover.offsetHeight || 310;
+        const pad = 8;
+
+        if (!activeAnchorElement || !document.body.contains(activeAnchorElement)) {
+          popover.style.left = `${Math.max(pad, (window.innerWidth - popW) / 2)}px`;
+          popover.style.top = `${Math.max(pad, (window.innerHeight - popH) / 2)}px`;
+          return;
+        }
+
+        const rect = activeAnchorElement.getBoundingClientRect();
+
+        let left = rect.left;
+        if (left + popW > window.innerWidth - pad) {
+          left = rect.right - popW;
+        }
+        if (left + popW > window.innerWidth - pad) {
+          left = window.innerWidth - popW - pad;
+        }
+        if (left < pad) left = pad;
+
+        let top = rect.bottom + 4;
+        if (top + popH > window.innerHeight - pad) {
+          const above = rect.top - popH - 4;
+          if (above >= pad) {
+            top = above;
+          } else {
+            top = Math.max(pad, window.innerHeight - popH - pad);
+          }
+        }
+
+        popover.style.left = `${Math.round(left)}px`;
+        popover.style.top = `${Math.round(top)}px`;
+      }
+
+      function syncEthPopoverUI() {
+        document.getElementById("ethMonthSelect").value = String(pickerDraft.month);
+        document.getElementById("ethYearSelect").value = String(pickerDraft.year);
+        document.getElementById("chkEthIncludeTime").checked = pickerDraft.hasTime;
+        document.getElementById("selEthHour").value = String(pickerDraft.hour);
+        document.getElementById("selEthMinute").value = String(pickerDraft.minute);
+        document.getElementById("selEthPeriod").value = pickerDraft.period;
+        syncEthTimeUI();
+      }
+
+      function syncEthTimeUI() {
+        const wrap = document.getElementById("ethTimeSelectsWrap");
+        const hint = document.getElementById("ethLocalTimeHint");
+        if (pickerDraft.hasTime) {
+          wrap.classList.remove("disabled");
+          hint.style.display = "block";
+          updateLocalTimeHint();
+        } else {
+          wrap.classList.add("disabled");
+          hint.style.display = "none";
+        }
+      }
+
+      function updateLocalTimeHint() {
+        const hint = document.getElementById("ethLocalTimeHint");
+        const h = pickerDraft.hour;
+        const m = pickerDraft.minute;
+        const period = pickerDraft.period;
+        // Ethiopian 1:00 Day = 7:00 AM Local; Ethiopian 1:00 Night = 7:00 PM Local
+        const h24 = period === "DAY" ? (h % 12) + 6 : ((h % 12) + 18) % 24;
+        const ampm = h24 >= 12 ? "PM" : "AM";
+        const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+        hint.textContent = `≈ ${h12}:${String(m).padStart(2, "0")} ${ampm} Local Time`;
+      }
+
+      function renderEthDaysGrid() {
+        const grid = document.getElementById("ethDaysGrid");
+        grid.innerHTML = "";
+
+        const daysInMonth = getEthiopianMonthDays(pickerDraft.year, pickerDraft.month);
+        const firstJDN = ethiopianToJDN(pickerDraft.year, pickerDraft.month, 1);
+        const startDow = (firstJDN + 1) % 7; // 0=Sun..6=Sat
+        const todayEth = dateObjToEthiopian(new Date());
+
+        for (let i = 0; i < startDow; i++) {
+          const blank = document.createElement("div");
+          blank.style.height = "26px";
+          grid.appendChild(blank);
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "eth-day-cell";
+          btn.textContent = String(d);
+
+          if (
+            d === todayEth.day &&
+            pickerDraft.month === todayEth.month &&
+            pickerDraft.year === todayEth.year
+          ) {
+            btn.classList.add("is-today");
+          }
+          if (d === pickerDraft.day) {
+            btn.classList.add("is-selected");
+          }
+
+          btn.addEventListener("click", () => {
+            pickerDraft.day = d;
+            renderEthDaysGrid();
+            if (!pickerDraft.hasTime) {
+              applyEthPopoverSelection();
+            }
+          });
+
+          grid.appendChild(btn);
+        }
+
+        // Gregorian equivalent preview
+        const jdn = ethiopianToJDN(pickerDraft.year, pickerDraft.month, pickerDraft.day);
+        const greg = jdnToGregorian(jdn);
+        const gDate = new Date(greg.year, greg.month - 1, greg.day);
+        const gStr = gDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        });
+        document.getElementById("ethGregPreviewText").textContent = `Greg: ${gStr}`;
+      }
+
+      function applyEthPopoverSelection() {
+        if (!activePickerTarget) return;
+
+        const chosen = {
+          year: pickerDraft.year,
+          month: pickerDraft.month,
+          day: pickerDraft.day,
+          hasTime: pickerDraft.hasTime,
+          hour: parseInt(document.getElementById("selEthHour").value, 10),
+          minute: parseInt(document.getElementById("selEthMinute").value, 10),
+          period: document.getElementById("selEthPeriod").value
+        };
+
+        if (activePickerTarget.type === "cell") {
+          state.weeks[activePickerTarget.col].date = chosen;
+          renderMatrixBody();
+          syncHeaderAdmDateDisplay();
+        } else if (activePickerTarget.type === "header_adm") {
+          state.weeks[0].date = chosen;
+          renderMatrixBody();
+          syncHeaderAdmDateDisplay();
+        } else if (activePickerTarget.type === "log") {
+          state.actionLogs[activePickerTarget.index].date = chosen;
+          renderActionLogTable();
+        }
+
+        saveStateToStorage(false);
+        closeEthPopover();
+      }
+
+      function syncHeaderAdmDateDisplay() {
+        const admDate = state.weeks[0].date;
+        const label = document.getElementById("headerAdmDateText");
+        if (admDate && admDate.year) {
+          label.textContent = `${formatEthShort(admDate)} E.C.`;
+        } else {
+          label.textContent = "Set E.C. Date";
+        }
+      }
+
+      function autoFillWeeklyDates() {
+        // Find first populated date column (defaulting to ADM = 0 using today's E.C. date)
+        let anchorCol = state.weeks.findIndex((wk) => wk.date && wk.date.year);
+        if (anchorCol === -1) {
+          const todayEth = dateObjToEthiopian(new Date());
+          state.weeks[0].date = {
+            year: todayEth.year,
+            month: todayEth.month,
+            day: todayEth.day,
+            hasTime: false,
+            hour: 3,
+            minute: 0,
+            period: "DAY"
+          };
+          anchorCol = 0;
+        }
+
+        const baseDate = state.weeks[anchorCol].date;
+        for (let col = anchorCol + 1; col < TOTAL_WEEKS; col++) {
+          state.weeks[col].date = addDaysToEthiopian(baseDate, (col - anchorCol) * 7);
+        }
+
+        renderMatrixBody();
+        syncHeaderAdmDateDisplay();
+        saveStateToStorage(false);
+        showToast(`Auto-filled +7 Ethiopian days across Weeks ${anchorCol + 1}–16`);
+      }
+
+      /* =======================================================================
+         8. SAMPLE CASE, PERSISTENCE, IMPORT / EXPORT, CLEAR & TOAST
+         ======================================================================= */
+      function loadSampleClinicalCase() {
+        const sample = createEmptyState();
+        sample.patientName = "Selamawit Bekele";
+        sample.registrationNo = "OTP-ET-2019/084";
+        sample.facilityName = "Bishoftu Health Center";
+        sample.outreachWorker = "Tigist Tadesse (HEW)";
+
+        // Realistic 6-week progression starting on 5 Hidar 2019 E.C. (transcribed + extended)
+        const admEth = { year: 2019, month: 3, day: 5, hasTime: true, hour: 3, minute: 30, period: "DAY" };
+        for (let c = 0; c <= 6; c++) {
+          sample.weeks[c].date = addDaysToEthiopian(admEth, c * 7);
+        }
+
+        // ADM (=0)
+        Object.assign(sample.weeks[0], {
+          oedema: "0",
+          muac: "11.2",
+          weight: "8.4",
+          weightLoss: "",
+          height: "76.5",
+          wfh: "<-3 SD",
+          diarrhoea: "N",
+          vomiting: "N",
+          fever: "N",
+          cough: "N",
+          temperature: "36.9",
+          respRate: "32",
+          dehydrated: "N",
+          anaemia: "N",
+          skinInfection: "N",
+          rutfTest: "Passed",
+          rutfUnits: "21",
+          breastfeeding: "Yes",
+          actionNeeded: "OTP",
+          otherMedication: "Amox 250mg",
+          examinerName: "Dr. Dawit",
+          visitOutcome: "OK"
+        });
+
+        // ADM (=0) — matches uploaded PDF form entries
+        Object.assign(sample.weeks[0], {
+          oedema: "0",
+          muac: "11.2",
+          weight: "8.4",
+          weightLoss: "",
+          height: "76.5",
+          wfh: "<-3 SD",
+          diarrhoea: "",
+          vomiting: "",
+          fever: "",
+          cough: "",
+          temperature: "36.9",
+          respRate: "32",
+          dehydrated: "N",
+          anaemia: "N",
+          skinInfection: "N",
+          rutfTest: "Passed",
+          rutfUnits: "21",
+          breastfeeding: "Yes",
+          actionNeeded: "OTP",
+          otherMedication: "250mg",
+          examinerName: "Dr. Dawit",
+          visitOutcome: "OK"
+        });
+
+        // Week 1 — matches uploaded PDF form entries
+        Object.assign(sample.weeks[1], {
+          oedema: "0",
+          muac: "11.1",
+          weight: "8.6",
+          weightLoss: "N",
+          height: "76.5",
+          wfh: "<-3 SD",
+          diarrhoea: "N",
+          vomiting: "",
+          fever: "",
+          cough: "",
+          temperature: "37",
+          respRate: "30",
+          dehydrated: "N",
+          anaemia: "N",
+          skinInfection: "N",
+          rutfTest: "Passed",
+          rutfUnits: "25",
+          breastfeeding: "Yes",
+          actionNeeded: "OTP",
+          otherMedication: "",
+          examinerName: "Dr. Dawit",
+          visitOutcome: "OK"
+        });
+
+        // Week 2 — matches uploaded PDF form entries
+        Object.assign(sample.weeks[2], {
+          oedema: "0",
+          muac: "11.1",
+          weight: "8.7",
+          weightLoss: "N",
+          height: "76.5",
+          wfh: "<-3 SD",
+          diarrhoea: "N",
+          vomiting: "",
+          fever: "",
+          cough: "",
+          temperature: "36.8",
+          respRate: "28",
+          dehydrated: "N",
+          anaemia: "N",
+          skinInfection: "N",
+          rutfTest: "Passed",
+          rutfUnits: "25",
+          breastfeeding: "Yes",
+          actionNeeded: "OTP",
+          otherMedication: "",
+          examinerName: "Sr. Hanna",
+          visitOutcome: "OK"
+        });
+
+        // Week 4
+        Object.assign(sample.weeks[4], {
+          oedema: "0",
+          muac: "12.0",
+          weight: "9.3",
+          weightLoss: "N",
+          height: "77.0",
+          wfh: "-3 to -2 SD",
+          diarrhoea: "N",
+          vomiting: "N",
+          fever: "N",
+          cough: "N",
+          temperature: "36.8",
+          respRate: "26",
+          dehydrated: "N",
+          anaemia: "N",
+          skinInfection: "N",
+          rutfTest: "Passed",
+          rutfUnits: "28",
+          breastfeeding: "Yes",
+          actionNeeded: "OTP",
+          otherMedication: "",
+          examinerName: "Dr. Dawit",
+          visitOutcome: "OK"
+        });
+
+        // Week 5
+        Object.assign(sample.weeks[5], {
+          oedema: "0",
+          muac: "12.5",
+          weight: "9.6",
+          weightLoss: "N",
+          height: "77.5",
+          wfh: "≥-2 SD",
+          diarrhoea: "N",
+          vomiting: "N",
+          fever: "N",
+          cough: "N",
+          temperature: "36.6",
+          respRate: "26",
+          dehydrated: "N",
+          anaemia: "N",
+          skinInfection: "N",
+          rutfTest: "Passed",
+          rutfUnits: "28",
+          breastfeeding: "Yes",
+          actionNeeded: "OTP",
+          otherMedication: "Measles Vac",
+          examinerName: "Dr. Dawit",
+          visitOutcome: "OK"
+        });
+
+        // Week 6 (2nd consecutive visit >= 12.5 cm -> Cured)
+        Object.assign(sample.weeks[6], {
+          oedema: "0",
+          muac: "12.7",
+          weight: "9.9",
+          weightLoss: "N",
+          height: "77.5",
+          wfh: "≥-2 SD",
+          diarrhoea: "N",
+          vomiting: "N",
+          fever: "N",
+          cough: "N",
+          temperature: "36.7",
+          respRate: "25",
+          dehydrated: "N",
+          anaemia: "N",
+          skinInfection: "N",
+          rutfTest: "Passed",
+          rutfUnits: "14",
+          breastfeeding: "Yes",
+          actionNeeded: "OTP",
+          otherMedication: "",
+          examinerName: "Dr. Dawit",
+          visitOutcome: "C"
+        });
+
+        sample.actionLogs = [
+          {
+            id: 101,
+            date: admEth,
+            weekRef: "ADM (=0)",
+            note: "Admitted to OTP. Passed RUTF appetite test; Amoxicillin 250mg & systematic treatment given."
+          },
+          {
+            id: 102,
+            date: addDaysToEthiopian(admEth, 14),
+            weekRef: "Week 2",
+            note: "Good weight gain (+0.3 kg). Mother counseled on exclusive RUTF feeding & handwashing."
+          },
+          {
+            id: 103,
+            date: addDaysToEthiopian(admEth, 42),
+            weekRef: "Week 6",
+            note: "MUAC ≥12.5 cm for 2 consecutive visits with no oedema. Discharged as Cured (C) with 14 transition RUTF sachets."
+          }
+        ];
+
+        state = sample;
+        syncEntireUI();
+        saveStateToStorage(false);
+        showToast("Loaded sample 6-week Ethiopian OTP clinical case");
+      }
+
+      /* =======================================================================
+         8B. BUILD EXACT OFFICIAL PAPER PRINT SHEET (MATCHES UPLOADED PDF FORM)
+         ======================================================================= */
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function renderOfficialPrintSheet() {
+        const container = document.getElementById("officialPrintSheet");
+        if (!container) return;
+
+        // Week header cells: ADM (=0) and 1..16
+        let weekHeaders = "";
+        for (let c = 0; c < TOTAL_WEEKS; c++) {
+          weekHeaders += `<th class="print-col-wk print-wk-head">${c === 0 ? "ADM<br>(=0)" : c}</th>`;
+        }
+
+        // Date row cells (DD/MM/YY Ethiopian Calendar)
+        let dateCells = "";
+        for (let c = 0; c < TOTAL_WEEKS; c++) {
+          const dObj = state.weeks[c].date;
+          const shortD = dObj && dObj.year
+            ? `${String(dObj.day).padStart(2, "0")}/${String(dObj.month).padStart(2, "0")}/${String(dObj.year).slice(-2)}`
+            : "";
+          dateCells += `<td class="print-col-wk">${escapeHtml(shortD)}</td>`;
+        }
+
+        // Exact official section groups & row spans matching the uploaded PDF
+        const printGroups = [
+          {
+            title: "Anthropometry",
+            rowSpan: 7, // 6 anthropometry rows + 1 full-width clinical rule row
+            rows: [
+              { key: "oedema", label: "Bilateral Pitting Oedema (++++++)" },
+              { key: "muac", label: "MUAC (cm)" },
+              { key: "weight", label: "Weight (kg)" },
+              { key: "weightLoss", label: "Weight loss * (Y/N)" },
+              { key: "height", label: "Height/length (cm)" },
+              { key: "wfh", label: "Weight for Height/length", afterRule: true }
+            ]
+          },
+          {
+            title: "History",
+            rowSpan: 4,
+            rows: [
+              { key: "diarrhoea", label: "Diarrhoea (# days)" },
+              { key: "vomiting", label: "Vomiting (# days)" },
+              { key: "fever", label: "Fever (# days)" },
+              { key: "cough", label: "Cough (# days)" }
+            ]
+          },
+          {
+            title: "Physical examination",
+            rowSpan: 5,
+            rows: [
+              { key: "temperature", label: "Temperature" },
+              { key: "respRate", label: "Respiratory rate (#/min)" },
+              { key: "dehydrated", label: "Dehydrated (Y/N)" },
+              { key: "anaemia", label: "Anaemia / palmar pallor" },
+              { key: "skinInfection", label: "Skin infection (Y/N)" }
+            ]
+          },
+          {
+            title: "Appetite test / feeding",
+            rowSpan: 3,
+            rows: [
+              { key: "rutfTest", label: "RUTF test (Passed/Failed)" },
+              { key: "rutfUnits", label: "RUTF (#units given)" },
+              { key: "breastfeeding", label: "Breastfeeding" }
+            ]
+          },
+          {
+            title: "Action / follow up",
+            rowSpan: 4,
+            rows: [
+              { key: "actionNeeded", label: "ACTION NEEDED (OTP/SC/Home follow up)" },
+              { key: "otherMedication", label: "Other medication (see front of card)" },
+              { key: "examinerName", label: "Name of examiner" },
+              { key: "visitOutcome", label: "VISIT OUTCOME" }
+            ]
+          }
+        ];
+
+        let matrixRowsHtml = "";
+        printGroups.forEach((grp) => {
+          grp.rows.forEach((r, idx) => {
+            matrixRowsHtml += "<tr>";
+            if (idx === 0) {
+              matrixRowsHtml += `<td class="print-col-grp" rowspan="${grp.rowSpan}"><span class="print-rot-text">${escapeHtml(grp.title)}</span></td>`;
+            }
+            matrixRowsHtml += `<td class="print-col-lbl">${escapeHtml(r.label)}</td>`;
+            for (let c = 0; c < TOTAL_WEEKS; c++) {
+              const rawVal = state.weeks[c][r.key];
+              matrixRowsHtml += `<td class="print-col-wk">${escapeHtml(rawVal)}</td>`;
+            }
+            matrixRowsHtml += "</tr>";
+
+            if (r.afterRule) {
+              matrixRowsHtml += `
+                <tr>
+                  <td colspan="${TOTAL_WEEKS + 1}" class="print-rule-banner">
+                    If below admission weight on week 3 refer for home visit; If no weight gain by week 5 refer to SC
+                  </td>
+                </tr>
+              `;
+            }
+          });
+        });
+
+        // Build ruled lines for "Action taken during follow-up (include date)"
+        const populatedLogs = (state.actionLogs || []).filter(
+          (l) => (l.date && l.date.year) || (l.note && l.note.trim() !== "")
+        );
+        const totalRuledLines = Math.max(4, populatedLogs.length + 1);
+        let ruledLinesHtml = "";
+        for (let i = 0; i < totalRuledLines; i++) {
+          const item = populatedLogs[i];
+          if (item) {
+            const dStr = item.date && item.date.year ? `${formatEthShort(item.date)} E.C.` : "";
+            const wkStr = item.weekRef ? `[${item.weekRef}]` : "";
+            const lineText = [dStr, wkStr, item.note].filter(Boolean).join(" — ");
+            ruledLinesHtml += `<div class="print-ruled-line">${escapeHtml(lineText)}</div>`;
+          } else {
+            ruledLinesHtml += `<div class="print-ruled-line">&nbsp;</div>`;
+          }
+        }
+
+        container.innerHTML = `
+          <div class="print-top-title">FOLLOW UP: OTP</div>
+
+          <div class="print-patient-bar">
+            <div class="print-field-line">
+              <span>NAME</span>
+              <span class="print-underline-val">${escapeHtml(state.patientName)}</span>
+            </div>
+            <div class="print-field-line right">
+              <span>Registration N°</span>
+              <span class="print-underline-val">${escapeHtml(state.registrationNo)}</span>
+            </div>
+          </div>
+
+          <table class="print-otp-grid">
+            <thead>
+              <tr>
+                <th class="print-col-grp"></th>
+                <th class="print-col-lbl print-wk-head">Week</th>
+                ${weekHeaders}
+              </tr>
+              <tr>
+                <th class="print-col-grp"></th>
+                <th class="print-col-lbl">Date</th>
+                ${dateCells}
+              </tr>
+            </thead>
+            <tbody>
+              ${matrixRowsHtml}
+            </tbody>
+          </table>
+
+          <table class="print-outcome-table">
+            <tbody>
+              <tr>
+                <td class="print-outcome-title-cell" rowspan="2">VISIT OUTCOME</td>
+                <td>
+                  <span class="print-code-span"><span class="print-code-badge">OK</span> Continue</span>
+                  <span class="print-code-span"><span class="print-code-badge">A</span> Absent</span>
+                  <span class="print-code-span"><strong>DF= Defaulter</strong> (Absent for 2 consecutive visits and confirmed by a home visit)</span>
+                  <span class="print-code-span"><span class="print-code-badge">HV</span> Home visit</span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="print-code-span"><span class="print-code-badge">T</span> Transfer</span>
+                  <span class="print-code-span"><span class="print-code-badge">RR</span> Refused referral</span>
+                  <span class="print-code-span"><span class="print-code-badge">C</span> Cured</span>
+                  <span class="print-code-span"><span class="print-code-badge">NR</span> Non-responder</span>
+                  <span class="print-code-span"><strong>D= Died</strong></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="print-bottom-notes">
+            <div class="print-outreach-row">
+              <span>Name of outreach worker:</span>
+              <span class="print-underline-val">${escapeHtml(state.outreachWorker)}</span>
+            </div>
+            <div class="print-action-heading">Action taken during follow-up (include date)</div>
+            ${ruledLinesHtml}
+          </div>
+        `;
+      }
+
+      function onClinicalStateChanged() {
+        evaluateClinicalRules();
+        updateSummaryKPIs();
+        renderGrowthSvgChart();
+        renderOfficialPrintSheet();
+        saveStateToStorage(false);
+      }
+
+      function syncEntireUI() {
+        document.getElementById("inputPatientName").value = state.patientName || "";
+        document.getElementById("inputRegNo").value = state.registrationNo || "";
+        document.getElementById("inputFacility").value = state.facilityName || "";
+        document.getElementById("inputOutreachWorker").value = state.outreachWorker || "";
+        syncHeaderAdmDateDisplay();
+        renderMatrixBody();
+        renderActionLogTable();
+        evaluateClinicalRules();
+        updateSummaryKPIs();
+        renderGrowthSvgChart();
+        renderOfficialPrintSheet();
+      }
+
+      function syncEntireUI() {
+        document.getElementById("inputPatientName").value = state.patientName || "";
+        document.getElementById("inputRegNo").value = state.registrationNo || "";
+        document.getElementById("inputFacility").value = state.facilityName || "";
+        document.getElementById("inputOutreachWorker").value = state.outreachWorker || "";
+        syncHeaderAdmDateDisplay();
+        renderMatrixBody();
+        renderActionLogTable();
+        evaluateClinicalRules();
+        updateSummaryKPIs();
+        renderGrowthSvgChart();
+      }
+
+      function saveStateToStorage(withToast) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          const ethToday = dateObjToEthiopian(now);
+          document.getElementById("saveStatusLabel").textContent =
+            `Last saved: ${formatEthShort(ethToday)} E.C. at ${timeStr}`;
+          if (withToast) {
+            showToast("OTP Card saved to browser storage");
+          }
+        } catch (err) {
+          console.error("Storage error:", err);
+        }
+      }
+
+      function loadStateFromStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return false;
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.weeks) && parsed.weeks.length === TOTAL_WEEKS) {
+            state = parsed;
+            return true;
+          }
+        } catch (err) {
+          console.error("Failed to parse saved state:", err);
+        }
+        return false;
+      }
+
+      function exportCardAsJson() {
+        const jsonStr = JSON.stringify(state, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const safeName = (state.patientName || "Ethiopian_OTP_Card")
+          .trim()
+          .replace(/[^a-z0-9_-]+/gi, "_");
+        a.href = url;
+        a.download = `${safeName}_OTP.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast("Exported OTP Card as JSON file");
+      }
+
+      function handleImportJsonFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const imported = JSON.parse(e.target.result);
+            if (!imported || !Array.isArray(imported.weeks) || imported.weeks.length !== TOTAL_WEEKS) {
+              showToast("Invalid OTP Card JSON format");
+              return;
+            }
+            state = imported;
+            syncEntireUI();
+            saveStateToStorage(false);
+            showToast(`Restored OTP card for ${state.patientName || "patient"}`);
+          } catch (err) {
+            showToast("Could not parse JSON file");
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const box = document.getElementById("toastBox");
+        document.getElementById("toastText").textContent = msg;
+        box.classList.add("visible");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          box.classList.remove("visible");
+        }, 2800);
+      }
+
+      /* =======================================================================
+         9. INITIALIZATION & GLOBAL EVENT WIRING
+         ======================================================================= */
+      function initApp() {
+        // Set live Ethiopian & Gregorian header dates
+        const now = new Date();
+        const todayEth = dateObjToEthiopian(now);
+        const mInfo = ETH_MONTHS[todayEth.month - 1];
+        const ethDisplay = `${mInfo.en} ${todayEth.day}, ${todayEth.year} E.C. (${mInfo.am})`;
+        const gregDisplay = now.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        });
+
+        document.getElementById("liveEthDateBadge").textContent = ethDisplay;
+        document.getElementById("liveGregDateSub").textContent =
+          `Gregorian: ${gregDisplay} • Federal Ministry of Health OTP Clinical Record`;
+
+        buildMatrixHeader();
+        initEthCalendarControls();
+
+        // Patient header inputs
+        document.getElementById("inputPatientName").addEventListener("input", (e) => {
+          state.patientName = e.target.value;
+          renderOfficialPrintSheet();
+          saveStateToStorage(false);
+        });
+        document.getElementById("inputRegNo").addEventListener("input", (e) => {
+          state.registrationNo = e.target.value;
+          renderOfficialPrintSheet();
+          saveStateToStorage(false);
+        });
+        document.getElementById("inputFacility").addEventListener("input", (e) => {
+          state.facilityName = e.target.value;
+          renderOfficialPrintSheet();
+          saveStateToStorage(false);
+        });
+        document.getElementById("inputOutreachWorker").addEventListener("input", (e) => {
+          state.outreachWorker = e.target.value;
+          renderOfficialPrintSheet();
+          saveStateToStorage(false);
+        });
+        document.getElementById("inputRegNo").addEventListener("input", (e) => {
+          state.registrationNo = e.target.value;
+          saveStateToStorage(false);
+        });
+        document.getElementById("inputFacility").addEventListener("input", (e) => {
+          state.facilityName = e.target.value;
+          saveStateToStorage(false);
+        });
+        document.getElementById("inputOutreachWorker").addEventListener("input", (e) => {
+          state.outreachWorker = e.target.value;
+          saveStateToStorage(false);
+        });
+
+        document.getElementById("btnHeaderAdmDate").addEventListener("click", (e) => {
+          e.stopPropagation();
+          openEthPopover({ type: "header_adm" }, e.currentTarget);
+        });
+
+        // Toolbar Buttons
+        document.getElementById("btnLoadSample").addEventListener("click", loadSampleClinicalCase);
+        document.getElementById("btnSaveCard").addEventListener("click", () => saveStateToStorage(true));
+        document.getElementById("btnExportJson").addEventListener("click", exportCardAsJson);
+
+        const fileInp = document.getElementById("jsonFileInput");
+        document.getElementById("btnImportJson").addEventListener("click", () => {
+          fileInp.value = "";
+          fileInp.click();
+        });
+        fileInp.addEventListener("change", (e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleImportJsonFile(e.target.files[0]);
+          }
+        });
+
+        document.getElementById("btnPrintCard").addEventListener("click", () => {
+          closeEthPopover();
+          renderOfficialPrintSheet();
+          window.print();
+        });
+        window.addEventListener("beforeprint", renderOfficialPrintSheet);
+        const clearBar = document.getElementById("inlineClearBar");
+        document.getElementById("btnClearCard").addEventListener("click", () => {
+          clearBar.classList.toggle("active");
+        });
+        document.getElementById("btnCancelClear").addEventListener("click", () => {
+          clearBar.classList.remove("active");
+        });
+        document.getElementById("btnConfirmClear").addEventListener("click", () => {
+          state = createEmptyState();
+          localStorage.removeItem(STORAGE_KEY);
+          clearBar.classList.remove("active");
+          syncEntireUI();
+          document.getElementById("saveStatusLabel").textContent = "Card cleared";
+          showToast("All OTP card fields cleared");
+        });
+
+        // Helper Strip & Action Log Add Button
+        document.getElementById("btnAutoFillWeeks").addEventListener("click", autoFillWeeklyDates);
+        document.getElementById("btnAddActionRow").addEventListener("click", () => {
+          const todayEthNow = dateObjToEthiopian(new Date());
+          state.actionLogs.push({
+            id: Date.now(),
+            date: {
+              year: todayEthNow.year,
+              month: todayEthNow.month,
+              day: todayEthNow.day,
+              hasTime: false,
+              hour: 3,
+              minute: 0,
+              period: "DAY"
+            },
+            weekRef: "Week 1",
+            note: ""
+          });
+          renderActionLogTable();
+          saveStateToStorage(false);
+        });
+
+        // Close popover on outside click, Escape key, or scroll/resize reposition
+        document.addEventListener("mousedown", (e) => {
+          const pop = document.getElementById("ethCalendarPopover");
+          if (!pop.classList.contains("open")) return;
+          if (pop.contains(e.target)) return;
+          if (activeAnchorElement && activeAnchorElement.contains(e.target)) return;
+          closeEthPopover();
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            closeEthPopover();
+            clearBar.classList.remove("active");
+          }
+        });
+
+        window.addEventListener("resize", positionEthPopover);
+        window.addEventListener("scroll", positionEthPopover, true);
+
+        // Load saved data or default sample case on first visit
+        if (!loadStateFromStorage()) {
+          loadSampleClinicalCase();
+        } else {
+          syncEntireUI();
+        }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initApp);
+      } else {
+        initApp();
+      }
+    })();
+  </script>
+</body>
+</html>

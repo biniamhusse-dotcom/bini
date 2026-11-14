@@ -275,7 +275,8 @@ angular.module('bahmni.registration')
                 var p = (patientData && patientData.patient) ? patientData.patient : (patientData || {});
                 var person = p.person || (patientData && patientData.person);
                 $scope.patient.name = (person && person.names && person.names[0] && person.names[0].display) || p.display || ($scope.patient && $scope.patient.name) || '';
-                $location.path("/patient/" + patientData.patient.uuid + "/crTriageVisit");
+                var cleanUuid = (patientData && patientData.patient && patientData.patient.uuid ? String(patientData.patient.uuid).replace(/^\/+/, '') : '');
+                $location.path("/patient/" + cleanUuid + "/crTriageVisit");
 
             };
 

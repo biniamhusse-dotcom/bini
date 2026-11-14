@@ -4,7 +4,7 @@ Clean & Purge Patient Data
 ==========================
 Wipes test/clinical data from **OpenMRS, OpenELIS, PACS and Odoo**, deletes
 non-essential user accounts, reconfigures the primary-identifier / Auto-MRN
-settings and re-applies the Bahmni UI patches.
+settings and resets lab sync state.
 
 Safety design (please keep when editing):
   * the OpenMRS clinical tables are discovered from the LIVE FK graph at
@@ -1060,40 +1060,7 @@ PACS_DENY = {
 # Bahmni web patches + service restarts
 # --------------------------------------------------------------------------
 def apply_frontend_patches():
-    print("[bahmni-web] Re-applying Bahmni UI patches...", flush=True)
-    run_cmd(
-        f'docker exec -i {BAHMNI_WEB} sed -i '
-        '\'s#\\$location\\.url("/patient/" + \\$scope\\.selectedPatient\\.uuid + "/crTriageVisit");#'
-        'var cleanUuid = ($scope.selectedPatient.uuid || "").replace(/^\\/+/g, ""); '
-        '\\$location.url("/patient/" + cleanUuid + "/crTriageVisit");#g\' '
-        '/usr/local/apache2/htdocs/bahmni/registration/controllers/searchPatientController.js',
-        check=False
-    )
-    run_cmd(
-        f'docker exec -i {BAHMNI_WEB} sed -i '
-        '\'s#\\$location\\.url("/patient/" + \\$scope\\.selectedPatient\\.uuid + "/prescription");#'
-        'var cleanUuid = ($scope.selectedPatient.uuid || "").replace(/^\\/+/g, ""); '
-        '\\$location.url("/patient/" + cleanUuid + "/prescription");#g\' '
-        '/usr/local/apache2/htdocs/bahmni/registration/controllers/searchPatientController.js',
-        check=False
-    )
-    run_cmd(
-        f'docker exec -i {BAHMNI_WEB} sed -i '
-        '\'s#\\$location\\.path("/patient/" + patientData\\.patient\\.uuid + "/crTriageVisit");#'
-        'var cleanUuid = (patientData.patient.uuid || "").replace(/^\\/+/g, ""); '
-        '\\$location.path("/patient/" + cleanUuid + "/crTriageVisit");#g\' '
-        '/usr/local/apache2/htdocs/bahmni/registration/controllers/createCRTriagePatientController.js',
-        check=False
-    )
-    run_cmd(
-        f'docker exec -i {BAHMNI_WEB} sed -i '
-        '\'s#const providerName = patientHistory\\.person\\.currentProvider\\.name#'
-        'const providerName = (patientHistory \\&\\& patientHistory.person \\&\\& '
-        'patientHistory.person.currentProvider) ? '
-        'patientHistory.person.currentProvider.name : "";#g\' '
-        '/usr/local/apache2/htdocs/bahmni/common/logicAndConditionProcessors/skipLogicProcessor.js',
-        check=False
-    )
+    print("[sync] Resetting lab result sync state...", flush=True)
     run_cmd(
         'docker exec lab-result-sync sh -c "echo \'{\\"last_result_id\\": 0}\' > last_result.json"',
         check=False

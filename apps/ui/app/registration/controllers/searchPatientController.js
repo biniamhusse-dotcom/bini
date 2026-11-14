@@ -579,15 +579,16 @@ angular.module('bahmni.registration')
                         closeVisit(response.data)
                     })
                 }
-                spinner.forPromise($scope.visitControl.createVisitOnly($scope.selectedPatient.uuid, $rootScope.visitLocation).then(function (response) {
-                    auditLogService.log($scope.selectedPatient.uuid, "OPEN_VISIT", { visitUuid: response.data.uuid, visitType: response.data.visitType.display }, 'MODULE_LABEL_REGISTRATION_KEY');
+                var cleanUuid = ($scope.selectedPatient && $scope.selectedPatient.uuid ? String($scope.selectedPatient.uuid).replace(/^\/+/, '') : '');
+                spinner.forPromise($scope.visitControl.createVisitOnly(cleanUuid, $rootScope.visitLocation).then(function (response) {
+                    auditLogService.log(cleanUuid, "OPEN_VISIT", { visitUuid: response.data.uuid, visitType: response.data.visitType.display }, 'MODULE_LABEL_REGISTRATION_KEY');
                 }));
-                $location.url("/patient/" + $scope.selectedPatient.uuid + "/crTriageVisit");
+                $location.url("/patient/" + cleanUuid + "/crTriageVisit");
 
             };
             $scope.prescriptionForExistedPatient = function () {
-            $location.url("/patient/" + $scope.selectedPatient.uuid + "/prescription");
-                
+                var cleanUuid = ($scope.selectedPatient && $scope.selectedPatient.uuid ? String($scope.selectedPatient.uuid).replace(/^\/+/, '') : '');
+                $location.url("/patient/" + cleanUuid + "/prescription");
             };
 
             $scope.visitControl.onStartVisit = function () {

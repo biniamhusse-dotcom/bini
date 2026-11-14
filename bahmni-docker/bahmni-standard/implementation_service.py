@@ -46,7 +46,7 @@ SCRIPTS = {
     "clean_patient_data": {
         "file": os.path.join(BASE_DIR, "clean_patient_data.py"),
         "title": "Clean & Purge Patient Data",
-        "description": "Purge test/clinical patient data in OpenMRS, OpenELIS, PACS & Odoo (Full Reset also deep-wipes Odoo business data: sale orders, invoices, partners), delete non-essential users, reconfigure auto-MRN sequence, and re-apply Bahmni UI patches."
+        "description": "Purge test/clinical patient data in OpenMRS, OpenELIS, PACS & Odoo (Full Reset also deep-wipes Odoo business data: sale orders, invoices, partners), delete non-essential users, reconfigure auto-MRN sequence, and reset integration sync state."
     },
     "import_kphc_excel_patients": {
         "file": os.path.join(BASE_DIR, "import_kphc_excel_patients.py"),
@@ -1401,7 +1401,7 @@ INDEX_TEMPLATE = """
             <div id="collapseClean" class="accordion-collapse collapse show" data-bs-parent="#toolsAccordion">
               <div class="accordion-body">
                 <p class="text-muted small">
-                  Wipes test/clinical patient data from OpenMRS, OpenELIS, PACS (dcm4chee) & Odoo, deletes non-essential user accounts (keeps admin, superman and service accounts), resets primary identifier global properties, configures the starting Auto-MRN sequence, and reapplies UI bugfix patches. Full Reset also performs a deep Odoo business wipe (sale orders, invoices, payments, purchases, stock movements, customer/vendor partners). Selective mode (choice 2) is MRN-scoped in OpenMRS & Odoo only.
+                  Wipes test/clinical patient data from OpenMRS, OpenELIS, PACS (dcm4chee) & Odoo, deletes non-essential user accounts (keeps admin, superman and service accounts), resets primary identifier global properties, configures the starting Auto-MRN sequence, and resets integration sync state. Full Reset also performs a deep Odoo business wipe (sale orders, invoices, payments, purchases, stock movements, customer/vendor partners). Selective mode (choice 2) is MRN-scoped in OpenMRS & Odoo only.
                 </p>
                 <div class="mb-3">
                   <label class="form-label fw-semibold small">Purge Scope Mode</label>
