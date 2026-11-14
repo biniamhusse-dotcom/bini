@@ -8,6 +8,14 @@ Bahmni.ConceptSet.ObservationMapper = function () {
         return internalMapForDisplay(observations, conceptSetConfig, conceptGroupFormatService);
     };
 
+    var getConceptName = function (concept) {
+        if (!concept) return '';
+        if (typeof concept.name === 'string') return concept.name;
+        if (concept.name && typeof concept.name.name === 'string') return concept.name.name;
+        if (concept.name && typeof concept.name.display === 'string') return concept.name.display;
+        return concept.display || '';
+    };
+
     var internalMapForDisplay = function (observations, conceptSetConfig, conceptGroupFormatService) {
         var observationsForDisplay = [];
         _.forEach(observations, function (savedObs) {
@@ -20,8 +28,9 @@ Bahmni.ConceptSet.ObservationMapper = function () {
                 }
             }
             else {
-                if (savedObs.concept.set) {
-                    if (conceptSetConfig[savedObs.concept.name] && conceptSetConfig[savedObs.concept.name].grid) {
+                if (savedObs.concept && savedObs.concept.set) {
+                    var conceptName = getConceptName(savedObs.concept);
+                    if (conceptSetConfig[conceptName] && conceptSetConfig[conceptName].grid) {
                         savedObs.value = self.getGridObservationDisplayValue(savedObs, conceptGroupFormatService);
                         observationsForDisplay = observationsForDisplay.concat(createObservationForDisplay(savedObs, savedObs.concept, conceptGroupFormatService));
                     } else {
@@ -63,7 +72,8 @@ Bahmni.ConceptSet.ObservationMapper = function () {
         }
         var mappedGroupMembers = concept && concept.set ? mapObservationGroupMembers(savedObs ? savedObs.groupMembers : [], concept, conceptSetConfig) : [];
 
-        if (concept.conceptClass.name === Bahmni.Common.Constants.conceptDetailsClassName) {
+        var className = concept.conceptClass && (concept.conceptClass.name || concept.conceptClass.display);
+        if (className === Bahmni.Common.Constants.conceptDetailsClassName) {
             obs = newObservationNode(concept, savedObs, conceptSetConfig, mappedGroupMembers);
         } else {
             obs = newObservation(concept, savedObs, conceptSetConfig, mappedGroupMembers);
@@ -76,19 +86,20 @@ Bahmni.ConceptSet.ObservationMapper = function () {
 
     function mapTabularObs (mappedGroupMembers, concept, obs, conceptSetConfig) {
         var tabularObsGroups = _.filter(mappedGroupMembers, function (member) {
-            return conceptSetConfig[member.concept.name] && conceptSetConfig[member.concept.name]['isTabular'];
+            var cName = member.concept ? getConceptName(member.concept) : '';
+            return cName && conceptSetConfig[cName] && conceptSetConfig[cName]['isTabular'];
         });
 
         if (tabularObsGroups.length > 0) {
             var array = _.map(concept.setMembers, function (member) {
-                return member.name.name;
+                return getConceptName(member);
             });
             tabularObsGroups.forEach(function (group) {
                 group.hidden = true;
             });
 
             var groupedObsGroups = _.groupBy(tabularObsGroups, function (group) {
-                return group.concept.name;
+                return group.concept ? getConceptName(group.concept) : '';
             });
 
             _.values(groupedObsGroups).forEach(function (groups) {
@@ -96,7 +107,7 @@ Bahmni.ConceptSet.ObservationMapper = function () {
                 obs.groupMembers.push(tabularObservations);
             });
             var sortedGroupMembers = _.sortBy(obs.groupMembers, function (observation) {
-                return array.indexOf(observation.concept.name);
+                return array.indexOf(observation.concept ? getConceptName(observation.concept) : '');
             });
             obs.groupMembers.length = 0;
             obs.groupMembers.push.apply(obs.groupMembers, sortedGroupMembers);
@@ -105,10 +116,11 @@ Bahmni.ConceptSet.ObservationMapper = function () {
 
     var mapObservationGroupMembers = function (observations, parentConcept, conceptSetConfig) {
         var observationGroupMembers = [];
-        var conceptSetMembers = parentConcept.setMembers;
+        var conceptSetMembers = (parentConcept && parentConcept.setMembers) || [];
         conceptSetMembers.forEach(function (memberConcept) {
             var savedObservations = findInSavedObservation(memberConcept, observations);
-            var configForConcept = conceptSetConfig[memberConcept.name.name] || {};
+            var memberName = getConceptName(memberConcept);
+            var configForConcept = (memberName && conceptSetConfig[memberName]) || {};
             var numberOfNodes = configForConcept.multiple || 1;
             for (var i = savedObservations.length - 1; i >= 0; i--) {
                 observationGroupMembers.push(mapObservation(memberConcept, savedObservations[i], conceptSetConfig));

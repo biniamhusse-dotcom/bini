@@ -8,30 +8,56 @@ UPDATE concept SET uuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b' WHERE concept_i
 INSERT IGNORE INTO concept (retired, datatype_id, class_id, is_set, creator, date_created, uuid)
 VALUES (0, 3, 11, 0, 1, NOW(), 'fd08aa37-e18d-415d-be41-f8bbbc81bea3');
 
+-- 1a. Unvoid any FULLY_SPECIFIED name mistakenly voided as duplicate
+UPDATE concept_name 
+SET voided = 0, void_reason = NULL 
+WHERE voided = 1 
+  AND concept_name_type = 'FULLY_SPECIFIED' 
+  AND void_reason = 'Duplicate name on same concept';
+
+-- 1b. Void redundant non-FULLY_SPECIFIED duplicate names on same concept where FULLY_SPECIFIED exists
 UPDATE concept_name cn
 JOIN (
-    SELECT MIN(concept_name_id) as keep_id, concept_id, name, locale
+    SELECT concept_id, name, locale
     FROM concept_name
     WHERE voided = 0
     GROUP BY concept_id, name, locale
     HAVING count(*) > 1
-) dup ON cn.concept_id = dup.concept_id 
-     AND cn.name = dup.name 
-     AND cn.locale = dup.locale 
-     AND cn.concept_name_id > dup.keep_id
-SET cn.voided = 1, cn.void_reason = 'Duplicate name on same concept';
-
-UPDATE concept_name cn
+) dup ON cn.concept_id = dup.concept_id AND cn.name = dup.name AND cn.locale = dup.locale
 JOIN (
-    SELECT MIN(concept_name_id) as keep_id, name, locale
+    SELECT concept_id, name, locale
     FROM concept_name
     WHERE voided = 0 AND concept_name_type = 'FULLY_SPECIFIED'
-    GROUP BY name, locale
-    HAVING count(*) > 1
-) dup ON cn.name = dup.name 
-     AND cn.locale = dup.locale 
-     AND cn.concept_name_id > dup.keep_id
-SET cn.concept_name_type = NULL;
+) fs ON cn.concept_id = fs.concept_id AND cn.name = fs.name AND cn.locale = fs.locale
+SET cn.voided = 1, cn.void_reason = 'Redundant duplicate of fully specified name'
+WHERE cn.voided = 0 
+  AND (cn.concept_name_type IS NULL OR cn.concept_name_type != 'FULLY_SPECIFIED');
+
+-- 1c. For any active concept with 0 active FULLY_SPECIFIED names, promote one name
+UPDATE concept_name cn
+JOIN (
+    SELECT c.concept_id, MIN(cn2.concept_name_id) as min_cn_id
+    FROM concept c
+    JOIN concept_name cn2 ON c.concept_id = cn2.concept_id AND cn2.voided = 0
+    WHERE c.retired = 0
+      AND NOT EXISTS (
+          SELECT 1 FROM concept_name fs 
+          WHERE fs.concept_id = c.concept_id 
+            AND fs.concept_name_type = 'FULLY_SPECIFIED' 
+            AND fs.voided = 0
+      )
+    GROUP BY c.concept_id
+) missing_fs ON cn.concept_name_id = missing_fs.min_cn_id
+SET cn.concept_name_type = 'FULLY_SPECIFIED', cn.locale_preferred = 1;
+
+-- 1d. Ensure eapts_drug_mapping table exists
+CREATE TABLE IF NOT EXISTS eapts_drug_mapping (
+  openmrs_drug_id INT NOT NULL PRIMARY KEY,
+  dagu_item_uuid VARCHAR(50) DEFAULT NULL,
+  dagu_item_name VARCHAR(255) DEFAULT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
 SET @fallback_cid = (SELECT concept_id FROM concept WHERE uuid = 'fd08aa37-e18d-415d-be41-f8bbbc81bea3' LIMIT 1);
 
