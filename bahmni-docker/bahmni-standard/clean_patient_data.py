@@ -495,7 +495,7 @@ def cleanup_openmrs_persons():
     """
     def doomed_where(col):
         return (
-            f"{col} IS NOT NULL AND {col} NOT IN (SELECT person_id FROM users) "
+            f"{col} IS NOT NULL AND {col} NOT IN (SELECT person_id FROM users WHERE person_id IS NOT NULL) "
             "AND NOT EXISTS (SELECT 1 FROM provider p WHERE p.person_id = "
             f"{col}) AND NOT EXISTS (SELECT 1 FROM patient pt WHERE "
             f"pt.patient_id = {col})"

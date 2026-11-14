@@ -491,11 +491,9 @@ def api_backup_upload():
     if content_length <= 0:
         return jsonify({"success": False, "error": "Content-Length header required for upload"}), 400
 
-    # The backup service only lists/restores archives matching bahmni_*.tar.gz,
-    # so normalise the name or the upload would be invisible (and unrestorable).
-    filename = os.path.basename(filename.strip()) or f"bahmni_uploaded_backup_{int(time.time())}.tar.gz"
-    if not filename.startswith("bahmni_"):
-        filename = "bahmni_" + filename
+    filename = os.path.basename(filename.strip()) or f"uploaded_backup_{int(time.time())}.tar.gz"
+    if not (filename.endswith(".tar.gz") or filename.endswith(".tgz")):
+        filename += ".tar.gz" 
 
     query = "?filename=" + quote(filename) + "&restore=" + ("true" if restore_now else "false")
     conn = http.client.HTTPConnection(BACKUP_API_HOST, BACKUP_API_PORT, timeout=3600)
@@ -527,7 +525,7 @@ def api_backup_upload():
 @require_openelis_maintenance
 def api_backup_download(name):
     safe_name = os.path.basename(name.strip())
-    if not safe_name or not safe_name.endswith(".tar.gz"):
+    if not safe_name or not (safe_name.endswith(".tar.gz") or safe_name.endswith(".tgz") or safe_name.endswith(".sql.gz")):
         return jsonify({"error": "Invalid backup archive filename"}), 400
     try:
         conn = http.client.HTTPConnection(BACKUP_API_HOST, BACKUP_API_PORT, timeout=120)
@@ -1627,7 +1625,7 @@ INDEX_TEMPLATE = """
                     <input class="form-check-input" type="checkbox" id="backupRestoreNow">
                     <label class="form-check-label small" for="backupRestoreNow">Restore immediately after upload</label>
                   </div>
-                  <button class="btn btn-warning btn-sm mt-2" onclick="uploadBackup()" id="btnUploadBackup"><i class="fa-solid fa-upload me-1"></i> Upload archive</button>
+                  <button type="button" class="btn btn-warning btn-sm mt-2" onclick="uploadBackup()" id="btnUploadBackup"><i class="fa-solid fa-upload me-1"></i> Upload archive</button>
                   <div class="progress mt-2" id="backupUploadProgress" style="display: none; height: 18px;">
                     <div class="progress-bar progress-bar-striped progress-bar-animated" id="backupUploadBar" role="progressbar" style="width: 0%">0%</div>
                   </div>
@@ -2511,7 +2509,7 @@ INDEX_TEMPLATE = """
       };
       xhr.onerror = () => {
         wrap.style.display = 'none';
-        alert('Upload failed: network error');
+        alert('Upload failed: network error. If uploading a large file, ensure connection stability or use server-staged archives directly.');
       };
       appendTerminal('[*] Uploading ' + file.name + (restoreNow ? ' (restore starts after upload)' : '') + ' ...');
       xhr.send(file);

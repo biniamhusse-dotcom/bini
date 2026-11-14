@@ -375,14 +375,33 @@ def apply_frontend_patches():
         check=False
     )
 
+CANDIDATE_BACKUP_DIRS = [
+    BACKUP_DIR,
+    "/home/hphc/Documents/bahmni backup",
+    "/home/hphc/Documents",
+    "/home/hphc/Documents/Harbu bak",
+]
+
+def find_archive_file(archive_name):
+    if not archive_name:
+        return None
+    archive_name = archive_name.strip()
+    if os.path.isabs(archive_name) and os.path.isfile(archive_name):
+        return archive_name
+    safe_name = os.path.basename(archive_name)
+    for d in CANDIDATE_BACKUP_DIRS:
+        if not os.path.isdir(d):
+            continue
+        p = os.path.join(d, safe_name)
+        if os.path.isfile(p):
+            return p
+    return None
+
 def execute_restore(archive_path):
-    if not os.path.exists(archive_path):
-        # Try finding in BACKUP_DIR
-        alt_path = os.path.join(BACKUP_DIR, archive_path)
-        if os.path.exists(alt_path):
-            archive_path = alt_path
-        else:
-            raise FileNotFoundError(f"Backup archive not found: {archive_path}")
+    resolved = find_archive_file(archive_path)
+    if not resolved:
+        raise FileNotFoundError(f"Backup archive not found: {archive_path}")
+    archive_path = resolved
 
     temp_dir = os.path.join(tempfile.gettempdir(), "bahmni_restore_unpack")
     shutil.rmtree(temp_dir, ignore_errors=True)
@@ -419,11 +438,12 @@ def execute_restore(archive_path):
 
     # 2. ClinLIMS / OpenELIS
     clinlims_sql = os.path.join(source_dir, "clinlims.sql")
-    if os.path.exists(clinlims_sql):
+    openelis_dump = os.path.join(source_dir, "openelis.dump")
+    oelis = get_container("openelisdb")
+    if os.path.exists(clinlims_sql) or os.path.exists(openelis_dump):
         current_op["progress"] = 45
         current_op["message"] = "Restoring OpenELIS ClinLIMS database..."
         log("Restoring OpenELIS ClinLIMS database...")
-        oelis = get_container("openelisdb")
         run_cmd(
             f'docker exec -i {oelis} psql -U clinlims -d postgres -c '
             '"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = \'clinlims\' AND pid <> pg_backend_pid();"',
@@ -431,23 +451,30 @@ def execute_restore(archive_path):
         )
         run_cmd(f"docker exec -i {oelis} dropdb -U clinlims --if-exists clinlims", check=False)
         run_cmd(f"docker exec -i {oelis} createdb -U clinlims clinlims", check=False)
-        run_cmd_pipe_in(f'docker exec -i {oelis} psql -U clinlims -d clinlims', clinlims_sql, check=False)
+        if os.path.exists(clinlims_sql):
+            run_cmd_pipe_in(f'docker exec -i {oelis} psql -U clinlims -d clinlims', clinlims_sql, check=False)
+        elif os.path.exists(openelis_dump):
+            run_cmd_pipe_in(f'docker exec -i {oelis} pg_restore -U clinlims -d clinlims', openelis_dump, check=False)
 
     # 3. Odoo
     odoo_sql = os.path.join(source_dir, "odoo.sql")
-    if os.path.exists(odoo_sql):
+    odoo_dump = os.path.join(source_dir, "odoo.dump")
+    odoo = get_container("odoodb")
+    if os.path.exists(odoo_sql) or os.path.exists(odoo_dump):
         current_op["progress"] = 60
         current_op["message"] = "Restoring Odoo ERP database..."
         log("Restoring Odoo ERP database...")
-        odoo = get_container("odoodb")
         run_cmd(
             f'docker exec -i {odoo} psql -U odoo -d postgres -c '
             '"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = \'odoo\' AND pid <> pg_backend_pid();"',
             check=False
         )
         run_cmd(f"docker exec -i {odoo} dropdb -U odoo --if-exists odoo", check=False)
-        run_cmd(f"docker exec -i {odoo} createdb -U odoo odoo", check=True)
-        run_cmd_pipe_in(f'docker exec -i {odoo} psql -U odoo -d odoo', odoo_sql, check=False)
+        run_cmd(f"docker exec -i {odoo} createdb -U odoo odoo", check=False)
+        if os.path.exists(odoo_sql):
+            run_cmd_pipe_in(f'docker exec -i {odoo} psql -U odoo -d odoo', odoo_sql, check=False)
+        elif os.path.exists(odoo_dump):
+            run_cmd_pipe_in(f'docker exec -i {odoo} pg_restore -U odoo -d odoo', odoo_dump, check=False)
 
     # 4. Reports
     reports_sql = os.path.join(source_dir, "bahmni_reports.sql")
@@ -516,42 +543,61 @@ def execute_restore(archive_path):
 
 def list_backups():
     os.makedirs(BACKUP_DIR, exist_ok=True)
-    archives = glob.glob(os.path.join(BACKUP_DIR, "bahmni_*.tar.gz"))
-    archives.sort(key=os.path.getmtime, reverse=True)
+    seen_names = set()
+    candidate_files = []
+    for d in CANDIDATE_BACKUP_DIRS:
+        if not os.path.isdir(d):
+            continue
+        for ext in ("*.tar.gz", "*.tgz", "*.sql.gz"):
+            for arc in glob.glob(os.path.join(d, ext)):
+                base = os.path.basename(arc)
+                if base in seen_names:
+                    continue
+                seen_names.add(base)
+                candidate_files.append(arc)
+
+    candidate_files.sort(key=os.path.getmtime, reverse=True)
     items = []
-    for arc in archives:
-        stat = os.stat(arc)
-        mtime = datetime.datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-        size_mb = round(stat.st_size / (1024 * 1024), 2)
-        base = os.path.basename(arc)
-        if "full" in base:
-            b_type = "Full Backup (DB + Volumes + Modules)"
-        elif "db" in base:
-            b_type = "Database Only Backup"
-        else:
-            b_type = "Standard Backup"
-        items.append({
-            "name": base,
-            "path": arc,
-            "size_mb": size_mb,
-            "modified": mtime,
-            "type": b_type,
-            "download_url": f"/backup-api/download/{base}"
-        })
+    for arc in candidate_files:
+        try:
+            stat = os.stat(arc)
+            mtime = datetime.datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            size_mb = round(stat.st_size / (1024 * 1024), 2)
+            base = os.path.basename(arc)
+            base_lower = base.lower()
+            if "full" in base_lower:
+                b_type = "Full System Backup (All DBs + Volumes)"
+            elif "openmrs" in base_lower and "sql" in base_lower:
+                b_type = "OpenMRS Clinical SQL Dump"
+            elif "clinlims" in base_lower and "sql" in base_lower:
+                b_type = "OpenELIS LIMS SQL Dump"
+            elif "predeploy" in base_lower:
+                b_type = "Pre-deployment Snapshot"
+            elif "db" in base_lower:
+                b_type = "Database Only Backup"
+            else:
+                b_type = "System Backup Archive"
+            items.append({
+                "name": base,
+                "path": arc,
+                "size_mb": size_mb,
+                "modified": mtime,
+                "type": b_type,
+                "download_url": f"/backup-api/download/{base}"
+            })
+        except OSError:
+            continue
     return items
 
 def delete_backup(archive_name):
-    safe_name = os.path.basename(archive_name.strip())
-    if not safe_name or not (safe_name.endswith(".tar.gz") or safe_name.endswith(".tgz")):
-        raise ValueError("Invalid backup filename")
-
-    file_path = os.path.join(BACKUP_DIR, safe_name)
-    if not os.path.isfile(file_path):
-        raise FileNotFoundError(f"Backup file not found: {safe_name}")
+    file_path = find_archive_file(archive_name)
+    if not file_path or not os.path.isfile(file_path):
+        raise FileNotFoundError(f"Backup file not found: {archive_name}")
 
     os.remove(file_path)
-    log(f"Deleted backup archive: {safe_name}")
-    return safe_name
+    base = os.path.basename(file_path)
+    log(f"Deleted backup archive: {base}")
+    return base
 
 # ── Auto Backup, External Storage & Remote PC Configuration ─────────────────
 
@@ -2429,12 +2475,12 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
 
     def _serve_download(self, filename, head_only=False):
         safe_name = os.path.basename(filename.strip())
-        if not safe_name or not safe_name.endswith(".tar.gz"):
+        if not safe_name or not (safe_name.endswith(".tar.gz") or safe_name.endswith(".tgz") or safe_name.endswith(".sql.gz")):
             self._send_json(400, {"error": "Invalid backup archive filename"})
             return
 
-        file_path = os.path.join(BACKUP_DIR, safe_name)
-        if not os.path.isfile(file_path):
+        file_path = find_archive_file(safe_name)
+        if not file_path or not os.path.isfile(file_path):
             self._send_json(404, {"error": f"Backup file not found: {safe_name}"})
             return
 
