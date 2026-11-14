@@ -7,10 +7,12 @@ Bahmni Interactive Clinical Summary PDF Pipeline
 - Sorts concepts by concept_id (ascending) within each form
 - Formats clinical summaries into high-quality PDFs with ReportLab
 - Automatically attaches generated PDFs into Bahmni Patient Documents
+- Cross-platform compatible (Windows & Linux)
 """
 
 import os
 import sys
+import re
 import json
 import glob
 import subprocess
@@ -22,23 +24,32 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
 # Configuration & Paths
-DEFAULT_BACKUP = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "CentOS Bahmni backups", "openmrs20261002_160501.sql.gz"))
-DEFAULT_PDF_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "backups", "patient_summary_pdfs"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_BACKUP_CANDIDATES = [
+    "/home/hphc/Documents/Harbu bak/openmrs20261002_160501.sql.gz",
+    os.path.join(BASE_DIR, "..", "..", "CentOS Bahmni backups", "openmrs20261002_160501.sql.gz"),
+    os.path.join(BASE_DIR, "..", "..", "backups", "bahmni_full_backup_20261114_030024", "openmrs.sql"),
+    os.path.join(BASE_DIR, "..", "..", "backups", "bahmni", "openmrs_20260616_111046.sql.gz"),
+]
+
+def find_default_backup():
+    for p in DEFAULT_BACKUP_CANDIDATES:
+        abs_p = os.path.abspath(p)
+        if os.path.exists(abs_p):
+            return abs_p
+    return os.path.abspath(DEFAULT_BACKUP_CANDIDATES[0])
+
+DEFAULT_BACKUP = find_default_backup()
+DEFAULT_PDF_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "backups", "patient_summary_pdfs"))
 
 SPECIFIC_BACKUP = os.environ.get("SPECIFIC_BACKUP") or (
     sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].strip()
-    else (
-        DEFAULT_BACKUP if os.name == "nt" or not os.path.exists("/home/hphc/Documents/Harbu bak/openmrs20261002_160501.sql.gz")
-        else "/home/hphc/Documents/Harbu bak/openmrs20261002_160501.sql.gz"
-    )
+    else DEFAULT_BACKUP
 )
 
 PDF_OUTPUT_DIR = os.environ.get("PDF_OUTPUT_DIR") or (
     sys.argv[2] if len(sys.argv) > 2 and sys.argv[2].strip()
-    else (
-        DEFAULT_PDF_DIR if os.name == "nt" or not os.path.exists("/opt/emr/backups/patient_summary_pdfs")
-        else "/opt/emr/backups/patient_summary_pdfs"
-    )
+    else DEFAULT_PDF_DIR
 )
 
 OPENMRS_CONTAINER = "bahmni-standard-openmrsdb-1"
@@ -46,31 +57,77 @@ APP_CONTAINER = "bahmni-standard-openmrs-1"
 MYSQL_USER = "root"
 MYSQL_PASS = "adminAdmin!123"
 STAGE_DB = "openmrs_legacy_stage"
+TARGET_DB = "openmrs"
 CONTAINER_CLINICAL_FORMS = "/home/bahmni/clinical_forms"
-HOST_CLINICAL_FORMS = "/tmp/clinical_forms"
-
-
-def run_cmd(cmd, check=True):
-    res = subprocess.run(cmd, shell=True, capture_output=True)
-    if check and res.returncode != 0:
-        err = res.stderr.decode("utf-8", errors="replace")
-        print(f"[!] Command error: {err.strip()}", file=sys.stderr, flush=True)
-        sys.exit(res.returncode)
-    return res.stdout.decode("utf-8", errors="replace").strip()
+HOST_CLINICAL_FORMS = os.path.join(BASE_DIR, "clinical_forms_cache")
 
 
 def run_sql(query, db=STAGE_DB):
+    """Executes SQL with fast native pymysql if available, falling back to docker exec."""
+    try:
+        import pymysql
+        port = 3206 if os.name == "nt" else 3306
+        conn = pymysql.connect(
+            host="127.0.0.1", port=port, user=MYSQL_USER, password=MYSQL_PASS,
+            database=db, charset="utf8mb4", connect_timeout=4
+        )
+        with conn.cursor() as cur:
+            cur.execute(query)
+            rows = cur.fetchall()
+            lines = []
+            for r in rows:
+                lines.append("\t".join("" if v is None else str(v) for v in r))
+            return "\n".join(lines)
+    except Exception:
+        pass
+
+    # Fallback to docker exec
     cmd = [
-        "docker", "exec", "-i", OPENMRS_CONTAINER,
+        "docker", "exec", OPENMRS_CONTAINER,
         "mysql", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}", "--default-character-set=utf8mb4",
         "-s", "-N", "-D", db, "-e", query
     ]
-    res = subprocess.run(cmd, capture_output=True)
+    res = subprocess.run(cmd, capture_output=True, stdin=subprocess.DEVNULL)
     raw = res.stdout
     try:
         return raw.decode("utf-8")
     except UnicodeDecodeError:
         return raw.decode("latin-1", errors="replace")
+
+
+def get_working_db():
+    chk_stage = run_sql("SELECT COUNT(*) FROM patient;", STAGE_DB).strip()
+    if chk_stage and chk_stage.isdigit() and int(chk_stage) > 0:
+        return STAGE_DB
+    chk_live = run_sql("SELECT COUNT(*) FROM patient;", TARGET_DB).strip()
+    if chk_live and chk_live.isdigit() and int(chk_live) > 0:
+        return TARGET_DB
+    return STAGE_DB
+
+
+def restore_backup(archive_path, target_db=STAGE_DB):
+    print(f"[*] Staging {target_db} from archive: {archive_path}...", flush=True)
+    run_sql(f"DROP DATABASE IF EXISTS {target_db}; CREATE DATABASE {target_db} CHARACTER SET utf8mb4;", "mysql")
+
+    opener = open
+    if archive_path.endswith(".gz"):
+        import gzip
+        opener = gzip.open
+
+    cmd = [
+        "docker", "exec", "-i", OPENMRS_CONTAINER,
+        "mysql", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}", "--default-character-set=utf8mb4",
+        "--force", target_db
+    ]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    with opener(archive_path, "rt", encoding="utf-8", errors="replace") as f_in:
+        for line in f_in:
+            if "DEFINER=" in line:
+                line = re.sub(r'DEFINER=`[^`]+`@`[^`]+`', '', line)
+            proc.stdin.write(line.encode("utf-8"))
+    proc.stdin.close()
+    proc.wait()
+    print(f"[✔] Staging restoration completed.", flush=True)
 
 
 def verify_and_stage():
@@ -83,32 +140,27 @@ def verify_and_stage():
         print(f"[✔] Staging database `{STAGE_DB}` verified ready with {chk} patients.", flush=True)
         return
 
+    # Check if target_db has patients
+    chk_live = run_sql("SELECT COUNT(*) FROM patient;", TARGET_DB).strip()
+    if not os.path.exists(SPECIFIC_BACKUP) and chk_live and chk_live.isdigit() and int(chk_live) > 0:
+        print(f"[*] Staging archive not found, but `{TARGET_DB}` has {chk_live} patients. Using `{TARGET_DB}`.", flush=True)
+        return
+
     if not os.path.exists(SPECIFIC_BACKUP):
         print(f"[!] Archive file not found: {SPECIFIC_BACKUP}", file=sys.stderr, flush=True)
         sys.exit(1)
 
-    print(f"[*] Staging {STAGE_DB} from compressed backup: {SPECIFIC_BACKUP}...", flush=True)
-    run_cmd(
-        f'docker exec -i {OPENMRS_CONTAINER} mysql -u{MYSQL_USER} -p"{MYSQL_PASS}" '
-        f'-e "DROP DATABASE IF EXISTS {STAGE_DB}; CREATE DATABASE {STAGE_DB} CHARACTER SET utf8;"'
-    )
-    restore_cmd = (
-        f'gunzip -c "{SPECIFIC_BACKUP}" | '
-        f'sed "s/DEFINER=[^ ]*//g" | '
-        f'docker exec -i {OPENMRS_CONTAINER} mysql -u{MYSQL_USER} -p"{MYSQL_PASS}" --force {STAGE_DB}'
-    )
-    subprocess.run(restore_cmd, shell=True, capture_output=True)
-    print(f"[✔] Staging restoration completed.", flush=True)
+    restore_backup(SPECIFIC_BACKUP, STAGE_DB)
 
 
 def load_form_definitions():
-    """Load Bahmni Clinical Forms JSON from container / host to resolve concept -> Form Name."""
+    """Load Bahmni Clinical Forms JSON from container / cache to resolve concept -> Form Name."""
     concept_to_form = {}
     if not os.path.exists(HOST_CLINICAL_FORMS) or not glob.glob(os.path.join(HOST_CLINICAL_FORMS, "*.json")):
         os.makedirs(HOST_CLINICAL_FORMS, exist_ok=True)
         subprocess.run(
             ["docker", "cp", f"{APP_CONTAINER}:{CONTAINER_CLINICAL_FORMS}/.", HOST_CLINICAL_FORMS],
-            capture_output=True
+            capture_output=True, stdin=subprocess.DEVNULL
         )
 
     for path in glob.glob(os.path.join(HOST_CLINICAL_FORMS, "*.json")):
@@ -154,7 +206,7 @@ def parse_instruction(raw_instr):
     return raw_instr.replace('{"instructions":"', '').replace('"}', '').strip()
 
 
-def fetch_patient_data(pid, form_definitions):
+def fetch_patient_data(pid, form_definitions, db_name):
     enc_sql = f"""
     SELECT 
         e.encounter_id,
@@ -172,7 +224,7 @@ def fetch_patient_data(pid, form_definitions):
     WHERE e.patient_id = {pid} AND e.voided = 0
     ORDER BY e.encounter_datetime DESC;
     """
-    enc_out = run_sql(enc_sql)
+    enc_out = run_sql(enc_sql, db_name)
     date_groups = {}
 
     for eline in enc_out.splitlines():
@@ -222,7 +274,7 @@ def fetch_patient_data(pid, form_definitions):
               AND (o.value_coded IS NOT NULL OR o.value_text IS NOT NULL OR o.value_numeric IS NOT NULL OR o.value_datetime IS NOT NULL)
             ORDER BY o.concept_id ASC;
             """
-            obs_out = run_sql(obs_sql)
+            obs_out = run_sql(obs_sql, db_name)
             form_obs = {}
             for oline in obs_out.splitlines():
                 oparts = oline.split("\t")
@@ -276,7 +328,7 @@ def fetch_patient_data(pid, form_definitions):
             LEFT JOIN concept_name cn_fs ON o.concept_id = cn_fs.concept_id AND cn_fs.locale = 'en' AND cn_fs.concept_name_type = 'FULLY_SPECIFIED' AND cn_fs.voided = 0
             WHERE o.encounter_id = {eid} AND o.voided = 0;
             """
-            med_out = run_sql(safe_med_sql)
+            med_out = run_sql(safe_med_sql, db_name)
             med_items = []
             for mline in med_out.splitlines():
                 mparts = mline.split("\t")
@@ -312,7 +364,7 @@ def fetch_patient_data(pid, form_definitions):
               AND o.order_id NOT IN (SELECT order_id FROM drug_order)
               AND o.voided = 0;
             """
-            ord_out = run_sql(ord_sql)
+            ord_out = run_sql(ord_sql, db_name)
             ord_items = []
             for orline in ord_out.splitlines():
                 orparts = orline.split("\t")
@@ -448,13 +500,14 @@ def generate_pdf(patient, date_groups, filepath):
 
 def main():
     verify_and_stage()
+    db_name = get_working_db()
     os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
 
     print("[*] Loading Bahmni form and concept definitions...", flush=True)
     form_definitions = load_form_definitions()
     print(f"[✔] Loaded {len(form_definitions)} form concept mappings.", flush=True)
 
-    print("\n[*] Querying active patients with clinical encounters...", flush=True)
+    print(f"\n[*] Querying active patients with clinical encounters from `{db_name}`...", flush=True)
     full_sql = """
     SELECT p.person_id, pi.identifier, 
            COALESCE(pn.given_name, ''), COALESCE(pn.family_name, ''), 
@@ -467,7 +520,7 @@ def main():
       AND EXISTS (SELECT 1 FROM encounter e WHERE e.patient_id = pt.patient_id AND e.voided = 0)
     GROUP BY pt.patient_id;
     """
-    full_out = run_sql(full_sql)
+    full_out = run_sql(full_sql, db_name)
     patients = []
     for line in full_out.splitlines():
         parts = line.split("\t")
@@ -494,19 +547,19 @@ def main():
         # Resume if already generated
         if os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 1000:
             skipped_count += 1
-            if idx % 100 == 0 or idx == total:
+            if idx % 50 == 0 or idx == total:
                 print(f"  [{idx}/{total}] MRN {pat['mrn']} already generated. (Skipped: {skipped_count}, Generated: {processed_count})...", flush=True)
             continue
 
         try:
-            d_groups = fetch_patient_data(pat["person_id"], form_definitions)
+            d_groups = fetch_patient_data(pat["person_id"], form_definitions, db_name)
             generate_pdf(pat, d_groups, pdf_path)
             processed_count += 1
         except Exception as e:
             print(f"[!] Warning on MRN {pat['mrn']}: {e}", file=sys.stderr, flush=True)
             continue
 
-        if idx % 50 == 0 or idx == total:
+        if idx % 25 == 0 or idx == total:
             print(f"  [{idx}/{total}] Processed MRN {pat['mrn']} ({processed_count} newly generated, {skipped_count} existing)...", flush=True)
 
     print(f"\n[✔] PDF generation complete! Total processed: {total} (New: {processed_count}, Cached: {skipped_count})", flush=True)
