@@ -60,6 +60,10 @@ def run_excel_import(excel_path=None):
     res = cursor.fetchone()
     loc_id = res[0] if res else 1
 
+    cursor.execute("SELECT person_attribute_type_id FROM person_attribute_type WHERE name LIKE '%phone%' OR name LIKE '%mobile%' OR name LIKE '%telephone%' LIMIT 1;")
+    res = cursor.fetchone()
+    phone_attr_id = res[0] if res else 9
+
     print(f"[*] Reading data from {excel_path}...")
     wb = openpyxl.load_workbook(excel_path, read_only=True, data_only=True)
     sheet = wb.active
@@ -119,13 +123,13 @@ def run_excel_import(excel_path=None):
         })
 
         if len(batch) >= batch_size:
-            insert_batch(cursor, conn, batch, id_type, loc_id)
+            insert_batch(cursor, conn, batch, id_type, loc_id, phone_attr_id)
             imported_count += len(batch)
             print(f"[Activity] {imported_count} patient profiles imported...")
             batch = []
 
     if batch:
-        insert_batch(cursor, conn, batch, id_type, loc_id)
+        insert_batch(cursor, conn, batch, id_type, loc_id, phone_attr_id)
         imported_count += len(batch)
 
     cursor.close()
@@ -134,7 +138,7 @@ def run_excel_import(excel_path=None):
     print(f"[✔] EXCEL IMPORT FINISHED: {imported_count} imported | {skipped_count} skipped")
     print("=" * 70)
 
-def insert_batch(cursor, conn, batch, id_type, loc_id):
+def insert_batch(cursor, conn, batch, id_type, loc_id, phone_attr_id=9):
     try:
         for r in batch:
             p_uuid = str(uuid.uuid4())
@@ -175,12 +179,12 @@ def insert_batch(cursor, conn, batch, id_type, loc_id):
                     (str(uuid.uuid4()), person_id, r["community"], r["district"])
                 )
 
-            # 6. Phone Number (Attribute type 9)
+            # 6. Phone Number
             if r["phone"]:
                 cursor.execute(
                     "INSERT INTO person_attribute (uuid, person_id, value, person_attribute_type_id, creator, date_created, voided) "
-                    "VALUES (%s, %s, %s, 9, 1, NOW(), 0)",
-                    (str(uuid.uuid4()), person_id, r["phone"])
+                    "VALUES (%s, %s, %s, %s, 1, NOW(), 0)",
+                    (str(uuid.uuid4()), person_id, r["phone"], phone_attr_id)
                 )
 
         conn.commit()

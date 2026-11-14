@@ -149,7 +149,7 @@ def main():
 
     # Set container permissions once after the batch finishes
     print("[*] Setting filesystem permissions in Bahmni container...")
-    subprocess.run(f"docker exec {APP_CONTAINER} chown -R bahmni:bahmni '{CONTAINER_DOC_DIR}'", shell=True)
+    subprocess.run(f"docker exec {APP_CONTAINER} chown -R root:root '{CONTAINER_DOC_DIR}' 2>/dev/null || docker exec {APP_CONTAINER} chown -R nginx:nginx '{CONTAINER_DOC_DIR}' 2>/dev/null || true", shell=True)
     subprocess.run(f"docker exec {APP_CONTAINER} chmod -R 775 '{CONTAINER_DOC_DIR}'", shell=True)
 
     print(f"\n[✔] Attachment Complete! Total: {total} (Newly Attached: {attached_count}, Skipped/Existing: {skipped_count})")

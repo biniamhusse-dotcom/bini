@@ -929,12 +929,27 @@ def delete_openelis_users():
 def purge_openelis_clinical():
     print("[openelis] Truncating patient/sample/analysis/order data "
           "(single transaction)...", flush=True)
+    names = ", ".join("'" + r + "'" for r in OPENELIS_ROOTS)
+    out = run_psql(
+        OPENELIS_DB, PG_OPENELIS_USER, PG_OPENELIS_DB,
+        f"SELECT table_name FROM information_schema.tables "
+        f"WHERE (table_schema = 'clinlims' OR table_schema = 'public') AND table_name IN ({names}) ORDER BY table_name;",
+        tuples=True,
+    )
+    present = {l.strip() for l in out.splitlines() if l.strip()}
+    active_roots = [r for r in OPENELIS_ROOTS if r in present]
+    missing = sorted(set(OPENELIS_ROOTS) - present)
+    if missing:
+        print(f"[openelis] skipping absent clinical tables: {', '.join(missing)}", flush=True)
+    if not active_roots:
+        print("[openelis] No matching clinical root tables found to truncate.", flush=True)
+        return
     postgres_truncate_guard(
         OPENELIS_DB, PG_OPENELIS_USER, PG_OPENELIS_DB,
-        OPENELIS_ROOTS, OPENELIS_DENY, "openelis",
+        active_roots, OPENELIS_DENY, "openelis",
     )
     run_psql(OPENELIS_DB, PG_OPENELIS_USER, PG_OPENELIS_DB,
-             "TRUNCATE " + ", ".join(OPENELIS_ROOTS) + " CASCADE;")
+             "TRUNCATE " + ", ".join(active_roots) + " CASCADE;")
 
 
 def cleanup_openelis_persons():
@@ -950,12 +965,9 @@ def cleanup_openelis_persons():
     """)
     print("[openelis] orphaned persons removed (providers/org contacts kept)",
           flush=True)
-    print("[openelis] orphaned persons removed (providers/org contacts kept)",
-          flush=True)
 
 
-OPENELIS_ROOTS = ["patient", "sample", "analysis", "orders", "patient_payment",
-                  "worksheets"]
+OPENELIS_ROOTS = ["patient", "sample", "analysis", "orders", "worksheets"]
 OPENELIS_DENY = {
     "site_information", "site_information_domain",
     "system_role", "system_role_module", "system_user", "system_user_module",
@@ -1007,14 +1019,25 @@ def task_pacs(start_mrn):
     if start_mrn:
         return (f"PACS: clinical data kept (selective mode is MRN-scoped in "
                 f"OpenMRS/Odoo only) ({time.time() - t0:.0f}s)")
+    names = ", ".join("'" + r + "'" for r in PACS_ROOTS)
+    out = run_psql(
+        PACS_DB, PG_PACS_USER, PG_PACS_DB,
+        f"SELECT table_name FROM information_schema.tables "
+        f"WHERE table_schema = 'public' AND table_name IN ({names}) ORDER BY table_name;",
+        tuples=True,
+    )
+    present = {l.strip() for l in out.splitlines() if l.strip()}
+    active_roots = [r for r in PACS_ROOTS if r in present]
+    if not active_roots:
+        return f"PACS: no active root tables found ({time.time() - t0:.0f}s)"
     postgres_truncate_guard(
         PACS_DB, PG_PACS_USER, PG_PACS_DB,
-        PACS_ROOTS, PACS_DENY, "pacs",
+        active_roots, PACS_DENY, "pacs",
     )
     print("[pacs] Truncating patient/study/series/instance data "
           "(single transaction)...", flush=True)
     run_psql(PACS_DB, PG_PACS_USER, PG_PACS_DB,
-             "TRUNCATE " + ", ".join(PACS_ROOTS) + " CASCADE;")
+             "TRUNCATE " + ", ".join(active_roots) + " CASCADE;")
     p_after, s_after = pacs_counts()
     return (f"PACS: patients {p_before} -> {p_after}, studies {s_before} -> "
             f"{s_after} (stored DICOM files on disk are left in place) "

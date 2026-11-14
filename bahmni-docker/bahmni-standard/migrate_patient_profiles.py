@@ -19,6 +19,12 @@ print("[*] Starting Production Patient Profile Migration")
 print("=======================================================")
 
 # 1. Base ID offset
+chk_stage = run_sql(f"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{STAGE_DB}' AND table_name = 'patient';")
+if not chk_stage or int(chk_stage.split()[-1]) == 0:
+    print(f"[!] Legacy staging database `{STAGE_DB}` does not exist or has not been loaded.", file=sys.stderr)
+    print("[*] Please run '4. Interactive PDF Pipeline' first to stage the backup database.", file=sys.stderr)
+    sys.exit(1)
+
 raw_offset = run_sql(f"SELECT COALESCE(MAX(person_id), 0) FROM {LIVE_DB}.person;")
 offset = int(raw_offset.split()[-1]) if raw_offset else 0
 print(f"[*] Base ID Offset: {offset}")
