@@ -74,5 +74,11 @@ analyzerTestName.txt
 user_guide_screenshots/
 test_shot.png
 scratch/
+clinical_forms_cache/
+**/clinical_forms_cache/
+deploy_*.py
+check_*.py
+inspect_enc.py
+scan_admin_apis.py
 
 /MessageResources.properties

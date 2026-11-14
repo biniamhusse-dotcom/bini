@@ -1,0 +1,24 @@
+Uuid,Void/Retire,Same as mappings,Fully specified name:en,Short name:en,Description:en,Fully specified name:fr,Short name:fr,Description:fr,Data class,Data type,Complex data handler,Answers,Members,Allow decimals,Units,Normal low,Normal high,Absolute low,Absolute high,_version:1,_order:1310
+787486b1-fdae-40f8-b704-4aa241633468,,,WHO Emergency Unit Form - Trauma,WHO Trauma,WHO Emergency Unit Trauma Clinical Observation and Assessment Form,,,,,ConvSet,N/A,,,787486b1-fdae-40f8-b704-4aa241633401;787486b1-fdae-40f8-b704-4aa241633402;787486b1-fdae-40f8-b704-4aa241633403;787486b1-fdae-40f8-b704-4aa241633404;787486b1-fdae-40f8-b704-4aa241633405;787486b1-fdae-40f8-b704-4aa241633406;787486b1-fdae-40f8-b704-4aa241633407;787486b1-fdae-40f8-b704-4aa241633408;787486b1-fdae-40f8-b704-4aa241633409;787486b1-fdae-40f8-b704-4aa241633410;787486b1-fdae-40f8-b704-4aa241633411;787486b1-fdae-40f8-b704-4aa241633412;787486b1-fdae-40f8-b704-4aa241633413;787486b1-fdae-40f8-b704-4aa241633414;787486b1-fdae-40f8-b704-4aa241633415;787486b1-fdae-40f8-b704-4aa241633416;787486b1-fdae-40f8-b704-4aa241633417;787486b1-fdae-40f8-b704-4aa241633418;787486b1-fdae-40f8-b704-4aa241633419;787486b1-fdae-40f8-b704-4aa241633420;787486b1-fdae-40f8-b704-4aa241633421;787486b1-fdae-40f8-b704-4aa241633422,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633401,,,WHO Trauma Complete Form JSON,WHO Trauma JSON,Complete JSON state and injury pin tracking for WHO Trauma Form,,,,,Misc,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633402,,,WHO Trauma Triage Category,Triage Category,Triage category on arrival (Red - Emergent; Yellow - Urgent; Green - Minor; Black - Dead on Arrival),,,,,Finding,Coded,,Red - Emergent;Yellow - Urgent;Green - Minor;Black - Dead on Arrival,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633403,,,WHO Trauma Chief Complaint,Trauma Complaint,Chief trauma complaint and incident description,,,,,Misc,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633404,,,WHO Trauma Arrival Mode,Arrival Mode,Mode of arrival to emergency unit,,,,,Misc,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633405,,,WHO Trauma Airway Status,Airway Status,Primary survey airway assessment and interventions,,,,,Finding,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633406,,,WHO Trauma Spontaneous Respiratory Rate,Trauma RR,Respiratory rate in breaths per minute,,,,,Finding,Numeric,,,,FALSE,/min,12,20,0,60
+787486b1-fdae-40f8-b704-4aa241633407,,,WHO Trauma Pulse,Trauma Pulse,Pulse rate in beats per minute,,,,,Finding,Numeric,,,,FALSE,bpm,60,100,0,220
+787486b1-fdae-40f8-b704-4aa241633408,,,WHO Trauma Systolic BP,Trauma SBP,Systolic blood pressure in mmHg,,,,,Finding,Numeric,,,,FALSE,mmHg,90,140,40,260
+787486b1-fdae-40f8-b704-4aa241633409,,,WHO Trauma Diastolic BP,Trauma DBP,Diastolic blood pressure in mmHg,,,,,Finding,Numeric,,,,FALSE,mmHg,60,90,20,160
+787486b1-fdae-40f8-b704-4aa241633410,,,WHO Trauma Temperature,Trauma Temp,Body temperature in degrees Celsius,,,,,Finding,Numeric,,,,TRUE,°C,36.0,37.5,25.0,43.0
+787486b1-fdae-40f8-b704-4aa241633411,,,WHO Trauma SpO2,Trauma SpO2,Oxygen saturation percentage,,,,,Finding,Numeric,,,,FALSE,%,94,100,0,100
+787486b1-fdae-40f8-b704-4aa241633412,,,WHO Trauma Glasgow Coma Scale Total,GCS Total,Glasgow Coma Scale total score (3-15),,,,,Finding,Numeric,,,,FALSE,,15,15,3,15
+787486b1-fdae-40f8-b704-4aa241633413,,,WHO Trauma GCS Eye,GCS Eye,Glasgow Coma Scale Eye opening score (1-4),,,,,Finding,Numeric,,,,FALSE,,4,4,1,4
+787486b1-fdae-40f8-b704-4aa241633414,,,WHO Trauma GCS Verbal,GCS Verbal,Glasgow Coma Scale Verbal response score (1-5),,,,,Finding,Numeric,,,,FALSE,,5,5,1,5
+787486b1-fdae-40f8-b704-4aa241633415,,,WHO Trauma GCS Motor,GCS Motor,Glasgow Coma Scale Motor response score (1-6),,,,,Finding,Numeric,,,,FALSE,,6,6,1,6
+787486b1-fdae-40f8-b704-4aa241633416,,,WHO Trauma Injury Count,Injury Count,Total number of marked injuries on body diagram,,,,,Finding,Numeric,,,,FALSE,,,,0,100,0,100
+787486b1-fdae-40f8-b704-4aa241633417,,,WHO Trauma Injury Details List,Injury List,Anatomical location and descriptions of mapped injuries,,,,,Misc,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633418,,,WHO Trauma FAST Exam Result,FAST Result,Focused Assessment with Sonography in Trauma findings,,,,,Finding,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633419,,,WHO Trauma Assessment Summary and Plan,Assessment and Plan,Clinical impression and management plan,,,,,Misc,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633420,,,WHO Trauma Disposition,Trauma Disposition,Emergency unit disposition and transfer/admission,,,,,Misc,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633421,,,WHO Trauma ED Departure Date Time,Departure Time,Date and time of departure from emergency unit,,,,,Misc,Text,,,,,,,,,,,
+787486b1-fdae-40f8-b704-4aa241633422,,,WHO Trauma Provider Name,Provider Name,Name and title of treating healthcare provider,,,,,Misc,Text,,,,,,,,,,,

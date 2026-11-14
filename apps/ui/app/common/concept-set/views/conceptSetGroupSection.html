@@ -5,6 +5,20 @@
                 <span class="section-label">{{conceptSet.label}}</span>
             </h2>
             <div class="form-actions fr">
+                <a ng-if="conceptSet.conceptName === 'WHO Emergency Unit Form - Trauma'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #2563eb; font-size: 13px; text-decoration: none; vertical-align: middle;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
+                <a ng-if="conceptSet.conceptName === 'WHO Labour Care Guide'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/WHO%20Labour%20Care%20Guide.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #0d9488; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
                 <button type="button"  ng-if="conceptSet.isOpen" ng-click="conceptSet.maximizeInnerSections($event)"
                         title="{{ ::'CONCEPT_SET_GROUP_EXPAND_ALL_KEY' | translate}}">
                        <i class="fa icon-bahmni-expand"></i>
@@ -26,7 +40,13 @@
             </div>
         </div>
     </div>
-    <div ng-if="!isFormTemplate(conceptSet)">
+    <div ng-if="conceptSet.conceptName === 'WHO Emergency Unit Form - Trauma'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <who-trauma-iframe patient="patient"></who-trauma-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName === 'WHO Labour Care Guide'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <who-labour-care-guide-iframe patient="patient" consultation="consultation"></who-labour-care-guide-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName !== 'WHO Emergency Unit Form - Trauma' && conceptSet.conceptName !== 'WHO Labour Care Guide' && !isFormTemplate(conceptSet)">
         <concept-set ng-if="conceptSet.isLoaded" patient="::patient" ng-show="conceptSet.isOpen"
                      collapse-inner-sections="conceptSet.collapseInnerSections"
                      concept-set-name="::conceptSet.conceptName"
@@ -38,7 +58,7 @@
                      section-id="conceptSet.id">
         </concept-set>
     </div>
-    <div ng-if="isFormTemplate(conceptSet)" id={{::conceptSet.formUuid}} class="form-controls-container">
+    <div ng-if="isFormTemplate(conceptSet) && conceptSet.conceptName !== 'WHO Emergency Unit Form - Trauma' && conceptSet.conceptName !== 'WHO Labour Care Guide'" id={{::conceptSet.formUuid}} class="form-controls-container">
         <form-controls form="conceptSet" patient="patient" validate-form="false"></form-controls>
     </div>
 </div>

@@ -247,4 +247,396 @@ angular.module('bahmni.common.displaycontrol.custom')
         },
         template: '<ng-include src="contentUrl"/>'
     };
+}]).directive('whoLabourCareGuide', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatEthiopianDate = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return '';
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var mName = etMonthsAm[et.month - 1] || et.month;
+            return mName + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var etStr = formatEthiopianDate(isoStr);
+            return etStr ? (gregStr + ' (' + etStr + ')') : gregStr;
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchLabourCareGuideObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            if (chart && chart.chartData) {
+                try {
+                    sessionStorage.setItem('lcg_active_chart', JSON.stringify(chart.chartData));
+                    if (chart.obsUuid) {
+                        localStorage.setItem('lcg_review_' + chart.obsUuid, JSON.stringify(chart.chartData));
+                    }
+                } catch (e) {}
+            }
+            var url = "/bahmni_config/openmrs/apps/custemForms/WHO%20Labour%20Care%20Guide.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            var patientUuid = getPatientUuid();
+            try {
+                sessionStorage.removeItem('lcg_active_chart');
+            } catch (e) {}
+            var url = "/bahmni_config/openmrs/apps/custemForms/WHO%20Labour%20Care%20Guide.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var extractSummaryMetrics = function (data) {
+            if (!data) return {};
+            var columns = data.records ? Object.keys(data.records) : [];
+            var activeAlerts = 0;
+            var lastDilatation = null;
+            var lastFHR = null;
+            var lastContractions = null;
+            var lastHour = null;
+            var lastAssessment = null;
+            var lastPlan = null;
+
+            columns.forEach(function (col) {
+                var r = data.records[col];
+                if (!r) return;
+                var hasEntry = Object.keys(r).length > 0;
+                if (hasEntry) {
+                    lastHour = col;
+                    if (r.cervix) lastDilatation = r.cervix;
+                    if (r.fhr) lastFHR = r.fhr;
+                    if (r.cx_count) lastContractions = r.cx_count + "/10m (" + (r.cx_dur || '-') + "s)";
+                    if (r.assessment) lastAssessment = r.assessment;
+                    if (r.plan) lastPlan = r.plan;
+
+                    // Count alerts
+                    if (r.companion === 'N') activeAlerts++;
+                    if (r.pain === 'N') activeAlerts++;
+                    if (r.fluid === 'N') activeAlerts++;
+                    if (r.posture === 'SP') activeAlerts++;
+                    if (r.fhr && (Number(r.fhr) < 110 || Number(r.fhr) >= 160)) activeAlerts++;
+                    if (r.decel === 'L') activeAlerts++;
+                    if (r.liquor === '+++' || r.liquor === 'B') activeAlerts++;
+                    if (r.pos === 'P' || r.pos === 'T') activeAlerts++;
+                    if (r.caput === '+++') activeAlerts++;
+                    if (r.moulding === '+++') activeAlerts++;
+                    if (r.pulse && (Number(r.pulse) < 60 || Number(r.pulse) >= 120)) activeAlerts++;
+                    if (r.sbp && (Number(r.sbp) < 80 || Number(r.sbp) >= 140)) activeAlerts++;
+                    if (r.dbp && Number(r.dbp) >= 90) activeAlerts++;
+                    if (r.temp && (Number(r.temp) < 35.0 || Number(r.temp) >= 37.5)) activeAlerts++;
+                    if (r.cx_count && (Number(r.cx_count) <= 2 || Number(r.cx_count) > 5)) activeAlerts++;
+                }
+            });
+
+            var meta = data.meta || {};
+            return {
+                hour: lastHour ? (lastHour.startsWith('h') ? 'Hour ' + lastHour.replace('h','') : 'Second Stage H' + lastHour.replace('s','')) : 'Admission',
+                dilatation: lastDilatation ? lastDilatation + ' cm' : (meta.activeDate ? 'Initial assessment' : 'Pending'),
+                fhr: lastFHR ? lastFHR + ' bpm' : 'Pending',
+                contractions: lastContractions || 'Pending',
+                alerts: activeAlerts,
+                assessment: lastAssessment || (meta.riskFactors ? ('Risk Factors: ' + meta.riskFactors) : 'Normal admission'),
+                plan: lastPlan || 'Continue routine partograph monitoring',
+                onset: meta.onset || 'Spontaneous',
+                activeLabourStart: (meta.activeDate ? (meta.activeDate + (meta.activeTime ? ' ' + meta.activeTime : '')) : '-'),
+                membranes: meta.ruptureTime ? ('Ruptured at ' + meta.ruptureTime) : 'Intact',
+                riskFactors: meta.riskFactors || 'None documented'
+            };
+        };
+
+        var fetchLabourCareGuideObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                return $q.when();
+            }
+
+            var conceptUuid = "9e2a5670-3d71-4569-b1d5-894000000002"; // WHO LCG Complete Chart JSON
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: conceptUuid,
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var sortedResults = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var parsedCharts = [];
+                    sortedResults.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var metrics = extractSummaryMetrics(parsed);
+
+                            // User detection: priority to lockedBy, then lastSavedByName, then creator person, then audit trail, then session
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.meta && parsed.meta.lastSavedByName && parsed.meta.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.meta.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            } else if (parsed.meta && parsed.meta.createdByName && parsed.meta.createdByName !== 'Attending Clinician') {
+                                userName = parsed.meta.createdByName;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                try {
+                                    var rootScope = ($window.parent && $window.parent.angular) ? $window.parent.angular.element($window.parent.document.body).injector().get('$rootScope') : null;
+                                    if (rootScope && rootScope.currentUser && rootScope.currentUser.person && rootScope.currentUser.person.display) {
+                                        userName = rootScope.currentUser.person.display;
+                                    } else if (rootScope && rootScope.currentProvider && rootScope.currentProvider.name) {
+                                        userName = rootScope.currentProvider.name;
+                                    }
+                                } catch (e) {}
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var updatedDateStr = null;
+                            if (parsed.meta && parsed.meta.lastSavedAt) {
+                                var upd = formatDateTime(parsed.meta.lastSavedAt);
+                                if (upd && upd !== savedDateStr) {
+                                    updatedDateStr = upd;
+                                }
+                            }
+
+                            parsedCharts.push({
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDate: obs.obsDatetime,
+                                savedDateFormatted: savedDateStr,
+                                updatedDateFormatted: updatedDateStr,
+                                userName: userName,
+                                isLocked: Boolean(parsed.locked),
+                                lockedBy: parsed.lockedBy || null,
+                                lockedAtFormatted: parsed.lockedAt ? formatDateTime(parsed.lockedAt) : null,
+                                metrics: metrics,
+                                chartData: parsed
+                            });
+                        } catch (e) {
+                            console.warn("Could not parse WHO LCG JSON for obs:", obs.uuid, e);
+                        }
+                    });
+
+                    $scope.allCharts = parsedCharts;
+                    $scope.hasRecord = parsedCharts.length > 0;
+                    if (parsedCharts.length > 0) {
+                        $scope.latestChart = parsedCharts[0];
+                    }
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasRecord = false;
+                }
+            }).catch(function (err) {
+                console.error("Error loading WHO LCG observations:", err);
+                $scope.loading = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newUuid) {
+            if (newUuid) {
+                spinner.forPromise(fetchLabourCareGuideObs());
+            }
+        });
+
+        spinner.forPromise(fetchLabourCareGuideObs());
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}]).directive('whoTraumaForm', ['$http', '$q', '$window', 'appService', 'spinner', function ($http, $q, $window, appService, spinner) {
+    var link = function ($scope) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.traumaData = null;
+        $scope.triageBorderColor = '#cbd5e1';
+        $scope.triageBgColor = '#f8fafc';
+        $scope.triageTextColor = '#334155';
+        $scope.triageStatusText = 'Not triaged';
+
+        var patientUuid = $scope.patient ? $scope.patient.uuid : null;
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchTraumaObs());
+        };
+
+        $scope.openFullForm = function () {
+            var url = "/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=" + encodeURIComponent(patientUuid);
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if ($scope.latestEncounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent($scope.latestEncounterUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchTraumaObs = function () {
+            if (!patientUuid) {
+                $scope.loading = false;
+                return $q.when();
+            }
+
+            var conceptUuid = "787486b1-fdae-40f8-b704-4aa241633401"; // WHO Trauma Complete Form JSON
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: conceptUuid,
+                    v: 'custom:(uuid,obsDatetime,value,encounter:(uuid,encounterDatetime))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var latest = res.data.results[0];
+                    $scope.hasRecord = true;
+                    $scope.latestEncounterUuid = latest.encounter ? latest.encounter.uuid : null;
+                    $scope.obsDate = latest.obsDatetime;
+
+                    try {
+                        var parsed = JSON.parse(latest.value);
+                        $scope.traumaData = parsed;
+                        processTriageTheme(parsed.triageCategory);
+                    } catch (e) {
+                        console.warn("Could not parse WHO Trauma JSON:", e);
+                        $scope.traumaData = { raw: latest.value };
+                    }
+                } else {
+                    $scope.hasRecord = false;
+                }
+            }).catch(function (err) {
+                console.error("Error loading WHO Trauma observations:", err);
+                $scope.loading = false;
+            });
+        };
+
+        var processTriageTheme = function (category) {
+            if (!category) return;
+            var cat = String(category).toLowerCase();
+            if (cat.indexOf('red') !== -1 || cat.indexOf('emergent') !== -1) {
+                $scope.triageBorderColor = '#fca5a5';
+                $scope.triageBgColor = '#fef2f2';
+                $scope.triageTextColor = '#b91c1c';
+                $scope.triageStatusText = 'Immediate resuscitation needed';
+            } else if (cat.indexOf('yellow') !== -1 || cat.indexOf('urgent') !== -1) {
+                $scope.triageBorderColor = '#fde047';
+                $scope.triageBgColor = '#fefce8';
+                $scope.triageTextColor = '#a16207';
+                $scope.triageStatusText = 'Urgent priority care';
+            } else if (cat.indexOf('green') !== -1 || cat.indexOf('minor') !== -1) {
+                $scope.triageBorderColor = '#86efac';
+                $scope.triageBgColor = '#f0fdf4';
+                $scope.triageTextColor = '#15803d';
+                $scope.triageStatusText = 'Non-urgent ambulatory care';
+            } else if (cat.indexOf('black') !== -1 || cat.indexOf('dead') !== -1) {
+                $scope.triageBorderColor = '#94a3b8';
+                $scope.triageBgColor = '#f1f5f9';
+                $scope.triageTextColor = '#0f172a';
+                $scope.triageStatusText = 'Expectant / Dead on arrival';
+            }
+        };
+
+        spinner.forPromise(fetchTraumaObs());
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
 }]);

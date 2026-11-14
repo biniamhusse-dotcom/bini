@@ -166,7 +166,9 @@
             "OB-Biopsy",
             "OB-GYN Cytology",
             "Summary",
-            "Obstetric Ultrasound Result Report Form"
+            "Obstetric Ultrasound Result Report Form",
+            "WHO Labour Care Guide",
+            "WHO Emergency Unit Form - Trauma"
         ],
         "EMR_eAPTS_endPoint": "https://10.139.8.28:443/stockStatus",
         "enableDrugStockStatusCheck": false,
@@ -196,6 +198,14 @@
             "identifier"
         ],
         "conceptSetUI": {
+            "WHO Labour Care Guide": {
+                "type": "partograph",
+                "labels": {
+                    "WHO LCG Cervical Dilatation": "Cervix (cm)",
+                    "WHO LCG Baseline FHR": "Baseline FHR",
+                    "WHO LCG Contractions in 10 Minutes": "Contractions / 10 min"
+                }
+            },
             "Intrapartum Care and follow-up; Monitoring Progress Of labor Using Partograph": {
                 "type": "partograph",
                 "labels": {

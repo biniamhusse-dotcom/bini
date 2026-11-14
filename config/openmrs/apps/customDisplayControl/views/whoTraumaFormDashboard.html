@@ -1,0 +1,148 @@
+<div class="who-trauma-dashboard-widget" style="padding: 14px; background: #ffffff; border-radius: 8px; border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+  <!-- Header with Title & Action Button -->
+  <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0b5cab; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="background: #0b5cab; color: #fff; font-weight: 800; font-size: 11px; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;">WHO</span>
+      <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;">WHO Emergency Unit Form - Trauma</h3>
+      <span ng-if="hasRecord" style="background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 9999px;">Saved on Encounter</span>
+      <span ng-if="!hasRecord && !loading" style="background: #f1f5f9; color: #64748b; font-size: 11px; padding: 2px 8px; border-radius: 9999px;">No active record</span>
+    </div>
+
+    <div>
+      <button type="button" ng-click="openFullForm()" style="background: #0b5cab; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); transition: background 0.2s;">
+        <i class="fa fa-ambulance" aria-hidden="true"></i>
+        <span>{{ hasRecord ? 'Open & Continue Trauma Form' : 'Initiate Trauma Assessment' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div ng-if="loading" style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">
+    <i class="fa fa-spinner fa-spin"></i> Loading WHO Trauma Form assessment...
+  </div>
+
+  <!-- Active Saved Record View -->
+  <div ng-if="!loading && hasRecord">
+    
+    <!-- Meta Summary Bar -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 11.5px; border: 1px solid #e2e8f0;">
+      <div>
+        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase;">Arrival Time</span>
+        <strong style="color: #0f172a;">{{ traumaData.arrivalDate || obsDate | date:'mediumDate' }} {{ traumaData.arrivalTime || '' }}</strong>
+      </div>
+      <div>
+        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase;">Arrival Mode</span>
+        <strong style="color: #0f172a;">{{ traumaData.arrivalMode || 'Not documented' }}</strong>
+      </div>
+      <div>
+        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase;">Chief Complaint</span>
+        <strong style="color: #0f172a;">{{ traumaData.chiefComplaint || 'Trauma evaluation' }}</strong>
+      </div>
+      <div>
+        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase;">Mechanism</span>
+        <strong style="color: #0f172a;">{{ traumaData.mechanism || 'Documented in full form' }}</strong>
+      </div>
+      <div>
+        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase;">Disposition</span>
+        <strong style="color: #0f172a;">{{ traumaData.disposition || 'Under Treatment' }}</strong>
+      </div>
+    </div>
+
+    <!-- Clinical Highlights Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
+      
+      <!-- Triage Category Card -->
+      <div style="border-radius: 6px; padding: 8px 10px; text-align: center;"
+           ng-style="{'border': '1px solid ' + triageBorderColor, 'background': triageBgColor}">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase;" ng-style="{'color': triageTextColor}">Triage Category</div>
+        <div style="font-size: 18px; font-weight: 800; margin: 4px 0;" ng-style="{'color': triageTextColor}">
+          {{ traumaData.triageCategory || 'Triaged' }}
+        </div>
+        <div style="font-size: 10px; font-weight: 600;" ng-style="{'color': triageTextColor}">{{ triageStatusText }}</div>
+      </div>
+
+      <!-- Glasgow Coma Scale (GCS) Card -->
+      <div style="border: 1px solid #fed7aa; background: #fff7ed; border-radius: 6px; padding: 8px 10px; text-align: center;">
+        <div style="font-size: 10px; font-weight: 700; color: #c2410c; text-transform: uppercase;">Glasgow Coma Scale</div>
+        <div style="font-size: 18px; font-weight: 800; color: #ea580c; margin: 4px 0;">
+          {{ traumaData.gcsTotal ? traumaData.gcsTotal + '/15' : 'Documented' }}
+        </div>
+        <div style="font-size: 10px; color: #7c2d12;">
+          <span ng-if="traumaData.gcsEye">E:{{ traumaData.gcsEye }} V:{{ traumaData.gcsVerbal }} M:{{ traumaData.gcsMotor }}</span>
+          <span ng-if="!traumaData.gcsEye">Eye / Verbal / Motor</span>
+        </div>
+      </div>
+
+      <!-- Vital Signs Card -->
+      <div style="border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 6px; padding: 8px 10px; text-align: center;">
+        <div style="font-size: 10px; font-weight: 700; color: #1d4ed8; text-transform: uppercase;">Vital Signs (Initial)</div>
+        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin: 4px 0;">
+          BP: {{ traumaData.vitals.bp || '-' }} | HR: {{ traumaData.vitals.pulse || '-' }}
+        </div>
+        <div style="font-size: 10.5px; color: #1e3a8a;">
+          RR: {{ traumaData.vitals.rr || '-' }} | SpO₂: {{ traumaData.vitals.spo2 ? traumaData.vitals.spo2 + '%' : '-' }} | T: {{ traumaData.vitals.temp ? traumaData.vitals.temp + '°C' : '-' }}
+        </div>
+      </div>
+
+      <!-- Injury Pins Count Card -->
+      <div style="border: 1px solid #fecaca; background: #fef2f2; border-radius: 6px; padding: 8px 10px; text-align: center;">
+        <div style="font-size: 10px; font-weight: 700; color: #b91c1c; text-transform: uppercase;">Mapped Injuries</div>
+        <div style="font-size: 18px; font-weight: 800; color: #dc2626; margin: 4px 0;">
+          {{ traumaData.pinsCount || 0 }}
+        </div>
+        <div style="font-size: 10px; color: #991b1b; font-weight: 600;">
+          {{ traumaData.pinsCount > 0 ? 'Logged on body diagram' : 'None marked' }}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Injury List Details (if any injuries were pinned) -->
+    <div ng-if="traumaData.pins && traumaData.pins.length > 0" style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; font-size: 11.5px;">
+      <div style="font-weight: 700; color: #9f1239; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+        <i class="fa fa-map-marker" aria-hidden="true"></i>
+        <span>Anatomical Injury Log ({{ traumaData.pins.length }} marked locations):</span>
+      </div>
+      <ul style="margin: 0; padding-left: 18px; color: #4c0519; line-height: 1.45;">
+        <li ng-repeat="pin in traumaData.pins track by $index">
+          <strong>Injury #{{ $index + 1 }}:</strong> {{ pin.t || 'Location marked on diagram' }}
+        </li>
+      </ul>
+    </div>
+
+    <!-- Primary Survey & FAST Summary -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px;">
+      <div style="font-weight: 700; color: #0b5cab; margin-bottom: 6px;">Primary Survey & FAST Exam Summary:</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; color: #334155; font-size: 11.5px;">
+        <div><strong>Airway:</strong> {{ traumaData.airway || 'NML' }}</div>
+        <div><strong>Breathing:</strong> {{ traumaData.breathing || 'NML' }}</div>
+        <div><strong>Circulation:</strong> {{ traumaData.circulation || 'NML' }}</div>
+        <div><strong>FAST Exam:</strong> {{ traumaData.fast || 'Negative / Indicated' }}</div>
+      </div>
+    </div>
+
+    <!-- Assessment & Agreed Plan -->
+    <div style="background: #f1f5f9; padding: 10px 12px; border-radius: 6px; font-size: 12px; border-left: 3px solid #0b5cab;">
+      <div style="margin-bottom: 4px;">
+        <strong style="color: #0b5cab;">Treating Provider Impression:</strong>
+        <span style="color: #334155;">{{ traumaData.assessment || 'Assessment completed in full form' }}</span>
+      </div>
+      <div>
+        <strong style="color: #0b5cab;">Interventions & Plan:</strong>
+        <span style="color: #334155;">{{ traumaData.plan || 'Emergency trauma protocol active' }}</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Empty State (No record for patient) -->
+  <div ng-if="!loading && !hasRecord" style="text-align: center; padding: 24px 12px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
+    <p style="margin: 0 0 10px; font-size: 13px; color: #475569;">No active WHO Emergency Unit Trauma record for this patient encounter yet.</p>
+    <button type="button" ng-click="openFullForm()" style="background: #0b5cab; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+      <i class="fa fa-plus-circle"></i>
+      <span>Initiate WHO Emergency Unit Form - Trauma</span>
+    </button>
+  </div>
+
+</div>

@@ -96,3 +96,63 @@ VALUES (
   UUID()
 )
 ON DUPLICATE KEY UPDATE property_value = VALUES(property_value);
+
+-- 6. Ensure WHO Emergency Unit Form - Trauma is registered in All Observation Templates
+SET @all_obs_id := (SELECT concept_id FROM concept_name WHERE name = 'All Observation Templates' AND voided = 0 LIMIT 1);
+SET @trauma_id := (SELECT concept_id FROM concept WHERE uuid = '787486b1-fdae-40f8-b704-4aa241633468' LIMIT 1);
+
+INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+SELECT @trauma_id, @all_obs_id, 62, 1, NOW(), UUID()
+FROM DUAL
+WHERE @trauma_id IS NOT NULL AND @all_obs_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM concept_set WHERE concept_id = @trauma_id AND concept_set = @all_obs_id
+);
+
+-- 7. Ensure WHO Labour Care Guide concepts and Observation Template registration exist
+INSERT INTO concept (retired, datatype_id, class_id, is_set, creator, date_created, uuid)
+SELECT 0, 4, 10, 1, 1, NOW(), '9e2a5670-3d71-4569-b1d5-894000000001'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM concept WHERE uuid = '9e2a5670-3d71-4569-b1d5-894000000001');
+
+SET @lcg_id := (SELECT concept_id FROM concept WHERE uuid = '9e2a5670-3d71-4569-b1d5-894000000001' LIMIT 1);
+
+INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid)
+SELECT @lcg_id, 'WHO Labour Care Guide', 'en', 1, 1, NOW(), 'FULLY_SPECIFIED', 0, UUID()
+FROM DUAL
+WHERE @lcg_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM concept_name WHERE concept_id = @lcg_id AND name = 'WHO Labour Care Guide');
+
+INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid)
+SELECT @lcg_id, 'WHO LCG', 'en', 0, 1, NOW(), 'SHORT', 0, UUID()
+FROM DUAL
+WHERE @lcg_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM concept_name WHERE concept_id = @lcg_id AND name = 'WHO LCG');
+
+INSERT INTO concept (retired, datatype_id, class_id, is_set, creator, date_created, uuid)
+SELECT 0, 3, 11, 0, 1, NOW(), '9e2a5670-3d71-4569-b1d5-894000000002'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM concept WHERE uuid = '9e2a5670-3d71-4569-b1d5-894000000002');
+
+SET @lcg_json_id := (SELECT concept_id FROM concept WHERE uuid = '9e2a5670-3d71-4569-b1d5-894000000002' LIMIT 1);
+
+INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid)
+SELECT @lcg_json_id, 'WHO LCG Complete Chart JSON', 'en', 1, 1, NOW(), 'FULLY_SPECIFIED', 0, UUID()
+FROM DUAL
+WHERE @lcg_json_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM concept_name WHERE concept_id = @lcg_json_id AND name = 'WHO LCG Complete Chart JSON');
+
+INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid)
+SELECT @lcg_json_id, 'WHO LCG JSON', 'en', 0, 1, NOW(), 'SHORT', 0, UUID()
+FROM DUAL
+WHERE @lcg_json_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM concept_name WHERE concept_id = @lcg_json_id AND name = 'WHO LCG JSON');
+
+INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+SELECT @lcg_json_id, @lcg_id, 1.0, 1, NOW(), UUID()
+FROM DUAL
+WHERE @lcg_json_id IS NOT NULL AND @lcg_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM concept_set WHERE concept_id = @lcg_json_id AND concept_set = @lcg_id
+);
+
+INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+SELECT @lcg_id, @all_obs_id, 63.0, 1, NOW(), UUID()
+FROM DUAL
+WHERE @lcg_id IS NOT NULL AND @all_obs_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM concept_set WHERE concept_id = @lcg_id AND concept_set = @all_obs_id
+);

@@ -733,12 +733,25 @@
     "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
     "type": "config",
     "extensionParams": {
-      "conceptName": "BMH WHO EMERGENCY UNIT FORM TRAUMA",
+      "conceptName": "WHO Emergency Unit Form - Trauma",
+      "formName": "WHO Emergency Unit Form - Trauma",
       "default": false,
       "defaultLocation": "All",
       "formUUID": "787486b1-fdae-40f8-b704-4aa241633468"
     },
     "order": 30,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsWHOLabourCareGuide": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.whoLabourCareGuide",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "WHO Labour Care Guide",
+      "default": true,
+      "defaultLocation": "All"
+    },
+    "order": 2,
     "requiredPrivilege": "app:clinical"
   }
 }

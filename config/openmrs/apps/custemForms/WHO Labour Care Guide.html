@@ -1,0 +1,3209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>WHO Labour Care Guide (LCG) - Clinical Observation Record</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --alert-red: #dc2626;
+      --alert-bg: #fef2f2;
+      --alert-border: #f87171;
+      --header-teal: #0f766e;
+      --first-stage-bg: #f0fdf4;
+      --second-stage-bg: #eff6ff;
+    }
+
+    [data-theme="dark"] {
+      --bg: #090d16;
+      --card: #111827;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #334155;
+      --primary: #38bdf8;
+      --primary-dark: #0284c7;
+      --alert-red: #ef4444;
+      --alert-bg: #450a0a;
+      --alert-border: #991b1b;
+      --header-teal: #14b8a6;
+      --first-stage-bg: #06241b;
+      --second-stage-bg: #082f49;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .font-mono-numbers {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Grid Table styling */
+    .lcg-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+    }
+
+    .lcg-table th, .lcg-table td {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 3px 4px;
+      font-size: 0.76rem;
+      line-height: 1.25;
+      text-align: center;
+      position: relative;
+    }
+
+    .lcg-table th:first-child, .lcg-table td:first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .lcg-table tr:first-child th {
+      border-top: 1px solid var(--border);
+    }
+
+    /* Column Sizing */
+    .col-cat { width: 100px; min-width: 90px; text-align: left !important; }
+    .col-param { width: 140px; min-width: 130px; text-align: left !important; }
+    .col-alert { width: 105px; min-width: 95px; font-weight: 700; background-color: #fee2e2 !important; color: #991b1b !important; }
+    [data-theme="dark"] .col-alert { background-color: #450a0a !important; color: #fca5a5 !important; }
+
+    .col-hour { min-width: 48px; width: 48px; }
+    .col-hour-sub { min-width: 26px; width: 26px; font-size: 0.72rem; }
+    .col-stage2 { min-width: 52px; width: 52px; background-color: #f0f7ff; }
+    [data-theme="dark"] .col-stage2 { background-color: #0c2033; }
+
+    /* Red Circle for observations meeting Alert Criteria (Manual Requirement) */
+    .alert-circled {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 4px;
+      border: 2px solid var(--alert-red);
+      border-radius: 9999px;
+      background-color: var(--alert-bg);
+      color: var(--alert-red);
+      font-weight: 700;
+      animation: alertPulse 2s infinite ease-in-out;
+      box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.2);
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.3); }
+      50% { transform: scale(1.08); box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15); }
+    }
+
+    .cell-editable {
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      min-height: 24px;
+    }
+    .cell-editable:hover {
+      background-color: rgba(2, 132, 199, 0.12) !important;
+    }
+
+    /* Dilatation / Descent Plot cell styles */
+    .plot-dot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      font-weight: 800;
+      border-radius: 50%;
+      user-select: none;
+    }
+    .plot-x {
+      color: #0369a1;
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+    .plot-o {
+      color: #b45309;
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+    .plot-p {
+      color: #7c3aed;
+      font-size: 1.05rem;
+      font-weight: 900;
+      border: 1px dashed #7c3aed;
+      border-radius: 4px;
+    }
+
+    /* Print Formatting */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 5mm;
+      }
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 8pt !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-exact {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .lcg-table th, .lcg-table td {
+        border-color: #475569 !important;
+        padding: 2px 3px !important;
+        font-size: 7.2pt !important;
+      }
+      .col-alert {
+        background-color: #fee2e2 !important;
+        color: #991b1b !important;
+        font-weight: bold !important;
+      }
+      .alert-circled {
+        border: 2px solid #b91c1c !important;
+        color: #b91c1c !important;
+        animation: none !important;
+      }
+      .shadow-md, .shadow-lg, .shadow-xl {
+        box-shadow: none !important;
+      }
+    }
+  
+    /* Ethiopian Calendar Date Picker Styles */
+    .et-date-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .et-date-display {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      padding: 4px 8px;
+      border: 1px solid #0d9488;
+      border-radius: 4px;
+      background: rgba(19, 78, 74, 0.85);
+      cursor: pointer;
+      font-size: 11px;
+      height: 30px;
+      color: #ffffff;
+      transition: all 0.15s ease-in-out;
+    }
+    .et-date-display:hover, .et-date-display:focus {
+      border-color: #2dd4bf;
+      background: rgba(19, 78, 74, 1);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.25);
+    }
+    .et-date-text {
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .et-date-text.placeholder {
+      color: #99f6e4;
+      opacity: 0.8;
+    }
+    .et-cal-icon {
+      font-size: 12px;
+      flex-shrink: 0;
+      color: #5eead4;
+    }
+    .et-popover {
+      position: fixed;
+      z-index: 99999;
+      width: 310px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      box-shadow: 0 15px 35px rgba(15, 23, 42, 0.25);
+      padding: 12px;
+      display: none;
+      user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .et-popover.open {
+      display: block;
+    }
+    .et-pop-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .et-pop-nav {
+      padding: 4px 10px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 6px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      color: #0f766e;
+      line-height: 1;
+    }
+    .et-pop-nav:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .et-pop-selectors {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+      justify-content: center;
+    }
+    .et-pop-selectors select {
+      padding: 4px 6px;
+      font-size: 11.5px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .et-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #0f766e;
+      padding: 4px 0;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 6px;
+    }
+    .et-days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .et-day-btn {
+      padding: 6px 0;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: #f8fafc;
+      color: #1e293b;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.1s;
+    }
+    .et-day-btn:hover {
+      background: #ccfbf1;
+      color: #0f766e;
+      border-color: #5eead4;
+    }
+    .et-day-btn.today {
+      border-color: #0d9488;
+      color: #0f766e;
+      font-weight: 800;
+      background: #f0fdfa;
+    }
+    .et-day-btn.selected {
+      background: #0f766e !important;
+      color: #ffffff !important;
+      font-weight: 800;
+      box-shadow: 0 2px 4px rgba(15, 118, 110, 0.3);
+    }
+    .et-day-empty {
+      padding: 6px 0;
+    }
+    .et-greg-hint {
+      margin-top: 8px;
+      padding: 4px 8px;
+      background: #f0fdfa;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #0f766e;
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid #ccfbf1;
+    }
+    .et-pop-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+  </style>
+</head>
+<body class="p-2 md:p-4">
+
+  <!-- Top Navigation & Action Toolbar -->
+  <header class="max-w-[1540px] mx-auto mb-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm no-print">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <!-- Title & Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center text-white font-black text-xl shadow-sm">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-slate-900 dark:text-white leading-tight">WHO Labour Care Guide (LCG)</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border border-teal-200 dark:border-teal-800">Next-Gen Partograph</span>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">Active Labour &ge; 5 cm</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Decision-support & labour monitoring tool for positive childbirth experience</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btnSaveEncounter" onclick="saveToPatientEncounter()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span id="txtSaveEncounter">Save to Encounter</span>
+        </button>
+
+        <button id="btnLockForm" onclick="toggleLockForm()" class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition" title="Finalize and lock this Labour Care Guide after finished activity to make it non-editable">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <span id="txtLockForm">Lock Form</span>
+        </button>
+
+        <button id="btnQuickRecord" onclick="openRecordModal()" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Record Assessment
+        </button>
+
+        <button onclick="loadDemoMaryJane()" class="px-3 py-1.5 bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="Load the clinical case example of Mary Jane Williams directly from the WHO Manual">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Load Manual Example
+        </button>
+
+        <button onclick="openGuidanceModal()" class="px-3 py-1.5 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 hover:bg-amber-100 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="View WHO Recommendations & Threshold Explanations">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Clinical Guidance
+        </button>
+
+        <button onclick="toggleVisualPlot()" id="btnTogglePlot" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 hover:bg-indigo-100 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+          <span id="txtTogglePlot">Show Cervicogram Chart</span>
+        </button>
+
+        <button onclick="window.print()" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print / PDF
+        </button>
+
+        <button onclick="exportJSON()" class="p-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" title="Export Chart JSON">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </button>
+
+        <button onclick="resetChart()" class="p-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg" title="Clear / New Chart">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+
+        <button onclick="toggleDarkMode()" class="p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" title="Toggle Light/Dark Theme">
+          <svg id="themeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Locked Form Notice Banner -->
+  <div id="lockedNoticeBanner" class="hidden max-w-[1540px] mx-auto mb-3 bg-amber-50 dark:bg-amber-950/70 border-2 border-amber-500 rounded-xl p-3.5 shadow-md flex items-center justify-between gap-3 transition-all duration-300">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow">🔒</div>
+      <div>
+        <h3 class="text-sm font-bold text-amber-950 dark:text-amber-200 flex items-center gap-2">
+          <span>FINALIZED &amp; LOCKED RECORD (READ-ONLY)</span>
+          <span id="lockedByBadge" class="px-2 py-0.5 bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 text-xs rounded-full font-bold">Locked</span>
+        </h3>
+        <p id="lockedNoticeDetails" class="text-xs text-amber-900 dark:text-amber-300 mt-0.5">
+          This Labour Care Guide has been finalized and locked for patient safety and data integrity. All clinical records and entries are non-editable.
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="btnUnlockBanner" onclick="requestUnlockForm()" class="px-3.5 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 dark:bg-amber-900 dark:hover:bg-amber-800 dark:text-amber-100 text-xs font-bold rounded-lg border border-amber-400 shadow-sm transition" title="Unlock for authorized corrections (will be logged in audit trail)">
+        Unlock Form 🔓
+      </button>
+    </div>
+  </div>
+
+  <!-- Live Alert Banner (Prompts & Decision Support) -->
+  <div id="liveAlertBanner" class="max-w-[1540px] mx-auto mb-3 bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 rounded-xl p-3 shadow-sm flex items-start gap-3 transition-all duration-300">
+    <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-sm shrink-0">!</div>
+    <div class="flex-1">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-red-900 dark:text-red-200 flex items-center gap-2">
+          <span>Clinical Early-Warning Alert Monitor</span>
+          <span id="alertCountBadge" class="px-2 py-0.2 bg-red-200 dark:bg-red-900 text-red-900 dark:text-red-100 text-xs rounded-full font-bold">0 Active Alerts</span>
+        </h3>
+        <span class="text-xs text-red-700 dark:text-red-300 font-medium">Protocol: Assess &rarr; Record &rarr; Check &rarr; Plan</span>
+      </div>
+      <div id="alertMessageList" class="text-xs text-red-800 dark:text-red-300 mt-1 space-y-1">
+        <span>No abnormal deviations recorded currently. Labour progression within normal physiological expectations.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="max-w-[1580px] mx-auto bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-md overflow-hidden print-exact">
+
+    <!-- FORM HEADER / SECTION 1: Identifying information and labour characteristics at admission -->
+    <div class="bg-gradient-to-r from-teal-800 via-teal-900 to-slate-900 text-white p-3.5 border-b border-teal-950">
+      <div class="flex flex-wrap items-center justify-between border-b border-teal-700/60 pb-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded bg-teal-600 flex items-center justify-center font-black text-sm text-white">WHO</div>
+          <span class="font-extrabold tracking-wider text-base md:text-lg uppercase">WHO LABOUR CARE GUIDE</span>
+          <span class="text-xs bg-teal-700/80 text-teal-100 px-2 py-0.5 rounded font-mono">ACTIVE FIRST STAGE (12h) &bull; SECOND STAGE (3h)</span>
+        </div>
+        <div class="flex items-center gap-4 text-xs text-teal-200">
+          <div>
+            <span>Facility: </span><input type="text" id="facilityName" value="Maternity & Child Health Care Unit" class="bg-transparent border-b border-teal-400 text-white text-xs px-1 py-0.5 outline-none focus:border-white">
+          </div>
+          <div class="hidden sm:inline text-teal-300">
+            <span>Reference: WHO Intrapartum Care Guidelines 2020</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 1 Input Fields -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+        <!-- Woman's Name -->
+        <div class="bg-teal-950/50 p-2 rounded border border-teal-700/50">
+          <label class="block text-teal-300 font-semibold mb-0.5">Woman's Name</label>
+          <input type="text" id="ptName" placeholder="Full legal name" class="w-full bg-teal-900/80 border border-teal-600 rounded px-2 py-1 text-white text-xs font-medium focus:ring-1 focus:ring-teal-400 outline-none" onchange="autoSave()">
+        </div>
+
+        <!-- Parity -->
+        <div class="bg-teal-950/50 p-2 rounded border border-teal-700/50">
+          <label class="block text-teal-300 font-semibold mb-0.5">Parity (Para)</label>
+          <input type="text" id="ptParity" placeholder="e.g. 0, 1, 2" class="w-full bg-teal-900/80 border border-teal-600 rounded px-2 py-1 text-white text-xs font-medium focus:ring-1 focus:ring-teal-400 outline-none" onchange="autoSave()">
+        </div>
+
+        <!-- Labour Onset -->
+        <div class="bg-teal-950/50 p-2 rounded border border-teal-700/50">
+          <label class="block text-teal-300 font-semibold mb-0.5">Labour Onset</label>
+          <select id="ptOnset" class="w-full bg-teal-900/80 border border-teal-600 rounded px-2 py-1 text-white text-xs font-medium focus:ring-1 focus:ring-teal-400 outline-none" onchange="autoSave()">
+            <option value="Spontaneous">Spontaneous</option>
+            <option value="Induced">Induced</option>
+          </select>
+        </div>
+
+        <!-- Active Labour Diagnosis Date (Ethiopian) & Time -->
+        <div class="bg-teal-950/50 p-2 rounded border border-teal-700/50">
+          <label class="block text-teal-300 font-semibold mb-0.5">Active Labour Diagnosis (&ge;5cm) <span class="text-[10px] text-teal-400 font-normal">(የኢትዮጵያ ቀን)</span></label>
+          <div class="flex gap-1 items-center">
+            <div class="w-3/5 et-date-wrapper" data-et-picker data-target="ptActiveDate">
+              <input type="hidden" id="ptActiveDate" value="" onchange="autoSave()">
+              <div class="et-date-display" tabindex="0">
+                <span class="et-date-text placeholder">ቀን / ወር / ዓ.ም</span>
+                <span class="et-cal-icon">📅</span>
+              </div>
+            </div>
+            <input type="time" id="ptActiveTime" class="w-2/5 bg-teal-900/80 border border-teal-600 rounded px-1.5 py-1 text-white text-xs outline-none h-[30px]" onchange="updateStartHourTime(); autoSave()">
+          </div>
+          <div id="ptActiveDateGregHint" class="text-[9.5px] text-teal-300/80 mt-0.5 truncate"></div>
+        </div>
+
+        <!-- Ruptured Membranes Date (Ethiopian) & Time -->
+        <div class="bg-teal-950/50 p-2 rounded border border-teal-700/50">
+          <label class="block text-teal-300 font-semibold mb-0.5">Ruptured Membranes (or 'U') <span class="text-[10px] text-teal-400 font-normal">(የኢትዮጵያ ቀን)</span></label>
+          <div class="flex gap-1 items-center">
+            <div class="w-1/2 et-date-wrapper" data-et-picker data-target="ptRuptureDate">
+              <input type="hidden" id="ptRuptureDate" value="" onchange="autoSave()">
+              <div class="et-date-display" tabindex="0">
+                <span class="et-date-text placeholder">ቀን / ወር / ዓ.ም</span>
+                <span class="et-cal-icon">📅</span>
+              </div>
+            </div>
+            <input type="text" id="ptRuptureTime" placeholder="hh:mm or U" class="w-1/2 bg-teal-900/80 border border-teal-600 rounded px-1.5 py-1 text-white text-xs outline-none h-[30px]" onchange="autoSave()">
+          </div>
+          <div id="ptRuptureDateGregHint" class="text-[9.5px] text-teal-300/80 mt-0.5 truncate"></div>
+        </div>
+
+        <!-- Risk Factors -->
+        <div class="bg-teal-950/50 p-2 rounded border border-teal-700/50">
+          <label class="block text-teal-300 font-semibold mb-0.5">Risk Factors (Obstetric / Medical)</label>
+          <input type="text" id="ptRiskFactors" placeholder="e.g. Previous stillbirth, Anaemia" class="w-full bg-teal-900/80 border border-teal-600 rounded px-2 py-1 text-white text-xs font-medium focus:ring-1 focus:ring-teal-400 outline-none" onchange="autoSave()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible Visual Cervicogram Plot -->
+    <div id="cervicogramWrapper" class="hidden border-b border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 transition-all">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Visual Cervical Dilatation & Head Descent Progression Graph</h4>
+          <span class="text-xs text-slate-500">(Includes WHO Evidence-Based Alert Lag Times)</span>
+        </div>
+        <div class="flex items-center gap-4 text-xs font-medium">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-sky-600 inline-block"></span> <b>X</b> = Cervical Dilatation (cm)</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-600 inline-block"></span> <b>O</b> = Fetal Head Descent (fifths)</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-red-500 inline-block border-t border-dashed border-red-500"></span> Red Zone = Lag Time Exceeded Alert</span>
+        </div>
+      </div>
+      <div class="w-full overflow-x-auto">
+        <svg id="cervicogramSvg" viewBox="0 0 1100 240" class="w-full min-w-[900px] h-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-inner"></svg>
+      </div>
+    </div>
+
+    <!-- MAIN LCG OBSERVATION TABLE (SECTIONS 2 - 7) -->
+    <div class="overflow-x-auto">
+      <table class="lcg-table text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900">
+        <thead>
+          <!-- Row 1: STAGE HEADERS -->
+          <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+            <th rowspan="3" class="col-cat bg-slate-200 dark:bg-slate-800 text-left font-bold pl-2">SECTION</th>
+            <th rowspan="3" class="col-param bg-slate-200 dark:bg-slate-800 text-left font-bold pl-2">OBSERVATION</th>
+            <th rowspan="3" class="col-alert">
+              <div class="flex flex-col items-center">
+                <span>ALERT</span>
+                <span class="text-[9px] font-normal tracking-tight">TRIGGER ACTION</span>
+              </div>
+            </th>
+            <th colspan="12" class="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-b border-emerald-300 dark:border-emerald-800 font-extrabold uppercase py-1">
+              &larr; ACTIVE FIRST STAGE (DILATATION &ge; 5 cm) &rarr;
+            </th>
+            <th colspan="3" class="col-stage2 bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border-b border-sky-300 dark:border-sky-800 font-extrabold uppercase py-1">
+              &larr; SECOND STAGE &rarr;
+            </th>
+          </tr>
+
+          <!-- Row 2: TIME ROW -->
+          <tr class="bg-slate-50 dark:bg-slate-800/80">
+            <!-- 12 Hours First stage -->
+            <th class="col-hour"><input type="text" id="time_h1" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h2" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h3" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h4" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h5" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h6" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h7" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h8" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h9" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h10" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h11" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-hour"><input type="text" id="time_h12" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <!-- 3 Hours Second stage -->
+            <th class="col-stage2"><input type="text" id="time_s1" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-stage2"><input type="text" id="time_s2" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+            <th class="col-stage2"><input type="text" id="time_s3" placeholder="Time" class="w-full text-center bg-transparent border-0 font-bold text-xs outline-none" onchange="autoSave()"></th>
+          </tr>
+
+          <!-- Row 3: HOURS ELAPSED -->
+          <tr class="bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
+            <th class="col-hour">1</th>
+            <th class="col-hour">2</th>
+            <th class="col-hour">3</th>
+            <th class="col-hour">4</th>
+            <th class="col-hour">5</th>
+            <th class="col-hour">6</th>
+            <th class="col-hour">7</th>
+            <th class="col-hour">8</th>
+            <th class="col-hour">9</th>
+            <th class="col-hour">10</th>
+            <th class="col-hour">11</th>
+            <th class="col-hour">12</th>
+            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300">1</th>
+            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300">2</th>
+            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300">3</th>
+          </tr>
+        </thead>
+        <tbody id="lcgTableBody">
+          <!-- Populated by JavaScript with exact WHO LCG structure -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer Information & Instructions -->
+    <div class="bg-slate-50 dark:bg-slate-800/80 p-3 border-t border-slate-300 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+        <div class="font-bold text-red-700 dark:text-red-400">
+          INSTRUCTIONS: Circle any observation meeting criteria in the 'ALERT' column, alert senior midwife or doctor, and record assessment & action taken in Section 7.
+        </div>
+        <div class="text-xs">
+          If active first stage exceeds 12 hours, continue on a new Labour Care Guide form.
+        </div>
+      </div>
+      <div class="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-[10px] leading-relaxed">
+        <b>Standard Abbreviations:</b>
+        <b>Y</b> - Yes, <b>N</b> - No, <b>D</b> - Declined, <b>U</b> - Unknown | 
+        <b>MO</b> - Mobile, <b>SP</b> - Supine | 
+        <b>E</b> - Early, <b>L</b> - Late deceleration, <b>V</b> - Variable | 
+        <b>I</b> - Intact, <b>C</b> - Clear, <b>M+ / M++ / M+++</b> - Meconium (mild/moderate/thick), <b>B</b> - Blood-stained | 
+        <b>A</b> - Anterior, <b>P</b> - Posterior, <b>T</b> - Transverse | 
+        <b>P+ / P++</b> - Proteinuria, <b>A+ / A++</b> - Acetonuria
+      </div>
+    </div>
+
+    <!-- SECTION 8: CLINICAL GOVERNANCE, AUDIT TRAIL & PARTICIPATING CLINICIANS -->
+    <div class="border-t-2 border-teal-800 bg-slate-50 dark:bg-slate-900/90 p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <span>Section 8: Clinical Governance &amp; Audit Trail</span>
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Complete chronological audit record of all healthcare providers who edited, saved, or locked this labour record (with what data entered, by whom, and when).</p>
+        </div>
+        <div id="governanceStatusBadge" class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+          Active Labour Monitoring
+        </div>
+      </div>
+
+      <!-- Audit Trail Table -->
+      <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-inner">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
+              <th class="p-2.5 w-40">Date &amp; Time</th>
+              <th class="p-2.5 w-52">Provider / Clinician Full Name</th>
+              <th class="p-2.5 w-36">Action Taken</th>
+              <th class="p-2.5">Specific Clinical Data Entered / Modified</th>
+            </tr>
+          </thead>
+          <tbody id="auditTrailTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr>
+              <td colspan="4" class="p-3 text-center text-slate-400 italic">No activity recorded yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  
+  <!-- Ethiopian Calendar Popover -->
+  <div class="et-popover" id="etPopover" role="dialog" aria-label="Ethiopian Calendar Picker">
+    <div class="et-pop-header">
+      <button type="button" class="et-pop-nav" id="etPrevMonth" title="Previous Month">&lsaquo;</button>
+      <div class="et-pop-selectors">
+        <select id="etMonthSelect" aria-label="Ethiopian Month"></select>
+        <select id="etYearSelect" aria-label="Ethiopian Year"></select>
+      </div>
+      <button type="button" class="et-pop-nav" id="etNextMonth" title="Next Month">&rsaquo;</button>
+    </div>
+    <div class="et-weekdays">
+      <span>እሑድ</span>
+      <span>ሰኞ</span>
+      <span>ማክ</span>
+      <span>ረቡ</span>
+      <span>ሐሙ</span>
+      <span>ዓር</span>
+      <span>ቅዳ</span>
+    </div>
+    <div class="et-days-grid" id="etDaysGrid"></div>
+    <div class="et-greg-hint" id="etGregHint"></div>
+    <div class="et-pop-footer">
+      <button type="button" id="etTodayBtn" style="padding:4px 10px; font-size:11px; background:#0f766e; color:#fff; border:none; border-radius:5px; font-weight:700; cursor:pointer;">Today (ዛሬ)</button>
+      <div style="display:flex; gap:6px;">
+        <button type="button" id="etClearBtn" style="padding:4px 8px; font-size:11px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:5px; cursor:pointer; color:#334155;">Clear</button>
+        <button type="button" id="etCloseBtn" style="padding:4px 8px; font-size:11px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:5px; cursor:pointer; color:#334155;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  </main>
+
+  <!-- QUICK RECORD / ASSESSMENT MODAL -->
+  <div id="recordModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-4 sm:p-6">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Clinical Labour Assessment Entry</span>
+            <span id="modalHourBadge" class="bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 text-xs px-2 py-0.5 rounded font-bold">Hour 1</span>
+          </h2>
+          <p class="text-xs text-slate-500">Record observations, assess alert thresholds, and log shared clinical decisions.</p>
+        </div>
+        <button onclick="closeRecordModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <form id="recordForm" onsubmit="saveAssessmentModal(event)" class="space-y-4 text-xs">
+        <!-- Target Column Selector & Time -->
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div>
+            <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Labour Column</label>
+            <select id="modalColSelect" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-slate-900 dark:text-white" onchange="onModalColChange()">
+              <!-- Options populated by JS: Hour 1 to 12, Stage 2 H1 to H3 -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Observation Time (hh:mm)</label>
+            <input type="time" id="modalTime" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+        <!-- Section 2: Supportive Care -->
+        <fieldset class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
+          <legend class="font-bold text-teal-700 dark:text-teal-400 px-1">Section 2: Supportive Care (Hourly)</legend>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Companion <span class="text-red-500 font-bold" title="Alert if 'No'">[Alert: N]</span></label>
+              <select id="m_companion" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="Y">Y - Yes</option>
+                <option value="N">N - No (ALERT)</option>
+                <option value="D">D - Woman Declines</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Pain Relief <span class="text-red-500 font-bold" title="Alert if 'No'">[Alert: N]</span></label>
+              <select id="m_pain" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="Y">Y - Yes</option>
+                <option value="N">N - No (ALERT)</option>
+                <option value="D">D - Woman Declines</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Oral Fluid <span class="text-red-500 font-bold" title="Alert if 'No'">[Alert: N]</span></label>
+              <select id="m_fluid" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="Y">Y - Yes</option>
+                <option value="N">N - No (ALERT)</option>
+                <option value="D">D - Woman Declines</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Posture <span class="text-red-500 font-bold" title="Alert if Supine">[Alert: SP]</span></label>
+              <select id="m_posture" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="MO">MO - Mobile (Upright/Lateral)</option>
+                <option value="SP">SP - Supine (ALERT)</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section 3: Care of the Baby -->
+        <fieldset class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
+          <legend class="font-bold text-teal-700 dark:text-teal-400 px-1">Section 3: Care of the Baby</legend>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Baseline FHR (bpm) <span class="text-red-500 font-bold">[&lt;110, &ge;160]</span></label>
+              <input type="number" id="m_fhr" placeholder="e.g. 140" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">FHR Deceleration <span class="text-red-500 font-bold">[Alert: L]</span></label>
+              <select id="m_decel" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="N">N - No Deceleration</option>
+                <option value="E">E - Early</option>
+                <option value="V">V - Variable</option>
+                <option value="L">L - Late Deceleration (ALERT)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Amniotic Fluid <span class="text-red-500 font-bold">[M+++, B]</span></label>
+              <select id="m_liquor" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="I">I - Intact</option>
+                <option value="C">C - Clear</option>
+                <option value="+">+ - Mild Meconium</option>
+                <option value="++">++ - Moderate Meconium</option>
+                <option value="+++">+++ - Thick Meconium (ALERT)</option>
+                <option value="B">B - Blood-stained (ALERT)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Fetal Position <span class="text-red-500 font-bold">[P, T]</span></label>
+              <select id="m_pos" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="A">A - Occiput Anterior</option>
+                <option value="P">P - Occiput Posterior (ALERT)</option>
+                <option value="T">T - Occiput Transverse (ALERT)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Caput <span class="text-red-500 font-bold">[Alert: +++]</span></label>
+              <select id="m_caput" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="0">0 - None</option>
+                <option value="+">+ - Mild</option>
+                <option value="++">++ - Moderate</option>
+                <option value="+++">+++ - Marked (ALERT)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Moulding <span class="text-red-500 font-bold">[Alert: +++]</span></label>
+              <select id="m_moulding" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="0">0 - None</option>
+                <option value="+">+ - Sutures Apposed</option>
+                <option value="++">++ - Overlapped, Reducible</option>
+                <option value="+++">+++ - Overlapped, Irreducible (ALERT)</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section 4: Care of the Woman -->
+        <fieldset class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
+          <legend class="font-bold text-teal-700 dark:text-teal-400 px-1">Section 4: Care of the Woman (4-hourly or PRN)</legend>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-1">
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Pulse (bpm) <span class="text-red-500 font-bold">[&lt;60, &ge;120]</span></label>
+              <input type="number" id="m_pulse" placeholder="88" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Systolic BP <span class="text-red-500 font-bold">[&lt;80, &ge;140]</span></label>
+              <input type="number" id="m_sbp" placeholder="120" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Diastolic BP <span class="text-red-500 font-bold">[&ge;90]</span></label>
+              <input type="number" id="m_dbp" placeholder="80" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Temp (&deg;C) <span class="text-red-500 font-bold">[&lt;35, &ge;37.5]</span></label>
+              <input type="number" step="0.1" id="m_temp" placeholder="36.5" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Urine Prot / Acet <span class="text-red-500 font-bold">[P++, A++]</span></label>
+              <input type="text" id="m_urine" placeholder="- / - or P+, A-" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section 5: Labour Progress -->
+        <fieldset class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
+          <legend class="font-bold text-teal-700 dark:text-teal-400 px-1">Section 5: Labour Progress</legend>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Contractions / 10m <span class="text-red-500 font-bold">[&le;2, &gt;5]</span></label>
+              <input type="number" id="m_cxCount" placeholder="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Duration (sec) <span class="text-red-500 font-bold">[&lt;20, &gt;60]</span></label>
+              <input type="number" id="m_cxDur" placeholder="40" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Cervix (cm) <span class="text-sky-600 font-bold">[Plot X]</span></label>
+              <select id="m_cervix" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="5">5 cm (Alert if &ge;6h)</option>
+                <option value="6">6 cm (Alert if &ge;5h)</option>
+                <option value="7">7 cm (Alert if &ge;3h)</option>
+                <option value="8">8 cm (Alert if &ge;2.5h)</option>
+                <option value="9">9 cm (Alert if &ge;2h)</option>
+                <option value="10">10 cm (Full dilatation)</option>
+                <option value="P">P - Pushing begins (2nd Stage)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Descent <span class="text-amber-600 font-bold">[Plot O]</span></label>
+              <select id="m_descent" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="">-</option>
+                <option value="5">5/5 - High, completely above brim</option>
+                <option value="4">4/5</option>
+                <option value="3">3/5</option>
+                <option value="2">2/5 - Engaged</option>
+                <option value="1">1/5</option>
+                <option value="0">0/5 - Deeply engaged</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section 6: Medication -->
+        <fieldset class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
+          <legend class="font-bold text-teal-700 dark:text-teal-400 px-1">Section 6: Medication & Fluids</legend>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1">
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Oxytocin (U/L, drops/min)</label>
+              <input type="text" id="m_oxytocin" placeholder="N or e.g. 5 U/L, 15 d/m" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">Medicine (Name, Dose, Route)</label>
+              <input type="text" id="m_med" placeholder="N or e.g. Pethidine 50mg IM" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium mb-1">IV Fluids (Y/N)</label>
+              <select id="m_iv" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1">
+                <option value="N">N - No</option>
+                <option value="Y">Y - Yes (Indicated)</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section 7: Shared Decision-Making -->
+        <fieldset class="border border-slate-200 dark:border-slate-800 rounded-lg p-3 bg-teal-50/50 dark:bg-teal-950/20">
+          <legend class="font-bold text-teal-800 dark:text-teal-300 px-1">Section 7: Shared Decision-Making</legend>
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 mt-1">
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-semibold mb-1">Assessment Findings</label>
+              <textarea id="m_assessment" rows="2" placeholder="e.g. Normal progress; or pain relief requested; or late decelerations observed." class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-1.5 text-xs outline-none"></textarea>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-semibold mb-1">Agreed Plan (with woman)</label>
+              <textarea id="m_plan" rows="2" placeholder="e.g. Continue routine monitoring; offer companionship; provide massage & position change." class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-1.5 text-xs outline-none"></textarea>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold mb-1">Provider Initials</label>
+              <input type="text" id="m_initials" placeholder="e.g. LA, GP" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-1 text-xs">
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <button type="button" onclick="closeRecordModal()" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-300 transition">Cancel</button>
+          <button type="submit" class="px-5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-bold shadow-md transition">Apply & Update Chart</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CLINICAL GUIDANCE & REFERENCE MODAL -->
+  <div id="guidanceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-5">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold">i</div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white">WHO Labour Care Guide: Clinical Guidance for Professionals</h2>
+        </div>
+        <button onclick="closeGuidanceModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-4 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+        <!-- Assess Record Check Plan Methodology -->
+        <div class="bg-teal-50 dark:bg-teal-950/50 p-3 rounded-lg border border-teal-200 dark:border-teal-800">
+          <h3 class="font-bold text-teal-900 dark:text-teal-200 text-sm mb-1">The 4-Step Clinical Cycle: Assess &rarr; Record &rarr; Check &rarr; Plan</h3>
+          <ul class="list-disc pl-4 space-y-1">
+            <li><b>Assess:</b> Evaluate woman's well-being, baby's well-being, supportive care, and labour progress.</li>
+            <li><b>Record:</b> Document numerical measurements as actual values, and non-numerical findings using standardized abbreviations.</li>
+            <li><b>Check Alert Threshold:</b> Compare every observation with the "ALERT" reference column. Any value meeting alert criteria is circled in red.</li>
+            <li><b>Plan:</b> When an alert occurs, alert senior midwife/obstetrician, discuss with the woman/companion, and record the agreed shared management plan.</li>
+          </ul>
+        </div>
+
+        <!-- Evidence-Based First Stage Progress Thresholds -->
+        <div>
+          <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Evidence-Based Cervical Dilatation Lag Times</h4>
+          <p class="mb-2 text-slate-500 dark:text-slate-400">
+            WHO research demonstrates that many low-risk women progress slower than the historical 1 cm/hour rate without adverse outcomes. Medical interventions to accelerate labour (oxytocin, C-section) should NOT be used before 5 cm dilatation:
+          </p>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
+            <div class="p-2 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-teal-600 text-sm">5 cm</div>
+              <div class="text-[11px] text-red-600 font-semibold">Alert if &ge; 6h</div>
+            </div>
+            <div class="p-2 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-teal-600 text-sm">6 cm</div>
+              <div class="text-[11px] text-red-600 font-semibold">Alert if &ge; 5h</div>
+            </div>
+            <div class="p-2 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-teal-600 text-sm">7 cm</div>
+              <div class="text-[11px] text-red-600 font-semibold">Alert if &ge; 3h</div>
+            </div>
+            <div class="p-2 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-teal-600 text-sm">8 cm</div>
+              <div class="text-[11px] text-red-600 font-semibold">Alert if &ge; 2.5h</div>
+            </div>
+            <div class="p-2 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-teal-600 text-sm">9 cm</div>
+              <div class="text-[11px] text-red-600 font-semibold">Alert if &ge; 2h</div>
+            </div>
+          </div>
+          <div class="mt-2 p-2 bg-sky-50 dark:bg-sky-950/40 rounded border border-sky-200 dark:border-sky-800 text-[11px]">
+            <b>Second Stage Alert Threshold:</b> Active pushing &ge; 3 hours in nulliparous women; &ge; 2 hours in multiparous women.
+          </div>
+        </div>
+
+        <!-- Essential WHO Recommendations (Annex 4) -->
+        <div class="border-t border-slate-200 dark:border-slate-800 pt-3">
+          <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1.5">Key Recommended Practices (WHO Intrapartum Guidelines)</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
+            <div class="p-2 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-1">
+              <b class="text-emerald-800 dark:text-emerald-300 block">Strongly Recommended (&check;)</b>
+              <div>&bull; Continuous labour companionship of woman's choice.</div>
+              <div>&bull; Respectful maternity care maintaining dignity and privacy.</div>
+              <div>&bull; Freedom of mobility and upright birth positions.</div>
+              <div>&bull; Oral fluid and light nutrition on demand during labour.</div>
+              <div>&bull; Pharmacological and non-pharmacological pain relief.</div>
+              <div>&bull; Delayed cord clamping (&ge; 1 minute) and skin-to-skin contact.</div>
+            </div>
+            <div class="p-2 rounded bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 space-y-1">
+              <b class="text-rose-800 dark:text-rose-300 block">NOT Recommended / Harmful (&cross;)</b>
+              <div>&bull; Routine pubic shaving or enemas on admission.</div>
+              <div>&bull; Routine continuous CTG for low-risk women.</div>
+              <div>&bull; Routine amniotomy or routine oxytocin to prevent delay.</div>
+              <div>&bull; Routine IV fluids in low-risk women (restricts mobility).</div>
+              <div>&bull; Manual fundal pressure (Kristeller) in second stage.</div>
+              <div>&bull; Routine episiotomy or oral/nasal suctioning in clear fluid.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+        <button onclick="closeGuidanceModal()" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold text-xs">Got it, Back to Form</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INLINE DIRECT CELL QUICK-PICKER POPUP -->
+  <div id="quickPicker" class="fixed z-50 hidden bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-xl p-1.5 text-xs flex flex-wrap gap-1"></div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Master data model for 12 First-Stage Hours (h1-h12) and 3 Second-Stage Hours (s1-s3)
+    const COLUMNS = [
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9', 'h10', 'h11', 'h12',
+      's1', 's2', 's3'
+    ];
+
+    // Rows Definition matching WHO Labour Care Guide (Annex 1, Fig 1)
+    const SECTIONS = [
+      {
+        section: "SUPPORTIVE CARE",
+        id: "supportive",
+        rows: [
+          { key: "companion", label: "Companion", alert: "N", options: ["Y", "N", "D"], unit: "", note: "Y=Yes, N=No, D=Declines" },
+          { key: "pain", label: "Pain relief", alert: "N", options: ["Y", "N", "D"], unit: "", note: "Y=Yes, N=No, D=Declines" },
+          { key: "fluid", label: "Oral fluid", alert: "N", options: ["Y", "N", "D"], unit: "", note: "Y=Yes, N=No, D=Declines" },
+          { key: "posture", label: "Posture", alert: "SP", options: ["MO", "SP"], unit: "", note: "MO=Mobile, SP=Supine" }
+        ]
+      },
+      {
+        section: "BABY",
+        id: "baby",
+        rows: [
+          { key: "fhr", label: "Baseline FHR", alert: "<110, ≥160", type: "number", unit: "bpm", note: "Normal 110-159 bpm" },
+          { key: "decel", label: "FHR deceleration", alert: "L", options: ["N", "E", "L", "V"], unit: "", note: "N=No, E=Early, L=Late, V=Variable" },
+          { key: "liquor", label: "Amniotic fluid", alert: "M+++, B", options: ["I", "C", "+", "++", "+++", "B"], unit: "", note: "I=Intact, C=Clear, +=Mild, ++=Mod, +++=Thick, B=Blood" },
+          { key: "pos", label: "Fetal position", alert: "P, T", options: ["A", "P", "T"], unit: "", note: "A=Anterior, P=Posterior, T=Transverse" },
+          { key: "caput", label: "Caput", alert: "+++", options: ["0", "+", "++", "+++"], unit: "", note: "0=None, +=Mild, ++=Mod, +++=Marked" },
+          { key: "moulding", label: "Moulding", alert: "+++", options: ["0", "+", "++", "+++"], unit: "", note: "0=None, +=Apposed, ++=Reducible, +++=Fixed" }
+        ]
+      },
+      {
+        section: "WOMAN",
+        id: "woman",
+        rows: [
+          { key: "pulse", label: "Pulse", alert: "<60, ≥120", type: "number", unit: "bpm", note: "Count 1 full min" },
+          { key: "sbp", label: "Systolic BP", alert: "<80, ≥140", type: "number", unit: "mmHg", note: "Sitting position" },
+          { key: "dbp", label: "Diastolic BP", alert: "≥90", type: "number", unit: "mmHg", note: "Sitting position" },
+          { key: "temp", label: "Temperature °C", alert: "<35.0, ≥37.5", type: "number", step: "0.1", unit: "°C", note: "Axillary temp" },
+          { key: "urine", label: "Urine", alert: "P++, A++", type: "text", unit: "", note: "Protein / Acetone" }
+        ]
+      },
+      {
+        section: "LABOUR PROGRESS",
+        id: "progress",
+        rows: [
+          { key: "cx_count", label: "Contractions per 10 min", alert: "≤2, >5", type: "number", unit: "", note: "Normal 3-5/10 min" },
+          { key: "cx_dur", label: "Duration of contractions", alert: "<20, >60", type: "number", unit: "sec", note: "Normal 20-60 sec" },
+          // Cervical Dilatation Plot Grid (10 down to 5 cm)
+          { key: "cervix_10", label: "Cervix: 10 cm", alert: "", plotKey: "cervix", plotVal: "10", subGroup: "cervix" },
+          { key: "cervix_9", label: "Cervix: 9 cm", alert: "≥ 2h", plotKey: "cervix", plotVal: "9", subGroup: "cervix" },
+          { key: "cervix_8", label: "Cervix: 8 cm", alert: "≥ 2.5h", plotKey: "cervix", plotVal: "8", subGroup: "cervix" },
+          { key: "cervix_7", label: "Cervix: 7 cm", alert: "≥ 3h", plotKey: "cervix", plotVal: "7", subGroup: "cervix" },
+          { key: "cervix_6", label: "Cervix: 6 cm", alert: "≥ 5h", plotKey: "cervix", plotVal: "6", subGroup: "cervix" },
+          { key: "cervix_5", label: "Cervix: 5 cm", alert: "≥ 6h", plotKey: "cervix", plotVal: "5", subGroup: "cervix" },
+          // Descent Plot Grid (5 down to 0)
+          { key: "descent_5", label: "Descent: 5/5", alert: "", plotKey: "descent", plotVal: "5", subGroup: "descent" },
+          { key: "descent_4", label: "Descent: 4/5", alert: "", plotKey: "descent", plotVal: "4", subGroup: "descent" },
+          { key: "descent_3", label: "Descent: 3/5", alert: "", plotKey: "descent", plotVal: "3", subGroup: "descent" },
+          { key: "descent_2", label: "Descent: 2/5", alert: "", plotKey: "descent", plotVal: "2", subGroup: "descent" },
+          { key: "descent_1", label: "Descent: 1/5", alert: "", plotKey: "descent", plotVal: "1", subGroup: "descent" },
+          { key: "descent_0", label: "Descent: 0/5", alert: "", plotKey: "descent", plotVal: "0", subGroup: "descent" }
+        ]
+      },
+      {
+        section: "MEDICATION",
+        id: "medication",
+        rows: [
+          { key: "oxytocin", label: "Oxytocin (U/L, drops/min)", alert: "", type: "text", unit: "", note: "N or dose" },
+          { key: "medicine", label: "Medicine", alert: "", type: "text", unit: "", note: "Name, dose, route" },
+          { key: "iv", label: "IV fluids", alert: "", options: ["N", "Y"], unit: "", note: "Y=Yes, N=No" }
+        ]
+      },
+      {
+        section: "SHARED DECISION-MAKING",
+        id: "decision",
+        rows: [
+          { key: "assessment", label: "ASSESSMENT", alert: "", type: "textarea", note: "Clinical findings" },
+          { key: "plan", label: "PLAN", alert: "", type: "textarea", note: "Agreed shared plan" },
+          { key: "initials", label: "INITIALS", alert: "", type: "text", note: "Provider initials" }
+        ]
+      }
+    ];
+
+    // In-memory data store for chart
+    let lcgData = {};
+
+    // Initialize blank data
+    function initData() {
+      lcgData = {
+        meta: {
+          facilityName: "Maternity Care Unit",
+          name: "",
+          parity: "",
+          onset: "Spontaneous",
+          activeDate: "",
+          activeTime: "",
+          ruptureDate: "",
+          ruptureTime: "",
+          riskFactors: "",
+          createdAt: new Date().toISOString(),
+          createdByName: (typeof currentUserName !== 'undefined' ? currentUserName : "Attending Clinician"),
+          lastSavedAt: "",
+          lastSavedByName: ""
+        },
+        locked: false,
+        lockedBy: "",
+        lockedAt: "",
+        auditTrail: [],
+        times: {},
+        records: {}
+      };
+      COLUMNS.forEach(col => {
+        lcgData.times[col] = "";
+        lcgData.records[col] = {};
+      });
+    }
+
+    // Build the Main LCG Observation Table DOM
+    function renderTable() {
+      const tbody = document.getElementById('lcgTableBody');
+      tbody.innerHTML = '';
+
+      SECTIONS.forEach((sec, secIdx) => {
+        sec.rows.forEach((row, rowIdx) => {
+          const tr = document.createElement('tr');
+          tr.className = (secIdx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/50 dark:bg-slate-800/30');
+
+          // Section Title cell with rowspan on first row of section
+          if (rowIdx === 0) {
+            const tdSec = document.createElement('td');
+            tdSec.rowSpan = sec.rows.length;
+            tdSec.className = 'col-cat font-extrabold text-teal-800 dark:text-teal-300 bg-slate-100 dark:bg-slate-800/80 uppercase tracking-tight text-[10px] pl-2';
+            tdSec.textContent = sec.section;
+            tr.appendChild(tdSec);
+          }
+
+          // Parameter Name
+          const tdParam = document.createElement('td');
+          tdParam.className = 'col-param font-medium text-left pl-2 text-slate-700 dark:text-slate-300';
+          if (row.subGroup === 'cervix') {
+            tdParam.innerHTML = `<span class="font-bold text-sky-700 dark:text-sky-300">${row.label}</span>`;
+          } else if (row.subGroup === 'descent') {
+            tdParam.innerHTML = `<span class="font-semibold text-amber-700 dark:text-amber-300">${row.label}</span>`;
+          } else {
+            tdParam.textContent = row.label;
+          }
+          tr.appendChild(tdParam);
+
+          // Alert Threshold Reference Column (Distinctive Alert Styling)
+          const tdAlert = document.createElement('td');
+          tdAlert.className = 'col-alert text-xs';
+          tdAlert.textContent = row.alert || '-';
+          tr.appendChild(tdAlert);
+
+          // Render Cells for 12 First Stage Columns + 3 Second Stage Columns
+          COLUMNS.forEach((colKey, colIdx) => {
+            const td = document.createElement('td');
+            const isStage2 = colKey.startsWith('s');
+            td.className = `cell-editable ${isStage2 ? 'col-stage2' : 'col-hour'}`;
+            td.dataset.col = colKey;
+            td.dataset.row = row.key;
+            td.id = `cell_${row.key}_${colKey}`;
+
+            // Handle special plotting grid for Cervix and Descent
+            if (row.plotKey) {
+              const val = row.plotVal;
+              td.onclick = (e) => {
+                e.stopPropagation();
+                togglePlotMark(colKey, row.plotKey, val);
+              };
+            } else {
+              // Direct cell click opens quick picker or editor
+              td.onclick = (e) => {
+                e.stopPropagation();
+                openQuickCellEditor(e, colKey, row);
+              };
+            }
+
+            tr.appendChild(td);
+          });
+
+          tbody.appendChild(tr);
+        });
+      });
+
+      refreshCellDisplay();
+    }
+
+    // Toggle mark on Cervical Dilatation or Descent grid
+    function togglePlotMark(colKey, type, val) {
+      if (lcgData.locked) {
+        showToast("This Labour Care Guide is locked. Unlock to make edits.", true);
+        return;
+      }
+      if (!lcgData.records[colKey]) lcgData.records[colKey] = {};
+      const current = lcgData.records[colKey][type];
+
+      if (current === val) {
+        delete lcgData.records[colKey][type];
+      } else {
+        lcgData.records[colKey][type] = val;
+      }
+      const colLabel = colKey.startsWith('h') ? `Hour ${colKey.replace('h','')}` : `Second Stage H${colKey.replace('s','')}`;
+      addAuditLog("PROGRESS PLOTTED", `${colLabel}: ${type.toUpperCase()} recorded as ${val}`);
+      refreshCellDisplay();
+      autoSave();
+      drawCervicogramChart();
+      evaluateAlerts();
+    }
+
+    // Direct cell click inline quick editor
+    function openQuickCellEditor(e, colKey, row) {
+      if (lcgData.locked) {
+        showToast("This Labour Care Guide is locked. Unlock to make edits.", true);
+        return;
+      }
+      const picker = document.getElementById('quickPicker');
+      picker.innerHTML = '';
+      picker.classList.remove('hidden');
+
+      const rect = e.target.getBoundingClientRect();
+      picker.style.top = `${rect.bottom + window.scrollY + 2}px`;
+      picker.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 220)}px`;
+
+      // If predefined options exist (like Y/N/D, MO/SP, etc.)
+      if (row.options && row.options.length > 0) {
+        row.options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'px-2 py-1 bg-slate-100 hover:bg-teal-600 hover:text-white dark:bg-slate-700 dark:hover:bg-teal-600 rounded text-xs font-bold transition';
+          btn.textContent = opt;
+          btn.onclick = () => {
+            setCellValue(colKey, row.key, opt, row.label);
+            picker.classList.add('hidden');
+          };
+          picker.appendChild(btn);
+        });
+      } else {
+        // Quick input box
+        const input = document.createElement('input');
+        input.type = row.type || 'text';
+        input.value = (lcgData.records[colKey] && lcgData.records[colKey][row.key]) || '';
+        input.className = 'w-24 px-1.5 py-0.5 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-xs text-slate-900 dark:text-white';
+        input.onkeydown = (ev) => {
+          if (ev.key === 'Enter') {
+            setCellValue(colKey, row.key, input.value.trim(), row.label);
+            picker.classList.add('hidden');
+          } else if (ev.key === 'Escape') {
+            picker.classList.add('hidden');
+          }
+        };
+        picker.appendChild(input);
+
+        const okBtn = document.createElement('button');
+        okBtn.className = 'px-2 py-0.5 bg-teal-600 text-white rounded text-xs font-semibold';
+        okBtn.textContent = 'Set';
+        okBtn.onclick = () => {
+          setCellValue(colKey, row.key, input.value.trim(), row.label);
+          picker.classList.add('hidden');
+        };
+        picker.appendChild(okBtn);
+        setTimeout(() => input.focus(), 50);
+      }
+
+      // Clear button
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'px-2 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded text-xs';
+      clearBtn.textContent = 'Clear';
+      clearBtn.onclick = () => {
+        setCellValue(colKey, row.key, '', row.label);
+        picker.classList.add('hidden');
+      };
+      picker.appendChild(clearBtn);
+    }
+
+    // Set value and re-evaluate
+    function setCellValue(colKey, rowKey, val, paramLabel) {
+      if (lcgData.locked) {
+        showToast("Form is locked. Unlock to make edits.", true);
+        return;
+      }
+      if (!lcgData.records[colKey]) lcgData.records[colKey] = {};
+      if (val === '') {
+        delete lcgData.records[colKey][rowKey];
+      } else {
+        lcgData.records[colKey][rowKey] = val;
+      }
+      const colLabel = colKey.startsWith('h') ? `Hour ${colKey.replace('h','')}` : `Second Stage H${colKey.replace('s','')}`;
+      addAuditLog("OBSERVATION EDITED", `${colLabel}: ${paramLabel || rowKey} set to '${val || 'Cleared'}'`);
+      refreshCellDisplay();
+      autoSave();
+      evaluateAlerts();
+    }
+      }
+      refreshCellDisplay();
+      autoSave();
+      evaluateAlerts();
+    }
+
+    // Close picker if clicked outside
+    document.addEventListener('click', (e) => {
+      const picker = document.getElementById('quickPicker');
+      if (picker && !picker.contains(e.target) && !e.target.classList.contains('cell-editable')) {
+        picker.classList.add('hidden');
+      }
+    });
+
+    // Check if an observation matches Alert threshold (Manual Rule: Must Circle in Red)
+    function checkIsAlert(rowKey, val, colKey) {
+      if (!val || val === '' || val === '-') return false;
+      const v = String(val).trim().toUpperCase();
+
+      switch(rowKey) {
+        // Section 2: Supportive Care
+        case 'companion': return v === 'N';
+        case 'pain': return v === 'N';
+        case 'fluid': return v === 'N';
+        case 'posture': return v === 'SP';
+
+        // Section 3: Baby
+        case 'fhr': {
+          const num = parseFloat(v);
+          return !isNaN(num) && (num < 110 || num >= 160);
+        }
+        case 'decel': return v === 'L';
+        case 'liquor': return v === '+++' || v === 'B' || v === 'M+++';
+        case 'pos': return v === 'P' || v === 'T';
+        case 'caput': return v === '+++';
+        case 'moulding': return v === '+++';
+
+        // Section 4: Woman
+        case 'pulse': {
+          const num = parseFloat(v);
+          return !isNaN(num) && (num < 60 || num >= 120);
+        }
+        case 'sbp': {
+          const num = parseFloat(v);
+          return !isNaN(num) && (num < 80 || num >= 140);
+        }
+        case 'dbp': {
+          const num = parseFloat(v);
+          return !isNaN(num) && (num >= 90);
+        }
+        case 'temp': {
+          const num = parseFloat(v);
+          return !isNaN(num) && (num < 35.0 || num >= 37.5);
+        }
+        case 'urine': return v.includes('P++') || v.includes('P+++') || v.includes('A++') || v.includes('A+++');
+
+        // Section 5: Progress
+        case 'cx_count': {
+          const num = parseFloat(v);
+          return !isNaN(num) && (num <= 2 || num > 5);
+        }
+        case 'cx_dur': {
+          const num = parseFloat(v);
+          return !isNaN(num) && (num < 20 || num > 60);
+        }
+
+        default:
+          return false;
+      }
+    }
+
+    // Refresh all rendered cells and alert rings
+    function refreshCellDisplay() {
+      // Refresh Times
+      COLUMNS.forEach(col => {
+        const inp = document.getElementById(`time_${col}`);
+        if (inp) inp.value = lcgData.times[col] || '';
+      });
+
+      // Refresh Rows
+      SECTIONS.forEach(sec => {
+        sec.rows.forEach(row => {
+          COLUMNS.forEach(col => {
+            const cell = document.getElementById(`cell_${row.key}_${col}`);
+            if (!cell) return;
+
+            // Progress Plots (Cervix and Descent)
+            if (row.plotKey) {
+              const recVal = lcgData.records[col] && lcgData.records[col][row.plotKey];
+              if (recVal === row.plotVal) {
+                if (row.plotKey === 'cervix') {
+                  if (recVal === 'P') {
+                    cell.innerHTML = '<span class="plot-dot plot-p" title="Second Stage: Active Pushing Begins">P</span>';
+                  } else {
+                    cell.innerHTML = '<span class="plot-dot plot-x" title="Cervical Dilatation">X</span>';
+                  }
+                } else if (row.plotKey === 'descent') {
+                  cell.innerHTML = '<span class="plot-dot plot-o" title="Fetal Descent">O</span>';
+                }
+              } else {
+                cell.innerHTML = '';
+              }
+              return;
+            }
+
+            // Normal values
+            const val = lcgData.records[col] && lcgData.records[col][row.key];
+            if (val !== undefined && val !== null && val !== '') {
+              const isAlert = checkIsAlert(row.key, val, col);
+              if (isAlert) {
+                cell.innerHTML = `<span class="alert-circled" title="ALERT TRIGGERED: Value exceeds WHO safe threshold">${val}</span>`;
+              } else {
+                cell.textContent = val;
+              }
+            } else {
+              cell.textContent = '';
+            }
+          });
+        });
+      });
+    }
+
+    // Live Alert Evaluation and Guidance Prompting
+    function evaluateAlerts() {
+      const activeAlerts = [];
+
+      // Check all entered values
+      COLUMNS.forEach((col, colIdx) => {
+        const rec = lcgData.records[col] || {};
+        const colLabel = col.startsWith('h') ? `Hour ${col.replace('h','')}` : `Stage 2 H${col.replace('s','')}`;
+
+        // Supportive Care Alerts
+        if (rec.companion === 'N') {
+          activeAlerts.push({ col: colLabel, param: 'Companion', val: 'No', action: "Offer to find a companion of the woman's choice (Annex 4, Rec 3)." });
+        }
+        if (rec.pain === 'N') {
+          activeAlerts.push({ col: colLabel, param: 'Pain Relief', val: 'No', action: "Offer pharmacological (epidural, opioids) or non-pharmacological pain relief (massage, breathing, relaxation)." });
+        }
+        if (rec.fluid === 'N') {
+          activeAlerts.push({ col: colLabel, param: 'Oral Fluid', val: 'No', action: "Encourage woman to drink fluids and take light diet on demand." });
+        }
+        if (rec.posture === 'SP') {
+          activeAlerts.push({ col: colLabel, param: 'Posture', val: 'Supine', action: "Encourage woman to walk freely and avoid supine position (adopt upright, lateral, kneeling, or squatting position)." });
+        }
+
+        // Baby Alerts
+        if (rec.fhr) {
+          const fhr = parseFloat(rec.fhr);
+          if (fhr < 110) {
+            activeAlerts.push({ col: colLabel, param: 'Baseline FHR', val: `${fhr} bpm (Bradycardia)`, action: "Turn woman on left side, perform prolonged auscultation, alert senior care provider immediately." });
+          } else if (fhr >= 160) {
+            activeAlerts.push({ col: colLabel, param: 'Baseline FHR', val: `${fhr} bpm (Tachycardia)`, action: "Check maternal temperature & pulse (fever/chorioamnionitis?), turn to left side, alert senior provider." });
+          }
+        }
+        if (rec.decel === 'L') {
+          activeAlerts.push({ col: colLabel, param: 'FHR Deceleration', val: 'Late Deceleration', action: "Urgent: Turn mother on left lateral, stop oxytocin infusion if running, alert senior doctor, evaluate for immediate delivery." });
+        }
+        if (rec.liquor === '+++' || rec.liquor === 'M+++') {
+          activeAlerts.push({ col: colLabel, param: 'Amniotic Fluid', val: 'Thick Meconium (+++)', action: "Alert senior care provider, monitor FHR closely, prepare for potential neonatal resuscitation at birth." });
+        }
+        if (rec.liquor === 'B') {
+          activeAlerts.push({ col: colLabel, param: 'Amniotic Fluid', val: 'Blood-Stained', action: "Urgent obstetric review: Rule out placental abruption, vasa praevia, or uterine rupture!" });
+        }
+        if (rec.pos === 'P' || rec.pos === 'T') {
+          activeAlerts.push({ col: colLabel, param: 'Fetal Position', val: rec.pos === 'P' ? 'Occiput Posterior' : 'Occiput Transverse', action: "Encourage maternal movement and hands-and-knees position to promote rotation to anterior." });
+        }
+        if (rec.caput === '+++') {
+          activeAlerts.push({ col: colLabel, param: 'Caput', val: 'Marked (+++)', action: "Assess with moulding and descent for possible cephalopelvic disproportion / obstructed labour." });
+        }
+        if (rec.moulding === '+++') {
+          activeAlerts.push({ col: colLabel, param: 'Moulding', val: 'Overlapped, irreducible (+++)', action: "Strong sign of obstructed labour. Alert senior obstetrician immediately for urgent decision!" });
+        }
+
+        // Woman Alerts
+        if (rec.pulse) {
+          const p = parseFloat(rec.pulse);
+          if (p < 60 || p >= 120) {
+            activeAlerts.push({ col: colLabel, param: 'Maternal Pulse', val: `${p} bpm`, action: "Assess for dehydration, fever, hemorrhage, pain, or shock. Alert senior provider." });
+          }
+        }
+        if (rec.sbp || rec.dbp) {
+          const sbp = parseFloat(rec.sbp);
+          const dbp = parseFloat(rec.dbp);
+          if (sbp < 80) {
+            activeAlerts.push({ col: colLabel, param: 'Blood Pressure', val: `${sbp}/${dbp} (Hypotension)`, action: "Signs of shock or concealed hemorrhage! Immediate IV access, fluids, alert team." });
+          } else if (sbp >= 140 || dbp >= 90) {
+            activeAlerts.push({ col: colLabel, param: 'Blood Pressure', val: `${sbp}/${dbp} (Hypertension)`, action: "Alert senior provider. Check urine protein, assess for pre-eclampsia symptoms." });
+          }
+        }
+        if (rec.temp) {
+          const t = parseFloat(rec.temp);
+          if (t < 35.0 || t >= 37.5) {
+            activeAlerts.push({ col: colLabel, param: 'Temperature', val: `${t} °C`, action: "Evaluate for maternal sepsis or chorioamnionitis. Alert senior provider." });
+          }
+        }
+        if (rec.urine && (rec.urine.includes('P++') || rec.urine.includes('P+++'))) {
+          activeAlerts.push({ col: colLabel, param: 'Urine Protein', val: rec.urine, action: "Significant proteinuria (2+ or more). Rule out pre-eclampsia in context of blood pressure." });
+        }
+
+        // Progress Alerts
+        if (rec.cx_count) {
+          const c = parseFloat(rec.cx_count);
+          if (c <= 2) {
+            activeAlerts.push({ col: colLabel, param: 'Contractions', val: `${c} / 10m (Inadequate)`, action: "Inadequate uterine activity. Verify over another 10 min, assess mobility and hydration." });
+          } else if (c > 5) {
+            activeAlerts.push({ col: colLabel, param: 'Contractions', val: `${c} / 10m (Hyperstimulation)`, action: "Tachysystole! If oxytocin is running, stop immediately. Check fetal heart rate." });
+          }
+        }
+        if (rec.cx_dur) {
+          const d = parseFloat(rec.cx_dur);
+          if (d < 20 || d > 60) {
+            activeAlerts.push({ col: colLabel, param: 'Contraction Duration', val: `${d} seconds`, action: "Short (<20s) or continuous (>60s) contraction. Verify over 10 min and notify senior." });
+          }
+        }
+      });
+
+      // Update Banner DOM
+      const banner = document.getElementById('liveAlertBanner');
+      const badge = document.getElementById('alertCountBadge');
+      const msgList = document.getElementById('alertMessageList');
+
+      if (activeAlerts.length > 0) {
+        banner.className = "max-w-[1540px] mx-auto mb-3 bg-red-100 dark:bg-red-950/80 border-2 border-red-500 rounded-xl p-3 shadow-md flex items-start gap-3 transition-all";
+        badge.textContent = `${activeAlerts.length} Active Alert${activeAlerts.length > 1 ? 's' : ''}`;
+        badge.className = "px-2 py-0.5 bg-red-600 text-white text-xs rounded-full font-bold";
+
+        msgList.innerHTML = activeAlerts.slice(0, 4).map(a => `
+          <div class="flex items-start gap-1.5">
+            <span class="font-bold text-red-700 dark:text-red-300">[${a.col}] ${a.param}: ${a.val}</span>
+            <span class="text-slate-700 dark:text-slate-300">&rarr; <b>Action:</b> ${a.action}</span>
+          </div>
+        `).join('');
+
+        if (activeAlerts.length > 4) {
+          msgList.innerHTML += `<div class="text-[11px] text-red-600 font-semibold italic">+ ${activeAlerts.length - 4} more alerts recorded in table. Check alert-circled cells.</div>`;
+        }
+      } else {
+        banner.className = "max-w-[1540px] mx-auto mb-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl p-3 shadow-sm flex items-start gap-3 transition-all";
+        badge.textContent = "0 Active Alerts";
+        badge.className = "px-2 py-0.5 bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 text-xs rounded-full font-bold";
+        msgList.innerHTML = `<span>No abnormal deviations recorded currently. Labour care progressing normally.</span>`;
+      }
+    }
+
+    // Modal Control: Quick Record Assessment
+    function openRecordModal(colKey) {
+      if (lcgData.locked) {
+        showToast("Labour Care Guide is locked. Unlock to record assessments.", true);
+        return;
+      }
+      const select = document.getElementById('modalColSelect');
+      select.innerHTML = '';
+      COLUMNS.forEach((c, idx) => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c.startsWith('h') ? `Active First Stage - Hour ${c.replace('h','')}` : `Second Stage - Hour ${c.replace('s','')}`;
+        select.appendChild(opt);
+      });
+
+      if (colKey && COLUMNS.includes(colKey)) {
+        select.value = colKey;
+      }
+
+      onModalColChange();
+      document.getElementById('recordModal').classList.remove('hidden');
+    }
+
+    function closeRecordModal() {
+      document.getElementById('recordModal').classList.add('hidden');
+    }
+
+    function onModalColChange() {
+      const col = document.getElementById('modalColSelect').value;
+      const colLabel = col.startsWith('h') ? `Hour ${col.replace('h','')}` : `Second Stage H${col.replace('s','')}`;
+      document.getElementById('modalHourBadge').textContent = colLabel;
+
+      const rec = lcgData.records[col] || {};
+      document.getElementById('modalTime').value = lcgData.times[col] || '';
+
+      // Supportive
+      document.getElementById('m_companion').value = rec.companion || '';
+      document.getElementById('m_pain').value = rec.pain || '';
+      document.getElementById('m_fluid').value = rec.fluid || '';
+      document.getElementById('m_posture').value = rec.posture || '';
+
+      // Baby
+      document.getElementById('m_fhr').value = rec.fhr || '';
+      document.getElementById('m_decel').value = rec.decel || '';
+      document.getElementById('m_liquor').value = rec.liquor || '';
+      document.getElementById('m_pos').value = rec.pos || '';
+      document.getElementById('m_caput').value = rec.caput || '';
+      document.getElementById('m_moulding').value = rec.moulding || '';
+
+      // Woman
+      document.getElementById('m_pulse').value = rec.pulse || '';
+      document.getElementById('m_sbp').value = rec.sbp || '';
+      document.getElementById('m_dbp').value = rec.dbp || '';
+      document.getElementById('m_temp').value = rec.temp || '';
+      document.getElementById('m_urine').value = rec.urine || '';
+
+      // Progress
+      document.getElementById('m_cxCount').value = rec.cx_count || '';
+      document.getElementById('m_cxDur').value = rec.cx_dur || '';
+      document.getElementById('m_cervix').value = rec.cervix || '';
+      document.getElementById('m_descent').value = rec.descent || '';
+
+      // Meds
+      document.getElementById('m_oxytocin').value = rec.oxytocin || '';
+      document.getElementById('m_med').value = rec.medicine || '';
+      document.getElementById('m_iv').value = rec.iv || 'N';
+
+      // Decision
+      document.getElementById('m_assessment').value = rec.assessment || '';
+      document.getElementById('m_plan').value = rec.plan || '';
+      document.getElementById('m_initials').value = rec.initials || '';
+    }
+
+    function saveAssessmentModal(e) {
+      e.preventDefault();
+      const col = document.getElementById('modalColSelect').value;
+      if (!lcgData.records[col]) lcgData.records[col] = {};
+
+      lcgData.times[col] = document.getElementById('modalTime').value;
+
+      // Supportive
+      const comp = document.getElementById('m_companion').value;
+      if (comp) lcgData.records[col].companion = comp; else delete lcgData.records[col].companion;
+
+      const pain = document.getElementById('m_pain').value;
+      if (pain) lcgData.records[col].pain = pain; else delete lcgData.records[col].pain;
+
+      const fl = document.getElementById('m_fluid').value;
+      if (fl) lcgData.records[col].fluid = fl; else delete lcgData.records[col].fluid;
+
+      const pos = document.getElementById('m_posture').value;
+      if (pos) lcgData.records[col].posture = pos; else delete lcgData.records[col].posture;
+
+      // Baby
+      const fhr = document.getElementById('m_fhr').value;
+      if (fhr) lcgData.records[col].fhr = fhr; else delete lcgData.records[col].fhr;
+
+      const decel = document.getElementById('m_decel').value;
+      if (decel) lcgData.records[col].decel = decel; else delete lcgData.records[col].decel;
+
+      const liq = document.getElementById('m_liquor').value;
+      if (liq) lcgData.records[col].liquor = liq; else delete lcgData.records[col].liquor;
+
+      const fetalPos = document.getElementById('m_pos').value;
+      if (fetalPos) lcgData.records[col].pos = fetalPos; else delete lcgData.records[col].pos;
+
+      const cap = document.getElementById('m_caput').value;
+      if (cap) lcgData.records[col].caput = cap; else delete lcgData.records[col].caput;
+
+      const mld = document.getElementById('m_moulding').value;
+      if (mld) lcgData.records[col].moulding = mld; else delete lcgData.records[col].moulding;
+
+      // Woman
+      const pul = document.getElementById('m_pulse').value;
+      if (pul) lcgData.records[col].pulse = pul; else delete lcgData.records[col].pulse;
+
+      const sbp = document.getElementById('m_sbp').value;
+      if (sbp) lcgData.records[col].sbp = sbp; else delete lcgData.records[col].sbp;
+
+      const dbp = document.getElementById('m_dbp').value;
+      if (dbp) lcgData.records[col].dbp = dbp; else delete lcgData.records[col].dbp;
+
+      const tmp = document.getElementById('m_temp').value;
+      if (tmp) lcgData.records[col].temp = tmp; else delete lcgData.records[col].temp;
+
+      const uri = document.getElementById('m_urine').value;
+      if (uri) lcgData.records[col].urine = uri; else delete lcgData.records[col].urine;
+
+      // Progress
+      const cxc = document.getElementById('m_cxCount').value;
+      if (cxc) lcgData.records[col].cx_count = cxc; else delete lcgData.records[col].cx_count;
+
+      const cxd = document.getElementById('m_cxDur').value;
+      if (cxd) lcgData.records[col].cx_dur = cxd; else delete lcgData.records[col].cx_dur;
+
+      const cvx = document.getElementById('m_cervix').value;
+      if (cvx) lcgData.records[col].cervix = cvx; else delete lcgData.records[col].cervix;
+
+      const des = document.getElementById('m_descent').value;
+      if (des) lcgData.records[col].descent = des; else delete lcgData.records[col].descent;
+
+      // Meds
+      const oxy = document.getElementById('m_oxytocin').value;
+      if (oxy) lcgData.records[col].oxytocin = oxy; else delete lcgData.records[col].oxytocin;
+
+      const med = document.getElementById('m_med').value;
+      if (med) lcgData.records[col].medicine = med; else delete lcgData.records[col].medicine;
+
+      const iv = document.getElementById('m_iv').value;
+      if (iv) lcgData.records[col].iv = iv; else delete lcgData.records[col].iv;
+
+      // Decision
+      const asm = document.getElementById('m_assessment').value;
+      if (asm) lcgData.records[col].assessment = asm; else delete lcgData.records[col].assessment;
+
+      const pln = document.getElementById('m_plan').value;
+      if (pln) lcgData.records[col].plan = pln; else delete lcgData.records[col].plan;
+
+      const ini = document.getElementById('m_initials').value;
+      if (ini) lcgData.records[col].initials = ini; else delete lcgData.records[col].initials;
+
+      // Construct detailed audit trail entry of entered clinical data
+      const colLabel = col.startsWith('h') ? `Hour ${col.replace('h','')}` : `Second Stage H${col.replace('s','')}`;
+      const changes = [];
+      if (cvx) changes.push(`Dilatation: ${cvx}cm`);
+      if (des) changes.push(`Descent: ${des}/5`);
+      if (fhr) changes.push(`FHR: ${fhr}bpm`);
+      if (cxc) changes.push(`Contractions: ${cxc}/10m (${cxd || '-'}s)`);
+      if (sbp || dbp) changes.push(`BP: ${sbp || '-'}/${dbp || '-'}mmHg`);
+      if (pul) changes.push(`Pulse: ${pul}bpm`);
+      if (tmp) changes.push(`Temp: ${tmp}°C`);
+      if (asm) changes.push(`Assessment: "${asm}"`);
+      if (pln) changes.push(`Plan: "${pln}"`);
+      if (ini) changes.push(`Initials: ${ini}`);
+
+      addAuditLog(`ASSESSMENT (${colLabel})`, changes.length > 0 ? changes.join('; ') : 'Assessment recorded');
+
+      closeRecordModal();
+      refreshCellDisplay();
+      autoSave();
+      drawCervicogramChart();
+      evaluateAlerts();
+    }
+
+    // Guidance Modal
+    function openGuidanceModal() {
+      document.getElementById('guidanceModal').classList.remove('hidden');
+    }
+    function closeGuidanceModal() {
+      document.getElementById('guidanceModal').classList.add('hidden');
+    }
+
+    // Toggle Visual Cervicogram Chart
+    function toggleVisualPlot() {
+      const wrap = document.getElementById('cervicogramWrapper');
+      const txt = document.getElementById('txtTogglePlot');
+      if (wrap.classList.contains('hidden')) {
+        wrap.classList.remove('hidden');
+        txt.textContent = 'Hide Cervicogram Chart';
+        drawCervicogramChart();
+      } else {
+        wrap.classList.add('hidden');
+        txt.textContent = 'Show Cervicogram Chart';
+      }
+    }
+
+    // Draw SVG Cervicogram Chart
+    function drawCervicogramChart() {
+      const svg = document.getElementById('cervicogramSvg');
+      if (!svg) return;
+
+      const width = 1100;
+      const height = 240;
+      const padding = { top: 30, right: 40, bottom: 35, left: 60 };
+      const plotW = width - padding.left - padding.right;
+      const plotH = height - padding.top - padding.bottom;
+
+      svg.innerHTML = '';
+
+      // Grid background & axes
+      const colStep = plotW / 15; // 12 first stage + 3 second stage
+
+      // Background shading for Second Stage
+      const s2Start = padding.left + colStep * 12;
+      svg.innerHTML += `
+        <rect x="${s2Start}" y="${padding.top}" width="${colStep * 3}" height="${plotH}" fill="rgba(14, 165, 233, 0.08)" />
+        <line x1="${s2Start}" y1="${padding.top}" x2="${s2Start}" y2="${height - padding.bottom}" stroke="#0284c7" stroke-width="2" stroke-dasharray="4,4" />
+        <text x="${s2Start + 10}" y="${padding.top - 8}" font-size="11" font-weight="bold" fill="#0284c7">SECOND STAGE</text>
+      `;
+
+      // Horizontal lines for Cervix (5 to 10 cm)
+      for (let cm = 5; cm <= 10; cm++) {
+        const y = padding.top + plotH - ((cm - 5) / 5) * plotH;
+        svg.innerHTML += `
+          <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="rgba(148, 163, 184, 0.25)" stroke-width="1" />
+          <text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" font-weight="bold" fill="#0369a1">${cm} cm</text>
+          <text x="${width - padding.right + 10}" y="${y + 4}" font-size="10" font-weight="bold" fill="#b45309">${10 - cm}/5</text>
+        `;
+      }
+
+      // Vertical lines for Hours (1 to 15)
+      COLUMNS.forEach((col, idx) => {
+        const x = padding.left + idx * colStep + colStep / 2;
+        const colLabel = col.startsWith('h') ? `H${col.replace('h','')}` : `S${col.replace('s','')}`;
+        svg.innerHTML += `
+          <line x1="${x}" y1="${padding.top}" x2="${x}" y2="${height - padding.bottom}" stroke="rgba(148, 163, 184, 0.15)" stroke-width="1" />
+          <text x="${x}" y="${height - padding.bottom + 18}" text-anchor="middle" font-size="10" font-weight="600" fill="#64748b">${colLabel}</text>
+        `;
+      });
+
+      // Axis Labels
+      svg.innerHTML += `
+        <text x="${padding.left - 45}" y="${padding.top + plotH / 2}" transform="rotate(-90 ${padding.left - 45} ${padding.top + plotH / 2})" text-anchor="middle" font-size="10" font-weight="bold" fill="#0369a1">Cervical Dilatation (cm)</text>
+        <text x="${width - 10}" y="${padding.top + plotH / 2}" transform="rotate(90 ${width - 10} ${padding.top + plotH / 2})" text-anchor="middle" font-size="10" font-weight="bold" fill="#b45309">Head Descent</text>
+      `;
+
+      // Plot Data Points & Curves
+      const cervixPoints = [];
+      const descentPoints = [];
+
+      COLUMNS.forEach((col, idx) => {
+        const x = padding.left + idx * colStep + colStep / 2;
+        const rec = lcgData.records[col] || {};
+
+        if (rec.cervix && rec.cervix !== 'P') {
+          const cm = parseFloat(rec.cervix);
+          if (!isNaN(cm) && cm >= 5 && cm <= 10) {
+            const y = padding.top + plotH - ((cm - 5) / 5) * plotH;
+            cervixPoints.push({ x, y, cm, col });
+          }
+        }
+
+        if (rec.descent !== undefined && rec.descent !== '') {
+          const des = parseFloat(rec.descent);
+          if (!isNaN(des) && des >= 0 && des <= 5) {
+            // 5/5 at top (cm=5 level), 0/5 at bottom (cm=10 level)
+            const y = padding.top + ((5 - des) / 5) * plotH;
+            descentPoints.push({ x, y, des, col });
+          }
+        }
+      });
+
+      // Connect Cervix line
+      if (cervixPoints.length > 1) {
+        let d = `M ${cervixPoints[0].x} ${cervixPoints[0].y}`;
+        for (let i = 1; i < cervixPoints.length; i++) {
+          d += ` L ${cervixPoints[i].x} ${cervixPoints[i].y}`;
+        }
+        svg.innerHTML += `<path d="${d}" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" />`;
+      }
+
+      // Draw Cervix 'X' marks
+      cervixPoints.forEach(pt => {
+        svg.innerHTML += `
+          <g>
+            <circle cx="${pt.x}" cy="${pt.y}" r="8" fill="#ffffff" stroke="#0284c7" stroke-width="1.5" />
+            <text x="${pt.x}" y="${pt.y + 3.5}" text-anchor="middle" font-size="11" font-weight="900" fill="#0284c7">X</text>
+          </g>
+        `;
+      });
+
+      // Connect Descent line
+      if (descentPoints.length > 1) {
+        let d = `M ${descentPoints[0].x} ${descentPoints[0].y}`;
+        for (let i = 1; i < descentPoints.length; i++) {
+          d += ` L ${descentPoints[i].x} ${descentPoints[i].y}`;
+        }
+        svg.innerHTML += `<path d="${d}" fill="none" stroke="#d97706" stroke-width="2.5" stroke-dasharray="3,3" stroke-linecap="round" />`;
+      }
+
+      // Draw Descent 'O' marks
+      descentPoints.forEach(pt => {
+        svg.innerHTML += `
+          <g>
+            <circle cx="${pt.x}" cy="${pt.y}" r="8" fill="#ffffff" stroke="#d97706" stroke-width="1.5" />
+            <text x="${pt.x}" y="${pt.y + 3.5}" text-anchor="middle" font-size="11" font-weight="900" fill="#d97706">O</text>
+          </g>
+        `;
+      });
+    }
+
+    // Populate the clinical case of Mary Jane Williams directly from the WHO Manual (Pages 14, 19, 22, 24, 28, 30)
+    function loadDemoMaryJane() {
+      initData();
+
+      // Section 1: Demographics & Admission
+      lcgData.meta = {
+        facilityName: "Metropolitan Maternity Centre",
+        name: "Mary Jane Williams",
+        parity: "2",
+        onset: "Spontaneous",
+        activeDate: "2026-06-07",
+        activeTime: "06:00",
+        ruptureDate: "2026-06-07",
+        ruptureTime: "05:00",
+        riskFactors: "History of stillbirth; mild anaemia"
+      };
+
+      // Header input fields update
+      document.getElementById('facilityName').value = lcgData.meta.facilityName;
+      document.getElementById('ptName').value = lcgData.meta.name;
+      document.getElementById('ptParity').value = lcgData.meta.parity;
+      document.getElementById('ptOnset').value = lcgData.meta.onset;
+      document.getElementById('ptActiveDate').value = lcgData.meta.activeDate;
+      document.getElementById('ptActiveTime').value = lcgData.meta.activeTime;
+      document.getElementById('ptRuptureDate').value = lcgData.meta.ruptureDate;
+      document.getElementById('ptRuptureTime').value = lcgData.meta.ruptureTime;
+      document.getElementById('ptRiskFactors').value = lcgData.meta.riskFactors;
+
+      // Clock times
+      lcgData.times = {
+        h1: "06:00", h2: "07:00", h3: "08:00", h4: "09:00",
+        h5: "10:00", h6: "11:00", h7: "12:00", h8: "13:00",
+        h9: "", h10: "", h11: "", h12: "",
+        s1: "13:05", s2: "13:45", s3: ""
+      };
+
+      // Hour 1 (06:00)
+      lcgData.records['h1'] = {
+        companion: "N", // Alert: N
+        pain: "N",      // Alert: N
+        fluid: "Y",
+        posture: "MO",
+        fhr: "140",
+        decel: "N",
+        liquor: "C",
+        pos: "P",       // Alert: P
+        caput: "0",
+        moulding: "0",
+        pulse: "88",
+        sbp: "120",
+        dbp: "80",
+        temp: "36.5",
+        urine: "-/-",
+        cx_count: "3",
+        cx_dur: "40",
+        cervix: "5",
+        descent: "4",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "PAIN RELIEF REQUIRED; companion offered",
+        plan: "Offer companionship and relaxation techniques; continue routine monitoring",
+        initials: "LA"
+      };
+
+      // Hour 2 (07:00)
+      lcgData.records['h2'] = {
+        companion: "Y",
+        pain: "Y",
+        fluid: "Y",
+        posture: "SP",  // Alert: SP
+        fhr: "132",
+        decel: "V",
+        cx_count: "3",
+        cx_dur: "40",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "NORMAL PROGRESS",
+        plan: "Encourage mobilization; continue routine monitoring",
+        initials: "LA"
+      };
+
+      // Hour 3 (08:00)
+      lcgData.records['h3'] = {
+        companion: "Y",
+        pain: "Y",
+        fluid: "Y",
+        posture: "MO",
+        fhr: "148",
+        decel: "N",
+        cx_count: "3",
+        cx_dur: "40",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "NORMAL PROGRESS",
+        plan: "Continuation of routine monitoring",
+        initials: "LA"
+      };
+
+      // Hour 4 (09:00)
+      lcgData.records['h4'] = {
+        companion: "Y",
+        pain: "Y",
+        fluid: "D",
+        posture: "MO",
+        fhr: "133",
+        decel: "N",
+        cx_count: "3",
+        cx_dur: "45",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "NORMAL PROGRESS",
+        plan: "Continuation of routine monitoring",
+        initials: "GP"
+      };
+
+      // Hour 5 (10:00) - 4-hour reassessment
+      lcgData.records['h5'] = {
+        companion: "N", // Alert: N (sister temporarily stepped out)
+        pain: "N",      // Alert: N (complains of strong pain)
+        fluid: "Y",
+        posture: "SP",  // Alert: SP
+        fhr: "151",
+        decel: "V",
+        liquor: "+",
+        pos: "T",       // Alert: T
+        caput: "+",
+        moulding: "+",
+        pulse: "96",
+        sbp: "128",
+        dbp: "84",
+        temp: "36.9",
+        urine: "-/-",
+        cx_count: "3",
+        cx_dur: "50",
+        cervix: "8",
+        descent: "3",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "PAIN RELIEF REQUIRED; sister recalled",
+        plan: "Offer companionship and manual pain relief; encourage mobilization; continue monitoring",
+        initials: "GP"
+      };
+
+      // Hour 6 (11:00)
+      lcgData.records['h6'] = {
+        companion: "Y",
+        pain: "Y",
+        fluid: "Y",
+        posture: "MO",
+        fhr: "149",
+        decel: "N",
+        cx_count: "4",
+        cx_dur: "50",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "NORMAL PROGRESS",
+        plan: "Continuation of routine monitoring",
+        initials: "GP"
+      };
+
+      // Hour 7 (12:00)
+      lcgData.records['h7'] = {
+        companion: "Y",
+        pain: "Y",
+        fluid: "D",
+        posture: "MO",
+        fhr: "153",
+        decel: "N",
+        cx_count: "3",
+        cx_dur: "50",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "NORMAL PROGRESS",
+        plan: "Continuation of routine monitoring",
+        initials: "GP"
+      };
+
+      // Hour 8 (13:00) - Full Dilatation Reached
+      lcgData.records['h8'] = {
+        companion: "Y",
+        pain: "Y",
+        fluid: "Y",
+        posture: "SP",
+        fhr: "132",
+        decel: "N",
+        liquor: "+",
+        pos: "A",
+        caput: "+",
+        moulding: "++",
+        cx_count: "3",
+        cx_dur: "50",
+        cervix: "10", // 10 cm - Full dilatation!
+        descent: "2",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "NORMAL PROGRESS - FULL DILATATION (10cm)",
+        plan: "Proceed to Second Stage; support spontaneous bearing down",
+        initials: "GP"
+      };
+
+      // Second Stage Hour 1 (13:05 pushing begins)
+      lcgData.records['s1'] = {
+        companion: "Y",
+        pain: "Y",
+        fluid: "Y",
+        posture: "SP",
+        fhr: "118",
+        decel: "E", // Early deceleration (normal in second stage)
+        cx_count: "4",
+        cx_dur: "50",
+        cervix: "P", // 'P' inserted for pushing
+        descent: "0",
+        oxytocin: "N",
+        medicine: "N",
+        iv: "N",
+        assessment: "NORMAL PROGRESS",
+        plan: "Continuation of routine monitoring; support spontaneous pushing",
+        initials: "GP"
+      };
+
+      // Second Stage Hour 2 (13:45 Birth)
+      lcgData.records['s2'] = {
+        companion: "Y",
+        fhr: "125",
+        decel: "E",
+        assessment: "NORMAL VAGINAL BIRTH AT 13:45",
+        plan: "Immediate skin-to-skin; delayed cord clamping at 2 min; 10 IU Oxytocin IM administered",
+        initials: "GP"
+      };
+
+      // Multi-clinician audit history matching the WHO case narrative
+      lcgData.auditTrail = [
+        { timestamp: "2026-06-07T06:00:00Z", user: "Sister Lucy Adams (Midwife)", action: "ADMISSION & H1", details: "Dilatation: 5cm; Descent: 4/5; FHR: 140bpm; Alert: Companion N, Pain N, Posture SP; Assessment: PAIN RELIEF REQUIRED" },
+        { timestamp: "2026-06-07T07:00:00Z", user: "Sister Lucy Adams (Midwife)", action: "ASSESSMENT (Hour 2)", details: "Companion: Yes; Pain Relief: Yes; Posture: SP (Supine); Assessment: NORMAL PROGRESS" },
+        { timestamp: "2026-06-07T09:00:00Z", user: "Dr. Grace Peters (Obstetrician)", action: "HANDOVER (Hour 4)", details: "Contractions: 3/10m (45s); FHR: 133bpm; Assessment: NORMAL PROGRESS" },
+        { timestamp: "2026-06-07T10:00:00Z", user: "Dr. Grace Peters (Obstetrician)", action: "REASSESSMENT (Hour 5)", details: "Dilatation: 8cm; Descent: 3/5; FHR: 151bpm; Assessment: PAIN RELIEF REQUIRED, sister recalled" },
+        { timestamp: "2026-06-07T13:00:00Z", user: "Dr. Grace Peters (Obstetrician)", action: "FULL DILATATION (Hour 8)", details: "Dilatation: 10cm; Descent: 2/5; FHR: 132bpm; Assessment: FULL DILATATION - Proceed to second stage" },
+        { timestamp: "2026-06-07T13:45:00Z", user: "Dr. Grace Peters (Obstetrician)", action: "DELIVERY COMPLETED", details: "Normal spontaneous vaginal birth at 13:45. Delayed cord clamping; 10 IU Oxytocin given." },
+        { timestamp: "2026-06-07T14:00:00Z", user: "Dr. Grace Peters (Obstetrician)", action: "FORM LOCKED", details: "All labour and birth activities completed. Form finalized and locked for patient safety." }
+      ];
+      lcgData.locked = true;
+      lcgData.lockedBy = "Dr. Grace Peters (Obstetrician)";
+      lcgData.lockedAt = "2026-06-07T14:00:00Z";
+
+      refreshCellDisplay();
+      autoSave();
+      drawCervicogramChart();
+      evaluateAlerts();
+      renderAuditTrail();
+      applyLockState();
+
+      alert("WHO Manual Case Example 'Mary Jane Williams' loaded successfully!\nNotice how observations meeting the alert criteria (Companion N, Pain relief N, Posture SP, Position P/T) are automatically circled in red and surfaced in the decision support monitor.");
+    }
+
+    // Auto calculate active labour start time to columns
+    function updateStartHourTime() {
+      const activeTime = document.getElementById('ptActiveTime').value;
+      if (!activeTime) return;
+
+      const [hours, mins] = activeTime.split(':').map(Number);
+      COLUMNS.forEach((col, idx) => {
+        if (col.startsWith('h')) {
+          const hIdx = parseInt(col.replace('h', '')) - 1;
+          const d = new Date();
+          d.setHours(hours + hIdx, mins);
+          const hh = String(d.getHours()).padStart(2, '0');
+          const mm = String(d.getMinutes()).padStart(2, '0');
+          const inp = document.getElementById(`time_${col}`);
+          if (inp && (!lcgData.times[col] || lcgData.times[col] === '')) {
+            inp.value = `${hh}:${mm}`;
+            lcgData.times[col] = `${hh}:${mm}`;
+          }
+        }
+      });
+      autoSave();
+    }
+
+    // Reset chart to empty
+    function resetChart() {
+      if (lcgData.locked) {
+        showToast("This Labour Care Guide is locked and cannot be reset.", true);
+        return;
+      }
+      if (confirm("Are you sure you want to clear this Labour Care Guide? All current entries will be reset.")) {
+        initData();
+        document.getElementById('ptName').value = '';
+        document.getElementById('ptParity').value = '';
+        document.getElementById('ptOnset').value = 'Spontaneous';
+        setEtPickerValue('ptActiveDate', '');
+        document.getElementById('ptActiveTime').value = '';
+        setEtPickerValue('ptRuptureDate', '');
+        document.getElementById('ptRuptureTime').value = '';
+        document.getElementById('ptRiskFactors').value = '';
+        renderTable();
+        drawCervicogramChart();
+        evaluateAlerts();
+        autoSave();
+      }
+    }
+
+    // Export JSON
+    function exportJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lcgData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      const filename = `WHO_LCG_${(lcgData.meta.name || 'Patient').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.json`;
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", filename);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // AutoSave / LocalStorage
+    function autoSave() {
+      lcgData.meta = {
+        facilityName: document.getElementById('facilityName').value,
+        name: document.getElementById('ptName').value,
+        parity: document.getElementById('ptParity').value,
+        onset: document.getElementById('ptOnset').value,
+        activeDate: document.getElementById('ptActiveDate').value,
+        activeTime: document.getElementById('ptActiveTime').value,
+        ruptureDate: document.getElementById('ptRuptureDate').value,
+        ruptureTime: document.getElementById('ptRuptureTime').value,
+        riskFactors: document.getElementById('ptRiskFactors').value
+      };
+
+      COLUMNS.forEach(col => {
+        const inp = document.getElementById(`time_${col}`);
+        if (inp) lcgData.times[col] = inp.value;
+      });
+
+      localStorage.setItem('who_lcg_data', JSON.stringify(lcgData));
+      debouncedSaveToOpenMRS();
+    }
+
+    function loadSavedData() {
+      const saved = localStorage.getItem('who_lcg_data');
+      if (saved) {
+        try {
+          lcgData = JSON.parse(saved);
+          if (!lcgData.auditTrail) lcgData.auditTrail = [];
+          if (lcgData.locked === undefined) lcgData.locked = false;
+          if (lcgData.meta) {
+            document.getElementById('facilityName').value = lcgData.meta.facilityName || 'Maternity Care Unit';
+            document.getElementById('ptName').value = lcgData.meta.name || '';
+            document.getElementById('ptParity').value = lcgData.meta.parity || '';
+            document.getElementById('ptOnset').value = lcgData.meta.onset || 'Spontaneous';
+            document.getElementById('ptActiveDate').value = lcgData.meta.activeDate || '';
+            document.getElementById('ptActiveTime').value = lcgData.meta.activeTime || '';
+            document.getElementById('ptRuptureDate').value = lcgData.meta.ruptureDate || '';
+            document.getElementById('ptRuptureTime').value = lcgData.meta.ruptureTime || '';
+            document.getElementById('ptRiskFactors').value = lcgData.meta.riskFactors || '';
+          }
+        } catch(e) {
+          initData();
+        }
+      } else {
+        initData();
+      }
+    }
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('lcg_theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('lcg_theme', 'dark');
+      }
+      drawCervicogramChart();
+    }
+
+    // Initial setup on DOM ready
+    
+    // =========================================================================
+    // Ethiopian Calendar Engine & Date Picker Controller
+    // =========================================================================
+    const ET_MONTHS = [
+      { am: 'መስከረም', en: 'Meskerem' },
+      { am: 'ጥቅምት',  en: 'Tikimt' },
+      { am: 'ኅዳር',   en: 'Hidar' },
+      { am: 'ታኅሣሥ',  en: 'Tahsas' },
+      { am: 'ጥር',    en: 'Tir' },
+      { am: 'የካቲት',  en: 'Yekatit' },
+      { am: 'መጋቢት',  en: 'Megabit' },
+      { am: 'ሚያዝያ',  en: 'Miazia' },
+      { am: 'ግንቦት',  en: 'Ginbot' },
+      { am: 'ሰኔ',    en: 'Sene' },
+      { am: 'ሐምሌ',   en: 'Hamle' },
+      { am: 'ነሐሴ',   en: 'Nehase' },
+      { am: 'ጳጉሜን',  en: 'Pagume' }
+    ];
+
+    const ET_EPOCH = 1724221;
+
+    function isEtLeapYear(y) {
+      return ((y + 1) % 4) === 0;
+    }
+
+    function etDaysInMonth(y, m) {
+      if (m >= 1 && m <= 12) return 30;
+      return isEtLeapYear(y) ? 6 : 5;
+    }
+
+    function etToJdn(y, m, d) {
+      return (ET_EPOCH - 1) + 365 * (y - 1) + Math.floor(y / 4) + 30 * (m - 1) + d;
+    }
+
+    function jdnToEt(jdn) {
+      const r = (jdn - ET_EPOCH) % 1461;
+      const n = (r % 365) + 365 * Math.floor(r / 1460);
+      const year = 4 * Math.floor((jdn - ET_EPOCH) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+      const month = Math.floor(n / 30) + 1;
+      const day = (n % 30) + 1;
+      return { year, month, day };
+    }
+
+    function gregorianToJdn(gy, gm, gd) {
+      const a = Math.floor((14 - gm) / 12);
+      const y = gy + 4800 - a;
+      const m = gm + 12 * a - 3;
+      return gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+    }
+
+    function jdnToGregorian(jdn) {
+      const a = jdn + 32044;
+      const b = Math.floor((4 * a + 3) / 146097);
+      const c = a - Math.floor((146097 * b) / 4);
+      const d = Math.floor((4 * c + 3) / 1461);
+      const e = c - Math.floor((1461 * d) / 4);
+      const m = Math.floor((5 * e + 2) / 153);
+      const day = e - Math.floor((153 * m + 2) / 5) + 1;
+      const month = m + 3 - 12 * Math.floor(m / 10);
+      const year = 100 * b + d - 4800 + Math.floor(m / 10);
+      return { year, month, day };
+    }
+
+    function getTodayEt() {
+      const now = new Date();
+      const jdn = gregorianToJdn(now.getFullYear(), now.getMonth() + 1, now.getDate());
+      return jdnToEt(jdn);
+    }
+
+    function pad2(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function parseEtValue(val) {
+      if (!val) return null;
+      const clean = String(val).trim().split(' ')[0];
+      const parts = clean.split('-').map(Number);
+      if (parts.length !== 3 || parts.some(isNaN)) return null;
+      return { year: parts[0], month: parts[1], day: parts[2] };
+    }
+
+    function formatEtDisplay(parsed) {
+      if (!parsed) return '';
+      const mObj = ET_MONTHS[parsed.month - 1];
+      const mLabel = mObj ? `${mObj.am} (${mObj.en})` : parsed.month;
+      return `${mLabel} ${parsed.day}, ${parsed.year} ዓ.ም`;
+    }
+
+    function formatGregEquivalent(parsed) {
+      if (!parsed) return '';
+      const g = jdnToGregorian(etToJdn(parsed.year, parsed.month, parsed.day));
+      const gMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${gMonths[g.month - 1]} ${g.day}, ${g.year}`;
+    }
+
+    function updateWrapperDisplay(wrapper) {
+      if (!wrapper) return;
+      const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+      const textSpan = wrapper.querySelector('.et-date-text');
+      const hintEl = document.getElementById(hiddenInput.id + 'GregHint');
+      const parsed = parseEtValue(hiddenInput.value);
+
+      if (parsed) {
+        textSpan.textContent = formatEtDisplay(parsed);
+        textSpan.classList.remove('placeholder');
+        if (hintEl) {
+          hintEl.textContent = 'Gregorian: ' + formatGregEquivalent(parsed);
+        }
+      } else {
+        textSpan.textContent = 'ቀን / ወር / ዓ.ም';
+        textSpan.classList.add('placeholder');
+        if (hintEl) {
+          hintEl.textContent = '';
+        }
+      }
+    }
+
+    function setEtPickerValue(inputId, val) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const wrapper = input.closest('.et-date-wrapper');
+      if (!val) {
+        input.value = '';
+        if (wrapper) updateWrapperDisplay(wrapper);
+        return;
+      }
+
+      let etYear, etMonth, etDay;
+      const parts = String(val).trim().split(' ')[0].split('-').map(Number);
+      if (parts.length === 3 && !parts.some(isNaN)) {
+        if (parts[0] > 2020) {
+          // Gregorian: convert to Ethiopian
+          const jdn = gregorianToJdn(parts[0], parts[1], parts[2]);
+          const et = jdnToEt(jdn);
+          etYear = et.year;
+          etMonth = et.month;
+          etDay = et.day;
+        } else {
+          // Ethiopian date already
+          etYear = parts[0];
+          etMonth = parts[1];
+          etDay = parts[2];
+        }
+        input.value = `${etYear}-${pad2(etMonth)}-${pad2(etDay)}`;
+      } else {
+        input.value = val;
+      }
+
+      if (wrapper) {
+        updateWrapperDisplay(wrapper);
+      }
+    }
+
+    let activeEtWrapper = null;
+    let etViewYear = 2019;
+    let etViewMonth = 3;
+
+    function initEtPicker() {
+      const popover = document.getElementById('etPopover');
+      const monthSelect = document.getElementById('etMonthSelect');
+      const yearSelect = document.getElementById('etYearSelect');
+      if (!popover || !monthSelect || !yearSelect) return;
+
+      monthSelect.innerHTML = '';
+      yearSelect.innerHTML = '';
+
+      ET_MONTHS.forEach((m, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx + 1;
+        opt.textContent = `${m.am} (${m.en})`;
+        monthSelect.appendChild(opt);
+      });
+
+      const today = getTodayEt();
+      etViewYear = today.year;
+      etViewMonth = today.month;
+
+      for (let y = today.year - 10; y <= today.year + 10; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = `${y} ዓ.ም`;
+        yearSelect.appendChild(opt);
+      }
+
+      monthSelect.addEventListener('change', () => {
+        etViewMonth = parseInt(monthSelect.value, 10);
+        renderEtCalendarGrid();
+      });
+
+      yearSelect.addEventListener('change', () => {
+        etViewYear = parseInt(yearSelect.value, 10);
+        renderEtCalendarGrid();
+      });
+
+      document.getElementById('etPrevMonth').addEventListener('click', (e) => {
+        e.stopPropagation();
+        etViewMonth--;
+        if (etViewMonth < 1) {
+          etViewMonth = 13;
+          etViewYear--;
+        }
+        renderEtCalendarGrid();
+      });
+
+      document.getElementById('etNextMonth').addEventListener('click', (e) => {
+        e.stopPropagation();
+        etViewMonth++;
+        if (etViewMonth > 13) {
+          etViewMonth = 1;
+          etViewYear++;
+        }
+        renderEtCalendarGrid();
+      });
+
+      document.getElementById('etTodayBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const t = getTodayEt();
+        selectEtDate(t.year, t.month, t.day);
+      });
+
+      document.getElementById('etClearBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (activeEtWrapper) {
+          const hiddenInput = activeEtWrapper.querySelector('input[type="hidden"]');
+          hiddenInput.value = '';
+          updateWrapperDisplay(activeEtWrapper);
+          autoSave();
+        }
+        closeEtPopover();
+      });
+
+      document.getElementById('etCloseBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeEtPopover();
+      });
+
+      document.querySelectorAll('[data-et-picker]').forEach(wrapper => {
+        const display = wrapper.querySelector('.et-date-display');
+        display.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (activeEtWrapper === wrapper && popover.classList.contains('open')) {
+            closeEtPopover();
+          } else {
+            openEtPopover(wrapper);
+          }
+        });
+        display.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openEtPopover(wrapper);
+          }
+        });
+        updateWrapperDisplay(wrapper);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (popover.classList.contains('open') && !popover.contains(e.target) && !e.target.closest('[data-et-picker]')) {
+          closeEtPopover();
+        }
+      });
+    }
+
+    function renderEtCalendarGrid() {
+      const monthSelect = document.getElementById('etMonthSelect');
+      const yearSelect = document.getElementById('etYearSelect');
+      const daysGrid = document.getElementById('etDaysGrid');
+      const gregHint = document.getElementById('etGregHint');
+      if (!daysGrid) return;
+
+      monthSelect.value = etViewMonth;
+      yearSelect.value = etViewYear;
+      daysGrid.innerHTML = '';
+
+      const today = getTodayEt();
+      const hiddenInput = activeEtWrapper ? activeEtWrapper.querySelector('input[type="hidden"]') : null;
+      const selected = hiddenInput ? parseEtValue(hiddenInput.value) : null;
+
+      const firstJdn = etToJdn(etViewYear, etViewMonth, 1);
+      const startDow = (firstJdn + 1) % 7;
+      const totalDays = etDaysInMonth(etViewYear, etViewMonth);
+
+      for (let i = 0; i < startDow; i++) {
+        const blank = document.createElement('div');
+        blank.className = 'et-day-empty';
+        daysGrid.appendChild(blank);
+      }
+
+      for (let d = 1; d <= totalDays; d++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'et-day-btn';
+        btn.textContent = d;
+
+        if (today.year === etViewYear && today.month === etViewMonth && today.day === d) {
+          btn.classList.add('today');
+        }
+        if (selected && selected.year === etViewYear && selected.month === etViewMonth && selected.day === d) {
+          btn.classList.add('selected');
+        }
+
+        btn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          selectEtDate(etViewYear, etViewMonth, d);
+        });
+        daysGrid.appendChild(btn);
+      }
+
+      if (selected && selected.year === etViewYear && selected.month === etViewMonth) {
+        gregHint.textContent = 'Gregorian: ' + formatGregEquivalent(selected);
+      } else {
+        gregHint.textContent = 'Gregorian (Month Start): ' + formatGregEquivalent({ year: etViewYear, month: etViewMonth, day: 1 });
+      }
+    }
+
+    function selectEtDate(year, month, day) {
+      if (!activeEtWrapper) return;
+      const hiddenInput = activeEtWrapper.querySelector('input[type="hidden"]');
+      hiddenInput.value = `${year}-${pad2(month)}-${pad2(day)}`;
+      updateWrapperDisplay(activeEtWrapper);
+      renderEtCalendarGrid();
+      autoSave();
+      closeEtPopover();
+    }
+
+    function openEtPopover(wrapper) {
+      activeEtWrapper = wrapper;
+      const popover = document.getElementById('etPopover');
+      const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+      const parsed = parseEtValue(hiddenInput.value);
+      const today = getTodayEt();
+
+      etViewYear = parsed ? parsed.year : today.year;
+      etViewMonth = parsed ? parsed.month : today.month;
+
+      renderEtCalendarGrid();
+      popover.classList.add('open');
+
+      const rect = wrapper.getBoundingClientRect();
+      const popW = 310;
+      const popH = popover.offsetHeight || 320;
+      let left = rect.left;
+      let top = rect.bottom + 6;
+
+      if (left + popW > window.innerWidth - 12) {
+        left = Math.max(12, window.innerWidth - popW - 12);
+      }
+      if (top + popH > window.innerHeight - 12) {
+        top = Math.max(12, rect.top - popH - 6);
+      }
+
+      popover.style.left = `${left}px`;
+      popover.style.top = `${top}px`;
+    }
+
+    function closeEtPopover() {
+      const popover = document.getElementById('etPopover');
+      if (popover) popover.classList.remove('open');
+      activeEtWrapper = null;
+    }
+
+    // Populate full chart data model into UI elements & re-render
+    function populateChartData(parsed) {
+      if (!parsed) return;
+      try {
+        lcgData = parsed;
+        if (!lcgData.auditTrail) lcgData.auditTrail = [];
+        if (lcgData.locked === undefined) lcgData.locked = false;
+
+        if (lcgData.meta) {
+          if (document.getElementById('facilityName')) document.getElementById('facilityName').value = lcgData.meta.facilityName || 'Maternity & Child Health Care Unit';
+          if (document.getElementById('ptName')) document.getElementById('ptName').value = lcgData.meta.name || patientNameParam || '';
+          if (document.getElementById('ptParity')) document.getElementById('ptParity').value = lcgData.meta.parity || '';
+          if (document.getElementById('ptOnset')) document.getElementById('ptOnset').value = lcgData.meta.onset || 'Spontaneous';
+          if (document.getElementById('ptActiveTime')) document.getElementById('ptActiveTime').value = lcgData.meta.activeTime || '';
+          if (document.getElementById('ptRuptureTime')) document.getElementById('ptRuptureTime').value = lcgData.meta.ruptureTime || '';
+          if (document.getElementById('ptRiskFactors')) document.getElementById('ptRiskFactors').value = lcgData.meta.riskFactors || '';
+
+          setEtPickerValue('ptActiveDate', lcgData.meta.activeDate || '');
+          setEtPickerValue('ptRuptureDate', lcgData.meta.ruptureDate || '');
+        }
+
+        renderTable();
+        drawCervicogramChart();
+        evaluateAlerts();
+        renderAuditTrail();
+        applyLockState();
+        showToast("Labour Care Guide record loaded successfully!");
+      } catch(e) {
+        console.error("Error populating chart data:", e);
+      }
+    }
+
+    // Initial setup on DOM ready
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('lcg_theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+
+      initEtPicker();
+      loadSavedData();
+      loadOpenMrsPatientRecord();
+    });
+
+
+    // =========================================================================
+    // OpenMRS / Bahmni Patient Encounter & Clinical Governance Integration
+    // =========================================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    let patientUuid = urlParams.get('patientUuid');
+    let encounterUuid = urlParams.get('encounterUuid');
+    let obsUuidParam = urlParams.get('obsUuid');
+    let patientNameParam = urlParams.get('patientName');
+    const isNewParam = urlParams.get('new') === 'true';
+
+    let currentUserName = 'Attending Clinician';
+
+    function fetchCurrentUserInfo() {
+      try {
+        if (window.parent && window.parent.angular) {
+          const rootScope = window.parent.angular.element(window.parent.document.body).injector().get('$rootScope');
+          if (rootScope && rootScope.currentUser) {
+            const user = rootScope.currentUser;
+            currentUserName = user.person?.display || user.display || user.username || currentUserName;
+          }
+          if (rootScope && rootScope.currentProvider && rootScope.currentProvider.name) {
+            currentUserName = rootScope.currentProvider.name;
+          }
+        }
+      } catch (e) {}
+
+      fetch('/openmrs/ws/rest/v1/session', { credentials: 'include' })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && data.authenticated && data.user) {
+            const fullName = data.user.person ? (data.user.person.display || data.user.person.names?.[0]?.display) : null;
+            if (fullName) {
+              currentUserName = fullName;
+            } else if (data.currentProvider && data.currentProvider.display) {
+              currentUserName = data.currentProvider.display;
+            } else if (data.user.username) {
+              currentUserName = data.user.username;
+            }
+          }
+          renderAuditTrail();
+        })
+        .catch(() => {});
+    }
+
+    // Extract patientUuid from parent URL or angular context if embedded
+    if (!patientUuid) {
+      try {
+        const hash = (window.parent && window.parent.location.hash) || window.location.hash || '';
+        const m = hash.match(/patient\/([a-f0-9\-]+)/i);
+        if (m) patientUuid = m[1];
+      } catch(e) {}
+    }
+    if (!patientUuid) {
+      try {
+        if (window.parent && window.parent.angular) {
+          const rootScope = window.parent.angular.element(window.parent.document.body).injector().get('$rootScope');
+          if (rootScope && rootScope.patient && rootScope.patient.uuid) {
+            patientUuid = rootScope.patient.uuid;
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Show toast message
+    function showToast(msg, isError = false) {
+      let toast = document.getElementById('lcgToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'lcgToast';
+        toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 transition-all duration-300';
+        document.body.appendChild(toast);
+      }
+      toast.className = isError 
+        ? 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 bg-red-600 text-white' 
+        : 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 bg-emerald-600 text-white';
+      toast.innerHTML = (isError ? '&#9888; ' : '&#10003; ') + msg;
+      toast.style.display = 'flex';
+      setTimeout(() => { if (toast) toast.style.display = 'none'; }, 4000);
+    }
+
+    // Clinical Governance & Audit Trail
+    function addAuditLog(action, details, provider) {
+      if (!lcgData.auditTrail) lcgData.auditTrail = [];
+      const user = provider || currentUserName || 'Attending Clinician';
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        user: user,
+        action: action,
+        details: details || ''
+      };
+      lcgData.auditTrail.push(logEntry);
+      renderAuditTrail();
+    }
+
+    function renderAuditTrail() {
+      const tbody = document.getElementById('auditTrailTableBody');
+      if (!tbody) return;
+      if (!lcgData.auditTrail || lcgData.auditTrail.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-slate-400 italic">No activity recorded yet</td></tr>';
+        return;
+      }
+
+      const rowsHtml = lcgData.auditTrail.slice().reverse().map(log => {
+        const dt = new Date(log.timestamp);
+        const dtStr = isNaN(dt.getTime()) ? log.timestamp : dt.toLocaleString();
+        
+        let actionBadgeClass = 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border-slate-300';
+        if (log.action.includes('LOCKED')) {
+          actionBadgeClass = 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-300';
+        } else if (log.action.includes('UNLOCKED')) {
+          actionBadgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300';
+        } else if (log.action.includes('SAVED')) {
+          actionBadgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300';
+        } else if (log.action.includes('ASSESSMENT')) {
+          actionBadgeClass = 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border-teal-300';
+        }
+
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/60 transition">
+            <td class="p-2.5 font-mono text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">${dtStr}</td>
+            <td class="p-2.5 font-semibold text-slate-900 dark:text-white">
+              <div class="flex items-center gap-1.5">
+                <span class="w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                  ${(log.user || 'U').charAt(0).toUpperCase()}
+                </span>
+                <span>${log.user || 'Clinical Staff'}</span>
+              </div>
+            </td>
+            <td class="p-2.5 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold border ${actionBadgeClass}">
+                ${log.action}
+              </span>
+            </td>
+            <td class="p-2.5 text-slate-700 dark:text-slate-300 font-medium text-[11.5px] leading-relaxed">
+              ${log.details || '-'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    // Form Locking & Non-Editable Enforcement
+    function applyLockState() {
+      const isLocked = Boolean(lcgData.locked);
+      const lockBtn = document.getElementById('btnLockForm');
+      const lockTxt = document.getElementById('txtLockForm');
+      const banner = document.getElementById('lockedNoticeBanner');
+      const bannerDetails = document.getElementById('lockedNoticeDetails');
+      const lockedByBadge = document.getElementById('lockedByBadge');
+      const govBadge = document.getElementById('governanceStatusBadge');
+      const quickRecordBtn = document.getElementById('btnQuickRecord');
+
+      if (isLocked) {
+        if (banner) {
+          banner.classList.remove('hidden');
+          const lDate = lcgData.lockedAt ? new Date(lcgData.lockedAt).toLocaleString() : 'Recent';
+          bannerDetails.textContent = `This Labour Care Guide was finalized & locked on ${lDate} by ${lcgData.lockedBy || 'Authorized Staff'}. All records are read-only for legal data safety.`;
+          if (lockedByBadge) lockedByBadge.textContent = `Locked by ${lcgData.lockedBy || 'Staff'}`;
+        }
+        if (lockBtn && lockTxt) {
+          lockBtn.className = "px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition";
+          lockTxt.textContent = "Unlock Form 🔓";
+          lockBtn.title = "Click to request authorized unlocking";
+        }
+        if (govBadge) {
+          govBadge.className = "px-2.5 py-1 text-xs font-bold rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300";
+          govBadge.innerHTML = `🔒 Finalized &amp; Locked by ${lcgData.lockedBy || 'Staff'}`;
+        }
+        if (quickRecordBtn) {
+          quickRecordBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      } else {
+        if (banner) {
+          banner.classList.add('hidden');
+        }
+        if (lockBtn && lockTxt) {
+          lockBtn.className = "px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition";
+          lockTxt.textContent = "Lock Form";
+          lockBtn.title = "Finalize and lock this Labour Care Guide after finished activity to make it non-editable";
+        }
+        if (govBadge) {
+          govBadge.className = "px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300";
+          govBadge.innerHTML = "Active Labour Monitoring";
+        }
+        if (quickRecordBtn) {
+          quickRecordBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+      }
+
+      // Disable or enable header demographic inputs
+      const headerInputs = [
+        'facilityName', 'ptName', 'ptParity', 'ptOnset', 
+        'ptActiveDate', 'ptActiveTime', 'ptRuptureDate', 
+        'ptRuptureTime', 'ptRiskFactors'
+      ];
+      headerInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = isLocked;
+      });
+
+      // Disable or enable hour time inputs
+      COLUMNS.forEach(col => {
+        const el = document.getElementById(`time_${col}`);
+        if (el) el.disabled = isLocked;
+      });
+    }
+
+    function toggleLockForm() {
+      if (lcgData.locked) {
+        requestUnlockForm();
+        return;
+      }
+
+      const confirmed = confirm(
+        "Are you sure you want to FINALIZE AND LOCK this WHO Labour Care Guide?\n\n" +
+        "• Activity will be marked as finished.\n" +
+        "• The form will become strictly NON-EDITABLE for patient safety and clinical legal integrity.\n" +
+        "• Your full name (" + currentUserName + ") will be permanently recorded in the clinical audit trail."
+      );
+
+      if (!confirmed) return;
+
+      lcgData.locked = true;
+      lcgData.lockedBy = currentUserName;
+      lcgData.lockedAt = new Date().toISOString();
+
+      addAuditLog("FORM LOCKED", `Labour Care Guide finalized and locked as read-only by ${currentUserName}`);
+      applyLockState();
+      saveToPatientEncounter(false);
+      showToast("Labour Care Guide finalized and locked successfully!");
+    }
+
+    function requestUnlockForm() {
+      const reason = prompt(
+        "This form is currently LOCKED for patient safety and data integrity.\n\n" +
+        "To unlock for corrections, please enter the clinical authorization reason:",
+        ""
+      );
+
+      if (!reason || !reason.trim()) {
+        showToast("Unlock canceled. Form remains non-editable.", true);
+        return;
+      }
+
+      lcgData.locked = false;
+      addAuditLog("FORM UNLOCKED", `Form unlocked by ${currentUserName}. Authorization reason: "${reason.trim()}"`);
+      applyLockState();
+      saveToPatientEncounter(false);
+      showToast("Labour Care Guide unlocked for editing.");
+    }
+
+    // Load existing OpenMRS observation for this patient if available
+    function loadOpenMrsPatientRecord() {
+      fetchCurrentUserInfo();
+
+      if (patientNameParam && !document.getElementById('ptName').value) {
+        document.getElementById('ptName').value = patientNameParam;
+        lcgData.meta.name = patientNameParam;
+      }
+
+      if (isNewParam) {
+        initData();
+        if (patientNameParam) {
+          lcgData.meta.name = patientNameParam;
+          document.getElementById('ptName').value = patientNameParam;
+        }
+        addAuditLog("FORM INITIALIZED", `New Labour Care Guide initialized by ${currentUserName}`);
+        renderTable();
+        drawCervicogramChart();
+        evaluateAlerts();
+        applyLockState();
+        renderAuditTrail();
+        return;
+      }
+
+      // Step 1: Check instant local/session storage cache passed from dashboard
+      let cachedChart = null;
+      if (obsUuidParam) {
+        try {
+          const item = localStorage.getItem('lcg_review_' + obsUuidParam);
+          if (item) cachedChart = JSON.parse(item);
+        } catch(e) {}
+      }
+      if (!cachedChart) {
+        try {
+          const item = sessionStorage.getItem('lcg_active_chart');
+          if (item) cachedChart = JSON.parse(item);
+        } catch(e) {}
+      }
+
+      if (cachedChart) {
+        populateChartData(cachedChart);
+      }
+
+      if (!patientUuid && !obsUuidParam) return;
+
+      // Step 2: Fetch specific observation directly by obsUuidParam
+      if (obsUuidParam) {
+        fetch(`/openmrs/ws/rest/v1/obs/${obsUuidParam}?v=custom:(uuid,obsDatetime,value,encounter:(uuid,encounterDatetime))`, {
+          credentials: 'include'
+        })
+        .then(r => r.ok ? r.json() : null)
+        .then(obs => {
+          if (obs && obs.value) {
+            let parsed = null;
+            if (typeof obs.value === 'object' && obs.value !== null) {
+              parsed = obs.value;
+            } else if (typeof obs.value === 'string') {
+              try { parsed = JSON.parse(obs.value); } catch(e) {}
+            }
+            if (parsed) {
+              if (obs.encounter && obs.encounter.uuid) encounterUuid = obs.encounter.uuid;
+              populateChartData(parsed);
+            }
+          }
+        })
+        .catch(err => console.warn("Obs fetch error:", err));
+      }
+
+      // Step 3: Fetch all LCG observations for this patient
+      if (patientUuid) {
+        fetch(`/openmrs/ws/rest/v1/obs?patient=${patientUuid}&concept=9e2a5670-3d71-4569-b1d5-894000000002&v=custom:(uuid,obsDatetime,value,encounter:(uuid,encounterDatetime))`, {
+          credentials: 'include'
+        })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && data.results && data.results.length > 0) {
+            const sorted = data.results.slice().sort((a, b) => new Date(b.obsDatetime) - new Date(a.obsDatetime));
+            let targetObs = sorted[0];
+
+            if (obsUuidParam) {
+              const found = sorted.find(o => o.uuid === obsUuidParam);
+              if (found) targetObs = found;
+            } else if (encounterUuid) {
+              const found = sorted.find(o => o.encounter && o.encounter.uuid === encounterUuid);
+              if (found) targetObs = found;
+            }
+
+            if (targetObs.encounter && targetObs.encounter.uuid) {
+              encounterUuid = targetObs.encounter.uuid;
+            }
+
+            let parsed = null;
+            if (typeof targetObs.value === 'object' && targetObs.value !== null) {
+              parsed = targetObs.value;
+            } else if (typeof targetObs.value === 'string') {
+              try { parsed = JSON.parse(targetObs.value); } catch(e) {}
+            }
+            if (parsed) {
+              populateChartData(parsed);
+            }
+          }
+        })
+        .catch(err => {
+          console.warn("Unable to fetch OpenMRS LCG obs:", err);
+        });
+      }
+    }
+
+    // Save observation form to patient encounter in OpenMRS
+    let autoSaveTimer = null;
+    function debouncedSaveToOpenMRS() {
+      if (patientUuid && !lcgData.locked) {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+          saveToPatientEncounter(true);
+        }, 1000);
+      }
+    }
+
+    async function saveToPatientEncounter(silent = false) {
+      const btn = document.getElementById('btnSaveEncounter');
+      const txt = document.getElementById('txtSaveEncounter');
+      const origText = txt ? txt.textContent : 'Save to Encounter';
+
+      // Ensure data model has latest inputs and update timestamps
+      lcgData.meta = lcgData.meta || {};
+      lcgData.meta.facilityName = document.getElementById('facilityName')?.value || 'Maternity Care Unit';
+      lcgData.meta.name = document.getElementById('ptName')?.value || '';
+      lcgData.meta.parity = document.getElementById('ptParity')?.value || '';
+      lcgData.meta.onset = document.getElementById('ptOnset')?.value || 'Spontaneous';
+      lcgData.meta.activeDate = document.getElementById('ptActiveDate')?.value || '';
+      lcgData.meta.activeTime = document.getElementById('ptActiveTime')?.value || '';
+      lcgData.meta.ruptureDate = document.getElementById('ptRuptureDate')?.value || '';
+      lcgData.meta.ruptureTime = document.getElementById('ptRuptureTime')?.value || '';
+      lcgData.meta.riskFactors = document.getElementById('ptRiskFactors')?.value || '';
+      lcgData.meta.lastSavedAt = new Date().toISOString();
+      lcgData.meta.lastSavedByName = currentUserName || 'Attending Clinician';
+      if (!lcgData.meta.createdByName) {
+        lcgData.meta.createdByName = currentUserName || 'Attending Clinician';
+      }
+      if (!lcgData.meta.createdAt) {
+        lcgData.meta.createdAt = new Date().toISOString();
+      }
+
+      if (!silent) {
+        addAuditLog("SAVED TO EMR", `Labour Care Guide observations saved to patient encounter by ${currentUserName}`);
+      }
+
+      if (!patientUuid) {
+        try {
+          const hash = (window.parent && window.parent.location.hash) || window.location.hash || '';
+          const m = hash.match(/patient\/([a-f0-9\-]+)/i);
+          if (m) patientUuid = m[1];
+        } catch(e) {}
+      }
+
+      let targetPatientUuid = patientUuid;
+      if (!targetPatientUuid) {
+        if (silent) return;
+        targetPatientUuid = prompt("Enter Patient UUID to save to OpenMRS Encounter (or click Cancel to save locally):", "");
+        if (!targetPatientUuid) {
+          showToast('Saved locally in browser storage!');
+          return;
+        }
+      }
+
+      if (!silent && btn && txt) {
+        txt.textContent = 'Saving to EMR...';
+        btn.disabled = true;
+      }
+
+      // Prepare Concept Observations
+      const obsArray = [
+        {
+          concept: "9e2a5670-3d71-4569-b1d5-894000000002", // WHO LCG Complete Chart JSON
+          value: JSON.stringify(lcgData)
+        }
+      ];
+
+      // Build Encounter Payload
+      const encounterPayload = {
+        patient: targetPatientUuid,
+        encounterType: "Consultation",
+        encounterDatetime: new Date().toISOString(),
+        obs: obsArray
+      };
+
+      try {
+        const response = await fetch('/openmrs/ws/rest/v1/encounter', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(encounterPayload)
+        });
+
+        if (response.ok) {
+          const encResult = await response.json();
+          encounterUuid = encResult.uuid;
+          showToast(`Saved to Patient Encounter (${encResult.uuid.substring(0,8)})!`);
+          try {
+            sessionStorage.setItem('lcg_active_chart', JSON.stringify(lcgData));
+            localStorage.setItem('who_lcg_data', JSON.stringify(lcgData));
+            if (encResult.obs && encResult.obs.length > 0) {
+              localStorage.setItem('lcg_review_' + encResult.obs[0].uuid, JSON.stringify(lcgData));
+            }
+          } catch(e) {}
+          if (!silent && txt && btn) {
+            txt.textContent = 'Saved to Encounter ✓';
+            setTimeout(() => { txt.textContent = origText; btn.disabled = false; }, 3000);
+          }
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          console.error("OpenMRS save encounter error:", errData);
+          if (!silent) {
+            showToast(`OpenMRS error: ${errData.error?.message || response.statusText}. Saved locally.`, true);
+            if (txt && btn) { txt.textContent = origText; btn.disabled = false; }
+          }
+        }
+      } catch (err) {
+        console.warn("Encounter post network error:", err);
+        if (!silent) {
+          showToast('Encounter saved locally in browser storage!');
+          if (txt && btn) { txt.textContent = origText; btn.disabled = false; }
+        }
+      }
+    }
+
+    // Listen for parent messages (e.g. from Bahmni consultation header Save button)
+    window.addEventListener('message', function (event) {
+      if (event.data && (event.data.action === 'saveToOpenMRS' || event.data.action === 'save')) {
+        if (event.data.patientUuid && !patientUuid) {
+          patientUuid = event.data.patientUuid;
+        }
+        saveToPatientEncounter(true);
+      }
+    });
+  </script>
+</body>
+</html>

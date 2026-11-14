@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safe Childbirth Checklist (Ethiopian Calendar)</title>
+<style>
+  :root {
+    --primary: #1a2332;
+    --accent: #0f766e;
+    --accent-light: #f0fdfa;
+    --danger: #991b1b;
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --border: #cbd5e1;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .title-group h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: var(--primary);
+  }
+
+  .title-group p {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  button:hover {
+    background: #f1f5f9;
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  button.primary:hover {
+    background: #0d5f59;
+  }
+
+  button.danger {
+    color: var(--danger);
+    border-color: var(--danger-border);
+  }
+
+  button.danger:hover {
+    background: var(--danger-bg);
+  }
+
+  .patient-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .field-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .field-group input[type="text"] {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  /* Ethiopian Date Picker Widget */
+  .et-date-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .et-date-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.88rem;
+    min-height: 36px;
+    transition: border-color 0.15s;
+  }
+
+  .et-date-display:hover {
+    border-color: var(--accent);
+  }
+
+  .et-date-display.signoff-style {
+    border: none;
+    border-bottom: 1px solid var(--primary);
+    border-radius: 0;
+    background: transparent;
+    padding: 6px 4px;
+    min-height: 32px;
+  }
+
+  .et-date-display.signoff-style:hover {
+    background: var(--accent-light);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .et-date-text {
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .et-date-text.placeholder {
+    color: var(--muted);
+  }
+
+  .et-cal-icon {
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+
+  .et-popover {
+    position: fixed;
+    z-index: 9999;
+    width: 300px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+    padding: 12px;
+    display: none;
+    user-select: none;
+  }
+
+  .et-popover.open {
+    display: block;
+  }
+
+  .et-pop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .et-pop-nav {
+    padding: 4px 9px;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+  }
+
+  .et-pop-selectors {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .et-pop-selectors select {
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .et-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .et-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+
+  .et-day-btn {
+    padding: 6px 0;
+    text-align: center;
+    font-size: 0.83rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .et-day-btn:hover {
+    background: #f1f5f9;
+  }
+
+  .et-day-btn.today {
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .et-day-btn.selected {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .et-day-empty {
+    padding: 6px 0;
+  }
+
+  .et-time-row {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.82rem;
+  }
+
+  .et-time-row input[type="time"] {
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.82rem;
+  }
+
+  .et-pop-footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .et-greg-hint {
+    font-size: 0.73rem;
+    color: var(--muted);
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  .progress-wrap {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+
+  .progress-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 95px;
+    text-align: right;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .tab-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* Stage Cards */
+  .stage-card {
+    background: var(--card);
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+
+  .stage-card.hidden {
+    display: none;
+  }
+
+  .stage-header {
+    background: var(--primary);
+    color: #ffffff;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .stage-header .phase {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+    font-weight: 600;
+  }
+
+  .stage-header h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .stage-body {
+    padding: 20px;
+  }
+
+  .check-row {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .check-row:last-of-type {
+    border-bottom: none;
+  }
+
+  .check-row.full-width {
+    grid-template-columns: 1fr;
+  }
+
+  @media (max-width: 720px) {
+    .check-row {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  }
+
+  .question-title {
+    font-weight: 700;
+    font-size: 0.98rem;
+    margin-bottom: 8px;
+    color: var(--primary);
+  }
+
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .option-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    padding: 4px 6px;
+    border-radius: 5px;
+    transition: background 0.12s;
+  }
+
+  .option-label:hover {
+    background: #f1f5f9;
+  }
+
+  .option-label input[type="checkbox"],
+  .option-label input[type="radio"] {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .guidance-box {
+    background: #f8fafc;
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+  }
+
+  .guidance-box strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--primary);
+  }
+
+  .guidance-box ul {
+    padding-left: 18px;
+    margin: 0;
+  }
+
+  .guidance-box li {
+    margin-bottom: 3px;
+  }
+
+  .two-col-bullets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  @media (max-width: 500px) {
+    .two-col-bullets {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Danger Signs Box */
+  .danger-panel {
+    margin-top: 16px;
+    border: 2px solid var(--danger);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--danger-bg);
+  }
+
+  .danger-header {
+    background: var(--danger);
+    color: #fff;
+    text-align: center;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 6px 12px;
+    font-size: 0.95rem;
+  }
+
+  .danger-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 14px 18px;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 600px) {
+    .danger-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .danger-grid h4 {
+    color: var(--danger);
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+  }
+
+  .danger-grid ul {
+    padding-left: 18px;
+  }
+
+  .danger-grid li {
+    margin-bottom: 3px;
+  }
+
+  /* Signoff footer */
+  .signoff {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 2px dashed var(--border);
+    display: grid;
+    grid-template-columns: 1.4fr 1.2fr 1.4fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 650px) {
+    .signoff {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .signoff input[type="text"] {
+    width: 100%;
+    padding: 6px 8px;
+    border: none;
+    border-bottom: 1px solid var(--primary);
+    background: transparent;
+    font-size: 0.9rem;
+  }
+
+  .signoff input[type="text"]:focus {
+    outline: none;
+    border-bottom: 2px solid var(--accent);
+    background: var(--accent-light);
+  }
+
+  .signoff label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+  }
+
+  .toast.show {
+    opacity: 1;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .controls, .tabs, .progress-wrap, .et-popover, .et-cal-icon { display: none !important; }
+    .stage-card { display: block !important; break-inside: avoid; margin-bottom: 16px; box-shadow: none; }
+    header { box-shadow: none; border: 1px solid #000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-top">
+      <div class="title-group">
+        <h1>SAFE CHILDBIRTH CHECKLIST</h1>
+        <p>Interactive Clinical Care &amp; Safety Verification Tool • Ethiopian Calendar (ዓ.ም)</p>
+      </div>
+      <div class="controls">
+        <button class="primary" onclick="exportSummary()">Export Summary (.txt)</button>
+        <button onclick="window.print()">Print / Save PDF</button>
+        <button class="danger" onclick="resetForm()">Reset Form</button>
+      </div>
+    </div>
+
+    <div class="patient-bar">
+      <div class="field-group">
+        <label for="patientName">Mother's Name / ID</label>
+        <input type="text" id="patientName" data-save placeholder="Enter patient name or ID">
+      </div>
+      <div class="field-group">
+        <label for="facilityName">Facility / Ward</label>
+        <input type="text" id="facilityName" data-save placeholder="Enter facility name">
+      </div>
+      <div class="field-group">
+        <label>Admission Date &amp; Time (Ethiopian)</label>
+        <div class="et-date-wrapper" data-et-picker data-include-time="true">
+          <input type="hidden" id="admissionDate" data-save>
+          <div class="et-date-display" tabindex="0">
+            <span class="et-date-text placeholder">Select Ethiopian date &amp; time</span>
+            <span class="et-cal-icon">📅</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">0 / 22 Completed</div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" onclick="filterStage('all', this)">All Stages (1–4)</button>
+    <button class="tab-btn" onclick="filterStage('stage1', this)">1. On Admission</button>
+    <button class="tab-btn" onclick="filterStage('stage2', this)">2. Before Birth</button>
+    <button class="tab-btn" onclick="filterStage('stage3', this)">3. Soon After Birth</button>
+    <button class="tab-btn" onclick="filterStage('stage4', this)">4. Before Discharge</button>
+  </nav>
+
+  <!-- STAGE 1 -->
+  <section class="stage-card" id="stage1">
+    <div class="stage-header">
+      <div>
+        <div class="phase">Before Birth</div>
+        <h2>1. On admission</h2>
+      </div>
+    </div>
+    <div class="stage-body">
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Quick check performed?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s1_quick" value="Yes" data-save data-track="s1_quick"> Yes</label>
+            <label class="option-label"><input type="radio" name="s1_quick" value="No" data-save data-track="s1_quick"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <ul>
+            <li>Assess for danger signs</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does mother need referral?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s1_referral" value="Yes" data-save data-track="s1_referral"> Yes, organized with initial stabilization and treatment according to signs</label>
+            <label class="option-label"><input type="radio" name="s1_referral" value="No" data-save data-track="s1_referral"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Refer to a higher level if any of the following danger signs are present (if the setup and professional is not present):</strong>
+          <div class="two-col-bullets">
+            <ul>
+              <li>Vaginal bleeding</li>
+              <li>Severe abdominal pain</li>
+              <li>High fever &gt; 38°C</li>
+              <li>Difficulty in breathing</li>
+            </ul>
+            <ul>
+              <li>History of heart disease or other major illnesses</li>
+              <li>Severe headache or blurred vision</li>
+              <li>Convulsions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Partograph started?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s1_partograph" value="Yes" data-save data-track="s1_partograph"> Yes</label>
+            <label class="option-label"><input type="radio" name="s1_partograph" value="No, will start when >= 4 cm" data-save data-track="s1_partograph"> No, will start when &ge; 4 cm</label>
+            <label class="option-label"><input type="radio" name="s1_partograph" value="No" data-save data-track="s1_partograph"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Start plotting when cervix &ge; 4 cm—on alert line.</strong>
+          <div class="two-col-bullets">
+            <ul>
+              <li>Every 30 min: plot maternal pulse, contractions, fetal heart rate</li>
+              <li>Every 2 hours: plot temperature</li>
+            </ul>
+            <ul>
+              <li>Every 4 hours: plot blood pressure</li>
+              <li>Every 4 hours: vaginal examination</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does mother need to start:</div>
+          <div class="question-title" style="font-size:0.92rem; margin-top:6px;">Antibiotics?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s1_abx" value="Yes, IV started" data-save data-track="s1_abx"> Yes, IV started</label>
+            <label class="option-label"><input type="radio" name="s1_abx" value="No" data-save data-track="s1_abx"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give if:</strong>
+          <ul>
+            <li>Temperature &gt; 38°C</li>
+            <li>Foul-smelling vaginal discharge</li>
+            <li>Rupture of membranes &gt; 12 hours, OR labor &gt; 24 hours</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Magnesium sulfate?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s1_mgso4" value="Yes, given" data-save data-track="s1_mgso4"> Yes, given</label>
+            <label class="option-label"><input type="radio" name="s1_mgso4" value="No" data-save data-track="s1_mgso4"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give if:</strong>
+          <ul>
+            <li>Convulsions</li>
+            <li>Diastolic blood pressure &ge; 110 mm Hg and 3+ proteinuria (give antihypertensives) OR</li>
+            <li>Diastolic blood pressure &ge; 90 mm Hg, 2+ proteinuria, and any: severe headache, visual disturbance, or epigastric pain or oliguria, pulmonary edema</li>
+            <li>Diastolic blood pressure &ge; 90 mm Hg, 2+ proteinuria in labor</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Antiretroviral medicine?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s1_arv" value="Yes, given" data-save data-track="s1_arv"> Yes, given</label>
+            <label class="option-label"><input type="radio" name="s1_arv" value="No, confirmed HIV negative" data-save data-track="s1_arv"> No, confirmed HIV negative</label>
+            <label class="option-label"><input type="radio" name="s1_arv" value="If status unknown, HIV test done" data-save data-track="s1_arv"> If status unknown, HIV test done</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give ART if mother is HIV+</strong>
+          <p>If on ART, continue</p>
+        </div>
+      </div>
+
+      <div class="check-row full-width">
+        <div>
+          <div class="question-title">Are soap, water, alcohol hand rub, gloves available?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s1_hygiene" value="Yes" data-save data-track="s1_hygiene"> Yes, I will wash hands and wear gloves for each vaginal exam</label>
+            <label class="option-label"><input type="radio" name="s1_hygiene" value="No, arrange supplies" data-save data-track="s1_hygiene"> No, arrange supplies</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-row full-width">
+        <div class="options-list">
+          <label class="option-label" style="font-weight:600;"><input type="checkbox" id="s1_companion" data-save data-track="s1_companion"> Confirm if birth companion encouraged to be present throughout labor and at birth</label>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div class="options-list">
+          <label class="option-label" style="font-weight:600;"><input type="checkbox" id="s1_callhelp" data-save data-track="s1_callhelp"> Confirm that mother/companion will call for help during labor if mother has a danger sign</label>
+        </div>
+        <div class="guidance-box">
+          <strong>Call for help if:</strong>
+          <div class="two-col-bullets">
+            <ul>
+              <li>Bleeding</li>
+              <li>Severe abdominal pain</li>
+              <li>Severe headache or blurring of vision</li>
+            </ul>
+            <ul>
+              <li>Convulsions</li>
+              <li>Urge to push</li>
+              <li>Difficulty emptying bladder</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-row full-width">
+        <div class="options-list">
+          <label class="option-label" style="font-weight:600;"><input type="checkbox" id="s1_privacy" data-save data-track="s1_privacy"> Confirm mothers privacy is maintained during labour and delivery</label>
+        </div>
+      </div>
+
+      <div class="signoff">
+        <div>
+          <label>Name of Provider</label>
+          <input type="text" id="s1_provider" data-save placeholder="Provider name">
+        </div>
+        <div>
+          <label>Date (Ethiopian)</label>
+          <div class="et-date-wrapper" data-et-picker data-include-time="false">
+            <input type="hidden" id="s1_date" data-save>
+            <div class="et-date-display signoff-style" tabindex="0">
+              <span class="et-date-text placeholder">ቀን / ወር / ዓ.ም</span>
+              <span class="et-cal-icon">📅</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label>Signature</label>
+          <input type="text" id="s1_sig" data-save placeholder="Type initials or full name">
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- STAGE 2 -->
+  <section class="stage-card" id="stage2">
+    <div class="stage-header">
+      <div>
+        <div class="phase">Before Birth</div>
+        <h2>2. Just before second stage/birth of baby (or before cesarean)</h2>
+      </div>
+    </div>
+    <div class="stage-body">
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does mother need to start antibiotics?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s2_abx" value="Yes, IV started" data-save data-track="s2_abx"> Yes, IV started</label>
+            <label class="option-label"><input type="radio" name="s2_abx" value="No" data-save data-track="s2_abx"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give if:</strong>
+          <div class="two-col-bullets">
+            <ul>
+              <li>Temperature &gt; 38°C</li>
+              <li>Foul-smelling vaginal discharge</li>
+            </ul>
+            <ul>
+              <li>Rupture of membranes &gt; 12 hours</li>
+              <li>Labor &gt; 24 hours</li>
+              <li>Before cesarean section</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does mother need to start magnesium sulfate?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s2_mgso4" value="Yes, given" data-save data-track="s2_mgso4"> Yes, given</label>
+            <label class="option-label"><input type="radio" name="s2_mgso4" value="No" data-save data-track="s2_mgso4"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give if:</strong>
+          <ul>
+            <li>Convulsions</li>
+            <li>Diastolic blood pressure &ge; 110 mm Hg and 3+ proteinuria, (give antihypertensives) OR</li>
+            <li>Diastolic blood pressure &ge; 90 mm Hg, 2+ proteinuria, and any: severe headache, visual disturbance, or epigastric pain or oliguria, pulmonary edema</li>
+            <li>Diastolic blood pressure &ge; 90 mm Hg, 2+ proteinuria in labor</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Are essential supplies at bedside for mother?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="checkbox" id="s2_sup_gloves" data-save data-track="s2_sup_mother"> Gloves</label>
+            <label class="option-label"><input type="checkbox" id="s2_sup_soap" data-save data-track="s2_sup_mother"> Soap/Savlon and clean water</label>
+            <label class="option-label"><input type="checkbox" id="s2_sup_oxytocin" data-save data-track="s2_sup_mother"> Oxytocin 10 IU in syringe</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Prepare to care for mother and baby during birth:</strong>
+          <ul>
+            <li>Check for 2nd baby</li>
+            <li>Give oxytocin within 1 minute</li>
+            <li>Delayed cord clamping in 1–3 min</li>
+            <li>Deliver placenta by controlled cord traction</li>
+            <li>Confirm uterus is contracted</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Are essential supplies at bedside for baby?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="checkbox" id="s2_baby_towels" data-save data-track="s2_sup_baby"> Two clean, dry, warm towels</label>
+            <label class="option-label"><input type="checkbox" id="s2_baby_scissors" data-save data-track="s2_sup_baby"> Sterile scissors to cut cord</label>
+            <label class="option-label"><input type="checkbox" id="s2_baby_suction" data-save data-track="s2_sup_baby"> Suction device</label>
+            <label class="option-label"><input type="checkbox" id="s2_baby_bag" data-save data-track="s2_sup_baby"> Bag-and-mask</label>
+            <label class="option-label"><input type="checkbox" id="s2_baby_tie" data-save data-track="s2_sup_baby"> Sterile cord tie/clamp</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Prepare to care for baby immediately after birth:</strong>
+          <ul>
+            <li>Deliver and dry baby on maternal abdomen, wrap, keep warm, and wipe eyes</li>
+            <li>Clamp/tie cord two fingers from abdomen and another two fingers from the first</li>
+            <li>Check breathing—if not breathing: stimulate and clear airway</li>
+            <li>If still not breathing or if the baby is blue: cut cord, ventilate with bag-and-mask</li>
+            <li>Shout for help</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Anti-retroviral medicine?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s2_arv" value="Yes, given" data-save data-track="s2_arv"> Yes, given</label>
+            <label class="option-label"><input type="radio" name="s2_arv" value="No, confirmed HIV negative" data-save data-track="s2_arv"> No, confirmed HIV negative</label>
+            <label class="option-label"><input type="radio" name="s2_arv" value="If status unknown, HIV test done" data-save data-track="s2_arv"> If status unknown, HIV test done</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give ART if mother is HIV+</strong>
+          <p>If on ART, continue</p>
+        </div>
+      </div>
+
+      <div class="check-row full-width">
+        <div class="options-list">
+          <label class="option-label" style="font-weight:600;"><input type="checkbox" id="s2_assistant" data-save data-track="s2_assistant"> Confirm assistant identified and informed to be ready to help at birth if needed</label>
+        </div>
+      </div>
+
+      <div class="signoff">
+        <div>
+          <label>Name of Provider</label>
+          <input type="text" id="s2_provider" data-save placeholder="Provider name">
+        </div>
+        <div>
+          <label>Date (Ethiopian)</label>
+          <div class="et-date-wrapper" data-et-picker data-include-time="false">
+            <input type="hidden" id="s2_date" data-save>
+            <div class="et-date-display signoff-style" tabindex="0">
+              <span class="et-date-text placeholder">ቀን / ወር / ዓ.ም</span>
+              <span class="et-cal-icon">📅</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label>Signature</label>
+          <input type="text" id="s2_sig" data-save placeholder="Type initials or full name">
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- STAGE 3 -->
+  <section class="stage-card" id="stage3">
+    <div class="stage-header">
+      <div>
+        <div class="phase">After Birth</div>
+        <h2>3. Soon after birth (within 1 hour)</h2>
+      </div>
+    </div>
+    <div class="stage-body">
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does baby need to start antibiotics?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s3_baby_abx" value="Yes" data-save data-track="s3_baby_abx"> Yes</label>
+            <label class="option-label"><input type="radio" name="s3_baby_abx" value="No" data-save data-track="s3_baby_abx"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give if antibiotics were given to mother or if baby has any of following:</strong>
+          <ul>
+            <li>Poor sucking/not sucking</li>
+            <li>Chest in-drawing, grunting</li>
+            <li>Convulsions</li>
+            <li>Poor movement on stimulation</li>
+            <li>Too cold (temperature &lt; 35°C and not rising after warming) or too hot (temperature &gt; 38°)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does baby need referral?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s3_baby_ref" value="Yes" data-save data-track="s3_baby_ref"> Yes</label>
+            <label class="option-label"><input type="radio" name="s3_baby_ref" value="No" data-save data-track="s3_baby_ref"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Refer to NICU if:</strong>
+          <ul>
+            <li>Any of above criteria or</li>
+            <li>Jaundice or pallor</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does baby need special care and monitoring?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s3_baby_special" value="Yes" data-save data-track="s3_baby_special"> Yes</label>
+            <label class="option-label"><input type="radio" name="s3_baby_special" value="No" data-save data-track="s3_baby_special"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Arrange special care if:</strong>
+          <ul>
+            <li>More than 1 month early,</li>
+            <li>Birth weight &lt; 2,500 grams,</li>
+            <li>Needs antibiotics,</li>
+            <li>Required resuscitation/HBB</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does baby need to start an anti-retroviral medicine?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s3_baby_arv" value="Yes" data-save data-track="s3_baby_arv"> Yes</label>
+            <label class="option-label"><input type="radio" name="s3_baby_arv" value="No" data-save data-track="s3_baby_arv"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>If mother is HIV+, give baby Nevirapine syrup (prophylaxis to be started within 12 hrs of birth)</strong>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Newborn</div>
+          <div class="options-list">
+            <label class="option-label"><input type="checkbox" id="s3_nb_skin" data-save data-track="s3_newborn"> Placed baby in skin-to-skin contact and started breastfeeding within 1 hr (if mother and baby are well)</label>
+            <label class="option-label"><input type="checkbox" id="s3_nb_vitk" data-save data-track="s3_newborn"> Vitamin K given 1 mg IM on anterior mid-thigh</label>
+            <label class="option-label"><input type="checkbox" id="s3_nb_ttc" data-save data-track="s3_newborn"> TTC eye ointment given in both eyes</label>
+            <label class="option-label"><input type="checkbox" id="s3_nb_weight" data-save data-track="s3_newborn"> Weighed and recorded</label>
+            <label class="option-label"><input type="checkbox" id="s3_nb_vacc" data-save data-track="s3_newborn"> Give BCG and OPV before discharge</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>If &lt; 2.5 kg, ensure full assessment</strong>
+        </div>
+      </div>
+
+      <div class="check-row full-width">
+        <div class="options-list">
+          <label class="option-label" style="font-weight:600;"><input type="checkbox" id="s3_callhelp" data-save data-track="s3_callhelp"> Confirm that mother/companion will call for help if danger signs are present</label>
+        </div>
+
+        <div class="danger-panel">
+          <div class="danger-header">DANGER SIGNS</div>
+          <div class="danger-grid">
+            <div>
+              <h4>Mother has:</h4>
+              <ul>
+                <li>Bleeding</li>
+                <li>Severe abdominal pain</li>
+                <li>Severe headache</li>
+                <li>Visual disturbance</li>
+                <li>Breathing difficulty</li>
+                <li>Fever/chills</li>
+                <li>Difficulty emptying bladder</li>
+              </ul>
+            </div>
+            <div>
+              <h4>Baby has:</h4>
+              <ul>
+                <li>Fast or difficulty breathing</li>
+                <li>Fever</li>
+                <li>Unusually cold</li>
+                <li>Stops feeding well</li>
+                <li>Less activity than normal</li>
+                <li>Yellow discoloration of skin/eyes</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signoff">
+        <div>
+          <label>Name of Provider</label>
+          <input type="text" id="s3_provider" data-save placeholder="Provider name">
+        </div>
+        <div>
+          <label>Date (Ethiopian)</label>
+          <div class="et-date-wrapper" data-et-picker data-include-time="false">
+            <input type="hidden" id="s3_date" data-save>
+            <div class="et-date-display signoff-style" tabindex="0">
+              <span class="et-date-text placeholder">ቀን / ወር / ዓ.ም</span>
+              <span class="et-cal-icon">📅</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label>Signature</label>
+          <input type="text" id="s3_sig" data-save placeholder="Type initials or full name">
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- STAGE 4 -->
+  <section class="stage-card" id="stage4">
+    <div class="stage-header">
+      <div>
+        <div class="phase">After Birth</div>
+        <h2>4. Before discharge</h2>
+      </div>
+    </div>
+    <div class="stage-body">
+
+      <div class="check-row full-width">
+        <div>
+          <div class="question-title">Is mother's bleeding controlled?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s4_bleeding" value="Yes" data-save data-track="s4_bleeding"> Yes</label>
+            <label class="option-label"><input type="radio" name="s4_bleeding" value="No" data-save data-track="s4_bleeding"> No</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does mother need to start antibiotics?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s4_mother_abx" value="Yes" data-save data-track="s4_mother_abx"> Yes</label>
+            <label class="option-label"><input type="radio" name="s4_mother_abx" value="No" data-save data-track="s4_mother_abx"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give if temperature &gt; 38°C and any:</strong>
+          <ul>
+            <li>Chills,</li>
+            <li>Foul-smelling vaginal discharge.</li>
+            <li>Labor &gt; 24hrs at time of delivery</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div>
+          <div class="question-title">Does baby need to start antibiotics?</div>
+          <div class="options-list">
+            <label class="option-label"><input type="radio" name="s4_baby_abx" value="Yes" data-save data-track="s4_baby_abx"> Yes</label>
+            <label class="option-label"><input type="radio" name="s4_baby_abx" value="No" data-save data-track="s4_baby_abx"> No</label>
+          </div>
+        </div>
+        <div class="guidance-box">
+          <strong>Give if:</strong>
+          <ul>
+            <li>Chest in-drawing, grunting,</li>
+            <li>Convulsions,</li>
+            <li>Poor movement on stimulation,</li>
+            <li>Too cold (temperature &lt; 35°C and not rising after warming) or too hot (temperature &gt; 38°C),</li>
+            <li>Poor sucking/not sucking breasts</li>
+            <li>Umbilical redness extending to skin or draining pus</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="check-row full-width">
+        <div class="options-list">
+          <div style="font-weight:700; color:var(--primary); margin-bottom:4px;">If mother HIV+, mother is on ART and baby has Nevirapine syrup for 6 weeks</div>
+          <label class="option-label" style="font-weight:600;"><input type="checkbox" id="s4_fp" data-save data-track="s4_fp"> Family planning options discussed and offered to mother</label>
+          <label class="option-label" style="font-weight:600;"><input type="checkbox" id="s4_callhelp" data-save data-track="s4_callhelp"> Confirm that mother/companion will call for help after discharge if:</label>
+        </div>
+
+        <div class="danger-panel">
+          <div class="danger-header">DANGER SIGNS</div>
+          <div class="danger-grid">
+            <div>
+              <h4>Mother has:</h4>
+              <ul>
+                <li>Bleeding</li>
+                <li>Severe abdominal pain</li>
+                <li>Severe headache</li>
+                <li>Visual disturbance</li>
+                <li>Breathing difficulty</li>
+                <li>Fever/chills</li>
+                <li>Difficulty emptying bladder</li>
+              </ul>
+            </div>
+            <div>
+              <h4>Baby has:</h4>
+              <ul>
+                <li>Fast or difficulty breathing</li>
+                <li>Fever</li>
+                <li>Unusually cold</li>
+                <li>Stops feeding well</li>
+                <li>Less activity than normal</li>
+                <li>Yellow discoloration of skin/eyes</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <div class="options-list">
+          <label class="option-label" style="font-weight:600;"><input type="checkbox" id="s4_followup" data-save data-track="s4_followup"> Follow-up arranged for mother and baby</label>
+        </div>
+        <div class="guidance-box">
+          <ul>
+            <li>Refer mother to three postnatal visits (6–24 hours, 3 days, 7 days) and an immunization visit at 6 weeks</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="signoff">
+        <div>
+          <label>Name of Provider</label>
+          <input type="text" id="s4_provider" data-save placeholder="Provider name">
+        </div>
+        <div>
+          <label>Date (Ethiopian)</label>
+          <div class="et-date-wrapper" data-et-picker data-include-time="false">
+            <input type="hidden" id="s4_date" data-save>
+            <div class="et-date-display signoff-style" tabindex="0">
+              <span class="et-date-text placeholder">ቀን / ወር / ዓ.ም</span>
+              <span class="et-cal-icon">📅</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label>Signature</label>
+          <input type="text" id="s4_sig" data-save placeholder="Type initials or full name">
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- Shared Ethiopian Calendar Popover -->
+<div class="et-popover" id="etPopover" role="dialog" aria-label="Ethiopian Calendar Picker">
+  <div class="et-pop-header">
+    <button type="button" class="et-pop-nav" id="etPrevMonth" title="Previous Month">&lsaquo;</button>
+    <div class="et-pop-selectors">
+      <select id="etMonthSelect" aria-label="Ethiopian Month"></select>
+      <select id="etYearSelect" aria-label="Ethiopian Year"></select>
+    </div>
+    <button type="button" class="et-pop-nav" id="etNextMonth" title="Next Month">&rsaquo;</button>
+  </div>
+  <div class="et-weekdays">
+    <span>እሑድ</span>
+    <span>ሰኞ</span>
+    <span>ማክ</span>
+    <span>ረቡ</span>
+    <span>ሐሙ</span>
+    <span>ዓር</span>
+    <span>ቅዳ</span>
+  </div>
+  <div class="et-days-grid" id="etDaysGrid"></div>
+  <div class="et-time-row" id="etTimeRow" style="display:none;">
+    <label for="etTimeInput" style="font-weight:600; color:var(--primary);">Time (ሰዓት):</label>
+    <input type="time" id="etTimeInput" value="08:00">
+  </div>
+  <div class="et-greg-hint" id="etGregHint"></div>
+  <div class="et-pop-footer">
+    <button type="button" id="etTodayBtn" class="primary" style="padding:5px 10px; font-size:0.8rem;">Today (ዛሬ)</button>
+    <div style="display:flex; gap:6px;">
+      <button type="button" id="etClearBtn" style="padding:5px 10px; font-size:0.8rem;">Clear</button>
+      <button type="button" id="etDoneBtn" style="padding:5px 10px; font-size:0.8rem;">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Progress saved automatically</div>
+
+<script>
+  const STORAGE_KEY = 'safe_childbirth_checklist_et_v1';
+
+  /* =========================================================
+     ETHIOPIAN CALENDAR CONVERSION & PICKER ENGINE
+     ========================================================= */
+  const ET_MONTHS = [
+    { am: 'መስከረም', en: 'Meskerem' },
+    { am: 'ጥቅምት',  en: 'Tikimt' },
+    { am: 'ኅዳር',   en: 'Hidar' },
+    { am: 'ታኅሣሥ',  en: 'Tahsas' },
+    { am: 'ጥር',    en: 'Tir' },
+    { am: 'የካቲት',  en: 'Yekatit' },
+    { am: 'መጋቢት',  en: 'Megabit' },
+    { am: 'ሚያዝያ',  en: 'Miazia' },
+    { am: 'ግንቦት',  en: 'Ginbot' },
+    { am: 'ሰኔ',    en: 'Sene' },
+    { am: 'ሐምሌ',   en: 'Hamle' },
+    { am: 'ነሐሴ',   en: 'Nehase' },
+    { am: 'ጳጉሜን',  en: 'Pagume' }
+  ];
+
+  // JDN (Julian Day Number) at noon (12:00 UT) conversions
+  // Ethiopian epoch in JDN: August 29, 8 CE (Julian) = JDN 1724221
+  const ET_EPOCH = 1724221;
+
+  function isEtLeapYear(etYear) {
+    return ((etYear + 1) % 4) === 0;
+  }
+
+  function etDaysInMonth(etYear, etMonth) {
+    if (etMonth >= 1 && etMonth <= 12) return 30;
+    return isEtLeapYear(etYear) ? 6 : 5;
+  }
+
+  function etToJdn(year, month, day) {
+    return (ET_EPOCH - 1) + 365 * (year - 1) + Math.floor(year / 4) + 30 * (month - 1) + day;
+  }
+
+  function jdnToEt(jdn) {
+    const r = (jdn - ET_EPOCH) % 1461;
+    const n = (r % 365) + 365 * Math.floor(r / 1460);
+    const year = 4 * Math.floor((jdn - ET_EPOCH) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+    const month = Math.floor(n / 30) + 1;
+    const day = (n % 30) + 1;
+    return { year, month, day };
+  }
+
+  function gregorianToJdn(gy, gm, gd) {
+    const a = Math.floor((14 - gm) / 12);
+    const y = gy + 4800 - a;
+    const m = gm + 12 * a - 3;
+    return gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+  }
+
+  function jdnToGregorian(jdn) {
+    const a = jdn + 32044;
+    const b = Math.floor((4 * a + 3) / 146097);
+    const c = a - Math.floor((146097 * b) / 4);
+    const d = Math.floor((4 * c + 3) / 1461);
+    const e = c - Math.floor((1461 * d) / 4);
+    const m = Math.floor((5 * e + 2) / 153);
+    const day = e - Math.floor((153 * m + 2) / 5) + 1;
+    const month = m + 3 - 12 * Math.floor(m / 10);
+    const year = 100 * b + d - 4800 + Math.floor(m / 10);
+    return { year, month, day };
+  }
+
+  function getTodayEt() {
+    const now = new Date();
+    const jdn = gregorianToJdn(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    return jdnToEt(jdn);
+  }
+
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function parseEtValue(val) {
+    if (!val) return null;
+    // Format: YYYY-MM-DD or YYYY-MM-DD HH:MM
+    const [datePart, timePart] = val.trim().split(' ');
+    const parts = datePart.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return null;
+    return { year: parts[0], month: parts[1], day: parts[2], time: timePart || '' };
+  }
+
+  function formatEtDisplay(parsed, includeTime) {
+    if (!parsed) return '';
+    const mObj = ET_MONTHS[parsed.month - 1];
+    const mLabel = mObj ? `${mObj.am} (${mObj.en})` : parsed.month;
+    let str = `${mLabel} ${parsed.day}, ${parsed.year} ዓ.ም`;
+    if (includeTime && parsed.time) {
+      str += ` • ${parsed.time}`;
+    }
+    return str;
+  }
+
+  function formatGregEquivalent(parsed) {
+    if (!parsed) return '';
+    const g = jdnToGregorian(etToJdn(parsed.year, parsed.month, parsed.day));
+    const gMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `Gregorian: ${gMonths[g.month - 1]} ${g.day}, ${g.year}`;
+  }
+
+  // Popover Controller
+  const popover = document.getElementById('etPopover');
+  const monthSelect = document.getElementById('etMonthSelect');
+  const yearSelect = document.getElementById('etYearSelect');
+  const daysGrid = document.getElementById('etDaysGrid');
+  const timeRow = document.getElementById('etTimeRow');
+  const timeInput = document.getElementById('etTimeInput');
+  const gregHint = document.getElementById('etGregHint');
+
+  let activeWrapper = null;
+  let viewYear = getTodayEt().year;
+  let viewMonth = getTodayEt().month;
+
+  // Populate Month and Year dropdowns
+  ET_MONTHS.forEach((m, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx + 1;
+    opt.textContent = `${m.am} (${m.en})`;
+    monthSelect.appendChild(opt);
+  });
+
+  const currentEtYear = getTodayEt().year;
+  for (let y = currentEtYear - 10; y <= currentEtYear + 10; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = `${y} ዓ.ም`;
+    yearSelect.appendChild(opt);
+  }
+
+  function updateWrapperDisplay(wrapper) {
+    const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+    const textSpan = wrapper.querySelector('.et-date-text');
+    const includeTime = wrapper.dataset.includeTime === 'true';
+    const parsed = parseEtValue(hiddenInput.value);
+
+    if (parsed) {
+      textSpan.textContent = formatEtDisplay(parsed, includeTime);
+      textSpan.classList.remove('placeholder');
+    } else {
+      textSpan.textContent = includeTime ? 'Select Ethiopian date & time' : 'ቀን / ወር / ዓ.ም';
+      textSpan.classList.add('placeholder');
+    }
+  }
+
+  function renderCalendarGrid() {
+    monthSelect.value = viewMonth;
+    yearSelect.value = viewYear;
+    daysGrid.innerHTML = '';
+
+    const today = getTodayEt();
+    const hiddenInput = activeWrapper ? activeWrapper.querySelector('input[type="hidden"]') : null;
+    const selected = hiddenInput ? parseEtValue(hiddenInput.value) : null;
+
+    // Day of week for day 1 of viewMonth (0 = Sunday ... 6 = Saturday)
+    // JDN 0 was Monday -> (jdn + 1) % 7 gives 0 = Sunday
+    const firstJdn = etToJdn(viewYear, viewMonth, 1);
+    const startDow = (firstJdn + 1) % 7;
+    const totalDays = etDaysInMonth(viewYear, viewMonth);
+
+    for (let i = 0; i < startDow; i++) {
+      const blank = document.createElement('div');
+      blank.className = 'et-day-empty';
+      daysGrid.appendChild(blank);
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'et-day-btn';
+      btn.textContent = d;
+
+      if (today.year === viewYear && today.month === viewMonth && today.day === d) {
+        btn.classList.add('today');
+      }
+      if (selected && selected.year === viewYear && selected.month === viewMonth && selected.day === d) {
+        btn.classList.add('selected');
+      }
+
+      btn.addEventListener('click', () => {
+        selectEtDate(viewYear, viewMonth, d);
+      });
+      daysGrid.appendChild(btn);
+    }
+
+    if (selected) {
+      gregHint.textContent = formatGregEquivalent(selected);
+    } else {
+      gregHint.textContent = formatGregEquivalent({ year: viewYear, month: viewMonth, day: 1 });
+    }
+  }
+
+  function selectEtDate(year, month, day) {
+    if (!activeWrapper) return;
+    const hiddenInput = activeWrapper.querySelector('input[type="hidden"]');
+    const includeTime = activeWrapper.dataset.includeTime === 'true';
+    let val = `${year}-${pad2(month)}-${pad2(day)}`;
+    if (includeTime) {
+      val += ` ${timeInput.value || '08:00'}`;
+    }
+    hiddenInput.value = val;
+    updateWrapperDisplay(activeWrapper);
+    renderCalendarGrid();
+    saveState();
+
+    if (!includeTime) {
+      closePopover();
+    }
+  }
+
+  function openPopover(wrapper) {
+    activeWrapper = wrapper;
+    const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+    const includeTime = wrapper.dataset.includeTime === 'true';
+    const parsed = parseEtValue(hiddenInput.value);
+    const today = getTodayEt();
+
+    viewYear = parsed ? parsed.year : today.year;
+    viewMonth = parsed ? parsed.month : today.month;
+
+    if (includeTime) {
+      timeRow.style.display = 'flex';
+      if (parsed && parsed.time) {
+        timeInput.value = parsed.time;
+      } else {
+        const now = new Date();
+        timeInput.value = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+      }
+    } else {
+      timeRow.style.display = 'none';
+    }
+
+    renderCalendarGrid();
+    popover.classList.add('open');
+
+    // Position popover near trigger without overflowing viewport
+    const rect = wrapper.getBoundingClientRect();
+    const popW = 300;
+    const popH = popover.offsetHeight || 320;
+    let left = rect.left;
+    let top = rect.bottom + 6;
+
+    if (left + popW > window.innerWidth - 12) {
+      left = Math.max(12, window.innerWidth - popW - 12);
+    }
+    if (top + popH > window.innerHeight - 12) {
+      top = Math.max(12, rect.top - popH - 6);
+    }
+
+    popover.style.left = `${left}px`;
+    popover.style.top = `${top}px`;
+  }
+
+  function closePopover() {
+    popover.classList.remove('open');
+    activeWrapper = null;
+  }
+
+  document.querySelectorAll('[data-et-picker]').forEach(wrapper => {
+    const display = wrapper.querySelector('.et-date-display');
+    display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (activeWrapper === wrapper && popover.classList.contains('open')) {
+        closePopover();
+      } else {
+        openPopover(wrapper);
+      }
+    });
+    display.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openPopover(wrapper);
+      }
+    });
+  });
+
+  document.getElementById('etPrevMonth').addEventListener('click', () => {
+    viewMonth--;
+    if (viewMonth < 1) {
+      viewMonth = 13;
+      viewYear--;
+    }
+    renderCalendarGrid();
+  });
+
+  document.getElementById('etNextMonth').addEventListener('click', () => {
+    viewMonth++;
+    if (viewMonth > 13) {
+      viewMonth = 1;
+      viewYear++;
+    }
+    renderCalendarGrid();
+  });
+
+  monthSelect.addEventListener('change', () => {
+    viewMonth = Number(monthSelect.value);
+    renderCalendarGrid();
+  });
+
+  yearSelect.addEventListener('change', () => {
+    viewYear = Number(yearSelect.value);
+    renderCalendarGrid();
+  });
+
+  timeInput.addEventListener('change', () => {
+    if (!activeWrapper) return;
+    const hiddenInput = activeWrapper.querySelector('input[type="hidden"]');
+    const parsed = parseEtValue(hiddenInput.value);
+    if (parsed) {
+      selectEtDate(parsed.year, parsed.month, parsed.day);
+    }
+  });
+
+  document.getElementById('etTodayBtn').addEventListener('click', () => {
+    const t = getTodayEt();
+    viewYear = t.year;
+    viewMonth = t.month;
+    selectEtDate(t.year, t.month, t.day);
+  });
+
+  document.getElementById('etClearBtn').addEventListener('click', () => {
+    if (!activeWrapper) return;
+    const hiddenInput = activeWrapper.querySelector('input[type="hidden"]');
+    hiddenInput.value = '';
+    updateWrapperDisplay(activeWrapper);
+    saveState();
+    closePopover();
+  });
+
+  document.getElementById('etDoneBtn').addEventListener('click', closePopover);
+
+  document.addEventListener('click', (e) => {
+    if (popover.classList.contains('open') && !popover.contains(e.target) && (!activeWrapper || !activeWrapper.contains(e.target))) {
+      closePopover();
+    }
+  });
+
+  /* =========================================================
+     CHECKLIST STATE, PROGRESS & EXPORT
+     ========================================================= */
+  function filterStage(stageId, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.querySelectorAll('.stage-card').forEach(card => {
+      if (stageId === 'all' || card.id === stageId) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  }
+
+  function updateProgress() {
+    const tracked = new Set();
+    const completed = new Set();
+
+    document.querySelectorAll('[data-track]').forEach(el => {
+      const key = el.getAttribute('data-track');
+      tracked.add(key);
+      if (el.checked) {
+        completed.add(key);
+      }
+    });
+
+    const total = tracked.size;
+    const done = completed.size;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${done} / ${total} Completed`;
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  function saveState() {
+    const state = {};
+    document.querySelectorAll('[data-save]').forEach(el => {
+      if (el.type === 'radio') {
+        if (el.checked) state[el.name] = el.value;
+      } else if (el.type === 'checkbox') {
+        state[el.id] = el.checked;
+      } else {
+        state[el.id] = el.value;
+      }
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    updateProgress();
+    showToast('Progress saved');
+  }
+
+  function loadState() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      try {
+        const state = JSON.parse(raw);
+        document.querySelectorAll('[data-save]').forEach(el => {
+          if (el.type === 'radio') {
+            if (state[el.name] === el.value) el.checked = true;
+          } else if (el.type === 'checkbox') {
+            if (typeof state[el.id] === 'boolean') el.checked = state[el.id];
+          } else if (state[el.id] !== undefined) {
+            el.value = state[el.id];
+          }
+        });
+      } catch (e) {
+        console.error('Error loading saved data', e);
+      }
+    }
+    document.querySelectorAll('[data-et-picker]').forEach(updateWrapperDisplay);
+    updateProgress();
+  }
+
+  function resetForm() {
+    if (!confirm('Clear all entries and reset the checklist?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    document.querySelectorAll('[data-save]').forEach(el => {
+      if (el.type === 'radio' || el.type === 'checkbox') {
+        el.checked = false;
+      } else {
+        el.value = '';
+      }
+    });
+    document.querySelectorAll('[data-et-picker]').forEach(updateWrapperDisplay);
+    updateProgress();
+    showToast('Checklist cleared');
+  }
+
+  function formatSavedEtForReport(rawVal, includeTime) {
+    const parsed = parseEtValue(rawVal);
+    if (!parsed) return 'N/A';
+    return `${formatEtDisplay(parsed, includeTime)} (${formatGregEquivalent(parsed)})`;
+  }
+
+  function exportSummary() {
+    const lines = [
+      'SAFE CHILDBIRTH CHECKLIST - SUMMARY REPORT',
+      '==========================================',
+      `Mother's Name / ID: ${document.getElementById('patientName').value || 'N/A'}`,
+      `Facility / Ward:    ${document.getElementById('facilityName').value || 'N/A'}`,
+      `Admission Date:     ${formatSavedEtForReport(document.getElementById('admissionDate').value, true)}`,
+      `Progress:           ${document.getElementById('progressText').textContent}`,
+      ''
+    ];
+
+    document.querySelectorAll('.stage-card').forEach(stage => {
+      const title = stage.querySelector('h2').textContent;
+      lines.push(`--- ${title.toUpperCase()} ---`);
+      stage.querySelectorAll('.check-row').forEach(row => {
+        const qTitle = row.querySelector('.question-title');
+        const checkedInputs = row.querySelectorAll('input:checked');
+        if (qTitle) {
+          const vals = Array.from(checkedInputs).map(i => i.parentElement.textContent.trim());
+          lines.push(`• ${qTitle.textContent}: ${vals.length ? vals.join('; ') : '[Unanswered]'}`);
+        } else {
+          row.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            lines.push(`• [${cb.checked ? 'X' : ' '}] ${cb.parentElement.textContent.trim()}`);
+          });
+        }
+      });
+      const signoffInputs = stage.querySelectorAll('.signoff input');
+      const etDateVal = formatSavedEtForReport(signoffInputs[1].value, false);
+      lines.push(`Provider: ${signoffInputs[0].value || '________'} | Date: ${etDateVal} | Sig: ${signoffInputs[2].value || '________'}`);
+      lines.push('');
+    });
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Safe_Childbirth_Checklist_Summary.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  document.querySelectorAll('[data-save]').forEach(el => {
+    el.addEventListener('change', saveState);
+    if (el.type === 'text') {
+      el.addEventListener('input', saveState);
+    }
+  });
+
+  loadState();
+</script>
+</body>
+</html>

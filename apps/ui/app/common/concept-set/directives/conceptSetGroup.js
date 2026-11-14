@@ -210,4 +210,77 @@ angular.module('bahmni.common.conceptSet')
             controller: 'ConceptSetGroupController',
             templateUrl: '../common/concept-set/views/conceptSetGroup.html'
         };
-    });
+    })
+    .directive('whoTraumaIframe', ['$sce', function ($sce) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '='
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 950px; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope) {
+                var updateUrl = function () {
+                    var pUuid = scope.patient ? scope.patient.uuid : '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=' + encodeURIComponent(pUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+    .directive('whoLabourCareGuideIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe id="whoLcgIframe" ng-src="{{trustedUrl}}" style="width: 100%; height: 1100px; border: 1px solid #0f766e; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/WHO%20Labour%20Care%20Guide.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                // Register with Bahmni consultation preSaveHandler (Bahmni.Clinical.Notifier uses .register)
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('whoLabourCareGuide', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                // Also listen for top consultation save button click directly
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }]);

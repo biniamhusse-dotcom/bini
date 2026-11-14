@@ -606,23 +606,54 @@
                 }
             },
             "whoTraumaForm": {
-                "translationKey": "WHO Emergency Unit Form - Trauma",
+                "type": "custom",
+                "displayOrder": 25,
+                "config": {
+                    "title": "WHO Emergency Unit Form - Trauma",
+                    "template": "<who-trauma-form section='config' patient='patient'></who-trauma-form>"
+                }
+            },
+            "whoLabourCareGuide": {
+                "type": "custom",
+                "displayOrder": 17,
+                "config": {
+                    "title": "WHO Labour Care Guide",
+                    "template": "<who-labour-care-guide section='config' patient='patient'></who-labour-care-guide>"
+                }
+            },
+            "whoLabourCareGuideObs": {
+                "title": "WHO Labour Care Guide Observations",
                 "type": "vitals",
                 "isObservation": true,
-                "displayOrder": 25,
+                "displayOrder": 18,
                 "dashboardConfig": {
-                    "conceptNames": [
-                        "WHO Trauma Form Templates"
-                    ],
                     "showDetailsButton": true,
-                    "numberOfVisits": 2
+                    "conceptNames": [
+                        "WHO Labour Care Guide",
+                        "WHO LCG Labour Onset",
+                        "WHO LCG Ruptured Membranes",
+                        "WHO LCG Obstetric and Medical Risk Factors",
+                        "WHO LCG Baseline FHR",
+                        "WHO LCG Cervical Dilatation",
+                        "WHO LCG Fetal Head Descent",
+                        "WHO LCG Clinical Assessment",
+                        "WHO LCG Management Plan"
+                    ],
+                    "numberOfVisits": 5
                 },
                 "expandedViewConfig": {
                     "conceptNames": [
-                        "WHO Trauma Form Templates"
+                        "WHO Labour Care Guide",
+                        "WHO LCG Labour Onset",
+                        "WHO LCG Ruptured Membranes",
+                        "WHO LCG Obstetric and Medical Risk Factors",
+                        "WHO LCG Baseline FHR",
+                        "WHO LCG Cervical Dilatation",
+                        "WHO LCG Fetal Head Descent",
+                        "WHO LCG Clinical Assessment",
+                        "WHO LCG Management Plan"
                     ],
-                    "numberOfVisits": 2,
-                    "scope": "latest",
+                    "numberOfVisits": 10,
                     "showDetailsButton": true,
                     "pivotTable": {}
                 }
@@ -800,26 +831,30 @@
             "logo": "../images/bahmniLogo.png"
         },
         "sections": {
-            "WHO Trauma Assessment": {
-                "translationKey": "WHO Emergency Unit Form - Trauma",
-                "type": "whoTraumaForm",
-                "isObservation": true,
+            "WHO Emergency Unit Form - Trauma": {
+                "type": "custom",
                 "displayOrder": 1,
-                "dashboardConfig": {
-                    "conceptNames": [
-                        "WHO Trauma Form Templates"
-                    ],
-                    "showDetailsButton": true,
-                    "numberOfVisits": 2
-                },
-                "expandedViewConfig": {
-                    "conceptNames": [
-                        "WHO Trauma Form Templates"
-                    ],
-                    "numberOfVisits": 2,
-                    "scope": "latest",
-                    "showDetailsButton": true,
-                    "pivotTable": {}
+                "config": {
+                    "title": "WHO Emergency Unit Form - Trauma",
+                    "template": "<who-trauma-form section='config' patient='patient'></who-trauma-form>"
+                }
+            }
+        }
+    },
+    "whoLabourCareGuideFullPage": {
+        "title": "WHO Labour Care Guide",
+        "printing": {
+            "title": "BORU MEDA GENERAL HOSPITAL",
+            "header": "WHO Labour Care Guide (LCG)",
+            "logo": "../images/bahmniLogo.png"
+        },
+        "sections": {
+            "WHO Labour Care Guide": {
+                "type": "custom",
+                "displayOrder": 1,
+                "config": {
+                    "title": "WHO Labour Care Guide",
+                    "template": "<who-labour-care-guide section='config' patient='patient'></who-labour-care-guide>"
                 }
             }
         }

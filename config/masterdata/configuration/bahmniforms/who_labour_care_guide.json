@@ -1,0 +1,495 @@
+{
+  "name": "WHO Labour Care Guide",
+  "id": 1002,
+  "uuid": "9e2a5670-3d71-4569-b1d5-894000000001",
+  "defaultLocale": "en",
+  "controls": [
+    {
+      "type": "sectionHeader",
+      "label": {
+        "translationKey": "WHO_LCG_SEC1_HEADER",
+        "type": "label",
+        "value": "SECTION 1: IDENTIFYING INFORMATION & ADMISSION CHARACTERISTICS"
+      },
+      "properties": { "location": { "column": 0, "row": 0 } },
+      "id": "100"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_ONSET_LABEL", "type": "label", "value": "Labour Onset" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 1 } },
+      "id": "101",
+      "concept": {
+        "name": "WHO LCG Labour Onset",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000003",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_ACTIVE_DATE_LABEL", "type": "label", "value": "Active Labour Diagnosis (>=5cm)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 2 } },
+      "id": "102",
+      "concept": {
+        "name": "WHO LCG Active Labour Diagnosis Date Time",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000004",
+        "datatype": "DateTime",
+        "conceptClass": "Misc",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_RUPTURE_LABEL", "type": "label", "value": "Ruptured Membranes (Date/Time or U)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 3 } },
+      "id": "103",
+      "concept": {
+        "name": "WHO LCG Ruptured Membranes",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000005",
+        "datatype": "Text",
+        "conceptClass": "Misc",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_RISK_FACTORS_LABEL", "type": "label", "value": "Risk Factors (Obstetric / Medical)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 4 } },
+      "id": "104",
+      "concept": {
+        "name": "WHO LCG Obstetric and Medical Risk Factors",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000006",
+        "datatype": "Text",
+        "conceptClass": "Misc",
+        "answers": []
+      }
+    },
+    {
+      "type": "sectionHeader",
+      "label": {
+        "translationKey": "WHO_LCG_SEC2_HEADER",
+        "type": "label",
+        "value": "SECTION 2: SUPPORTIVE CARE"
+      },
+      "properties": { "location": { "column": 0, "row": 5 } },
+      "id": "200"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_COMPANION_LABEL", "type": "label", "value": "Labour Companion (Alert: No)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 6 } },
+      "id": "201",
+      "concept": {
+        "name": "WHO LCG Labour Companion",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000013",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_PAIN_LABEL", "type": "label", "value": "Pain Relief Offered/Given (Alert: No)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 7 } },
+      "id": "202",
+      "concept": {
+        "name": "WHO LCG Pain Relief",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000014",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_FLUIDS_LABEL", "type": "label", "value": "Oral Fluid Intake (Alert: No)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 8 } },
+      "id": "203",
+      "concept": {
+        "name": "WHO LCG Oral Fluid Intake",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000015",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_POSTURE_LABEL", "type": "label", "value": "Maternal Posture (Alert: Supine)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 9 } },
+      "id": "204",
+      "concept": {
+        "name": "WHO LCG Maternal Posture",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000016",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "sectionHeader",
+      "label": {
+        "translationKey": "WHO_LCG_SEC3_HEADER",
+        "type": "label",
+        "value": "SECTION 3: CARE OF THE BABY"
+      },
+      "properties": { "location": { "column": 0, "row": 10 } },
+      "id": "300"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_FHR_LABEL", "type": "label", "value": "Baseline FHR (bpm) [Alert: <110, >=160]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 11 } },
+      "id": "301",
+      "concept": {
+        "name": "WHO LCG Baseline FHR",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000020",
+        "datatype": "Numeric",
+        "conceptClass": "Finding",
+        "answers": []
+      },
+      "units": "bpm",
+      "lowNormal": "110",
+      "hiNormal": "159"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_DECEL_LABEL", "type": "label", "value": "FHR Deceleration (Alert: Late)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 12 } },
+      "id": "302",
+      "concept": {
+        "name": "WHO LCG FHR Deceleration",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000021",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_LIQUOR_LABEL", "type": "label", "value": "Amniotic Fluid (Alert: Thick Meconium, Blood)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 13 } },
+      "id": "303",
+      "concept": {
+        "name": "WHO LCG Amniotic Fluid",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000022",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_POS_LABEL", "type": "label", "value": "Fetal Position (Alert: Posterior, Transverse)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 14 } },
+      "id": "304",
+      "concept": {
+        "name": "WHO LCG Fetal Position",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000023",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_CAPUT_LABEL", "type": "label", "value": "Caput (Alert: Marked +++)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 15 } },
+      "id": "305",
+      "concept": {
+        "name": "WHO LCG Caput Succedaneum",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000024",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_MOULDING_LABEL", "type": "label", "value": "Moulding (Alert: Irreducible +++)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 16 } },
+      "id": "306",
+      "concept": {
+        "name": "WHO LCG Moulding",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000025",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "sectionHeader",
+      "label": {
+        "translationKey": "WHO_LCG_SEC4_HEADER",
+        "type": "label",
+        "value": "SECTION 4: CARE OF THE WOMAN"
+      },
+      "properties": { "location": { "column": 0, "row": 17 } },
+      "id": "400"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_PULSE_LABEL", "type": "label", "value": "Pulse (bpm) [Alert: <60, >=120]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 18 } },
+      "id": "401",
+      "concept": {
+        "name": "WHO LCG Maternal Pulse",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000030",
+        "datatype": "Numeric",
+        "conceptClass": "Finding",
+        "answers": []
+      },
+      "units": "bpm",
+      "lowNormal": "60",
+      "hiNormal": "119"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_SBP_LABEL", "type": "label", "value": "Systolic BP (mmHg) [Alert: <80, >=140]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 19 } },
+      "id": "402",
+      "concept": {
+        "name": "WHO LCG Systolic Blood Pressure",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000031",
+        "datatype": "Numeric",
+        "conceptClass": "Finding",
+        "answers": []
+      },
+      "units": "mmHg",
+      "lowNormal": "80",
+      "hiNormal": "139"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_DBP_LABEL", "type": "label", "value": "Diastolic BP (mmHg) [Alert: >=90]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 20 } },
+      "id": "403",
+      "concept": {
+        "name": "WHO LCG Diastolic Blood Pressure",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000032",
+        "datatype": "Numeric",
+        "conceptClass": "Finding",
+        "answers": []
+      },
+      "units": "mmHg",
+      "hiNormal": "89"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_TEMP_LABEL", "type": "label", "value": "Temperature (°C) [Alert: <35.0, >=37.5]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 21 } },
+      "id": "404",
+      "concept": {
+        "name": "WHO LCG Maternal Temperature",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000033",
+        "datatype": "Numeric",
+        "conceptClass": "Finding",
+        "answers": []
+      },
+      "units": "°C",
+      "lowNormal": "35.0",
+      "hiNormal": "37.4"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_URINE_LABEL", "type": "label", "value": "Urine (Protein / Acetone) [Alert: P++, A++]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 22 } },
+      "id": "405",
+      "concept": {
+        "name": "WHO LCG Urine Analysis",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000034",
+        "datatype": "Text",
+        "conceptClass": "Test",
+        "answers": []
+      }
+    },
+    {
+      "type": "sectionHeader",
+      "label": {
+        "translationKey": "WHO_LCG_SEC5_HEADER",
+        "type": "label",
+        "value": "SECTION 5: LABOUR PROGRESS"
+      },
+      "properties": { "location": { "column": 0, "row": 23 } },
+      "id": "500"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_CX_COUNT_LABEL", "type": "label", "value": "Contractions / 10 min [Alert: <=2, >5]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 24 } },
+      "id": "501",
+      "concept": {
+        "name": "WHO LCG Contractions in 10 Minutes",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000040",
+        "datatype": "Numeric",
+        "conceptClass": "Finding",
+        "answers": []
+      },
+      "lowNormal": "3",
+      "hiNormal": "5"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_CX_DUR_LABEL", "type": "label", "value": "Contraction Duration (sec) [Alert: <20, >60]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 25 } },
+      "id": "502",
+      "concept": {
+        "name": "WHO LCG Contraction Duration",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000041",
+        "datatype": "Numeric",
+        "conceptClass": "Finding",
+        "answers": []
+      },
+      "units": "sec",
+      "lowNormal": "20",
+      "hiNormal": "60"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_CERVIX_LABEL", "type": "label", "value": "Cervical Dilatation (cm) [5-10cm]" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 26 } },
+      "id": "503",
+      "concept": {
+        "name": "WHO LCG Cervical Dilatation",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000042",
+        "datatype": "Numeric",
+        "conceptClass": "Finding",
+        "answers": []
+      },
+      "units": "cm",
+      "lowNormal": "5",
+      "hiNormal": "10"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_DESCENT_LABEL", "type": "label", "value": "Fetal Head Descent (fifths)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 27 } },
+      "id": "504",
+      "concept": {
+        "name": "WHO LCG Fetal Head Descent",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000043",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "sectionHeader",
+      "label": {
+        "translationKey": "WHO_LCG_SEC6_HEADER",
+        "type": "label",
+        "value": "SECTION 6: MEDICATION & IV FLUIDS"
+      },
+      "properties": { "location": { "column": 0, "row": 28 } },
+      "id": "600"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_OXY_LABEL", "type": "label", "value": "Oxytocin (U/L, drops/min or N)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 29 } },
+      "id": "601",
+      "concept": {
+        "name": "WHO LCG Oxytocin Administration",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000050",
+        "datatype": "Text",
+        "conceptClass": "Drug",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_MED_LABEL", "type": "label", "value": "Medicine (Name, Dose, Route)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 30 } },
+      "id": "602",
+      "concept": {
+        "name": "WHO LCG Medication Administered",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000051",
+        "datatype": "Text",
+        "conceptClass": "Drug",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_IV_LABEL", "type": "label", "value": "IV Fluids (Y/N)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 31 } },
+      "id": "603",
+      "concept": {
+        "name": "WHO LCG IV Fluids",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000052",
+        "datatype": "Coded",
+        "conceptClass": "Finding",
+        "answers": []
+      }
+    },
+    {
+      "type": "sectionHeader",
+      "label": {
+        "translationKey": "WHO_LCG_SEC7_HEADER",
+        "type": "label",
+        "value": "SECTION 7: SHARED DECISION-MAKING"
+      },
+      "properties": { "location": { "column": 0, "row": 32 } },
+      "id": "700"
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_ASSESSMENT_LABEL", "type": "label", "value": "Clinical Assessment Findings" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 33 } },
+      "id": "701",
+      "concept": {
+        "name": "WHO LCG Clinical Assessment",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000060",
+        "datatype": "Text",
+        "conceptClass": "Misc",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_PLAN_LABEL", "type": "label", "value": "Agreed Management Plan (with Woman)" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 34 } },
+      "id": "702",
+      "concept": {
+        "name": "WHO LCG Management Plan",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000061",
+        "datatype": "Text",
+        "conceptClass": "Misc",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_INITIALS_LABEL", "type": "label", "value": "Provider Initials" },
+      "properties": { "mandatory": false, "notes": true, "addMore": false, "hideLabel": false, "location": { "column": 0, "row": 35 } },
+      "id": "703",
+      "concept": {
+        "name": "WHO LCG Provider Initials",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000062",
+        "datatype": "Text",
+        "conceptClass": "Misc",
+        "answers": []
+      }
+    },
+    {
+      "type": "obsControl",
+      "label": { "translationKey": "WHO_LCG_JSON_LABEL", "type": "label", "value": "Complete Chart JSON Record" },
+      "properties": { "mandatory": false, "notes": false, "addMore": false, "hideLabel": true, "location": { "column": 0, "row": 36 } },
+      "id": "704",
+      "concept": {
+        "name": "WHO LCG Complete Chart JSON",
+        "uuid": "9e2a5670-3d71-4569-b1d5-894000000002",
+        "datatype": "Text",
+        "conceptClass": "Misc",
+        "answers": []
+      }
+    }
+  ],
+  "events": { "onFormSave": "", "onFormInit": "" },
+  "translationsUrl": "/openmrs/ws/rest/v1/bahmniie/form/translations",
+  "referenceVersion": 0,
+  "referenceFormUuid": "9e2a5670-3d71-4569-b1d5-894000000001"
+}
+
