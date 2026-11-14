@@ -30,10 +30,12 @@ from flask import (
     Flask, request, session, redirect, url_for,
     render_template_string, jsonify, Response, send_file
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
 
@@ -2631,12 +2633,24 @@ INDEX_TEMPLATE = """
 
 def main():
     port = int(os.environ.get("IMPLEMENTATION_PORT", 8001))
+    ssl_cert = os.environ.get("SSL_CERT")
+    ssl_key = os.environ.get("SSL_KEY")
+    ssl_context = None
+    if ssl_cert and ssl_key and os.path.exists(ssl_cert) and os.path.exists(ssl_key):
+        ssl_context = (ssl_cert, ssl_key)
+        scheme = "https"
+    else:
+        scheme = "http"
+
     print(f"============================================================")
     print(f"  Bahmni & OpenELIS Implementation Portal")
-    print(f"  Listening on: http://0.0.0.0:{port}")
+    print(f"  Listening on: {scheme}://0.0.0.0:{port}")
     print(f"  Access: OpenELIS users with 'Maintenance' role only")
     print(f"============================================================")
-    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
+    if ssl_context:
+        app.run(host="0.0.0.0", port=port, debug=False, threaded=True, ssl_context=ssl_context)
+    else:
+        app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
 
 
 if __name__ == "__main__":
