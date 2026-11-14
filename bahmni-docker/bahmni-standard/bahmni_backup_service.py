@@ -2194,7 +2194,7 @@ def batch_import_drugs(items):
             else:
                 new_drug_uuid = str(uuid.uuid4())
                 generic_concept_id = None
-                gen_rows = run_openmrs_query(f"SELECT c.concept_id FROM concept c JOIN concept_name cn ON c.concept_id = cn.concept_id WHERE cn.name = '{esc_name}' AND c.class_id = 3 AND cn.voided = 0 LIMIT 1;")
+                gen_rows = run_openmrs_query(f"SELECT c.concept_id FROM concept c JOIN concept_name cn ON c.concept_id = cn.concept_id WHERE LOWER(cn.name) = LOWER('{esc_name}') AND cn.voided = 0 ORDER BY (c.class_id = 3) DESC LIMIT 1;")
                 if gen_rows and gen_rows[0].get("concept_id"):
                     generic_concept_id = gen_rows[0]["concept_id"]
                 else:

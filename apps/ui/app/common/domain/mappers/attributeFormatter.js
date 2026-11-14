@@ -5,7 +5,8 @@ Bahmni.Common.Domain.AttributeFormatter = (function () {
     }
 
     AttributeFormatter.prototype.getMrsAttributes = function (model, attributeTypes) {
-        return attributeTypes.map(function (result) {
+        var formatted = [];
+        attributeTypes.forEach(function (result) {
             var attribute = {
                 attributeType: {
                     uuid: result.uuid
@@ -14,8 +15,11 @@ Bahmni.Common.Domain.AttributeFormatter = (function () {
             if (!_.isEmpty(model)) {
                 setAttributeValue(result, attribute, model[result.name]);
             }
-            return attribute;
+            if (!attribute.voided && attribute.value) {
+                formatted.push(attribute);
+            }
         });
+        return formatted;
     };
 
     AttributeFormatter.prototype.getMrsAttributesForUpdate = function (model, attributeTypes, attributes) {
@@ -39,22 +43,21 @@ Bahmni.Common.Domain.AttributeFormatter = (function () {
     };
 
     var setAttributeValue = function setAttributeValue (attributeType, attr, value) {
-        if (value === "" || value === null || value === undefined || value.conceptUuid === null) {
+        var isConcept = attributeType.format === "org.openmrs.Concept";
+        var isConceptEmpty = isConcept && (!value || (typeof value === 'object' && !value.conceptUuid));
+        if (value === "" || value === null || value === undefined || isConceptEmpty) {
             attr.voided = true;
-        } else if (attributeType.format === "org.openmrs.Concept") {
-            var cUuid = (value && (value.conceptUuid || value)) || null;
+            attr.value = null;
+            attr.hydratedObject = null;
+        } else if (isConcept) {
+            var cUuid = (typeof value === 'object') ? value.conceptUuid : value;
             if (cUuid === 'fd08aa37-e18d-415d-be41-f8bbbc81bea3') {
                 cUuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b';
                 if (typeof value === 'object' && value) {
                     value.conceptUuid = cUuid;
                 }
             }
-            var attrDescription = _.find(attributeType.answers, function (answer) {
-                if (answer.conceptId === cUuid) {
-                    return true;
-                }
-            });
-            attr.value = attrDescription != undefined ? attrDescription.description : null;
+            attr.value = cUuid;
             attr.hydratedObject = cUuid;
         } else if (attributeType.format == "org.openmrs.util.AttributableDate" || attributeType.format == "org.openmrs.customdatatype.datatype.DateDatatype") {
             var mnt = moment(value);

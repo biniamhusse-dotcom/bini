@@ -562,6 +562,40 @@ def fix_global_properties_and_id_search():
     run_mysql(config_sql)
 
 
+def fix_concept_duplicates_and_uuids():
+    print("[openmrs] Harmonizing Concept UUIDs and removing duplicate concept names...",
+          flush=True)
+    fix_sql = """
+    UPDATE concept SET uuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b' WHERE concept_id = 65282;
+
+    UPDATE concept_name cn
+    JOIN (
+        SELECT MIN(concept_name_id) as keep_id, concept_id, name, locale
+        FROM concept_name
+        WHERE voided = 0
+        GROUP BY concept_id, name, locale
+        HAVING count(*) > 1
+    ) dup ON cn.concept_id = dup.concept_id 
+         AND cn.name = dup.name 
+         AND cn.locale = dup.locale 
+         AND cn.concept_name_id > dup.keep_id
+    SET cn.voided = 1, cn.void_reason = 'Duplicate name on same concept';
+
+    UPDATE concept_name cn
+    JOIN (
+        SELECT MIN(concept_name_id) as keep_id, name, locale
+        FROM concept_name
+        WHERE voided = 0 AND concept_name_type = 'FULLY_SPECIFIED'
+        GROUP BY name, locale
+        HAVING count(*) > 1
+    ) dup ON cn.name = dup.name 
+         AND cn.locale = dup.locale 
+         AND cn.concept_name_id > dup.keep_id
+    SET cn.concept_name_type = NULL;
+    """
+    run_mysql(fix_sql)
+
+
 def configure_auto_mrn(starting_mrn):
     print(f"[openmrs] Configuring Auto-MRN starting sequence to {starting_mrn}...",
           flush=True)
@@ -589,6 +623,7 @@ def task_openmrs(start_mrn):
     users_deleted = delete_openmrs_users()
     cleanup_openmrs_persons()
     fix_global_properties_and_id_search()
+    fix_concept_duplicates_and_uuids()
     configure_auto_mrn(_SEQ_START[0])
     patients_after, users_after = openmrs_counts()
     return (f"OpenMRS: patients {patients_before} -> {patients_after}, "

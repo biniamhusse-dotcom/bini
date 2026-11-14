@@ -4,9 +4,36 @@
 -- and dispensing register errors across all health facility servers.
 -- =========================================================================
 
--- 1. Ensure fallback concept UUID 'fd08aa37-e18d-415d-be41-f8bbbc81bea3' exists as N/A
+-- 1. Ensure canonical concept UUIDs and clean duplicate concept names
+UPDATE concept SET uuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b' WHERE concept_id = 65282;
+
 INSERT IGNORE INTO concept (retired, datatype_id, class_id, is_set, creator, date_created, uuid)
 VALUES (0, 3, 11, 0, 1, NOW(), 'fd08aa37-e18d-415d-be41-f8bbbc81bea3');
+
+UPDATE concept_name cn
+JOIN (
+    SELECT MIN(concept_name_id) as keep_id, concept_id, name, locale
+    FROM concept_name
+    WHERE voided = 0
+    GROUP BY concept_id, name, locale
+    HAVING count(*) > 1
+) dup ON cn.concept_id = dup.concept_id 
+     AND cn.name = dup.name 
+     AND cn.locale = dup.locale 
+     AND cn.concept_name_id > dup.keep_id
+SET cn.voided = 1, cn.void_reason = 'Duplicate name on same concept';
+
+UPDATE concept_name cn
+JOIN (
+    SELECT MIN(concept_name_id) as keep_id, name, locale
+    FROM concept_name
+    WHERE voided = 0 AND concept_name_type = 'FULLY_SPECIFIED'
+    GROUP BY name, locale
+    HAVING count(*) > 1
+) dup ON cn.name = dup.name 
+     AND cn.locale = dup.locale 
+     AND cn.concept_name_id > dup.keep_id
+SET cn.concept_name_type = NULL;
 
 SET @fallback_cid = (SELECT concept_id FROM concept WHERE uuid = 'fd08aa37-e18d-415d-be41-f8bbbc81bea3' LIMIT 1);
 

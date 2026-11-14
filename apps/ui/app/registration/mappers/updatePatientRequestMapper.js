@@ -80,9 +80,10 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                     uuid: attributeType.uuid
                 }
             };
-            var savedAttribute = openMRSPatient.person.attributes.filter(function (attribute) {
-                return attributeType.uuid === attribute.attributeType.uuid;
-            })[0];
+            var savedAttribute = (openMRSPatient && openMRSPatient.person && openMRSPatient.person.attributes) ? 
+                openMRSPatient.person.attributes.filter(function (attribute) {
+                    return attributeType.uuid === (attribute.attributeType && attribute.attributeType.uuid);
+                })[0] : null;
 
             if (savedAttribute) {
                 attr.uuid = savedAttribute.uuid;
@@ -91,7 +92,9 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                 attributes.push(attr);
             } else if (patient[attributeType.name] !== undefined && patient[attributeType.name] !== null && patient[attributeType.name] !== "") {
                 setAttributeValue(attributeType, attr, patient[attributeType.name]);
-                attributes.push(attr);
+                if (!attr.voided && attr.value) {
+                    attributes.push(attr);
+                }
             }
         });
         return attributes;
@@ -102,11 +105,14 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
         var isConceptEmpty = isConcept && (!value || (typeof value === 'object' && !value.conceptUuid));
         if (value === "" || value === null || value === undefined || isConceptEmpty) {
             attr.voided = true;
+            attr.value = null;
+            attr.hydratedObject = null;
         } else if (isConcept) {
             var conceptUuid = (typeof value === 'object') ? value.conceptUuid : value;
             if (conceptUuid === 'fd08aa37-e18d-415d-be41-f8bbbc81bea3') {
                 conceptUuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b';
             }
+            attr.value = conceptUuid;
             attr.hydratedObject = conceptUuid;
         } else if (attributeType.format === "org.openmrs.util.AttributableDate" || attributeType.format === "org.openmrs.customdatatype.datatype.DateDatatype") {
             var mnt = moment(value);
