@@ -19,7 +19,7 @@ SELECT
     IFNULL(MAX(CASE WHEN rcn.name = 'Reason for referral (text)' THEN ro.value_text END), '') AS reasonForReferral,
     IFNULL(MAX(CASE WHEN rcn.name = 'Need ambulance' THEN ro.value_text END), '') AS needAmbulance,
     IFNULL(MAX(CASE WHEN rcn.name = 'Need escorting professionals' THEN ro.value_text END), '') AS needEscorting,
-    IF(loc.uuid = ${location_uuid}, 'Out', 'In') AS referralDirection,
+    'Out' AS referralDirection,
     IFNULL(MAX(eloc.name), '') AS location,
     COALESCE(
         NULLIF(TRIM(MAX(CONCAT(cu_pn.given_name, IF(cu_pn.middle_name IS NOT NULL AND cu_pn.middle_name != '', CONCAT(' ', cu_pn.middle_name), ''), IF(cu_pn.family_name IS NOT NULL AND cu_pn.family_name != '', CONCAT(' ', cu_pn.family_name), '')))), ''),

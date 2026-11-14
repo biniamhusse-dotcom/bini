@@ -202,7 +202,8 @@ angular.module('admin')
                     }).catch(function () { return { data: { results: [] } }; }),
                     $http.get(OPENMRS_BASE + '/bahmniie/form/latestPublishedForms', { withCredentials: true }).catch(function () { return { data: [] }; })
                 ]).then(function (responses) {
-                    $scope.dashboard = (responses[0] && responses[0].data && responses[0].data.dashboard) || {};
+                    var respData = (responses[0] && responses[0].data) || {};
+                    $scope.dashboard = respData.dashboard ? respData.dashboard : respData;
                     $scope.i18nMap = (responses[1] && responses[1].data) || {};
 
                     var tplResults = (responses[2] && responses[2].data && responses[2].data.results) || [];
@@ -812,8 +813,10 @@ angular.module('admin')
                 }).then(function (res) {
                     $scope.saving = false;
                     $scope.dirty = false;
-                    if (res.data && res.data.dashboard) {
-                        $scope.dashboard = res.data.dashboard;
+                    var resData = res.data || {};
+                    var savedDash = resData.dashboard || (resData.result && (resData.result.dashboard || resData.result)) || resData;
+                    if (savedDash && typeof savedDash === 'object' && Object.keys(savedDash).length > 0) {
+                        $scope.dashboard = savedDash;
                         rebuildTabAndSections();
                     }
                     messagingService.showMessage('info', 'Dashboard & observation form display configuration saved!');

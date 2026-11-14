@@ -11,7 +11,9 @@ angular.module('bahmni.clinical')
         $scope.wards = [];
         $scope.visitTypes = [];
         $scope.femaleOnlyVisitTypes = [];
-        $scope.femaleVisitTypeNames;
+        $scope.femaleVisitTypeNames = [];
+        $scope.pediOnlyVisitTypes = [];
+        $scope.pediVisitTypeNames = [];
 
         function extractPatientUUID() {
             const fragmentIdentifier = window.location.hash.replace(/^#/, '');
@@ -47,24 +49,30 @@ angular.module('bahmni.clinical')
         };
 
         var loadAllWards = function () {
-            return wards.success(function (wardList) {
-                const exist = $scope.patient.person;
+            return wards.then(function (response) {
+                var wardList = response.data || response;
+                var results = (wardList && wardList.results) || [];
+                var exist = $scope.patient && $scope.patient.person;
+                var femaleNames = $scope.femaleVisitTypeNames || [];
+                var pediNames = $scope.pediVisitTypeNames || [];
                 if (exist && $scope.patient.person.age <= 18 && $scope.patient.person.gender === 'M') {
-                    $scope.wards = wardList.results
-                        .filter(e => !$scope.femaleVisitTypeNames.includes(e.ward.name))
+                    $scope.wards = results
+                        .filter(e => e.ward && !femaleNames.includes(e.ward.name))
                         .map(e => e.ward.name);
                 } else if (exist && $scope.patient.person.age > 18 && $scope.patient.person.gender === 'M') {
-                    $scope.wards = wardList.results
-                        .filter(e => !$scope.femaleVisitTypeNames.includes(e.ward.name) && !$scope.pediVisitTypeNames.includes(e.ward.name))
+                    $scope.wards = results
+                        .filter(e => e.ward && !femaleNames.includes(e.ward.name) && !pediNames.includes(e.ward.name))
                         .map(e => e.ward.name);
                 } else if (exist && $scope.patient.person.age > 18 && $scope.patient.person.gender === 'F') {
-                    $scope.wards = wardList.results
-                        .filter(e => !$scope.pediVisitTypeNames.includes(e.ward.name))
+                    $scope.wards = results
+                        .filter(e => e.ward && !pediNames.includes(e.ward.name))
                         .map(e => e.ward.name);
                 } else {
-                    $scope.wards = wardList.results.map(e => e.ward.name);
+                    $scope.wards = results.map(e => (e.ward && e.ward.name) || e.name || '');
                 }
-
+            }).catch(function (err) {
+                console.error("Failed to load admission locations/wards:", err);
+                $scope.wards = [];
             });
         };
 
@@ -377,20 +385,26 @@ angular.module('bahmni.clinical')
         var visitType = visitService.getVisitType();
 
         visitType.then(function (data) {
-            const exist= $scope.patient.person;
+            var results = (data && data.data && data.data.results) || (data && data.results) || [];
+            var exist = $scope.patient && $scope.patient.person;
+            var femaleNames = $scope.femaleVisitTypeNames || [];
+            var pediNames = $scope.pediVisitTypeNames || [];
             if (exist && $scope.patient.person.age <= 18 && $scope.patient.person.gender === 'M') {
-                $scope.visitType = data.data.results
-                    .filter(e => !$scope.femaleVisitTypeNames.includes(e.display));
+                $scope.visitType = results
+                    .filter(e => !femaleNames.includes(e.display));
             } else if (exist && $scope.patient.person.age > 18 && $scope.patient.person.gender === 'M') {
-                $scope.visitType = data.data.results
-                    .filter(e => !$scope.femaleVisitTypeNames.includes(e.display) && !$scope.pediVisitTypeNames.includes(e.display));
+                $scope.visitType = results
+                    .filter(e => !femaleNames.includes(e.display) && !pediNames.includes(e.display));
             } else if (exist && $scope.patient.person.age > 18 && $scope.patient.person.gender === 'F') {
-                $scope.visitType = data.data.results
-                    .filter(e => !$scope.pediVisitTypeNames.includes(e.display));
+                $scope.visitType = results
+                    .filter(e => !pediNames.includes(e.display));
             } else {
-                $scope.visitType = data.data.results;
+                $scope.visitType = results;
             }
-        })
+        }).catch(function (err) {
+            console.error("Failed to load visit types for disposition:", err);
+            $scope.visitType = [];
+        });
 
         var getLinkageUuid = function () {
             var params = {
@@ -1308,86 +1322,92 @@ angular.module('bahmni.clinical')
             $scope.referralDiagnosisConceptUuid = 'd3681d2a-5e07-11ef-8f7c-0242ac120002';
             return $q.all([
                 dispositionService.getDispositionNoteConcept().then(function (response) {
-                    $scope.dispositionNoteConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.dispositionNoteConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.dispositionNoteConceptUuid;
+                }).catch(function (err) { console.warn("Error loading disposition note concept", err); }),
                 dispositionService.getRefersConcept().then(function (response) {
-                    $scope.refersConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.refersConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.refersConceptUuid;
+                }).catch(function (err) { console.warn("Error loading refers concept", err); }),
                 dispositionService.getDurationOfStayConcept().then(function (response) {
-                    $scope.durationOfStayConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.durationOfStayConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.durationOfStayConceptUuid;
+                }).catch(function (err) { console.warn("Error loading duration of stay concept", err); }),
                 dispositionService.getDurationOfStayUniteConcept().then(function (response) {
-                    $scope.durationOfStayUniteConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.durationOfStayUniteConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.durationOfStayUniteConceptUuid;
+                }).catch(function (err) { console.warn("Error loading duration of stay unit concept", err); }),
                 dispositionService.getAdmissionWardConcept().then(function (response) {
-                    $scope.admissionWardConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.admissionWardConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.admissionWardConceptUuid;
+                }).catch(function (err) { console.warn("Error loading admission ward concept", err); }),
                 dispositionService.getLinkageVisitTypeConcept().then(function (response) {
-                    $scope.linkageVisitTypeConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.linkageVisitTypeConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.linkageVisitTypeConceptUuid;
+                }).catch(function (err) { console.warn("Error loading linkage visit type concept", err); }),
                 dispositionService.getSignatureConcept().then(function (response) {
-                    $scope.signatureConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.signatureConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.signatureConceptUuid;
+                }).catch(function (err) { console.warn("Error loading signature concept", err); }),
                 dispositionService.getSpecialtyConcept().then(function (response) {
-                    $scope.specialtyConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.specialtyConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.specialtyConceptUuid;
+                }).catch(function (err) { console.warn("Error loading specialty concept", err); }),
                 dispositionService.getSuggestedProviderConcept().then(function (response) {
-                    $scope.suggestedProviderConceptUuid = response.data.results[0].uuid;
-                }),
+                    $scope.suggestedProviderConceptUuid = (response.data.results && response.data.results[0]) ? response.data.results[0].uuid : $scope.suggestedProviderConceptUuid;
+                }).catch(function (err) { console.warn("Error loading suggested provider concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Reason for referral (text)&v=custom:(uuid)").then(function (response) {
-                    $scope.reasonForReferralConceptUuid = response.data.results[0] ? response.data.results[0].uuid : null;
-                }),
+                    if (response.data.results && response.data.results[0]) {
+                        $scope.reasonForReferralConceptUuid = response.data.results[0].uuid;
+                    }
+                }).catch(function (err) { console.warn("Error loading Reason for referral concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Relevant clinical history&v=custom:(uuid)").then(function (response) {
-                    $scope.clinicalHistoryConceptUuid = response.data.results[0] ? response.data.results[0].uuid : null;
-                }),
+                    if (response.data.results && response.data.results[0]) {
+                        $scope.clinicalHistoryConceptUuid = response.data.results[0].uuid;
+                    }
+                }).catch(function (err) { console.warn("Error loading Relevant clinical history concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Treatment provided&v=custom:(uuid)").then(function (response) {
-                    $scope.treatmentProvidedConceptUuid = response.data.results[0] ? response.data.results[0].uuid : null;
-                }),
+                    if (response.data.results && response.data.results[0]) {
+                        $scope.treatmentProvidedConceptUuid = response.data.results[0].uuid;
+                    }
+                }).catch(function (err) { console.warn("Error loading Treatment provided concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Referral department&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.referralDepartmentConceptUuid = response.data.results[0].uuid;
                     }
-                }),
+                }).catch(function (err) { console.warn("Error loading Referral department concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Patient condition at referral&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.patientConditionConceptUuid = response.data.results[0].uuid;
                     }
-                }),
+                }).catch(function (err) { console.warn("Error loading Patient condition at referral concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Need ambulance&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.needAmbulanceConceptUuid = response.data.results[0].uuid;
                     }
-                }),
+                }).catch(function (err) { console.warn("Error loading Need ambulance concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Need escorting professionals&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.needEscortingConceptUuid = response.data.results[0].uuid;
                     }
-                }),
+                }).catch(function (err) { console.warn("Error loading Need escorting professionals concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Referral Approved By&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.referralApprovedByConceptUuid = response.data.results[0].uuid;
                     }
-                }),
+                }).catch(function (err) { console.warn("Error loading Referral Approved By concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Referral Senior Physician Specialty&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.referralSeniorPhysicianSpecialtyConceptUuid = response.data.results[0].uuid;
                     }
-                }),
+                }).catch(function (err) { console.warn("Error loading Referral Senior Physician Specialty concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Referral Approval Method&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.referralApprovalMethodConceptUuid = response.data.results[0].uuid;
                     }
-                }),
+                }).catch(function (err) { console.warn("Error loading Referral Approval Method concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Referral Approval DateTime&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.referralApprovalDateTimeConceptUuid = response.data.results[0].uuid;
                     }
-                }),
+                }).catch(function (err) { console.warn("Error loading Referral Approval DateTime concept", err); }),
                 $http.get(Bahmni.Common.Constants.conceptSearchByFullNameUrl + "&name=Referral Approval Notes&v=custom:(uuid)").then(function (response) {
                     if (response.data.results && response.data.results[0]) {
                         $scope.referralApprovalNotesConceptUuid = response.data.results[0].uuid;
                     }
-                })
+                }).catch(function (err) { console.warn("Error loading Referral Approval Notes concept", err); })
             ]);
         };
 

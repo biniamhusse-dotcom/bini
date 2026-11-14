@@ -69,7 +69,7 @@
         "url": "#/backupRestore",
         "icon": "fa-database",
         "order": 6,
-        "requiredPrivilege": "app:admin:backupRestore"
+        "requiredPrivilege": "app:admin"
     },
     "branding":{
         "id": "bahmni.admin.branding",
@@ -81,7 +81,7 @@
         "url": "#/branding",
         "icon": "fa-paint-brush",
         "order": 7,
-        "requiredPrivilege": "app:admin:branding"
+        "requiredPrivilege": "app:admin"
     },
     "paymentConfig":{
         "id": "bahmni.admin.paymentConfig",
@@ -93,7 +93,7 @@
         "url": "#/paymentConfig",
         "icon": "fa-credit-card",
         "order": 8,
-        "requiredPrivilege": "app:admin:paymentConfig"
+        "requiredPrivilege": "app:admin"
     },
     "erTriageConfig":{
         "id": "bahmni.admin.erTriageConfig",
@@ -105,7 +105,7 @@
         "url": "#/erTriageConfig",
         "icon": "fa-ambulance",
         "order": 9,
-        "requiredPrivilege": "app:admin:erTriageConfig"
+        "requiredPrivilege": "app:admin"
     },
     "locationVisitMapping":{
         "id": "bahmni.admin.locationVisitMapping",
@@ -117,7 +117,7 @@
         "url": "#/locationVisitMapping",
         "icon": "fa-map-marker",
         "order": 10,
-        "requiredPrivilege": "app:admin:locationVisitMapping"
+        "requiredPrivilege": "app:admin"
     },
     "dashboardConfig":{
         "id": "bahmni.admin.dashboardConfig",
@@ -129,7 +129,7 @@
         "url": "#/dashboardConfig",
         "icon": "fa-th-large",
         "order": 11,
-        "requiredPrivilege": "app:admin:dashboardConfig"
+        "requiredPrivilege": "app:admin"
     },
     "obsFormManager":{
         "id": "bahmni.admin.obsFormManager",
@@ -141,7 +141,7 @@
         "url": "#/obsFormManager",
         "icon": "fa-list-alt",
         "order": 12,
-        "requiredPrivilege": "app:admin:obsFormManager"
+        "requiredPrivilege": "app:admin"
     },
     "drugManagement":{
         "id": "bahmni.admin.drugManagement",
@@ -153,7 +153,7 @@
         "url": "#/drugManagement",
         "icon": "fa-medkit",
         "order": 13,
-        "requiredPrivilege": "app:admin:drugManagement"
+        "requiredPrivilege": "app:admin"
     },
     "diagnosisManagement":{
         "id": "bahmni.admin.diagnosisManagement",
@@ -165,6 +165,6 @@
         "url": "#/diagnosisManagement",
         "icon": "fa-stethoscope",
         "order": 14,
-        "requiredPrivilege": "app:admin:diagnosisManagement"
+        "requiredPrivilege": "app:admin"
     }
 }

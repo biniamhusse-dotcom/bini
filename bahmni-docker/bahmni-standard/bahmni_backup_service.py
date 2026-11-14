@@ -1561,36 +1561,63 @@ def save_er_triage_config(payload):
     return load_er_triage_config()
 
 def load_location_visit_mappings():
-    omrs = get_container("openmrsdb")
     sql = """
-    SELECT l.uuid as locationUuid, l.name as locationName,
-           la.value_reference as visitTypeUuid, vt.name as visitTypeName
-    FROM location l
-    LEFT JOIN location_attribute la ON l.location_id = la.location_id AND la.voided = 0
-    LEFT JOIN location_attribute_type lat ON la.attribute_type_id = lat.location_attribute_type_id AND lat.name = 'defaultVisitType'
-    LEFT JOIN visit_type vt ON la.value_reference = vt.uuid AND vt.retired = 0
-    WHERE l.retired = 0
-    ORDER BY l.name ASC;
+    SELECT em.entity1_uuid as locationUuid, l.name as locationName,
+           em.entity2_uuid as visitTypeUuid, vt.name as visitTypeName
+    FROM entity_mapping em
+    JOIN entity_mapping_type emt ON em.entity_mapping_type_id = emt.id AND emt.name = 'loginlocation_visittype'
+    JOIN location l ON em.entity1_uuid = l.uuid
+    JOIN visit_type vt ON em.entity2_uuid = vt.uuid
+    WHERE l.retired = 0 AND vt.retired = 0
+    ORDER BY l.name ASC, vt.name ASC;
     """
     rows = run_openmrs_query(sql)
     return {"mappings": rows}
 
 def save_location_visit_mappings(payload):
-    mappings = payload.get("mappings", [])
-    omrs = get_container("openmrsdb")
-    for m in mappings:
-        loc_uuid = m.get("locationUuid")
-        vt_uuid = m.get("visitTypeUuid")
-        if loc_uuid and vt_uuid:
-            sql = f"""
-            INSERT INTO location_attribute (location_id, attribute_type_id, value_reference, uuid, creator, date_created)
-            SELECT l.location_id, lat.location_attribute_type_id, '{escape_sql_str(vt_uuid)}', UUID(), 1, NOW()
-            FROM location l
-            JOIN location_attribute_type lat ON lat.name = 'defaultVisitType'
-            WHERE l.uuid = '{escape_sql_str(loc_uuid)}'
-            ON DUPLICATE KEY UPDATE value_reference = '{escape_sql_str(vt_uuid)}';
-            """
-            run_openmrs_query(sql)
+    # Payload can be { locationUuid, visitTypeUuids }, { mappings: [...] }, or a list
+    items = []
+    if isinstance(payload, list):
+        items = payload
+    elif isinstance(payload, dict):
+        if "locationUuid" in payload:
+            items = [payload]
+        elif "mappings" in payload:
+            items = payload.get("mappings", [])
+
+    for item in items:
+        loc_uuid = item.get("locationUuid")
+        if not loc_uuid:
+            continue
+
+        vt_uuids = item.get("visitTypeUuids")
+        if vt_uuids is None and "visitTypeUuid" in item:
+            single_vt = item.get("visitTypeUuid")
+            vt_uuids = [single_vt] if single_vt else []
+        elif vt_uuids is None:
+            vt_uuids = []
+
+        # Delete existing mappings for this location in loginlocation_visittype
+        del_sql = f"""
+        DELETE FROM entity_mapping
+        WHERE entity_mapping_type_id = (SELECT id FROM entity_mapping_type WHERE name = 'loginlocation_visittype' LIMIT 1)
+          AND entity1_uuid = '{escape_sql_str(loc_uuid)}';
+        """
+        run_openmrs_query(del_sql)
+
+        # Insert each mapped visit type
+        for vt_uuid in vt_uuids:
+            if vt_uuid:
+                ins_sql = f"""
+                INSERT INTO entity_mapping (uuid, entity_mapping_type_id, entity1_uuid, entity2_uuid, date_created)
+                SELECT UUID(), id, '{escape_sql_str(loc_uuid)}', '{escape_sql_str(vt_uuid)}', NOW()
+                FROM entity_mapping_type
+                WHERE name = 'loginlocation_visittype'
+                LIMIT 1;
+                """
+                run_openmrs_query(ins_sql)
+
+    log(f"Saved location-visit mappings for {len(items)} location(s).")
     return load_location_visit_mappings()
 
 def load_dashboard_config():
@@ -1598,14 +1625,21 @@ def load_dashboard_config():
     if os.path.exists(dash_file):
         try:
             with open(dash_file, "r", encoding="utf-8") as f:
-                return json.load(f)
+                dash = json.load(f)
+                if isinstance(dash, dict) and "dashboard" in dash and len(dash) == 1:
+                    dash = dash["dashboard"]
+                res = {"dashboard": dash}
+                if isinstance(dash, dict):
+                    res.update(dash)
+                return res
         except Exception as e:
             log(f"Warning loading dashboard.json: {e}")
     return {"dashboard": {}}
 
 def save_dashboard_config(payload):
+    data_to_save = payload.get("dashboard", payload) if isinstance(payload, dict) else payload
     dash_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical", "dashboard.json")
-    write_file_safe(dash_file, json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+    write_file_safe(dash_file, json.dumps(data_to_save, indent=2, ensure_ascii=False) + "\n")
     sync_file_to_bahmni_web(dash_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/clinical/dashboard.json")
     log("Saved dashboard.json successfully.")
     return load_dashboard_config()
@@ -2687,7 +2721,7 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
         elif path in ("/api/location-visit-mappings", "/location-visit-mappings"):
             try:
                 result = save_location_visit_mappings(payload)
-                self._send_json(200, {"success": True, "result": result})
+                self._send_json(200, {"success": True, "result": result, "mappings": result.get("mappings", [])})
             except Exception as e:
                 log(f"Error saving location visit mappings: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
