@@ -3,6 +3,7 @@
 angular.module('admin')
     .controller('BackupRestoreController', ['$scope', '$rootScope', '$http', '$interval', '$timeout', 'messagingService',
         function ($scope, $rootScope, $http, $interval, $timeout, messagingService) {
+            $scope.implementationPortalUrl = 'http://' + (window.location.hostname || 'localhost') + ':8001';
             $scope.backups = [];
             $scope.status = {
                 status: 'idle',
