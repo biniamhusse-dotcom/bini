@@ -1,29 +1,93 @@
 #!/usr/bin/env python3
-import subprocess
+import os
+import re
 import sys
+import gzip
+import argparse
+import subprocess
 
-MYSQL_CMD = "docker exec -i bahmni-standard-openmrsdb-1 mysql -uroot -p'adminAdmin!123' -sN openmrs"
+OPENMRS_CONTAINER = "bahmni-standard-openmrsdb-1"
 STAGE_DB = "openmrs_legacy_stage"
 LIVE_DB = "openmrs"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def run_sql(query):
-    p = subprocess.Popen(MYSQL_CMD, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+DEFAULT_BACKUP_CANDIDATES = [
+    "/opt/emr/backups/openmrs20261002_160501.sql.gz",
+    "/home/hphc/Documents/Harbu bak/openmrs20261002_160501.sql.gz",
+    "/opt/emr/CentOS Bahmni backups/openmrs20261002_160501.sql.gz",
+    os.path.join(BASE_DIR, "..", "..", "CentOS Bahmni backups", "openmrs20261002_160501.sql.gz"),
+    os.path.join(BASE_DIR, "..", "..", "backups", "openmrs20261002_160501.sql.gz"),
+    os.path.join(BASE_DIR, "..", "..", "openmrs_backup_20260626_134854.sql"),
+]
+
+
+def run_sql(query, db=LIVE_DB):
+    cmd = f"docker exec -i {OPENMRS_CONTAINER} mysql -uroot -p'adminAdmin!123' -sN {db}"
+    p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     out, err = p.communicate(input=query)
     if p.returncode != 0:
         print(f"[-] SQL Error: {err}", file=sys.stderr)
         sys.exit(1)
     return out.strip()
 
+
+def ensure_staging_ready(backup_file=None):
+    chk_stage = run_sql(f"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{STAGE_DB}' AND table_name = 'patient';")
+    has_table = chk_stage and int(chk_stage.split()[-1]) > 0
+    if has_table:
+        pat_cnt = run_sql(f"SELECT COUNT(*) FROM {STAGE_DB}.patient;")
+        if pat_cnt and pat_cnt.isdigit() and int(pat_cnt) > 0:
+            print(f"[✔] Staging database `{STAGE_DB}` verified ready with {pat_cnt} patients.", flush=True)
+            return
+
+    archive_path = None
+    if backup_file and os.path.exists(backup_file):
+        archive_path = os.path.abspath(backup_file)
+    else:
+        for c in DEFAULT_BACKUP_CANDIDATES:
+            if os.path.exists(c):
+                archive_path = os.path.abspath(c)
+                break
+
+    if not archive_path or not os.path.exists(archive_path):
+        print(f"[!] Legacy staging database `{STAGE_DB}` does not exist or has no patients.", file=sys.stderr, flush=True)
+        print("[!] No backup archive found to restore. Please provide a CentOS backup file (.sql.gz / .sql).", file=sys.stderr, flush=True)
+        sys.exit(1)
+
+    print(f"[*] Staging {STAGE_DB} from backup archive: {archive_path}...", flush=True)
+    run_sql(f"DROP DATABASE IF EXISTS {STAGE_DB}; CREATE DATABASE {STAGE_DB} CHARACTER SET utf8mb4;", db="mysql")
+
+    opener = gzip.open if archive_path.endswith(".gz") else open
+    cmd = [
+        "docker", "exec", "-i", OPENMRS_CONTAINER,
+        "mysql", "-uroot", "-padminAdmin!123", "--default-character-set=utf8mb4",
+        "--force", STAGE_DB
+    ]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    with opener(archive_path, "rt", encoding="utf-8", errors="replace") as f_in:
+        for line in f_in:
+            if "DEFINER=" in line:
+                line = re.sub(r'DEFINER=`[^`]+`@`[^`]+`', '', line)
+            proc.stdin.write(line.encode("utf-8"))
+    proc.stdin.close()
+    proc.wait()
+    print(f"[✔] Staging restoration completed from {archive_path}.", flush=True)
+
+
+parser = argparse.ArgumentParser(description="Migrate Patient Profiles from CentOS backup/staging into OpenMRS")
+parser.add_argument("--backup-file", "-b", help="Path to CentOS backup archive (.sql.gz or .sql)")
+args, unknown = parser.parse_known_args()
+
+backup_path = args.backup_file or os.environ.get("SPECIFIC_BACKUP")
+if not backup_path and len(unknown) > 0 and not unknown[0].startswith("-"):
+    backup_path = unknown[0]
+
 print("=======================================================")
 print("[*] Starting Production Patient Profile Migration & Sync")
 print("=======================================================")
 
-# 1. Base ID offset and Staging check
-chk_stage = run_sql(f"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{STAGE_DB}' AND table_name = 'patient';")
-if not chk_stage or int(chk_stage.split()[-1]) == 0:
-    print(f"[!] Legacy staging database `{STAGE_DB}` does not exist or has not been loaded.", file=sys.stderr)
-    print("[*] Please run '4. Interactive PDF Pipeline' first to stage the backup database.", file=sys.stderr)
-    sys.exit(1)
+# 1. Base ID offset and Staging check/restoration
+ensure_staging_ready(backup_path)
 
 # Clean up any orphaned person records before calculating offset
 print("[*] Cleaning up orphaned person records in live database...")
@@ -40,14 +104,16 @@ raw_offset = run_sql(f"SELECT COALESCE(MAX(person_id), 0) FROM {LIVE_DB}.person;
 offset = int(raw_offset.split()[-1]) if raw_offset else 0
 print(f"[*] Base ID Offset: {offset}")
 
-# 2. Build mapping table of unmigrated records
+# 2. Build mapping table of unmigrated records (stripping any non-numeric prefix from identifiers)
 run_sql(f"""
 DROP TABLE IF EXISTS {LIVE_DB}._legacy_patient_map;
 CREATE TABLE {LIVE_DB}._legacy_patient_map AS
 SELECT p.patient_id AS legacy_patient_id
 FROM {STAGE_DB}.patient p
 JOIN {STAGE_DB}.patient_identifier pi ON p.patient_id = pi.patient_id AND pi.voided = 0
-LEFT JOIN {LIVE_DB}.patient_identifier lpi ON pi.identifier = lpi.identifier AND lpi.voided = 0
+LEFT JOIN {LIVE_DB}.patient_identifier lpi ON 
+    COALESCE(NULLIF(REGEXP_REPLACE(TRIM(pi.identifier), '^[^0-9]+', ''), ''), TRIM(pi.identifier)) = lpi.identifier 
+    AND lpi.voided = 0
 WHERE p.voided = 0 AND lpi.patient_id IS NULL
 GROUP BY p.patient_id;
 """)
@@ -101,11 +167,13 @@ if pending_count > 0:
     JOIN {STAGE_DB}.person_name pn ON m.legacy_patient_id = pn.person_id AND pn.voided = 0;
     """)
 
-    # 6. Migrate PATIENT_IDENTIFIER (Universal location_id = NULL)
-    print("[*] [4/6] Migrating Patient Identifier records (Universal location_id = NULL)...")
+    # 6. Migrate PATIENT_IDENTIFIER (Universal location_id = NULL, pure numeric IDs only)
+    print("[*] [4/6] Migrating Patient Identifier records (Universal location_id = NULL, pure numeric IDs)...")
     run_sql(f"""
     INSERT INTO {LIVE_DB}.patient_identifier (patient_id, identifier, identifier_type, preferred, location_id, creator, date_created, voided, uuid)
-    SELECT (m.legacy_patient_id + {offset}), pi.identifier, 3, pi.preferred, NULL, 1, COALESCE(pi.date_created, NOW()), 0, UUID()
+    SELECT (m.legacy_patient_id + {offset}), 
+           COALESCE(NULLIF(REGEXP_REPLACE(TRIM(pi.identifier), '^[^0-9]+', ''), ''), TRIM(pi.identifier)),
+           3, pi.preferred, NULL, 1, COALESCE(pi.date_created, NOW()), 0, UUID()
     FROM {LIVE_DB}._legacy_patient_map m
     JOIN {STAGE_DB}.patient_identifier pi ON m.legacy_patient_id = pi.patient_id AND pi.voided = 0;
     """)
@@ -198,7 +266,7 @@ else:
     print("[!] All patients already inserted. Running live synchronization & attribute repair...")
 
 # 9. Live Database Repair and Synchronization (ensures existing profiles are 100% correct)
-print("[*] Synchronizing and repairing address, payment concepts, and phone numbers in live database...")
+print("[*] Synchronizing and repairing address, payment concepts, identifiers, and auto-MRN in live database...")
 run_sql(f"""
 -- Address synchronization: ensure Woreda (address3), Zone (county_district), and Region (state_province)
 UPDATE {LIVE_DB}.person_address SET address3 = city_village WHERE address3 IS NULL AND city_village IS NOT NULL;
@@ -209,6 +277,11 @@ UPDATE {LIVE_DB}.person_address SET state_province = 'Amhara' WHERE state_provin
 UPDATE {LIVE_DB}.person_attribute SET value = '12121' WHERE person_attribute_type_id = 29 AND value = '7974';
 UPDATE {LIVE_DB}.person_attribute SET value = '60762' WHERE person_attribute_type_id = 29 AND value = '7973';
 UPDATE {LIVE_DB}.person_attribute SET value = '60764' WHERE person_attribute_type_id = 29 AND value = '7975';
+
+-- Sanitize any existing identifiers in live DB that have non-numeric prefixes:
+UPDATE {LIVE_DB}.patient_identifier 
+SET identifier = REGEXP_REPLACE(TRIM(identifier), '^[^0-9]+', '') 
+WHERE identifier REGEXP '^[^0-9]+';
 
 -- Universal identifier configuration
 UPDATE {LIVE_DB}.patient_identifier SET location_id = NULL WHERE voided = 0;
@@ -222,7 +295,11 @@ JOIN {LIVE_DB}.metadatamapping_metadata_source mts ON mtm.metadata_source_id = m
 SET mtm.metadata_uuid = 'd3153eb0-5e07-11ef-8f7c-0242ac120002'
 WHERE mtm.code IN ('emr.primaryIdentifierType', 'primaryIdentifierType');
 
-UPDATE {LIVE_DB}.global_property SET property_value = '' WHERE property = 'patient.identifierPrefix';
+-- Ensure Auto-MRN sequence generator has NO prefix and NO suffix (pure numbers)
+UPDATE {LIVE_DB}.idgen_seq_id_gen SET prefix = NULL, suffix = NULL WHERE id = 1;
+UPDATE {LIVE_DB}.idgen_identifier_source SET name = 'Patient Identifier', description = 'ID sequence source for patients' WHERE id = 1;
+
+UPDATE {LIVE_DB}.global_property SET property_value = NULL WHERE property = 'patient.identifierPrefix';
 UPDATE {LIVE_DB}.global_property SET property_value = '.*' WHERE property = 'patient.identifierRegex';
 UPDATE {LIVE_DB}.global_property SET property_value = 'ANYWHERE' WHERE property = 'patientIdentifierSearch.matchMode';
 UPDATE {LIVE_DB}.global_property SET property_value = '' WHERE property = 'patient.defaultPatientIdentifierValidator';

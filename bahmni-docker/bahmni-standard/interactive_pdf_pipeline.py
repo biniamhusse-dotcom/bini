@@ -33,6 +33,7 @@ from reportlab.lib import colors
 # Configuration & Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_BACKUP_CANDIDATES = [
+    "/opt/emr/backups/openmrs20261002_160501.sql.gz",
     "/home/hphc/Documents/Harbu bak/openmrs20261002_160501.sql.gz",
     "/opt/emr/CentOS Bahmni backups/openmrs20261002_160501.sql.gz",
     os.path.join(BASE_DIR, "..", "..", "CentOS Bahmni backups", "openmrs20261002_160501.sql.gz"),

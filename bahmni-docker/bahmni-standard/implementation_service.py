@@ -341,6 +341,21 @@ def logout():
     return redirect(url_for("login"))
 
 
+def find_default_backup():
+    candidates = [
+        "/opt/emr/backups/openmrs20261002_160501.sql.gz",
+        "/home/hphc/Documents/Harbu bak/openmrs20261002_160501.sql.gz",
+        "/opt/emr/CentOS Bahmni backups/openmrs20261002_160501.sql.gz",
+        os.path.join(BASE_DIR, "..", "..", "CentOS Bahmni backups", "openmrs20261002_160501.sql.gz"),
+        os.path.join(BASE_DIR, "..", "..", "backups", "openmrs20261002_160501.sql.gz"),
+        os.path.join(BASE_DIR, "..", "..", "openmrs_backup_20260626_134854.sql"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return "/opt/emr/backups/openmrs20261002_160501.sql.gz"
+
+
 @app.route("/")
 @require_openelis_maintenance
 def index():
@@ -358,7 +373,8 @@ def index():
         INDEX_TEMPLATE,
         user=user,
         scripts=script_statuses,
-        active_process=active_process
+        active_process=active_process,
+        default_backup_path=find_default_backup()
     )
 
 
@@ -829,6 +845,7 @@ def api_run_script(script_key):
         start_mrn = str(data.get("start_mrn", "")).strip()
         confirm = str(data.get("confirm", "")).strip()
         starting_mrn = str(data.get("starting_mrn", "200000")).strip()
+        clean_staging = data.get("clean_staging", True)
 
         if confirm != "PURGE":
             return jsonify({"error": "Confirmation word 'PURGE' required."}), 400
@@ -838,6 +855,8 @@ def api_run_script(script_key):
             if not start_mrn:
                 return jsonify({"error": "Starting MRN is required for selective purge."}), 400
             cmd_args.extend(["--start-mrn", start_mrn])
+        if clean_staging or mode == "1":
+            cmd_args.append("--clean-staging")
 
     elif script_key == "import_kphc_excel_patients":
         excel_path = data.get("excel_path", "").strip()
@@ -861,8 +880,10 @@ def api_run_script(script_key):
             cmd_args.append(pdf_dir)
 
     elif script_key == "migrate_patient_profiles":
-        # migrate_patient_profiles requires no extra args
-        pass
+        backup_file = data.get("backup_file", "").strip()
+        if backup_file:
+            env_vars["SPECIFIC_BACKUP"] = backup_file
+            cmd_args.extend(["--backup-file", backup_file])
 
     # Launch in background thread
     t = threading.Thread(target=run_script_worker, args=(script_key, cmd_args, env_vars), daemon=True)
@@ -1435,6 +1456,14 @@ INDEX_TEMPLATE = """
                   </div>
                 </div>
 
+                <div class="form-check form-switch mb-3" id="cleanStagingGroup">
+                  <input class="form-check-input" type="checkbox" id="cleanStagingDb" checked>
+                  <label class="form-check-label small fw-semibold" for="cleanStagingDb">
+                    Purge Legacy Staging DB (<code>openmrs_legacy_stage</code>) for fresh start
+                  </label>
+                  <div class="form-text text-muted small">Drops the temporary staging database so the Legacy Staging DB card resets to 0 records.</div>
+                </div>
+
                 <button class="btn btn-danger btn-action" onclick="executeCleanData()">
                   <i class="fa-solid fa-triangle-exclamation me-1"></i> Execute Patient Data Clean
                 </button>
@@ -1488,10 +1517,20 @@ INDEX_TEMPLATE = """
             <div id="collapseMigrate" class="accordion-collapse collapse" data-bs-parent="#toolsAccordion">
               <div class="accordion-body">
                 <p class="text-muted small">
-                  Transfers legacy patient demographics, person names, preferred identifiers, addresses, and phone attributes from <code>openmrs_legacy_stage</code> into live <code>openmrs</code> with safe ID offset synchronization.
+                  Transfers legacy patient demographics, person names, pure numeric identifiers (skipping any prefix), addresses, and phone attributes from <code>openmrs_legacy_stage</code> into live <code>openmrs</code> with safe ID offset synchronization.
                 </p>
-                <div class="alert alert-info py-2 small mb-3">
-                  <i class="fa-solid fa-circle-info me-1"></i> Requires staging database <code>openmrs_legacy_stage</code> populated from backup.
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">Source CentOS SQL Archive Path (.sql.gz / .sql) <span class="text-muted fw-normal">(Optional if already staged)</span></label>
+                  <div class="path-zone" id="zone-migrateBackupPath">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text"><i class="fa-solid fa-file-zipper text-primary"></i></span>
+                      <input type="text" id="migrateBackupPath" class="form-control form-control-sm" data-kind="file" data-title="Select source CentOS SQL backup archive" data-filetypes="SQL Archives (*.sql.gz,*.gz,*.sql);Compressed (*.zip,*.7z,*.rar);All Files (*.*)" value="{{ default_backup_path }}">
+                      <button type="button" class="btn btn-outline-primary" title="Browse the server filesystem" onclick="browsePath('migrateBackupPath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
+                      <button type="button" class="btn btn-outline-secondary" title="Clear" onclick="clearPath('migrateBackupPath')"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="path-drop"><i class="fa-solid fa-hand-pointer me-1"></i>Click <b>Browse</b> to pick the backup on the server, or <b>drag &amp; drop</b> the archive here (copied into <code>portal_uploads</code>).</div>
+                    <div class="path-status" id="status-migrateBackupPath"></div>
+                  </div>
                 </div>
                 <button class="btn btn-primary btn-action" onclick="executeProfileMigration()">
                   <i class="fa-solid fa-arrows-split-up-and-left me-1"></i> Run Profile Migration
@@ -1519,7 +1558,7 @@ INDEX_TEMPLATE = """
                   <div class="path-zone" id="zone-pdfBackupPath">
                     <div class="input-group input-group-sm">
                       <span class="input-group-text"><i class="fa-solid fa-file-zipper text-danger"></i></span>
-                      <input type="text" id="pdfBackupPath" class="form-control form-control-sm" data-kind="file" data-title="Select source SQL backup archive" data-filetypes="SQL Archives (*.sql.gz,*.gz,*.sql);Compressed (*.zip,*.7z,*.rar);All Files (*.*)" value="/opt/emr/CentOS Bahmni backups/openmrs20261002_160501.sql.gz">
+                      <input type="text" id="pdfBackupPath" class="form-control form-control-sm" data-kind="file" data-title="Select source SQL backup archive" data-filetypes="SQL Archives (*.sql.gz,*.gz,*.sql);Compressed (*.zip,*.7z,*.rar);All Files (*.*)" value="{{ default_backup_path }}">
                       <button type="button" class="btn btn-outline-primary" title="Browse the server filesystem" onclick="browsePath('pdfBackupPath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                       <button type="button" class="btn btn-outline-secondary" title="Clear" onclick="clearPath('pdfBackupPath')"><i class="fa-solid fa-xmark"></i></button>
                     </div>
@@ -2299,6 +2338,7 @@ INDEX_TEMPLATE = """
       const startMrn = document.getElementById('cleanStartMrn').value.trim();
       const autoMrn = document.getElementById('cleanAutoMrn').value.trim();
       const confirmWord = document.getElementById('cleanConfirm').value.trim();
+      const cleanStaging = document.getElementById('cleanStagingDb') ? document.getElementById('cleanStagingDb').checked : false;
 
       if (confirmWord !== "PURGE") {
         alert("You must type 'PURGE' in the confirmation box to proceed.");
@@ -2317,7 +2357,8 @@ INDEX_TEMPLATE = """
         mode: mode,
         start_mrn: startMrn,
         starting_mrn: autoMrn,
-        confirm: confirmWord
+        confirm: confirmWord,
+        clean_staging: cleanStaging
       });
     }
 
@@ -2338,8 +2379,10 @@ INDEX_TEMPLATE = """
 
     // 3. Profile Migration Trigger
     function executeProfileMigration() {
-      if (!confirm("Execute patient profile migration from openmrs_legacy_stage into production openmrs?")) return;
-      triggerScript('migrate_patient_profiles', {});
+      const backupInput = document.getElementById('migrateBackupPath');
+      const backup = backupInput ? backupInput.value.trim() : '';
+      if (!confirm("Execute patient profile migration into production openmrs?")) return;
+      triggerScript('migrate_patient_profiles', {backup_file: backup});
     }
 
     // 4. PDF Pipeline Trigger

@@ -1940,9 +1940,14 @@
       document.getElementById('ptName').value = lcgData.meta.name;
       document.getElementById('ptParity').value = lcgData.meta.parity;
       document.getElementById('ptOnset').value = lcgData.meta.onset;
-      document.getElementById('ptActiveDate').value = lcgData.meta.activeDate;
+      if (typeof setEtPickerValue === 'function') {
+        setEtPickerValue('ptActiveDate', lcgData.meta.activeDate);
+        setEtPickerValue('ptRuptureDate', lcgData.meta.ruptureDate);
+      } else {
+        document.getElementById('ptActiveDate').value = lcgData.meta.activeDate;
+        document.getElementById('ptRuptureDate').value = lcgData.meta.ruptureDate;
+      }
       document.getElementById('ptActiveTime').value = lcgData.meta.activeTime;
-      document.getElementById('ptRuptureDate').value = lcgData.meta.ruptureDate;
       document.getElementById('ptRuptureTime').value = lcgData.meta.ruptureTime;
       document.getElementById('ptRiskFactors').value = lcgData.meta.riskFactors;
 
@@ -2273,9 +2278,14 @@
             document.getElementById('ptName').value = lcgData.meta.name || '';
             document.getElementById('ptParity').value = lcgData.meta.parity || '';
             document.getElementById('ptOnset').value = lcgData.meta.onset || 'Spontaneous';
-            document.getElementById('ptActiveDate').value = lcgData.meta.activeDate || '';
+            if (typeof setEtPickerValue === 'function') {
+              setEtPickerValue('ptActiveDate', lcgData.meta.activeDate || '');
+              setEtPickerValue('ptRuptureDate', lcgData.meta.ruptureDate || '');
+            } else {
+              document.getElementById('ptActiveDate').value = lcgData.meta.activeDate || '';
+              document.getElementById('ptRuptureDate').value = lcgData.meta.ruptureDate || '';
+            }
             document.getElementById('ptActiveTime').value = lcgData.meta.activeTime || '';
-            document.getElementById('ptRuptureDate').value = lcgData.meta.ruptureDate || '';
             document.getElementById('ptRuptureTime').value = lcgData.meta.ruptureTime || '';
             document.getElementById('ptRiskFactors').value = lcgData.meta.riskFactors || '';
           }
@@ -2701,8 +2711,14 @@
         document.documentElement.setAttribute('data-theme', 'dark');
       }
 
+      initData();
       initEtPicker();
       loadSavedData();
+      renderTable();
+      drawCervicogramChart();
+      evaluateAlerts();
+      renderAuditTrail();
+      applyLockState();
       loadOpenMrsPatientRecord();
     });
 
@@ -2907,6 +2923,11 @@
       headerInputs.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.disabled = isLocked;
+      });
+
+      document.querySelectorAll('.et-date-display').forEach(d => {
+        d.style.pointerEvents = isLocked ? 'none' : 'auto';
+        d.style.opacity = isLocked ? '0.6' : '1';
       });
 
       // Disable or enable hour time inputs

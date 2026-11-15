@@ -623,14 +623,32 @@ def fix_concept_duplicates_and_uuids():
 
 
 def configure_auto_mrn(starting_mrn):
-    print(f"[openmrs] Configuring Auto-MRN starting sequence to {starting_mrn}...",
+    print(f"[openmrs] Configuring Auto-MRN starting sequence to {starting_mrn} (prefix=NULL, pure numeric)...",
           flush=True)
     run_mysql(f"""
     UPDATE idgen_seq_id_gen
-    SET next_sequence_value = {int(starting_mrn)},
+    SET prefix = NULL,
+        suffix = NULL,
+        next_sequence_value = {int(starting_mrn)},
         first_identifier_base = '{int(starting_mrn)}'
     WHERE id = 1;
+
+    UPDATE idgen_identifier_source
+    SET name = 'Patient Identifier',
+        description = 'ID sequence source for patients'
+    WHERE id = 1;
+
+    UPDATE global_property
+    SET property_value = NULL
+    WHERE property = 'patient.identifierPrefix';
     """)
+
+
+def task_clean_staging():
+    t0 = time.time()
+    print("[staging] Dropping legacy staging database `openmrs_legacy_stage`...", flush=True)
+    run_mysql("DROP DATABASE IF EXISTS openmrs_legacy_stage;")
+    return f"Legacy Staging DB: openmrs_legacy_stage purged/dropped ({time.time() - t0:.0f}s)"
 
 
 def openmrs_counts():
@@ -1133,10 +1151,13 @@ def main():
     parser.add_argument("--confirm", help="Must be 'PURGE'")
     parser.add_argument("--starting-mrn", type=str, default="200000",
                         help="Desired starting number for Auto-MRN sequence")
+    parser.add_argument("--clean-staging", action="store_true",
+                        help="Also drop/purge legacy staging DB (openmrs_legacy_stage)")
     parser.add_argument("--wait", action="store_true",
                         help="Block until OpenMRS is reachable again")
     args = parser.parse_args()
 
+    clean_staging_flag = args.clean_staging
     if args.mode:
         choice = args.mode
         start_mrn = args.start_mrn if choice == "2" else None
@@ -1171,6 +1192,9 @@ def main():
         else:
             confirm = input("Confirm deleting ALL patient data + non-admin users "
                             "in OpenMRS/OpenELIS/Odoo? Type 'PURGE': ").strip()
+            stg_ans = input("Also drop/purge legacy staging DB (openmrs_legacy_stage)? [Y/n]: ").strip().lower()
+            if stg_ans != 'n':
+                clean_staging_flag = True
 
         if confirm != "PURGE":
             print("Aborted.")
@@ -1191,6 +1215,8 @@ def main():
     print(f"  Kept users: openmrs={sorted(KEEP_OPENMRS)}", flush=True)
     print(f"              openelis={sorted(KEEP_OPENELIS)}", flush=True)
     print(f"              odoo={sorted(KEEP_ODOO)}", flush=True)
+    if clean_staging_flag or not start_mrn:
+        print("  Staging DB:  openmrs_legacy_stage will be purged", flush=True)
     print("=" * 60, flush=True)
 
     started = time.time()
@@ -1202,6 +1228,8 @@ def main():
         "patches": lambda: (
             (apply_frontend_patches(), "Bahmni web UI patches re-applied")[1]),
     }
+    if clean_staging_flag or (choice == "1" and not start_mrn):
+        jobs["staging"] = task_clean_staging
 
     results, errors = {}, {}
     with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
