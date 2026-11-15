@@ -124,11 +124,20 @@
             ],
             "Procedure Orders": [
                 "Procedure"
+            ],
+            "Pathology Orders": [
+                "Pathology",
+                "Specimen"
+            ],
+            "Ophthalmology and Optometry Orders": [
+                "Ophthalmology"
             ]
         },
         "otherInvestigationsMap": {
             "Radiology": "Radiology Order",
-            "Endoscopy": "Endoscopy Order"
+            "Endoscopy": "Endoscopy Order",
+            "Pathology": "Pathology Order",
+            "Ophthalmology": "Ophtha Order"
         },
         "formsAndPrivileges": [
             {

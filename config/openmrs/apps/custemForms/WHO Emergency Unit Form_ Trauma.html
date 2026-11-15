@@ -114,6 +114,40 @@ main input[type=checkbox]:checked,main input[type=radio]:checked{background:#000
 .bw{border:1px solid #000;border-radius:0}.bw img{border-radius:0}
 .pl{margin-bottom:2px}
 }
+
+/* Ethiopian Calendar & Governance Controls */
+.btn-lock{background:#dc2626 !important;border-color:#dc2626 !important;color:#fff !important;}
+.btn-lock:hover{background:#b91c1c !important;}
+.btn-lock.locked{background:#475569 !important;border-color:#475569 !important;}
+.btn-handover{background:#4f46e5 !important;border-color:#4f46e5 !important;color:#fff !important;}
+.btn-handover:hover{background:#4338ca !important;}
+.et-date-wrapper{position:relative;width:100%;}
+.et-date-display{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);cursor:pointer;font-size:12px;height:38px;color:var(--tx);transition:all .15s;}
+.et-date-display:hover,.et-date-display:focus{border-color:var(--ac);outline:none;box-shadow:0 0 0 2px rgba(11,92,171,.2);}
+.et-date-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;font-weight:600;}
+.et-date-text.placeholder{color:var(--mut);font-weight:400;}
+.et-cal-icon{font-size:13px;color:var(--ac);}
+.et-popover{position:fixed;z-index:99999;width:310px;background:#fff;color:#0f172a;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 15px 35px rgba(15,23,42,.25);padding:12px;display:none;user-select:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+.et-popover.open{display:block;}
+.et-pop-header{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px;}
+.et-pop-nav{padding:4px 10px;font-size:14px;font-weight:700;border-radius:6px;background:#f1f5f9;border:1px solid #cbd5e1;cursor:pointer;color:#0b5cab;line-height:1;}
+.et-pop-nav:hover{background:#e2e8f0;color:#0f172a;}
+.et-pop-selectors{display:flex;gap:4px;flex:1;justify-content:center;}
+.et-pop-selectors select{padding:4px 6px;font-size:11.5px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:600;}
+.et-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10.5px;font-weight:700;color:#0b5cab;padding:4px 0;border-bottom:1px solid #e2e8f0;margin-bottom:6px;}
+.et-days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.et-day-btn{padding:6px 0;font-size:11.5px;font-weight:600;border:1px solid transparent;border-radius:6px;background:#f8fafc;color:#1e293b;cursor:pointer;text-align:center;transition:all .1s;}
+.et-day-btn:hover{background:#dbeafe;color:#0b5cab;border-color:#93c5fd;}
+.et-day-btn.today{border-color:#0b5cab;color:#0b5cab;font-weight:800;background:#eff6ff;}
+.et-day-btn.selected{background:#0b5cab !important;color:#fff !important;font-weight:800;box-shadow:0 2px 4px rgba(11,92,171,.3);}
+.et-day-empty{padding:6px 0;}
+.et-greg-hint{margin-top:8px;padding:4px 8px;background:#eff6ff;border-radius:4px;font-size:10px;color:#0b5cab;font-weight:600;text-align:center;border:1px solid #bfdbfe;}
+.et-pop-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid #e2e8f0;}
+#lockedNoticeBanner{display:none;background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;}
+.gov-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.gov-table th{background:#f1f5f9;color:#334155;text-align:left;padding:6px 8px;border:1px solid #cbd5e1;font-size:11px;}
+.gov-table td{padding:6px 8px;border:1px solid #e2e8f0;color:#0f172a;}
+
 </style>
 </head>
 <body>
@@ -138,6 +172,12 @@ main input[type=checkbox]:checked,main input[type=radio]:checked{background:#000
       <button type="button" class="btn-save" id="btnSaveEncounter" onclick="saveToPatientEncounter()">
         <span id="txtSaveEncounter">Save to Encounter</span>
       </button>
+      <button type="button" class="btn-lock" id="btnLockForm" onclick="toggleLockForm()" title="Finalize and lock this Trauma record to make it non-editable">
+        <span id="txtLockForm">Lock Form</span>
+      </button>
+      <button type="button" class="btn-handover" id="btnShiftHandover" onclick="openShiftHandoverModal()" title="Handover trauma care to incoming clinician without locking the entire form">
+        <span id="txtShiftHandover">Shift Handover</span>
+      </button>
       <button type="button" id="pr">Print / PDF</button>
       <button type="button" id="cl">Clear Form</button>
     </div>
@@ -145,6 +185,74 @@ main input[type=checkbox]:checked,main input[type=radio]:checked{background:#000
 </header>
 
 <nav id="nav" aria-label="Sections"></nav>
+
+<!-- Locked Banner -->
+<div id="lockedNoticeBanner" style="max-width:960px;margin:10px auto;display:none;">
+  <span>🔒 </span><span id="lockedNoticeDetails">This Trauma Assessment was finalized &amp; locked. All entries are read-only for data safety.</span>
+</div>
+
+<!-- Shift Handover Modal -->
+<div id="shiftHandoverModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.6);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:12px;box-shadow:0 20px 40px rgba(0,0,0,0.3);width:100%;max-width:480px;padding:20px;font-family:sans-serif;color:#0f172a;">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-bottom:14px;">
+      <h3 style="margin:0;font-size:16px;color:#0b5cab;font-weight:700;">🤝 Clinical Shift Handover</h3>
+      <button type="button" onclick="closeShiftHandoverModal()" style="border:none;background:none;font-size:18px;cursor:pointer;color:#64748b;">&times;</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:12.5px;">
+      <div>
+        <label style="display:block;font-weight:600;margin-bottom:4px;color:#334155;">Outgoing Clinician (Current User)</label>
+        <input type="text" id="hoOutgoingUser" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;" value="Attending Clinician">
+      </div>
+      <div>
+        <label style="display:block;font-weight:600;margin-bottom:4px;color:#334155;">Incoming Clinician (Receiving Staff)</label>
+        <input type="text" id="hoIncomingUser" placeholder="e.g. Dr. Abebe / Nurse Tigist" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;">
+      </div>
+      <div>
+        <label style="display:block;font-weight:600;margin-bottom:4px;color:#334155;">Care Phase / Hours Documented</label>
+        <input type="text" id="hoHoursCovered" placeholder="e.g. Primary Survey & Resuscitation / Hours 1-4" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;">
+      </div>
+      <div>
+        <label style="display:block;font-weight:600;margin-bottom:4px;color:#334155;">Clinical Handover Summary / Pending Actions</label>
+        <textarea id="hoSummary" rows="3" placeholder="Condition stable, CT scan pending, blood cross-match in progress..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:12px;">
+      <button type="button" onclick="closeShiftHandoverModal()" style="padding:6px 14px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;font-size:12px;cursor:pointer;">Cancel</button>
+      <button type="button" onclick="submitShiftHandover()" style="padding:6px 16px;border:none;background:#4f46e5;color:#fff;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Sign-off &amp; Handover</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ethiopian Calendar Popover -->
+<div class="et-popover" id="etPopover" role="dialog" aria-label="Ethiopian Calendar Picker">
+  <div class="et-pop-header">
+    <button type="button" class="et-pop-nav" id="etPrevMonth" title="Previous Month">&lsaquo;</button>
+    <div class="et-pop-selectors">
+      <select id="etMonthSelect" aria-label="Ethiopian Month"></select>
+      <select id="etYearSelect" aria-label="Ethiopian Year"></select>
+    </div>
+    <button type="button" class="et-pop-nav" id="etNextMonth" title="Next Month">&rsaquo;</button>
+  </div>
+  <div class="et-weekdays">
+    <span>እሑድ</span>
+    <span>ሰኞ</span>
+    <span>ማክ</span>
+    <span>ረቡ</span>
+    <span>ሐሙ</span>
+    <span>ዓር</span>
+    <span>ቅዳ</span>
+  </div>
+  <div class="et-days-grid" id="etDaysGrid"></div>
+  <div class="et-greg-hint" id="etGregHint"></div>
+  <div class="et-pop-footer">
+    <button type="button" id="etTodayBtn" style="padding:4px 10px;font-size:11px;background:#0b5cab;color:#fff;border:none;border-radius:5px;font-weight:700;cursor:pointer;">Today (ዛሬ)</button>
+    <div style="display:flex;gap:6px;">
+      <button type="button" id="etClearBtn" style="padding:4px 8px;font-size:11px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#334155;">Clear</button>
+      <button type="button" id="etCloseBtn" style="padding:4px 8px;font-size:11px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#334155;">Close</button>
+    </div>
+  </div>
+</div>
+
 <main id="m"></main>
 <p class="pf">Form to be used with WHO Reference Card. See who.int/emergencycare for more information.</p>
 
@@ -333,6 +441,9 @@ const S = [
     ['t','Signature and date'],
     ['t','Provider name / title (handover)'],
     ['t','Signature and date (handover)']
+  ]},
+  { t: 'Clinical Governance & Audit Trail', f: [
+    ['gov']
   ]}
 ];
 
@@ -347,6 +458,20 @@ function chip(o, type, name) {
 
 function fld(a) {
   const [k, l, o] = a;
+  if (k === 'd') {
+    const i = nid();
+    return `<div class="fl${o==='full'?' full':''}">
+      <span>${l} <span style="font-size:10px;color:var(--ac);font-weight:700;">(የኢትዮጵያ ቀን)</span></span>
+      <div class="et-date-wrapper" data-et-picker data-target="${i}">
+        <input type="hidden" id="${i}" data-lbl="${l}" value="" onchange="autoSaveLocal()">
+        <div class="et-date-display" tabindex="0">
+          <span class="et-date-text placeholder">ቀን / ወር / ዓ.ም</span>
+          <span class="et-cal-icon">📅</span>
+        </div>
+      </div>
+      <div id="${i}GregHint" class="et-hint" style="font-size:10.5px;color:var(--mut);margin-top:2px;"></div>
+    </div>`;
+  }
   if (T[k]) return `<label class="fl${o==='full'?' full':''}">${l}<input id="${nid()}" data-lbl="${l}" type="${T[k]}"${k==='n'?' inputmode="decimal" step="any"':''}></label>`;
   if (k==='a') return `<label class="fl full">${l}<textarea id="${nid()}" data-lbl="${l}"></textarea></label>`;
   if (k==='h') return `<h3 class="h">${l}</h3>`;
@@ -360,6 +485,51 @@ function fld(a) {
   if (k==='zz') return `<div class="ps"><div class="ltr two"><div class="lt"><div><b>D</b><span>isability</span></div>${chip('NML','checkbox')}</div><div class="lt"><div><b>E</b><span>xposure</span></div>${chip('Exposed completely','checkbox')}</div></div><div class="pc"><div>${l.map(fld).join('')}</div><div class="fast"><div class="fh"><div><b>F</b><span>AST</span></div>${chip('NML','checkbox')}${chip('Not indicated','checkbox')}${chip('Not available','checkbox')}</div>${o.map(fld).join('')}</div></div></div>`;
   if (k==='x') return `<div class="row x">${chip('NML','checkbox')}<label class="fl"><b>${l}</b><textarea id="${nid()}" data-lbl="${l}" style="min-height:2.6rem"></textarea></label></div>`;
   if (k==='m') return `<div class="row">${chip(l,'checkbox')}<input id="${nid()}" type="text" placeholder="Details" aria-label="${l} details"><input id="${nid()}" type="time" aria-label="${l} time"></div>`;
+  if (k === 'gov') {
+    return `<div class="full" style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <div style="font-weight:700;color:var(--ac);font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+          <span>🔒</span><span>Finalization &amp; Edit Audit Trail</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="gov-table">
+            <thead>
+              <tr>
+                <th style="width:24%;">Date &amp; Time (Dual Calendar)</th>
+                <th style="width:24%;">Clinician Full Name</th>
+                <th style="width:20%;">Action Taken</th>
+                <th style="width:32%;">Clinical Data Entered / Modified</th>
+              </tr>
+            </thead>
+            <tbody id="govAuditTableBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--mut);font-style:italic;">No edits recorded yet. Current initial assessment in progress.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:700;color:#4f46e5;font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+          <span>🤝</span><span>Shift Handover History</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="gov-table">
+            <thead>
+              <tr>
+                <th style="width:20%;">Timestamp</th>
+                <th style="width:20%;">Outgoing Clinician</th>
+                <th style="width:20%;">Incoming Staff</th>
+                <th style="width:20%;">Care Phase / Hours</th>
+                <th style="width:20%;">Handover Summary</th>
+              </tr>
+            </thead>
+            <tbody id="govHandoverTableBody">
+              <tr><td colspan="5" style="text-align:center;color:var(--mut);font-style:italic;">No shift handover recorded yet. Initial shift active.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  }
   return `<p class="full" style="margin:0;color:var(--mut);font-size:.85rem">Mark NML only if all key elements are normal.</p>`;
 }
 
@@ -370,6 +540,15 @@ S.forEach((s, i) => {
   m.insertAdjacentHTML('beforeend', `<section id="s${i}"><h2>${s.t}</h2><div class="g">${s.f.map(fld).join('')}</div></section>`);
   nav.insertAdjacentHTML('beforeend', `<a href="#s${i}" onclick="document.getElementById('s${i}').scrollIntoView();return false">${s.t}</a>`);
 });
+
+
+let currentObsUuid = urlParams.get('obsUuid') || null;
+let currentClinicianName = 'Attending Clinician';
+let traumaLocked = false;
+let traumaLockedBy = null;
+let traumaLockedAt = null;
+let traumaAuditTrail = [];
+let traumaHandovers = [];
 
 const K = 'who-trauma-form-v1' + (patientUuid ? '_' + patientUuid : '');
 let pins = [];
@@ -401,6 +580,7 @@ function drawPins(foc) {
     t.value = q.t || '';
     t.placeholder = 'e.g. 3 cm laceration, left forearm';
     t.setAttribute('aria-label', 'Injury ' + (i + 1) + ' description');
+    if (traumaLocked) t.disabled = true;
     t.oninput = () => {
       q.t = t.value;
       sp();
@@ -410,7 +590,9 @@ function drawPins(foc) {
     x.type = 'button';
     x.className = 'rm';
     x.textContent = 'Remove';
+    if (traumaLocked) x.disabled = true;
     x.onclick = () => {
+      if (traumaLocked) return;
       pins.splice(i, 1);
       drawPins();
       sp();
@@ -429,6 +611,7 @@ function sp() {
 }
 
 bw.addEventListener('click', e => {
+  if (traumaLocked) return;
   const r = bw.getBoundingClientRect();
   pins.push({
     x: +((e.clientX - r.left) / r.width * 100).toFixed(1),
@@ -450,31 +633,579 @@ function gcs() {
 }
 
 function autoSaveLocal() {
+  if (traumaLocked) return;
   try {
     const data = els.map(e => e.type === 'checkbox' || e.type === 'radio' ? +e.checked : e.value);
     localStorage.setItem(K, JSON.stringify(data));
   } catch (e) {}
 }
 
-function restoreFormFromData(d) {
-  if (!d) return;
-  els.forEach((e, i) => {
-    if (e.type === 'checkbox' || e.type === 'radio') {
-      e.checked = !!d[i];
-    } else if (d[i] != null) {
-      e.value = d[i];
-    }
-  });
-  gcs();
+// =========================================================================
+// Ethiopian Calendar Engine & Date Picker Controller
+// =========================================================================
+const ET_MONTHS = [
+  { am: 'መስከረም', en: 'Meskerem' },
+  { am: 'ጥቅምት',  en: 'Tikimt' },
+  { am: 'ኅዳር',   en: 'Hidar' },
+  { am: 'ታኅሣሥ',  en: 'Tahsas' },
+  { am: 'ጥር',    en: 'Tir' },
+  { am: 'የካቲት',  en: 'Yekatit' },
+  { am: 'መጋቢት',  en: 'Megabit' },
+  { am: 'ሚያዝያ',  en: 'Miazia' },
+  { am: 'ግንቦት',  en: 'Ginbot' },
+  { am: 'ሰኔ',    en: 'Sene' },
+  { am: 'ሐምሌ',   en: 'Hamle' },
+  { am: 'ነሐሴ',   en: 'Nehase' },
+  { am: 'ጳጉሜን',  en: 'Pagume' }
+];
+
+const ET_EPOCH = 1724221;
+
+function isEtLeapYear(y) {
+  return ((y + 1) % 4) === 0;
 }
 
-// Load initial local data
+function etDaysInMonth(y, m) {
+  if (m >= 1 && m <= 12) return 30;
+  return isEtLeapYear(y) ? 6 : 5;
+}
+
+function etToJdn(y, m, d) {
+  return (ET_EPOCH - 1) + 365 * (y - 1) + Math.floor(y / 4) + 30 * (m - 1) + d;
+}
+
+function jdnToEt(jdn) {
+  const r = (jdn - ET_EPOCH) % 1461;
+  const n = (r % 365) + 365 * Math.floor(r / 1460);
+  const year = 4 * Math.floor((jdn - ET_EPOCH) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+  const month = Math.floor(n / 30) + 1;
+  const day = (n % 30) + 1;
+  return { year, month, day };
+}
+
+function gregorianToJdn(gy, gm, gd) {
+  const a = Math.floor((14 - gm) / 12);
+  const y = gy + 4800 - a;
+  const m = gm + 12 * a - 3;
+  return gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+}
+
+function jdnToGregorian(jdn) {
+  const a = jdn + 32044;
+  const b = Math.floor((4 * a + 3) / 146097);
+  const c = a - Math.floor((146097 * b) / 4);
+  const d = Math.floor((4 * c + 3) / 1461);
+  const e = c - Math.floor((1461 * d) / 4);
+  const m = Math.floor((5 * e + 2) / 153);
+  const day = e - Math.floor((153 * m + 2) / 5) + 1;
+  const month = m + 3 - 12 * Math.floor(m / 10);
+  const year = 100 * b + d - 4800 + Math.floor(m / 10);
+  return { year, month, day };
+}
+
+function getTodayEt() {
+  const now = new Date();
+  const jdn = gregorianToJdn(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  return jdnToEt(jdn);
+}
+
+function pad2(num) {
+  return String(num).padStart(2, '0');
+}
+
+function parseEtValue(val) {
+  if (!val) return null;
+  const clean = String(val).trim().split(' ')[0];
+  const parts = clean.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return null;
+  return { year: parts[0], month: parts[1], day: parts[2] };
+}
+
+function formatEtDisplay(parsed) {
+  if (!parsed) return '';
+  const mObj = ET_MONTHS[parsed.month - 1];
+  const mLabel = mObj ? `${mObj.am} (${mObj.en})` : parsed.month;
+  return `${mLabel} ${parsed.day}, ${parsed.year} ዓ.ም`;
+}
+
+function formatGregEquivalent(parsed) {
+  if (!parsed) return '';
+  const g = jdnToGregorian(etToJdn(parsed.year, parsed.month, parsed.day));
+  const gMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${gMonths[g.month - 1]} ${g.day}, ${g.year}`;
+}
+
+function updateWrapperDisplay(wrapper) {
+  if (!wrapper) return;
+  const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+  const textSpan = wrapper.querySelector('.et-date-text');
+  const hintEl = document.getElementById(hiddenInput.id + 'GregHint');
+  const parsed = parseEtValue(hiddenInput.value);
+
+  if (parsed) {
+    textSpan.textContent = formatEtDisplay(parsed);
+    textSpan.classList.remove('placeholder');
+    if (hintEl) {
+      hintEl.textContent = 'Gregorian: ' + formatGregEquivalent(parsed);
+    }
+  } else {
+    textSpan.textContent = 'ቀን / ወር / ዓ.ም';
+    textSpan.classList.add('placeholder');
+    if (hintEl) {
+      hintEl.textContent = '';
+    }
+  }
+}
+
+function setEtPickerValue(inputId, val, isGregorian) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const wrapper = input.closest('.et-date-wrapper');
+  if (!val) {
+    input.value = '';
+    if (wrapper) updateWrapperDisplay(wrapper);
+    return;
+  }
+
+  let etYear, etMonth, etDay;
+  const parts = String(val).trim().split(' ')[0].split('-').map(Number);
+  if (parts.length === 3 && !parts.some(isNaN)) {
+    if (isGregorian || parts[0] > 2025 || (parts[0] > 1900 && parts[0] < 2010)) {
+      // Gregorian: convert to Ethiopian
+      const jdn = gregorianToJdn(parts[0], parts[1], parts[2]);
+      const et = jdnToEt(jdn);
+      etYear = et.year;
+      etMonth = et.month;
+      etDay = et.day;
+    } else {
+      etYear = parts[0];
+      etMonth = parts[1];
+      etDay = parts[2];
+    }
+    input.value = `${etYear}-${pad2(etMonth)}-${pad2(etDay)}`;
+  } else {
+    input.value = val;
+  }
+
+  if (wrapper) {
+    updateWrapperDisplay(wrapper);
+  }
+}
+
+let activeEtWrapper = null;
+let etViewYear = 2019;
+let etViewMonth = 3;
+
+function initEtPicker() {
+  const popover = document.getElementById('etPopover');
+  const monthSelect = document.getElementById('etMonthSelect');
+  const yearSelect = document.getElementById('etYearSelect');
+  if (!popover || !monthSelect || !yearSelect) return;
+
+  monthSelect.innerHTML = '';
+  yearSelect.innerHTML = '';
+
+  ET_MONTHS.forEach((m, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx + 1;
+    opt.textContent = `${m.am} (${m.en})`;
+    monthSelect.appendChild(opt);
+  });
+
+  const today = getTodayEt();
+  etViewYear = today.year;
+  etViewMonth = today.month;
+
+  for (let y = today.year - 15; y <= today.year + 10; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = `${y} ዓ.ም`;
+    yearSelect.appendChild(opt);
+  }
+
+  monthSelect.addEventListener('change', () => {
+    etViewMonth = parseInt(monthSelect.value, 10);
+    renderEtCalendarGrid();
+  });
+
+  yearSelect.addEventListener('change', () => {
+    etViewYear = parseInt(yearSelect.value, 10);
+    renderEtCalendarGrid();
+  });
+
+  document.getElementById('etPrevMonth').addEventListener('click', (e) => {
+    e.stopPropagation();
+    etViewMonth--;
+    if (etViewMonth < 1) {
+      etViewMonth = 13;
+      etViewYear--;
+    }
+    renderEtCalendarGrid();
+  });
+
+  document.getElementById('etNextMonth').addEventListener('click', (e) => {
+    e.stopPropagation();
+    etViewMonth++;
+    if (etViewMonth > 13) {
+      etViewMonth = 1;
+      etViewYear++;
+    }
+    renderEtCalendarGrid();
+  });
+
+  document.getElementById('etTodayBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const t = getTodayEt();
+    selectEtDate(t.year, t.month, t.day);
+  });
+
+  document.getElementById('etClearBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (activeEtWrapper) {
+      const hiddenInput = activeEtWrapper.querySelector('input[type="hidden"]');
+      hiddenInput.value = '';
+      updateWrapperDisplay(activeEtWrapper);
+      autoSaveLocal();
+    }
+    closeEtPopover();
+  });
+
+  document.getElementById('etCloseBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeEtPopover();
+  });
+
+  document.querySelectorAll('[data-et-picker]').forEach(wrapper => {
+    const display = wrapper.querySelector('.et-date-display');
+    display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (traumaLocked) return;
+      if (activeEtWrapper === wrapper && popover.classList.contains('open')) {
+        closeEtPopover();
+      } else {
+        openEtPopover(wrapper);
+      }
+    });
+    display.addEventListener('keydown', (e) => {
+      if (traumaLocked) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openEtPopover(wrapper);
+      }
+    });
+    updateWrapperDisplay(wrapper);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (popover.classList.contains('open') && !popover.contains(e.target) && !e.target.closest('[data-et-picker]')) {
+      closeEtPopover();
+    }
+  });
+}
+
+function renderEtCalendarGrid() {
+  const monthSelect = document.getElementById('etMonthSelect');
+  const yearSelect = document.getElementById('etYearSelect');
+  const daysGrid = document.getElementById('etDaysGrid');
+  const gregHint = document.getElementById('etGregHint');
+  if (!daysGrid) return;
+
+  monthSelect.value = etViewMonth;
+  yearSelect.value = etViewYear;
+  daysGrid.innerHTML = '';
+
+  const today = getTodayEt();
+  const hiddenInput = activeEtWrapper ? activeEtWrapper.querySelector('input[type="hidden"]') : null;
+  const selected = hiddenInput ? parseEtValue(hiddenInput.value) : null;
+
+  const firstJdn = etToJdn(etViewYear, etViewMonth, 1);
+  const startDow = (firstJdn + 1) % 7;
+  const totalDays = etDaysInMonth(etViewYear, etViewMonth);
+
+  for (let i = 0; i < startDow; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'et-day-empty';
+    daysGrid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= totalDays; d++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'et-day-btn';
+    btn.textContent = d;
+
+    if (today.year === etViewYear && today.month === etViewMonth && today.day === d) {
+      btn.classList.add('today');
+    }
+    if (selected && selected.year === etViewYear && selected.month === etViewMonth && selected.day === d) {
+      btn.classList.add('selected');
+    }
+
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectEtDate(etViewYear, etViewMonth, d);
+    });
+    daysGrid.appendChild(btn);
+  }
+
+  if (selected && selected.year === etViewYear && selected.month === etViewMonth) {
+    gregHint.textContent = 'Gregorian: ' + formatGregEquivalent(selected);
+  } else {
+    gregHint.textContent = 'Gregorian (Month Start): ' + formatGregEquivalent({ year: etViewYear, month: etViewMonth, day: 1 });
+  }
+}
+
+function selectEtDate(year, month, day) {
+  if (!activeEtWrapper) return;
+  const hiddenInput = activeEtWrapper.querySelector('input[type="hidden"]');
+  hiddenInput.value = `${year}-${pad2(month)}-${pad2(day)}`;
+  updateWrapperDisplay(activeEtWrapper);
+  renderEtCalendarGrid();
+  autoSaveLocal();
+  closeEtPopover();
+}
+
+function openEtPopover(wrapper) {
+  if (traumaLocked) return;
+  activeEtWrapper = wrapper;
+  const popover = document.getElementById('etPopover');
+  const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+  const parsed = parseEtValue(hiddenInput.value);
+  const today = getTodayEt();
+
+  etViewYear = parsed ? parsed.year : today.year;
+  etViewMonth = parsed ? parsed.month : today.month;
+
+  renderEtCalendarGrid();
+  popover.classList.add('open');
+
+  const rect = wrapper.getBoundingClientRect();
+  const popW = 310;
+  const popH = popover.offsetHeight || 320;
+  let left = rect.left;
+  let top = rect.bottom + 6;
+
+  if (left + popW > window.innerWidth - 12) {
+    left = Math.max(12, window.innerWidth - popW - 12);
+  }
+  if (top + popH > window.innerHeight - 12) {
+    top = Math.max(12, rect.top - popH - 6);
+  }
+
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+}
+
+function closeEtPopover() {
+  const popover = document.getElementById('etPopover');
+  if (popover) popover.classList.remove('open');
+  activeEtWrapper = null;
+}
+
+// =========================================================================
+// Lock State & Shift Handover Controllers
+// =========================================================================
+function applyLockState() {
+  const banner = document.getElementById('lockedNoticeBanner');
+  const bannerDetails = document.getElementById('lockedNoticeDetails');
+  const lockBtn = document.getElementById('btnLockForm');
+  const lockTxt = document.getElementById('txtLockForm');
+
+  if (traumaLocked) {
+    if (banner) {
+      banner.style.display = 'block';
+      const lDate = traumaLockedAt ? new Date(traumaLockedAt).toLocaleString() : 'Recent';
+      bannerDetails.textContent = `This Trauma Assessment was finalized & locked on ${lDate} by ${traumaLockedBy || 'Authorized Clinician'}. All records are read-only for data safety.`;
+    }
+    if (lockBtn && lockTxt) {
+      lockBtn.classList.add('locked');
+      lockTxt.textContent = 'Locked (Read-Only)';
+      lockBtn.title = 'Trauma form is finalized and locked. Click to unlock (authorized staff only).';
+    }
+    els.forEach(el => { el.disabled = true; });
+    document.getElementById('cl').disabled = true;
+  } else {
+    if (banner) banner.style.display = 'none';
+    if (lockBtn && lockTxt) {
+      lockBtn.classList.remove('locked');
+      lockTxt.textContent = 'Lock Form';
+      lockBtn.title = 'Finalize and lock this Trauma record to make it non-editable';
+    }
+    els.forEach(el => { el.disabled = false; });
+    document.getElementById('cl').disabled = false;
+  }
+  drawPins();
+}
+
+function toggleLockForm() {
+  if (traumaLocked) {
+    if (confirm('Unlock this Trauma form to allow further documentation?')) {
+      traumaLocked = false;
+      traumaLockedBy = null;
+      traumaLockedAt = null;
+      addAuditTrailEntry('Form Unlocked', 'Clinician reopened form for updates');
+      applyLockState();
+      saveToPatientEncounter();
+    }
+  } else {
+    if (confirm('Finalize and LOCK this Trauma form?\n\nOnce locked, all observations become non-editable for patient safety and clinical governance.')) {
+      traumaLocked = true;
+      traumaLockedBy = currentClinicianName;
+      traumaLockedAt = new Date().toISOString();
+      addAuditTrailEntry('Form Finalized & Locked', 'All data entry locked for clinical data safety');
+      applyLockState();
+      saveToPatientEncounter();
+    }
+  }
+}
+
+function openShiftHandoverModal() {
+  const modal = document.getElementById('shiftHandoverModal');
+  const outUser = document.getElementById('hoOutgoingUser');
+  if (outUser) outUser.value = currentClinicianName;
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeShiftHandoverModal() {
+  const modal = document.getElementById('shiftHandoverModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function submitShiftHandover() {
+  const outgoing = (document.getElementById('hoOutgoingUser').value || currentClinicianName).trim();
+  const incoming = (document.getElementById('hoIncomingUser').value || '').trim();
+  const hours = (document.getElementById('hoHoursCovered').value || 'Trauma Care Shift').trim();
+  const summary = (document.getElementById('hoSummary').value || '').trim();
+
+  if (!incoming) {
+    alert('Please specify the incoming clinician / receiving staff name.');
+    return;
+  }
+
+  const now = new Date();
+  const todayEt = getTodayEt();
+  const etStr = `${ET_MONTHS[todayEt.month - 1].am} ${todayEt.day}, ${todayEt.year} ዓ.ም`;
+
+  const handoverObj = {
+    outgoingUser: outgoing,
+    incomingUser: incoming,
+    hoursCovered: hours,
+    clinicalSummary: summary,
+    timestamp: now.toISOString(),
+    timestampEt: etStr
+  };
+
+  traumaHandovers.push(handoverObj);
+  addAuditTrailEntry('Shift Handover Completed', `Care transferred from ${outgoing} to ${incoming} (${hours}). Notes: ${summary || 'None'}`);
+  renderShiftHandovers();
+  renderAuditTrail();
+  closeShiftHandoverModal();
+  saveToPatientEncounter();
+  showToast(`Shift Handover to ${incoming} recorded!`);
+}
+
+function addAuditTrailEntry(action, details) {
+  const now = new Date();
+  const todayEt = getTodayEt();
+  const etStr = `${ET_MONTHS[todayEt.month - 1].am} ${todayEt.day}, ${todayEt.year} ዓ.ም`;
+  traumaAuditTrail.push({
+    timestamp: now.toISOString(),
+    timestampFormatted: `${now.toLocaleDateString()} ${now.toLocaleTimeString()} (${etStr})`,
+    user: currentClinicianName,
+    action: action,
+    details: details
+  });
+}
+
+function renderAuditTrail() {
+  const tbody = document.getElementById('govAuditTableBody');
+  if (!tbody) return;
+  if (traumaAuditTrail.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--mut);font-style:italic;">No edits recorded yet. Current initial assessment in progress.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = traumaAuditTrail.slice().reverse().map(a => `
+    <tr>
+      <td style="font-weight:600;font-size:11.5px;">${a.timestampFormatted || new Date(a.timestamp).toLocaleString()}</td>
+      <td style="font-weight:700;color:var(--ac);">${a.user || 'Attending Clinician'}</td>
+      <td><span style="background:var(--acs);color:var(--ac);font-weight:700;padding:2px 6px;border-radius:4px;font-size:10.5px;">${a.action}</span></td>
+      <td style="font-size:11.5px;">${a.details || '-'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderShiftHandovers() {
+  const tbody = document.getElementById('govHandoverTableBody');
+  if (!tbody) return;
+  if (traumaHandovers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--mut);font-style:italic;">No shift handover recorded yet. Initial shift active.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = traumaHandovers.slice().reverse().map(h => `
+    <tr>
+      <td style="font-weight:600;font-size:11.5px;">${new Date(h.timestamp).toLocaleString()} ${h.timestampEt ? '(' + h.timestampEt + ')' : ''}</td>
+      <td style="font-weight:700;color:#0b5cab;">${h.outgoingUser}</td>
+      <td style="font-weight:700;color:#166534;">${h.incomingUser}</td>
+      <td><strong>${h.hoursCovered || 'Shift'}</strong></td>
+      <td style="font-size:11.5px;">${h.clinicalSummary || '-'}</td>
+    </tr>
+  `).join('');
+}
+
+function restoreTraumaFormFromData(parsed) {
+  if (!parsed) return;
+  if (parsed.locked !== undefined) traumaLocked = Boolean(parsed.locked);
+  if (parsed.lockedBy) traumaLockedBy = parsed.lockedBy;
+  if (parsed.lockedAt) traumaLockedAt = parsed.lockedAt;
+  if (parsed.auditTrail) traumaAuditTrail = parsed.auditTrail;
+  if (parsed.handovers) traumaHandovers = parsed.handovers;
+
+  if (parsed.fields && Array.isArray(parsed.fields)) {
+    els.forEach((e, i) => {
+      const val = parsed.fields[i];
+      if (e.type === 'checkbox' || e.type === 'radio') {
+        e.checked = !!val;
+      } else if (val != null) {
+        e.value = val;
+        if (e.type === 'hidden' && e.closest('.et-date-wrapper')) {
+          setEtPickerValue(e.id, val);
+        }
+      }
+    });
+  }
+
+  if (parsed.pins && Array.isArray(parsed.pins)) {
+    pins = parsed.pins;
+    drawPins();
+  }
+
+  gcs();
+  applyLockState();
+  renderAuditTrail();
+  renderShiftHandovers();
+}
+
+// Check initial local cached chart
 try {
-  const d = JSON.parse(localStorage.getItem(K) || 'null');
-  if (d) restoreFormFromData(d);
+  const cachedTraumaChart = sessionStorage.getItem('trauma_active_chart') || (currentObsUuid ? localStorage.getItem('trauma_review_' + currentObsUuid) : null);
+  if (cachedTraumaChart) {
+    const parsed = JSON.parse(cachedTraumaChart);
+    restoreTraumaFormFromData(parsed);
+  } else {
+    const d = JSON.parse(localStorage.getItem(K) || 'null');
+    if (d) {
+      els.forEach((e, i) => {
+        if (e.type === 'checkbox' || e.type === 'radio') e.checked = !!d[i];
+        else if (d[i] != null) {
+          e.value = d[i];
+          if (e.type === 'hidden' && e.closest('.et-date-wrapper')) setEtPickerValue(e.id, d[i]);
+        }
+      });
+      gcs();
+    }
+  }
 } catch (e) {}
 
-gcs();
 m.addEventListener('input', () => { gcs(); autoSaveLocal(); });
 m.addEventListener('change', () => { gcs(); autoSaveLocal(); });
 
@@ -485,10 +1216,15 @@ window.addEventListener('beforeprint', () => {
 document.getElementById('pr').onclick = () => window.print();
 
 document.getElementById('cl').onclick = () => {
+  if (traumaLocked) {
+    alert('This form is locked and cannot be cleared.');
+    return;
+  }
   if (confirm('Clear every field on this form?')) {
     els.forEach(e => {
       if (e.type === 'checkbox' || e.type === 'radio') e.checked = false;
       else e.value = '';
+      if (e.type === 'hidden' && e.closest('.et-date-wrapper')) setEtPickerValue(e.id, '');
     });
     pins = [];
     drawPins();
@@ -511,6 +1247,21 @@ function showToast(msg, isErr) {
 
 // EMR OpenMRS REST API Integration
 async function initPatientContext() {
+  initEtPicker();
+
+  // Fetch logged in clinician session
+  try {
+    const sRes = await fetch('/openmrs/ws/rest/v1/session', { credentials: 'include' });
+    if (sRes.ok) {
+      const sData = await sRes.json();
+      if (sData.user && sData.user.person && sData.user.person.display) {
+        currentClinicianName = sData.user.person.display;
+      } else if (sData.user && sData.user.display) {
+        currentClinicianName = sData.user.display;
+      }
+    }
+  } catch (e) {}
+
   if (patientName) {
     document.getElementById('hdrPtName').textContent = decodeURIComponent(patientName);
   }
@@ -553,12 +1304,13 @@ async function initPatientContext() {
       }
 
       const dobInput = document.querySelector('[data-lbl="Date of birth"]');
-      if (dobInput && !dobInput.value && pDob) dobInput.value = pDob;
+      if (dobInput && !dobInput.value && pDob) {
+        setEtPickerValue(dobInput.id, pDob, true);
+      }
 
       const ageInput = document.querySelector('[data-lbl="Age"]');
       if (ageInput && !ageInput.value && pAge !== '-') ageInput.value = pAge;
 
-      // Select gender radio if present
       document.querySelectorAll('input[type=radio][value="' + pGender + '"]').forEach(r => {
         if (![...document.querySelectorAll('input[type=radio][name="' + r.name + '"]')].some(x => x.checked)) {
           r.checked = true;
@@ -566,22 +1318,39 @@ async function initPatientContext() {
       });
     }
 
+    // Default Date of arrival and Time of arrival to today/now if empty
+    const arrDateInput = document.querySelector('[data-lbl="Date of arrival"]');
+    if (arrDateInput && !arrDateInput.value) {
+      const todayEt = getTodayEt();
+      setEtPickerValue(arrDateInput.id, `${todayEt.year}-${pad2(todayEt.month)}-${pad2(todayEt.day)}`);
+    }
+    const arrTimeInput = document.querySelector('[data-lbl="Time of arrival"]');
+    if (arrTimeInput && !arrTimeInput.value) {
+      const now = new Date();
+      arrTimeInput.value = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    }
+
     // 2. Fetch existing observations for this patient
-    const obsRes = await fetch(`/openmrs/ws/rest/v1/obs?patient=${patientUuid}&concept=787486b1-fdae-40f8-b704-4aa241633401&v=custom:(uuid,obsDatetime,value,encounter:(uuid))`, { credentials: 'include' });
+    const obsUrl = currentObsUuid 
+      ? `/openmrs/ws/rest/v1/obs/${currentObsUuid}?v=custom:(uuid,obsDatetime,value,encounter:(uuid))`
+      : `/openmrs/ws/rest/v1/obs?patient=${patientUuid}&concept=787486b1-fdae-40f8-b704-4aa241633401&v=custom:(uuid,obsDatetime,value,encounter:(uuid))`;
+
+    const obsRes = await fetch(obsUrl, { credentials: 'include' });
     if (obsRes.ok) {
       const obsData = await obsRes.json();
-      if (obsData.results && obsData.results.length > 0) {
-        const latest = obsData.results[0];
+      let targetObs = null;
+      if (currentObsUuid && obsData.uuid) {
+        targetObs = obsData;
+      } else if (obsData.results && obsData.results.length > 0) {
+        targetObs = obsData.results[0];
+      }
+
+      if (targetObs) {
+        currentObsUuid = targetObs.uuid;
         try {
-          const parsed = JSON.parse(latest.value);
-          if (parsed.fields) {
-            restoreFormFromData(parsed.fields);
-          }
-          if (parsed.pins && parsed.pins.length > 0) {
-            pins = parsed.pins;
-            drawPins();
-          }
-          document.getElementById('hdrStatus').textContent = 'Loaded EMR record from ' + new Date(latest.obsDatetime).toLocaleDateString();
+          const parsed = typeof targetObs.value === 'string' ? JSON.parse(targetObs.value) : targetObs.value;
+          restoreTraumaFormFromData(parsed);
+          document.getElementById('hdrStatus').textContent = 'EMR record: ' + new Date(targetObs.obsDatetime).toLocaleDateString();
         } catch (e) {
           console.warn("Could not parse saved trauma JSON:", e);
         }
@@ -629,6 +1398,18 @@ async function saveToPatientEncounter() {
   const ccEl = document.querySelector('[data-lbl="Chief complaint"]');
   const chiefComplaint = ccEl ? ccEl.value : '';
 
+  // Arrival date & time
+  const arrDateEl = document.querySelector('[data-lbl="Date of arrival"]');
+  const arrTimeEl = document.querySelector('[data-lbl="Time of arrival"]');
+  const arrivalDateVal = arrDateEl ? arrDateEl.value : '';
+  const arrivalTimeVal = arrTimeEl ? arrTimeEl.value : '';
+
+  // Arrival mode
+  let arrivalModeVal = '';
+  document.querySelectorAll('input[type=radio]:checked').forEach(r => {
+    if (['Ambulance','Walk','Public transport'].some(m => r.value.includes(m))) arrivalModeVal = r.value;
+  });
+
   // Vitals
   const vitBp = document.querySelector('[data-lbl="BP (sys/dia)"]');
   const vitPulse = document.querySelector('[data-lbl="Pulse"]');
@@ -644,22 +1425,32 @@ async function saveToPatientEncounter() {
 
   // Primary survey summaries
   const airwaySummary = [...document.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value).filter(v => ['Angioedema','Stridor','Tongue','Suction','ETT'].includes(v)).join(', ');
-  const assessmentEl = document.querySelector('section#s10 textarea');
+  const assessmentEl = document.querySelector('section#s9 textarea') || document.querySelector('[data-lbl="Diagnoses / impressions (list all)"]');
   const assessmentPlan = assessmentEl ? assessmentEl.value : '';
 
-  // Disposition
   let dispoVal = '';
   document.querySelectorAll('input[type=radio]:checked').forEach(r => {
     if (['Admit','Discharge','Transfer','Died'].includes(r.value)) dispoVal = r.value;
   });
 
+  // Record audit entry
+  addAuditTrailEntry(traumaLocked ? 'Record Finalized' : 'Routine Observation Save', `Saved by ${currentClinicianName}`);
+
   const payload = {
     savedAt: new Date().toISOString(),
     patientUuid: targetPtUuid,
     encounterUuid: encounterUuid,
+    obsUuid: currentObsUuid,
+    locked: traumaLocked,
+    lockedBy: traumaLockedBy,
+    lockedAt: traumaLockedAt,
+    lastSavedByName: currentClinicianName,
     triageCategory: triageCategory || 'Triaged',
     chiefComplaint: chiefComplaint,
-    arrivalMode: '',
+    arrivalDate: arrivalDateVal,
+    arrivalTime: arrivalTimeVal,
+    arrivalMode: arrivalModeVal || 'Walk / Direct',
+    mechanism: 'Documented in incident history',
     gcsTotal: gcsTot !== '–' ? gcsTot : null,
     gcsEye: gcsEyeVal,
     gcsVerbal: gcsVerbalVal,
@@ -676,9 +1467,19 @@ async function saveToPatientEncounter() {
     pins: pins,
     airway: airwaySummary || 'NML',
     assessment: assessmentPlan,
-    disposition: dispoVal || 'Documented',
+    plan: 'Emergency Unit trauma clinical protocol active',
+    disposition: dispoVal || 'Under Treatment',
+    auditTrail: traumaAuditTrail,
+    handovers: traumaHandovers,
     fields: fieldValues
   };
+
+  try {
+    sessionStorage.setItem('trauma_active_chart', JSON.stringify(payload));
+    if (currentObsUuid) {
+      localStorage.setItem('trauma_review_' + currentObsUuid, JSON.stringify(payload));
+    }
+  } catch (e) {}
 
   try {
     const obsList = [
@@ -688,52 +1489,9 @@ async function saveToPatientEncounter() {
       }
     ];
 
-    if (triageCategory) {
-      obsList.push({
-        concept: "787486b1-fdae-40f8-b704-4aa241633402",
-        value: triageCategory
-      });
-    }
-
-    if (chiefComplaint) {
-      obsList.push({
-        concept: "787486b1-fdae-40f8-b704-4aa241633403",
-        value: chiefComplaint
-      });
-    }
-
-    if (gcsTot && gcsTot !== '–') {
-      obsList.push({
-        concept: "787486b1-fdae-40f8-b704-4aa241633412",
-        value: Number(gcsTot)
-      });
-    }
-
-    if (pins.length > 0) {
-      obsList.push({
-        concept: "787486b1-fdae-40f8-b704-4aa241633416",
-        value: pins.length
-      });
-      const pinDetails = pins.map((p, idx) => `#${idx+1}: ${p.t || 'Marked on body map'} (x:${p.x}%, y:${p.y}%)`).join('; ');
-      obsList.push({
-        concept: "787486b1-fdae-40f8-b704-4aa241633417",
-        value: pinDetails
-      });
-    }
-
-    if (assessmentPlan) {
-      obsList.push({
-        concept: "787486b1-fdae-40f8-b704-4aa241633419",
-        value: assessmentPlan
-      });
-    }
-
-    if (dispoVal) {
-      obsList.push({
-        concept: "787486b1-fdae-40f8-b704-4aa241633420",
-        value: dispoVal
-      });
-    }
+    if (triageCategory) obsList.push({ concept: "787486b1-fdae-40f8-b704-4aa241633402", value: triageCategory });
+    if (chiefComplaint) obsList.push({ concept: "787486b1-fdae-40f8-b704-4aa241633403", value: chiefComplaint });
+    if (gcsTot && gcsTot !== '–') obsList.push({ concept: "787486b1-fdae-40f8-b704-4aa241633412", value: Number(gcsTot) });
 
     let res;
     if (encounterUuid) {
@@ -745,7 +1503,7 @@ async function saveToPatientEncounter() {
       });
     } else {
       for (const singleObs of obsList) {
-        await fetch('/openmrs/ws/rest/v1/obs', {
+        const postRes = await fetch('/openmrs/ws/rest/v1/obs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -756,15 +1514,21 @@ async function saveToPatientEncounter() {
             value: singleObs.value
           })
         });
+        if (postRes.ok && !currentObsUuid) {
+          const created = await postRes.json();
+          if (created && created.uuid) currentObsUuid = created.uuid;
+        }
       }
       res = { ok: true };
     }
 
     if (res.ok) {
-      showToast('WHO Trauma Form successfully saved to Patient Encounter!');
-      document.getElementById('hdrStatus').textContent = 'Saved at ' + new Date().toLocaleTimeString();
+      renderAuditTrail();
+      renderShiftHandovers();
+      showToast(traumaLocked ? 'WHO Trauma Form Finalized & Locked!' : 'WHO Trauma Form successfully saved!');
+      document.getElementById('hdrStatus').textContent = (traumaLocked ? 'Locked at ' : 'Saved at ') + new Date().toLocaleTimeString();
     } else {
-      showToast('Saved locally in browser storage (Encounter sync paused).');
+      showToast('Saved locally in browser storage.');
     }
   } catch (err) {
     console.error("Save error:", err);
@@ -775,7 +1539,7 @@ async function saveToPatientEncounter() {
   }
 }
 
-// Initialize
+// Initialize on page load
 initPatientContext();
 </script>
 </body>

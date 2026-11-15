@@ -1,0 +1,2755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Federal Ministry of Health, Ethiopia — DM & Hypertension Follow Up Form</title>
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Noto Sans Ethiopic for crisp Amharic/Ge'ez rendering -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Ethiopic', 'sans-serif'],
+          },
+          colors: {
+            fmoh: {
+              teal: '#0f766e',
+              dark: '#0f2942',
+              emerald: '#059669',
+              gold: '#d97706',
+              red: '#dc2626',
+              light: '#f0fdfa'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar & refined form micro-interactions */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    .eth-font { font-family: 'Noto Sans Ethiopic', 'Inter', sans-serif; }
+
+    /* Print Styles tailored to look like the official Federal Ministry of Health horizontal chart */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 8mm;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 9pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .card-shadow { box-shadow: none !important; border: 1px solid #334155 !important; }
+      input, select, textarea {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        font-weight: 600 !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 7.5pt !important;
+      }
+      th, td {
+        border: 1px solid #334155 !important;
+        padding: 3px 4px !important;
+        vertical-align: top !important;
+      }
+      .overflow-x-auto { overflow: visible !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Toast Notification Banner (Replaces alert/confirm) -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Floating Rich Clinical Code Tooltip (Hover / Focus / Tap) -->
+  <div id="code-tooltip" role="tooltip" class="hidden fixed z-[70] max-w-xs sm:max-w-sm pointer-events-none transition-opacity duration-150 opacity-0 no-print">
+    <div class="bg-[#0f2942] text-white rounded-xl shadow-2xl border border-teal-500/40 p-3 text-xs space-y-1.5 backdrop-blur-md">
+      <div class="flex items-center justify-between gap-2 border-b border-white/15 pb-1">
+        <span id="tt-col-badge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-teal-500/25 text-emerald-200 border border-teal-400/30">Col (c)</span>
+        <span id="tt-code-pill" class="font-mono font-bold text-amber-300 text-[11px]">CODE</span>
+      </div>
+      <div id="tt-title" class="font-bold text-white text-xs sm:text-[13px] leading-snug">Code Title</div>
+      <div id="tt-desc" class="text-slate-200 text-[11px] leading-relaxed">Detailed FMoH manual description.</div>
+    </div>
+  </div>
+
+  <!-- Top Navigation & Ministry Header -->
+  <header class="bg-gradient-to-r from-[#0f2942] via-[#0f4c5c] to-[#0f766e] text-white shadow-lg sticky top-0 z-30 no-print">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Emblem & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center shrink-0 shadow-inner">
+          <!-- Custom Medical & Ethiopian Cross Emblem SVG -->
+          <svg class="w-7 h-7 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18" />
+            <circle cx="12" cy="12" r="9" stroke="#fbbf24" stroke-width="1.5" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 6h6M9 18h6M6 9v6M18 9v6" stroke="#ffffff" stroke-width="1.5" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-200 eth-font">የኢትዮጵያ ፌዴራላዊ ዴሞክራሲያዊ ሪፐብሊክ ጤና ሚኒስቴር</span>
+            <span class="hidden sm:inline text-white/40">|</span>
+            <span class="text-xs font-medium text-amber-300">Federal Ministry of Health, Ethiopia</span>
+          </div>
+          <h1 class="text-base sm:text-xl font-bold tracking-tight text-white leading-snug">
+            DM and Hypertension Follow Up Form
+          </h1>
+        </div>
+      </div>
+
+      <!-- Current Ethiopian Date/Time Live Badge & Action Toolbar -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div id="live-ethiopian-clock" class="hidden xl:flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-xs">
+          <svg class="w-4 h-4 text-amber-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span id="live-ec-text" class="font-medium text-white eth-font">Loading EC Date...</span>
+        </div>
+
+        <button type="button" onclick="toggleReferenceDrawer(true)" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs sm:text-sm transition shadow-sm cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          <span>Clinical Guide (Page 2)</span>
+        </button>
+
+        <button type="button" onclick="saveAllData(true)" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs sm:text-sm transition shadow-sm cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span>Save</span>
+        </button>
+
+        <div class="relative inline-block" id="export-menu-wrapper">
+          <button type="button" onclick="toggleExportMenu()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium text-xs sm:text-sm border border-white/20 transition cursor-pointer">
+            <span>More</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="export-dropdown" class="hidden absolute right-0 mt-2 w-56 rounded-xl bg-white text-slate-800 shadow-xl border border-slate-200 py-1.5 z-40 text-sm">
+            <button type="button" onclick="window.print(); toggleExportMenu();" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2 cursor-pointer">
+              <span>🖨️ Print Official Form</span>
+            </button>
+            <button type="button" onclick="exportCSV(); toggleExportMenu();" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2 cursor-pointer">
+              <span>📊 Export CSV Spreadsheet</span>
+            </button>
+            <button type="button" onclick="exportJSON(); toggleExportMenu();" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2 cursor-pointer">
+              <span>💾 Export JSON Backup</span>
+            </button>
+            <hr class="my-1 border-slate-200">
+            <button type="button" onclick="loadSamplePatient(); toggleExportMenu();" class="w-full text-left px-4 py-2 hover:bg-teal-50 text-teal-700 font-medium flex items-center gap-2 cursor-pointer">
+              <span>🩺 Load Sample Patient</span>
+            </button>
+            <button type="button" onclick="confirmNewPatient(); toggleExportMenu();" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 font-medium flex items-center gap-2 cursor-pointer">
+              <span>🆕 Clear All Data / New Patient</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Print-only Official Ministry Banner -->
+  <div class="hidden print-only text-center border-b-2 border-slate-800 pb-2 mb-3">
+    <div class="text-xs font-bold uppercase">Federal Ministry of Health, Ethiopia</div>
+    <div class="text-base font-extrabold">DM and Hypertension Follow Up Form</div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-6 py-5 space-y-6">
+
+    <!-- SECTION 1: Patient Demographics & Enrollment Header -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/90 card-shadow overflow-hidden">
+      <div class="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-lg bg-teal-700 text-white font-bold text-xs flex items-center justify-center">01</span>
+          <h2 class="font-bold text-slate-800 text-sm sm:text-base">Patient Identification, Address & Baseline Profile</h2>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-slate-500">
+          <span id="baseline-bmi-badge" class="hidden px-2.5 py-1 rounded-full font-semibold bg-teal-50 text-teal-800 border border-teal-200"></span>
+          <span>All dates synchronized with Ethiopian Calendar (EC)</span>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-6 space-y-4">
+        <!-- Row 1: Name, Age, Sex, MRN -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+          <div class="lg:col-span-5">
+            <label for="pt-name" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Name of Patient <span class="text-red-500">*</span></label>
+            <input type="text" id="pt-name" placeholder="e.g., Abebe Kebede Tadesse" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+          </div>
+          <div class="lg:col-span-2">
+            <label for="pt-age" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Age (Years)</label>
+            <input type="number" id="pt-age" min="0" max="130" placeholder="e.g., 54" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+          </div>
+          <div class="lg:col-span-2">
+            <label for="pt-sex" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Sex</label>
+            <select id="pt-sex" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium bg-white focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" onchange="autoSaveDraft()">
+              <option value="">Select Sex</option>
+              <option value="Male">Male (M)</option>
+              <option value="Female">Female (F)</option>
+            </select>
+          </div>
+          <div class="lg:col-span-3">
+            <label for="pt-mrn" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Medical Registration No. (MRN)</label>
+            <input type="text" id="pt-mrn" placeholder="e.g., MRN-2019-04821" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono font-semibold text-slate-800 focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+          </div>
+        </div>
+
+        <!-- Row 2: Address: Zone/Sub-city, Woreda, Kebele, H. No., Tel -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-12 gap-4 pt-1">
+          <div class="col-span-2 sm:col-span-1 lg:col-span-3">
+            <label for="pt-zone" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Address: Zone / Sub-city</label>
+            <input type="text" id="pt-zone" placeholder="e.g., Bole Sub-city" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+          </div>
+          <div class="lg:col-span-2">
+            <label for="pt-woreda" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Woreda</label>
+            <input type="text" id="pt-woreda" placeholder="e.g., 03" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+          </div>
+          <div class="lg:col-span-2">
+            <label for="pt-kebele" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Kebele</label>
+            <input type="text" id="pt-kebele" placeholder="e.g., 08" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+          </div>
+          <div class="lg:col-span-2">
+            <label for="pt-hno" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">H. No.</label>
+            <input type="text" id="pt-hno" placeholder="e.g., 412/B" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+          </div>
+          <div class="col-span-2 sm:col-span-1 lg:col-span-3">
+            <label for="pt-tel" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Tel (Phone)</label>
+            <input type="tel" id="pt-tel" placeholder="e.g., +251 911 234 567" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+          </div>
+        </div>
+
+        <!-- Row 3: Date of Enrollment (EC Picker), Height (cm), Waist Circumference (cm), Full Initial Diagnosis -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 pt-1 border-t border-slate-100">
+          <div class="lg:col-span-3">
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Date of Enrollment (EC / GC)</label>
+            <div id="enrollment-date-picker-mount"></div>
+          </div>
+          <div class="lg:col-span-2">
+            <label for="pt-height" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Height (cm) <span class="text-[10px] font-normal text-slate-400">(Used for BMI)</span></label>
+            <div class="relative">
+              <input type="number" id="pt-height" step="0.1" min="40" max="250" placeholder="e.g., 172" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 pr-10 text-sm font-semibold focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="handleHeightChange()" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">cm</span>
+            </div>
+          </div>
+          <div class="lg:col-span-2">
+            <label for="pt-waist" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Waist Circumference</label>
+            <div class="relative">
+              <input type="number" id="pt-waist" step="0.1" min="20" max="220" placeholder="e.g., 94" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 pr-10 text-sm font-semibold focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">cm</span>
+            </div>
+          </div>
+          <div class="sm:col-span-2 lg:col-span-5">
+            <label for="pt-diagnosis" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Full Initial Diagnosis</label>
+            <div class="flex gap-2">
+              <input type="text" id="pt-diagnosis" placeholder="e.g., Type 2 DM + Stage 2 Hypertension + Dyslipidemia" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" oninput="autoSaveDraft()" />
+            </div>
+            <!-- Quick diagnosis chips -->
+            <div class="flex flex-wrap gap-1.5 mt-1.5 no-print">
+              <button type="button" onclick="appendDiagnosisTag('Type 1 DM')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-teal-800 border border-slate-200 transition cursor-pointer">+ Type 1 DM</button>
+              <button type="button" onclick="appendDiagnosisTag('Type 2 DM')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-teal-800 border border-slate-200 transition cursor-pointer">+ Type 2 DM</button>
+              <button type="button" onclick="appendDiagnosisTag('Hypertension')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-teal-800 border border-slate-200 transition cursor-pointer">+ Hypertension</button>
+              <button type="button" onclick="appendDiagnosisTag('Dyslipidemia')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-teal-800 border border-slate-200 transition cursor-pointer">+ Dyslipidemia</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Clinical Summary Strip (Latest Vitals & Trend Snapshot) -->
+    <section id="clinical-summary-strip" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 no-print">
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500">Total Visits Logged</p>
+          <p id="stat-total-visits" class="text-2xl font-extrabold text-slate-800 mt-0.5">0</p>
+          <p id="stat-last-visit" class="text-[11px] text-slate-400 mt-0.5">No visits recorded yet</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold">📋</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500">Latest Blood Pressure</p>
+          <p id="stat-latest-bp" class="text-2xl font-extrabold text-slate-800 mt-0.5">-- / --</p>
+          <p id="stat-bp-status" class="text-[11px] text-slate-400 mt-0.5">Goal: &lt;140/90 mmHg</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">❤️</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500">Latest Weight & BMI</p>
+          <p id="stat-latest-bmi" class="text-2xl font-extrabold text-slate-800 mt-0.5">--</p>
+          <p id="stat-bmi-cat" class="text-[11px] text-slate-400 mt-0.5">Enter height & weight</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">⚖️</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500">Next Scheduled Visit</p>
+          <p id="stat-next-appt" class="text-sm sm:text-base font-extrabold text-teal-800 mt-1 eth-font">--</p>
+          <p id="stat-next-appt-gc" class="text-[11px] text-slate-400 mt-0.5">Ethiopian Calendar</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">🗓️</div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Follow-Up Visits Log (Columns a through x) -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/90 card-shadow overflow-hidden">
+      <div class="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-lg bg-[#0f2942] text-white font-bold text-xs flex items-center justify-center">02</span>
+          <div>
+            <h2 class="font-bold text-slate-800 text-sm sm:text-base">Follow-Up Visits Longitudinal Register (Columns a – x)</h2>
+            <p class="text-xs text-slate-500">Structured according to Federal Ministry of Health DM & HTN Clinical Chart</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 no-print">
+          <button type="button" onclick="openVisitModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs sm:text-sm shadow-sm transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            <span>Record New Follow-Up Visit</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Multi-Criteria Filter Toolbar for Longitudinal Register -->
+      <div class="bg-slate-50/70 border-b border-slate-200 px-4 sm:px-6 py-3 space-y-2.5 no-print">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+          <!-- Live Search Input -->
+          <div class="md:col-span-4 relative">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+            </svg>
+            <input type="text" id="register-search-input" placeholder="Search date (EC/GC), symptoms, drugs, labs, clinician..."
+              class="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-2 text-xs font-medium text-slate-800 focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition"
+              oninput="handleRegisterFilterChange()" />
+            <button type="button" id="register-search-clear" onclick="clearRegisterSearch()" title="Clear search"
+              class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 text-xs flex items-center justify-center cursor-pointer">×</button>
+          </div>
+
+          <!-- Filter: Visit Type (Col b) -->
+          <div class="md:col-span-2">
+            <select id="filter-visit-type" onchange="handleRegisterFilterChange()" aria-label="Filter by Visit Type"
+              class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 focus:border-teal-600 outline-none cursor-pointer">
+              <option value="ALL">Visit Type: All</option>
+              <option value="Scheduled">📅 Scheduled Only</option>
+              <option value="Unscheduled">⚡ Unscheduled Only</option>
+            </select>
+          </div>
+
+          <!-- Filter: Final Outcome (Col q) -->
+          <div class="md:col-span-2">
+            <select id="filter-outcome" onchange="handleRegisterFilterChange()" aria-label="Filter by Final Outcome"
+              class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 focus:border-teal-600 outline-none cursor-pointer">
+              <option value="ALL">Outcome: All</option>
+              <option value="Controlled">🟢 Controlled</option>
+              <option value="Uncontrolled">🟠 Uncontrolled</option>
+              <option value="Complicated">🔴 Complicated</option>
+              <option value="Dead">⚫ Dead</option>
+            </select>
+          </div>
+
+          <!-- Filter: Adherence (Col u) -->
+          <div class="md:col-span-2">
+            <select id="filter-adherence" onchange="handleRegisterFilterChange()" aria-label="Filter by Adherence"
+              class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 focus:border-teal-600 outline-none cursor-pointer">
+              <option value="ALL">Adherence: All</option>
+              <option value="Good">✅ Good (&lt;20% missed)</option>
+              <option value="Poor">⚠️ Poor (&ge;20% missed)</option>
+            </select>
+          </div>
+
+          <!-- Filter: BP & Clinical Alert -->
+          <div class="md:col-span-2">
+            <select id="filter-clinical-alert" onchange="handleRegisterFilterChange()" aria-label="Filter by Clinical Alert"
+              class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 focus:border-teal-600 outline-none cursor-pointer">
+              <option value="ALL">Clinical Status: All</option>
+              <option value="BP_HIGH">🔺 BP Above Goal (&ge;140/90)</option>
+              <option value="BP_GOAL">💚 BP Within Goal (&lt;140/90)</option>
+              <option value="ABNORMAL_EXAM">🩺 Abnormal Exam / Foot / CVS</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Active Filter Status Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <div class="flex items-center gap-2 text-slate-600">
+            <span id="register-match-badge" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200 font-semibold">
+              Showing 0 of 0 visits
+            </span>
+            <span class="hidden sm:inline text-slate-400">• Tip: Hover, focus, or tap any dashed-underline clinical code in the table for FMoH manual definitions.</span>
+          </div>
+          <button type="button" id="reset-filters-btn" onclick="resetRegisterFilters()"
+            class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold transition cursor-pointer">
+            <span>↺ Clear All Filters</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Responsive Horizontal Scroll Table matching exact FMoH columns (a) to (x) -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[1480px]">
+          <thead>
+            <!-- Grouped Super Headers matching PDF Page 1 -->
+            <tr class="bg-[#0f2942] text-white text-[11px] uppercase tracking-wider">
+              <th colspan="2" class="py-2 px-2.5 border-r border-slate-600 text-center">Visit Date & Type</th>
+              <th colspan="2" class="py-2 px-2.5 border-r border-slate-600 text-center">History & Risk Factors</th>
+              <th colspan="3" class="py-2 px-2.5 border-r border-slate-600 text-center">Anthropometry & Vital Signs</th>
+              <th colspan="5" class="py-2 px-2.5 border-r border-slate-600 text-center">Physical Examination</th>
+              <th colspan="4" class="py-2 px-2.5 border-r border-slate-600 text-center">Laboratory Investigations</th>
+              <th colspan="5" class="py-2 px-2.5 border-r border-slate-600 text-center">Outcome, Treatment & Adherence</th>
+              <th colspan="3" class="py-2 px-2.5 text-center">Referral, Clinician & Next Visit</th>
+              <th class="py-2 px-2 no-print sticky right-0 bg-[#0f2942] border-l border-slate-600 text-center">Manage</th>
+            </tr>
+            <!-- Sub-columns (a) through (x) -->
+            <tr class="bg-slate-100 text-slate-700 text-[11px] font-bold border-b border-slate-300">
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[130px]">(a) Date of Visit<br><span class="font-normal text-[10px] text-slate-500">EC / GC & Time</span></th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[95px]">(b) Visit Type<br><span class="font-normal text-[10px] text-slate-500">Sched / Unsched</span></th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[140px]">(c) Symptoms<br><span class="font-normal text-[10px] text-slate-500">DM & HTN</span></th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[120px]">(d) Risk Factors<br><span class="font-normal text-[10px] text-slate-500">Tbco, Alc, Salt...</span></th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[75px]">(e) Wt<br><span class="font-normal text-[10px] text-slate-500">(kg)</span></th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[85px]">(f) BMI<br><span class="font-normal text-[10px] text-slate-500">(kg/m²)</span></th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[95px]">(g) BP<br><span class="font-normal text-[10px] text-slate-500">(mmHg)</span></th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[95px]">(h) Oral / Dental</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[95px]">(i) CVS Exam</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[95px]">(j) Skin / Inj. Site</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[105px]">(k) MSS / Foot Exam</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[105px]">(l) Nerv. Syst / Eye</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[105px]">(m) U/A<br><span class="font-normal text-[10px] text-slate-500">Prot, Ket, Casts</span></th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[95px]">(n) FBS / HbA1c</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[75px]">(o) Cr</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[95px]">(p) T.Chol / LDL</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[100px]">(q) Final Outcome</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[120px]">(r) Lifestyle Changes</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[165px]">(s) Regimen / Dose</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[75px]">(t) # Mos Disp.</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[110px]">(u) Adherence / Why</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[115px]">(v) Referrals / Consult</th>
+              <th class="py-2.5 px-2 border-r border-slate-200 min-w-[110px]">(w) Clinician's Name</th>
+              <th class="py-2.5 px-2 min-w-[135px]">(x) Next Appt.<br><span class="font-normal text-[10px] text-slate-500">EC / GC & Time</span></th>
+              <th class="py-2.5 px-2 text-center no-print sticky right-0 bg-slate-100 border-l border-slate-300">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="visits-table-body" class="divide-y divide-slate-200 text-xs">
+            <!-- Populated dynamically via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State Message -->
+      <div id="empty-visits-state" class="hidden py-12 px-4 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto mb-3 text-2xl">🩺</div>
+        <h3 class="text-base font-bold text-slate-800">No Follow-Up Visits Recorded Yet</h3>
+        <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">Click <strong>"Record New Follow-Up Visit"</strong> to enter clinical observations, vitals, lab investigations, and medications using the Ethiopian Calendar.</p>
+        <button type="button" onclick="openVisitModal()" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs sm:text-sm transition cursor-pointer">
+          <span>+ Add First Visit</span>
+        </button>
+      </div>
+
+      <!-- No Matching Filter Results State -->
+      <div id="no-filter-matches-state" class="hidden py-10 px-4 text-center no-print">
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-2.5 text-xl">🔍</div>
+        <h3 class="text-sm sm:text-base font-bold text-slate-800">No Follow-Up Visits Match Your Search or Filters</h3>
+        <p class="text-xs text-slate-500 max-w-md mx-auto mt-1">Try adjusting your search keywords or resetting the active Visit Type, Outcome, Adherence, or BP filters.</p>
+        <button type="button" onclick="resetRegisterFilters()" class="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs transition cursor-pointer">
+          <span>↺ Reset Filters</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 px-4 sm:px-6 text-xs text-slate-500 no-print">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div>Federal Ministry of Health, Ethiopia — Non-Communicable Diseases (NCD) DM & Hypertension Follow-Up Chart</div>
+      <div class="text-slate-400">Supports Ethiopian (13-Month) & Gregorian Calendars • Data stored locally in your browser</div>
+    </div>
+  </footer>
+
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: ADD / EDIT FOLLOW-UP VISIT (Full Guided Clinical Form a - x)   -->
+  <!-- ===================================================================== -->
+  <div id="visit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden my-auto">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-[#0f2942] to-[#0f766e] text-white px-5 py-4 flex items-center justify-between shrink-0">
+        <div>
+          <h3 id="visit-modal-title" class="text-base sm:text-lg font-bold">Record Follow-Up Visit</h3>
+          <p class="text-xs text-teal-100">Complete columns (a) through (x) with built-in FMoH clinical codes</p>
+        </div>
+        <button type="button" onclick="closeVisitModal()" class="w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition cursor-pointer" aria-label="Close modal">✕</button>
+      </div>
+
+      <!-- Modal Scrollable Form Body -->
+      <form id="visit-form" onsubmit="handleVisitSubmit(event)" class="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
+        <input type="hidden" id="edit-visit-id" value="" />
+
+        <!-- Group 1: (a) Date of Visit & (b) Visit Type -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-800">
+            <span class="px-2 py-0.5 rounded bg-teal-100">Cols a – b</span>
+            <span>Visit Schedule & Type</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div class="md:col-span-7">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(a) Date & Time of Visit (Ethiopian Calendar) <span class="text-red-500">*</span></label>
+              <div id="visit-date-picker-mount"></div>
+            </div>
+            <div class="md:col-span-5">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(b) Visit Type <span class="text-red-500">*</span></label>
+              <div class="grid grid-cols-2 gap-2.5 pt-0.5">
+                <label class="cursor-pointer">
+                  <input type="radio" name="visitType" value="Scheduled" checked class="peer sr-only" />
+                  <div class="rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-center text-xs font-semibold text-slate-700 peer-checked:border-teal-600 peer-checked:bg-teal-50 peer-checked:text-teal-800 transition">
+                    📅 Scheduled
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="visitType" value="Unscheduled" class="peer sr-only" />
+                  <div class="rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-center text-xs font-semibold text-slate-700 peer-checked:border-amber-600 peer-checked:bg-amber-50 peer-checked:text-amber-800 transition">
+                    ⚡ Unscheduled
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 2: (c) Symptoms & (d) Risk Factors -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-800">
+              <span class="px-2 py-0.5 rounded bg-teal-100">Cols c – d</span>
+              <span>Clinical History, Symptoms & Risk Factors</span>
+            </div>
+            <button type="button" onclick="toggleReferenceDrawer(true)" class="text-xs font-semibold text-teal-700 hover:underline cursor-pointer">View Symptom Definitions ↗</button>
+          </div>
+
+          <!-- (c) Symptoms DM & HTN -->
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">(c) Diabetes Mellitus (DM) Symptoms — Select all present:</label>
+              <div id="dm-symptoms-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">(c) Hypertension (HTN) & General Symptoms — Select all present:</label>
+              <div id="htn-symptoms-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div>
+              <input type="text" id="visit-symptoms-other" placeholder="Other symptoms or clinical notes (optional)..." class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs focus:border-teal-600 outline-none" />
+            </div>
+          </div>
+
+          <!-- (d) Risk Factors Status -->
+          <div class="pt-2 border-t border-slate-200">
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">(d) Risk Factors Status — Select active risk factors:</label>
+            <div id="risk-factors-chips" class="flex flex-wrap gap-1.5"></div>
+          </div>
+        </div>
+
+        <!-- Group 3: (e) Weight, (f) BMI, (g) BP -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-800">
+            <span class="px-2 py-0.5 rounded bg-teal-100">Cols e – g</span>
+            <span>Anthropometry & Vital Signs</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- (e) Weight -->
+            <div>
+              <label for="visit-weight" class="block text-xs font-semibold text-slate-700 mb-1">(e) Weight (kg)</label>
+              <div class="relative">
+                <input type="number" id="visit-weight" step="0.1" min="10" max="350" placeholder="e.g., 74.5" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 pr-10 text-sm font-semibold focus:border-teal-600 outline-none" oninput="recalculateModalBMI()" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">kg</span>
+              </div>
+            </div>
+            <!-- (f) Auto BMI -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(f) BMI (kg/m²) <span class="text-[10px] font-normal text-slate-500">Auto-calculated</span></label>
+              <div id="modal-bmi-display" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 flex items-center justify-between min-h-[42px]">
+                <span id="modal-bmi-val">--</span>
+                <span id="modal-bmi-tag" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Enter Wt & Ht</span>
+              </div>
+            </div>
+            <!-- (g) Blood Pressure -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(g) Blood Pressure (mmHg) <span class="text-[10px] font-normal text-slate-500">Goal &lt;140/90</span></label>
+              <div class="flex items-center gap-1.5">
+                <input type="number" id="visit-sbp" min="50" max="300" placeholder="SBP (120)" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-center focus:border-teal-600 outline-none" oninput="checkBPWarning()" />
+                <span class="font-bold text-slate-400">/</span>
+                <input type="number" id="visit-dbp" min="30" max="200" placeholder="DBP (80)" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-center focus:border-teal-600 outline-none" oninput="checkBPWarning()" />
+              </div>
+              <div id="bp-alert-badge" class="hidden mt-1 text-[11px] font-semibold text-red-600">⚠️ Elevated BP (&ge;140/90 mmHg)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 4: Physical Examination (Cols h – l) -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-800">
+            <span class="px-2 py-0.5 rounded bg-teal-100">Cols h – l</span>
+            <span>Physical Examination</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- (h) Oral / Dental -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">(h) Oral / Dental Exam</label>
+              <div id="oral-exam-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <!-- (i) Cardiovascular (CVS) -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">(i) Cardiovascular (CVS)</label>
+              <div id="cvs-exam-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <!-- (j) Skin & Injection Site -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">(j) Skin & Injection Site</label>
+              <div id="skin-exam-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <!-- (k) MSS / Foot Exam -->
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">(k) Musculoskeletal (MSS) / Foot Exam</label>
+              <div id="foot-exam-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <!-- (l) Nervous System & Dilated Eye Exam -->
+            <div>
+              <label for="visit-nervous" class="block text-xs font-semibold text-slate-700 mb-1.5">(l) Nervous System & Dilated Eye Exam</label>
+              <select id="visit-nervous" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium focus:border-teal-600 outline-none mb-1.5">
+                <option value="Normal Motor/Sensory">Normal Motor & Sensory</option>
+                <option value="Peripheral Neuropathy Suspected">Peripheral Neuropathy Suspected</option>
+                <option value="Dilated Eye Exam Done - Normal">Dilated Eye Exam Done — Normal</option>
+                <option value="Dilated Eye Exam Done - Retinopathy">Dilated Eye Exam Done — Retinopathy</option>
+                <option value="Due for Annual Dilated Eye Exam">Due for Annual Dilated Eye Exam</option>
+              </select>
+              <input type="text" id="visit-nervous-note" placeholder="Motor/Sensory/Eye details..." class="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs focus:border-teal-600 outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 5: Laboratory Investigations (Cols m – p) -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-800">
+            <span class="px-2 py-0.5 rounded bg-teal-100">Cols m – p</span>
+            <span>Laboratory Investigations</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- (m) U/A -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <label class="block text-xs font-bold text-slate-700">(m) Urinalysis (U/A)</label>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <span class="text-[10px] text-slate-500 block">Protein</span>
+                  <select id="visit-ua-protein" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-medium">
+                    <option value="P-">P- (Neg)</option>
+                    <option value="P+">P+</option>
+                    <option value="P++">P++</option>
+                    <option value="P+++">P+++</option>
+                    <option value="P++++">P++++</option>
+                    <option value="ND">Not Done</option>
+                  </select>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-500 block">Ketone</span>
+                  <select id="visit-ua-ketone" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-medium">
+                    <option value="K-">K- (Neg)</option>
+                    <option value="K+">K+</option>
+                    <option value="K++">K++</option>
+                    <option value="K+++">K+++</option>
+                    <option value="K++++">K++++</option>
+                    <option value="ND">Not Done</option>
+                  </select>
+                </div>
+              </div>
+              <input type="text" id="visit-ua-casts" placeholder="Microscopy / Casts..." class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs" />
+            </div>
+
+            <!-- (n) FBS / HbA1c -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <label class="block text-xs font-bold text-slate-700">(n) FBS / HbA1c</label>
+              <div>
+                <span class="text-[10px] text-slate-500 block">FBS / RBS (mg/dL)</span>
+                <input type="number" id="visit-fbs" step="1" placeholder="e.g., 126" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold" />
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 block">HbA1c (%) — Every 3 mos</span>
+                <input type="number" id="visit-hba1c" step="0.1" placeholder="e.g., 6.8" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold" />
+              </div>
+            </div>
+
+            <!-- (o) Creatinine (Cr) -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <label for="visit-cr" class="block text-xs font-bold text-slate-700">(o) Creatinine (Cr)</label>
+              <span class="text-[10px] text-slate-500 block">RFT (mg/dL) — Annually</span>
+              <input type="number" id="visit-cr" step="0.01" placeholder="e.g., 0.9" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold" />
+            </div>
+
+            <!-- (p) Total Cholesterol / LDL -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <label class="block text-xs font-bold text-slate-700">(p) Lipid Profile (mg/dL)</label>
+              <div>
+                <span class="text-[10px] text-slate-500 block">Total Cholesterol</span>
+                <input type="number" id="visit-tchol" step="1" placeholder="e.g., 185" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold" />
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 block">LDL Cholesterol</span>
+                <input type="number" id="visit-ldl" step="1" placeholder="e.g., 98" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 6: Outcome, Lifestyle, Treatment Regimen & Adherence (Cols q – u) -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-800">
+            <span class="px-2 py-0.5 rounded bg-teal-100">Cols q – u</span>
+            <span>Outcome, Lifestyle Education, Regimen & Adherence</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <!-- (q) Final Outcome -->
+            <div class="md:col-span-4">
+              <label for="visit-outcome" class="block text-xs font-semibold text-slate-700 mb-1">(q) Final Outcome</label>
+              <select id="visit-outcome" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold focus:border-teal-600 outline-none">
+                <option value="Controlled">🟢 Controlled</option>
+                <option value="Uncontrolled">🟠 Uncontrolled</option>
+                <option value="Complicated">🔴 Complicated</option>
+                <option value="Dead">⚫ Dead</option>
+              </select>
+            </div>
+
+            <!-- (t) # Months Dispensed -->
+            <div class="md:col-span-3">
+              <label for="visit-months" class="block text-xs font-semibold text-slate-700 mb-1">(t) # Months Dispensed</label>
+              <input type="number" id="visit-months" min="0" max="12" value="1" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-semibold focus:border-teal-600 outline-none" />
+            </div>
+
+            <!-- (u) Adherence / Why -->
+            <div class="md:col-span-5">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(u) Medication Adherence & Reason if Poor</label>
+              <div class="flex gap-2">
+                <select id="visit-adherence" class="rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold focus:border-teal-600 outline-none">
+                  <option value="Good">Good (&lt;20% missed)</option>
+                  <option value="Poor">Poor (&ge;20% missed)</option>
+                </select>
+                <input type="text" id="visit-adherence-why" placeholder="Why if poor (e.g., stockout, side effects)..." class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs focus:border-teal-600 outline-none" />
+              </div>
+            </div>
+          </div>
+
+          <!-- (r) Lifestyle Changes & Education -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">(r) Lifestyle Changes & Patient Education Counseled (1 – 9):</label>
+            <div id="lifestyle-chips" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <!-- (s) Structured Medication Regimen / Dose Builder -->
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <label class="text-xs font-bold text-slate-800">(s) Treatment Regimen / Dose (FMoH Standard Codes)</label>
+              <span class="text-[11px] text-slate-500">Select drug class & code, specify dose/frequency, and click Add</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+              <div class="sm:col-span-5">
+                <select id="med-code-select" class="w-full rounded-lg border border-slate-300 px-2.5 py-2 text-xs font-medium bg-slate-50 focus:border-teal-600 outline-none">
+                  <optgroup label="1. Insulin">
+                    <option value="1a. NPH insulin">1a. NPH insulin</option>
+                    <option value="1b. Regular insulin">1b. Regular insulin</option>
+                    <option value="1c. Premixed insulin">1c. Premixed insulin</option>
+                  </optgroup>
+                  <optgroup label="2. Oral Hypoglycemic Agents">
+                    <option value="2a. Glibenclamide">2a. Glibenclamide</option>
+                    <option value="2b. Metformin">2b. Metformin</option>
+                    <option value="2c. Glimepiride">2c. Glimepiride</option>
+                    <option value="2d. Other OHA">2d. Other Oral Hypoglycemic</option>
+                  </optgroup>
+                  <optgroup label="3. Antihypertensives">
+                    <option value="Nf - Nifedipine">Nf — Nifedipine</option>
+                    <option value="Am - Amlodipine">Am — Amlodipine</option>
+                    <option value="Fl - Felodipine">Fl — Felodipine</option>
+                    <option value="HCT - Hydrochlorothiazide">HCT — Hydrochlorothiazide</option>
+                    <option value="Ena - Enalapril">Ena — Enalapril</option>
+                    <option value="Lis - Lisinopril">Lis — Lisinopril</option>
+                    <option value="Cap - Captopril">Cap — Captopril</option>
+                    <option value="Atn - Atenolol">Atn — Atenolol</option>
+                    <option value="Metp - Metoprolol">Metp — Metoprolol</option>
+                    <option value="Other Anti-HTN">Other Antihypertensive</option>
+                  </optgroup>
+                  <optgroup label="4. Antiplatelets">
+                    <option value="ASA - Aspirin">ASA — Aspirin</option>
+                    <option value="Clop - Clopidogrel">Clop — Clopidogrel</option>
+                  </optgroup>
+                  <optgroup label="5. Statins">
+                    <option value="Smv - Simvastatin">Smv — Simvastatin</option>
+                    <option value="Lvs - Lovastatin">Lvs — Lovastatin</option>
+                    <option value="Atv - Atorvastatin">Atv — Atorvastatin</option>
+                    <option value="Prv - Pravastatin">Prv — Pravastatin</option>
+                    <option value="Rsv - Rosuvastatin">Rsv — Rosuvastatin</option>
+                    <option value="Other Statin">Other Statin</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="sm:col-span-5">
+                <input type="text" id="med-dose-input" placeholder="Dose & Frequency (e.g., 500mg PO BID, 20/10 IU SC)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-teal-600 outline-none" />
+              </div>
+              <div class="sm:col-span-2">
+                <button type="button" onclick="addMedicationToRegimen()" class="w-full rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs py-2 px-3 transition cursor-pointer">+ Add Drug</button>
+              </div>
+            </div>
+
+            <!-- Active Regimen List -->
+            <div id="active-regimen-list" class="flex flex-wrap gap-2 pt-1">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 7: Referrals, Clinician & Next Appointment (Cols v – x) -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-800">
+            <span class="px-2 py-0.5 rounded bg-teal-100">Cols v – x</span>
+            <span>Referrals, Clinician Sign-off & Next Appointment</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div class="md:col-span-4">
+              <label for="visit-referral" class="block text-xs font-semibold text-slate-700 mb-1">(v) Referrals / Consultations</label>
+              <input type="text" id="visit-referral" placeholder="e.g., Ophthalmologist (Dilated Eye Exam)" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs focus:border-teal-600 outline-none" />
+            </div>
+            <div class="md:col-span-3">
+              <label for="visit-clinician" class="block text-xs font-semibold text-slate-700 mb-1">(w) Clinician's Name <span class="text-red-500">*</span></label>
+              <input type="text" id="visit-clinician" placeholder="e.g., Dr. Selamawit M." class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-semibold focus:border-teal-600 outline-none" />
+            </div>
+            <div class="md:col-span-5">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(x) Next Appointment (Ethiopian Calendar)</label>
+              <div id="next-appt-picker-mount"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-200">
+          <button type="button" onclick="closeVisitModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs sm:text-sm transition cursor-pointer">Cancel</button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs sm:text-sm shadow-sm transition cursor-pointer">Save Follow-Up Visit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- DRAWER: OFFICIAL CLINICAL REFERENCE GUIDE (PDF Page 2)                -->
+  <!-- ===================================================================== -->
+  <div id="reference-drawer" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex justify-end">
+    <div class="bg-white w-full max-w-2xl h-full shadow-2xl flex flex-col overflow-hidden">
+      <div class="bg-[#0f2942] text-white px-5 py-4 flex items-center justify-between shrink-0">
+        <div>
+          <span class="text-[11px] uppercase tracking-wider text-amber-300 font-semibold">FMoH Ethiopia Standard Operating Manual</span>
+          <h3 class="text-base sm:text-lg font-bold">How to Fill the DM & HTN Follow-Up Format</h3>
+        </div>
+        <button type="button" onclick="toggleReferenceDrawer(false)" class="w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white cursor-pointer">✕</button>
+      </div>
+      <div class="p-4 border-b border-slate-200 bg-slate-50 shrink-0">
+        <input type="text" id="guide-search" placeholder="Search codes (e.g., HyperG, BMI, Pagume, HbA1c, Metformin, Foot)..." class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm focus:border-teal-600 outline-none" oninput="filterClinicalGuide()" />
+      </div>
+      <div id="clinical-guide-content" class="p-5 overflow-y-auto space-y-4 text-xs leading-relaxed text-slate-700 flex-1">
+        <!-- Populated dynamically from Page 2 Clinical Reference Data -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- SHARED POPOVER: CUSTOM ETHIOPIAN CALENDAR DATE & TIME PICKER          -->
+  <!-- ===================================================================== -->
+  <div id="eth-picker-popover" class="hidden fixed z-[60] w-[320px] sm:w-[345px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden select-none">
+    <!-- Header with Month & Year Selectors -->
+    <div class="bg-gradient-to-r from-[#0f2942] to-[#0f766e] text-white p-3">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-200 eth-font">የኢትዮጵያ ዘመን አቆጣጠር (EC)</span>
+        <button type="button" onclick="closeEthPicker()" class="text-white/80 hover:text-white text-xs px-1.5 py-0.5 rounded bg-white/10 cursor-pointer">✕</button>
+      </div>
+      <div class="flex items-center justify-between gap-1.5">
+        <button type="button" onclick="shiftEthMonth(-1)" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center font-bold cursor-pointer" title="Previous Month">‹</button>
+        <select id="eth-picker-month" onchange="onEthMonthYearChange()" class="flex-1 rounded-lg bg-white/15 text-white border border-white/25 px-2 py-1 text-xs font-bold outline-none eth-font cursor-pointer">
+          <!-- Options populated by JS -->
+        </select>
+        <select id="eth-picker-year" onchange="onEthMonthYearChange()" class="w-24 rounded-lg bg-white/15 text-white border border-white/25 px-2 py-1 text-xs font-bold outline-none cursor-pointer">
+          <!-- Options populated by JS -->
+        </select>
+        <button type="button" onclick="shiftEthMonth(1)" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center font-bold cursor-pointer" title="Next Month">›</button>
+      </div>
+    </div>
+
+    <!-- Day of Week Headers (Sun - Sat / እሁድ - ቅዳሜ) -->
+    <div class="grid grid-cols-7 bg-slate-100 border-b border-slate-200 text-center py-1.5 text-[10px] font-bold text-slate-600">
+      <div>እሁድ<br>Sun</div>
+      <div>ሰኞ<br>Mon</div>
+      <div>ማክሰ<br>Tue</div>
+      <div>ረቡዕ<br>Wed</div>
+      <div>ሐሙስ<br>Thu</div>
+      <div>ዓርብ<br>Fri</div>
+      <div>ቅዳሜ<br>Sat</div>
+    </div>
+
+    <!-- Calendar Days Grid (1..30 or 1..5/6 for Pagume) -->
+    <div id="eth-picker-days" class="grid grid-cols-7 gap-1 p-2.5 bg-white text-center text-xs">
+      <!-- Populated dynamically -->
+    </div>
+
+    <!-- Time Selector (Optional/Included) & Gregorian Preview -->
+    <div class="border-t border-slate-200 bg-slate-50 p-3 space-y-2.5">
+      <div id="eth-picker-time-row" class="flex items-center justify-between gap-2">
+        <label class="text-xs font-semibold text-slate-600 flex items-center gap-1">
+          <span>🕒 Time:</span>
+        </label>
+        <div class="flex items-center gap-1">
+          <select id="eth-picker-hour" onchange="updateEthPickerTime()" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold">
+            <!-- 01..12 -->
+          </select>
+          <span class="font-bold text-slate-400">:</span>
+          <select id="eth-picker-minute" onchange="updateEthPickerTime()" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold">
+            <option value="00">00</option>
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="45">45</option>
+          </select>
+          <select id="eth-picker-ampm" onchange="updateEthPickerTime()" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Conversion Readout & Quick Today Button -->
+      <div class="flex items-center justify-between text-[11px] bg-teal-50/80 border border-teal-200 rounded-lg px-2.5 py-1.5">
+        <div>
+          <span class="text-slate-500">Gregorian (GC): </span>
+          <strong id="eth-picker-gc-preview" class="text-teal-900 font-semibold">--</strong>
+        </div>
+        <button type="button" onclick="selectEthToday()" class="text-teal-700 hover:text-teal-900 font-bold underline cursor-pointer">Today (ዛሬ)</button>
+      </div>
+
+      <button type="button" onclick="closeEthPicker()" class="w-full py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs transition cursor-pointer">Done</button>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT LOGIC: ETHIOPIAN CALENDAR ENGINE, FORM STATE & RENDERING   -->
+  <!-- ===================================================================== -->
+  <script>
+    /**
+     * 1. ETHIOPIAN CALENDAR CONVERSION ENGINE (Accurate JDN-Based Algorithm)
+     * Handles all 13 months:
+     * 1: Meskerem (መስከረም) - 30 days
+     * 2: Tikimt   (ጥቅምት)  - 30 days
+     * 3: Hidar    (ኅዳር)   - 30 days
+     * 4: Tahsas   (ታኅሣሥ)  - 30 days
+     * 5: Tir      (ጥር)    - 30 days
+     * 6: Yekatit  (የካቲት)  - 30 days
+     * 7: Megabit  (መጋቢት)  - 30 days
+     * 8: Miazia   (ሚያዝያ)  - 30 days
+     * 9: Ginbot   (ግንቦት)  - 30 days
+     * 10: Sene    (ሰኔ)    - 30 days
+     * 11: Hamle   (ሐምሌ)   - 30 days
+     * 12: Nehase  (ነሐሴ)   - 30 days
+     * 13: Pagume  (ጳጉሜን)  - 5 days (or 6 days in Ethiopian leap year where year % 4 === 3)
+     */
+    const ETH_MONTHS = [
+      { num: 1, en: 'Meskerem', am: 'መስከረም' },
+      { num: 2, en: 'Tikimt',   am: 'ጥቅምት' },
+      { num: 3, en: 'Hidar',    am: 'ኅዳር' },
+      { num: 4, en: 'Tahsas',   am: 'ታኅሣሥ' },
+      { num: 5, en: 'Tir',      am: 'ጥር' },
+      { num: 6, en: 'Yekatit',  am: 'የካቲት' },
+      { num: 7, en: 'Megabit',  am: 'መጋቢት' },
+      { num: 8, en: 'Miazia',   am: 'ሚያዝያ' },
+      { num: 9, en: 'Ginbot',   am: 'ግንቦት' },
+      { num: 10, en: 'Sene',    am: 'ሰኔ' },
+      { num: 11, en: 'Hamle',   am: 'ሐምሌ' },
+      { num: 12, en: 'Nehase',  am: 'ነሐሴ' },
+      { num: 13, en: 'Pagume',  am: 'ጳጉሜን' }
+    ];
+
+    const GC_MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Epoch of Ethiopian Calendar in Julian Day Number
+    const ETHIOPIC_EPOCH = 1723856;
+
+    function isEthLeapYear(ethYear) {
+      return ((ethYear % 4) + 4) % 4 === 3;
+    }
+
+    function getEthMonthDays(ethYear, ethMonth) {
+      if (ethMonth >= 1 && ethMonth <= 12) return 30;
+      if (ethMonth === 13) return isEthLeapYear(ethYear) ? 6 : 5;
+      return 30;
+    }
+
+    // Convert Ethiopian (year, month, day) -> Julian Day Number
+    function ethToJDN(year, month, day) {
+      return (ETHIOPIC_EPOCH + 365) + 365 * (year - 1) + Math.floor(year / 4) + 30 * month + day - 31;
+    }
+
+    // Convert Julian Day Number -> Ethiopian { year, month, day }
+    function jdnToEth(jdn) {
+      const r = ((jdn - ETHIOPIC_EPOCH) % 1461 + 1461) % 1461;
+      const n = (r % 365) + 365 * Math.floor(r / 1460);
+      const year = 4 * Math.floor((jdn - ETHIOPIC_EPOCH) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460);
+      const month = Math.floor(n / 30) + 1;
+      const day = (n % 30) + 1;
+      return { year, month, day };
+    }
+
+    // Convert Gregorian (year, month 1..12, day) -> Julian Day Number
+    function gregorianToJDN(year, month, day) {
+      const a = Math.floor((14 - month) / 12);
+      const y = year + 4800 - a;
+      const m = month + 12 * a - 3;
+      return day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+    }
+
+    // Convert Julian Day Number -> Gregorian { year, month, day }
+    function jdnToGregorian(jdn) {
+      const a = jdn + 32044;
+      const b = Math.floor((4 * a + 3) / 146097);
+      const c = a - Math.floor((146097 * b) / 4);
+      const d = Math.floor((4 * c + 3) / 1461);
+      const e = c - Math.floor((1461 * d) / 4);
+      const m = Math.floor((5 * e + 2) / 153);
+      const day = e - Math.floor((153 * m + 2) / 5) + 1;
+      const month = m + 3 - 12 * Math.floor(m / 10);
+      const year = 100 * b + d - 4800 + Math.floor(m / 10);
+      return { year, month, day };
+    }
+
+    function ethToGregorian(ethObj) {
+      const jdn = ethToJDN(ethObj.year, ethObj.month, ethObj.day);
+      return jdnToGregorian(jdn);
+    }
+
+    function gregorianToEth(dateObj = new Date()) {
+      const jdn = gregorianToJDN(dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate());
+      return jdnToEth(jdn);
+    }
+
+    function formatEthDate(ethObj, includeTime = true) {
+      if (!ethObj || !ethObj.year) return '--';
+      const m = ETH_MONTHS[ethObj.month - 1] || ETH_MONTHS[0];
+      const base = `${m.en} (${m.am}) ${ethObj.day}, ${ethObj.year} EC`;
+      if (includeTime && ethObj.hour) {
+        return `${base} • ${ethObj.hour}:${ethObj.minute || '00'} ${ethObj.ampm || 'AM'}`;
+      }
+      return base;
+    }
+
+    function formatEthShort(ethObj) {
+      if (!ethObj || !ethObj.year) return '--';
+      const m = ETH_MONTHS[ethObj.month - 1] || ETH_MONTHS[0];
+      return `${m.en} ${ethObj.day}, ${ethObj.year} EC`;
+    }
+
+    function formatGCDate(ethObj) {
+      if (!ethObj || !ethObj.year) return '--';
+      const gc = ethToGregorian(ethObj);
+      return `${GC_MONTH_SHORT[gc.month - 1]} ${gc.day}, ${gc.year} GC`;
+    }
+
+    function getEthDayOfWeek(ethYear, ethMonth, ethDay) {
+      // JDN 0 was Monday; (jdn + 1) % 7 gives 0 = Sunday .. 6 = Saturday
+      const jdn = ethToJDN(ethYear, ethMonth, ethDay);
+      return ((jdn + 1) % 7 + 7) % 7;
+    }
+
+
+    /**
+     * 2. CUSTOM ETHIOPIAN CALENDAR DATE & TIME PICKER CONTROLLER
+     */
+    const pickerStates = {
+      enrollment: { ...gregorianToEth(new Date()), hour: '09', minute: '00', ampm: 'AM', showTime: false },
+      visitDate:  { ...gregorianToEth(new Date()), hour: '10', minute: '30', ampm: 'AM', showTime: true },
+      nextAppt:   { ...jdnToEth(ethToJDN(gregorianToEth(new Date()).year, gregorianToEth(new Date()).month, gregorianToEth(new Date()).day) + 30), hour: '09', minute: '00', ampm: 'AM', showTime: true }
+    };
+
+    let activePickerKey = null;
+    let viewEthYear = 2019;
+    let viewEthMonth = 3;
+
+    function initEthPickerControls() {
+      const monthSel = document.getElementById('eth-picker-month');
+      monthSel.innerHTML = ETH_MONTHS.map(m => `<option value="${m.num}" class="text-slate-900">${m.num}. ${m.en} (${m.am})</option>`).join('');
+
+      const yearSel = document.getElementById('eth-picker-year');
+      let yearOpts = '';
+      for (let y = 2005; y <= 2030; y++) {
+        yearOpts += `<option value="${y}" class="text-slate-900">${y} EC</option>`;
+      }
+      yearSel.innerHTML = yearOpts;
+
+      const hourSel = document.getElementById('eth-picker-hour');
+      let hourOpts = '';
+      for (let h = 1; h <= 12; h++) {
+        const hh = String(h).padStart(2, '0');
+        hourOpts += `<option value="${hh}">${hh}</option>`;
+      }
+      hourSel.innerHTML = hourOpts;
+    }
+
+    function renderPickerTrigger(mountId, key) {
+      const mount = document.getElementById(mountId);
+      if (!mount) return;
+      const st = pickerStates[key];
+      const ecLabel = formatEthDate(st, st.showTime);
+      const gcLabel = formatGCDate(st);
+
+      mount.innerHTML = `
+        <button type="button" id="trigger-${key}" onclick="openEthPicker('${key}', this)"
+          class="w-full text-left rounded-xl border border-slate-300 hover:border-teal-600 bg-white px-3 py-2 transition flex items-center justify-between gap-2 focus:ring-2 focus:ring-teal-500/20 outline-none cursor-pointer">
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-slate-800 truncate eth-font">${ecLabel}</div>
+            <div class="text-[11px] text-teal-700 font-medium truncate">Gregorian: ${gcLabel}</div>
+          </div>
+          <span class="w-7 h-7 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 text-sm">📅</span>
+        </button>
+      `;
+    }
+
+    function openEthPicker(key, triggerEl) {
+      activePickerKey = key;
+      const st = pickerStates[key];
+      viewEthYear = st.year;
+      viewEthMonth = st.month;
+
+      document.getElementById('eth-picker-month').value = viewEthMonth;
+      document.getElementById('eth-picker-year').value = viewEthYear;
+      document.getElementById('eth-picker-hour').value = st.hour || '09';
+      document.getElementById('eth-picker-minute').value = st.minute || '00';
+      document.getElementById('eth-picker-ampm').value = st.ampm || 'AM';
+
+      const timeRow = document.getElementById('eth-picker-time-row');
+      if (st.showTime) {
+        timeRow.classList.remove('hidden');
+      } else {
+        timeRow.classList.add('hidden');
+      }
+
+      renderEthCalendarGrid();
+
+      const popover = document.getElementById('eth-picker-popover');
+      popover.classList.remove('hidden');
+
+      // Smart positioning inside viewport
+      const rect = triggerEl.getBoundingClientRect();
+      const popWidth = 340;
+      const popHeight = 370;
+      let left = rect.left;
+      let top = rect.bottom + 6;
+
+      if (left + popWidth > window.innerWidth - 12) {
+        left = Math.max(12, window.innerWidth - popWidth - 12);
+      }
+      if (top + popHeight > window.innerHeight - 12) {
+        top = Math.max(12, rect.top - popHeight - 6);
+      }
+
+      popover.style.left = `${left}px`;
+      popover.style.top = `${top}px`;
+    }
+
+    function closeEthPicker() {
+      document.getElementById('eth-picker-popover').classList.add('hidden');
+      activePickerKey = null;
+    }
+
+    function shiftEthMonth(delta) {
+      viewEthMonth += delta;
+      if (viewEthMonth > 13) {
+        viewEthMonth = 1;
+        viewEthYear++;
+      } else if (viewEthMonth < 1) {
+        viewEthMonth = 13;
+        viewEthYear--;
+      }
+      document.getElementById('eth-picker-month').value = viewEthMonth;
+      document.getElementById('eth-picker-year').value = viewEthYear;
+      renderEthCalendarGrid();
+    }
+
+    function onEthMonthYearChange() {
+      viewEthMonth = parseInt(document.getElementById('eth-picker-month').value, 10);
+      viewEthYear = parseInt(document.getElementById('eth-picker-year').value, 10);
+      renderEthCalendarGrid();
+    }
+
+    function renderEthCalendarGrid() {
+      const daysContainer = document.getElementById('eth-picker-days');
+      const totalDays = getEthMonthDays(viewEthYear, viewEthMonth);
+      const firstDow = getEthDayOfWeek(viewEthYear, viewEthMonth, 1);
+      const st = pickerStates[activePickerKey];
+      const todayEth = gregorianToEth(new Date());
+
+      let cells = '';
+      for (let blank = 0; blank < firstDow; blank++) {
+        cells += `<div class="h-8"></div>`;
+      }
+
+      for (let d = 1; d <= totalDays; d++) {
+        const isSelected = st && st.year === viewEthYear && st.month === viewEthMonth && st.day === d;
+        const isToday = todayEth.year === viewEthYear && todayEth.month === viewEthMonth && todayEth.day === d;
+        let btnClass = 'h-8 rounded-lg font-semibold transition flex items-center justify-center cursor-pointer ';
+        if (isSelected) {
+          btnClass += 'bg-teal-700 text-white shadow-xs';
+        } else if (isToday) {
+          btnClass += 'bg-amber-100 text-amber-900 border border-amber-400 hover:bg-amber-200';
+        } else {
+          btnClass += 'hover:bg-teal-50 text-slate-700';
+        }
+        cells += `<button type="button" onclick="selectEthDay(${d})" class="${btnClass}">${d}</button>`;
+      }
+
+      daysContainer.innerHTML = cells;
+      if (st) {
+        document.getElementById('eth-picker-gc-preview').textContent = formatGCDate(st);
+      }
+    }
+
+    function selectEthDay(day) {
+      if (!activePickerKey) return;
+      const st = pickerStates[activePickerKey];
+      st.year = viewEthYear;
+      st.month = viewEthMonth;
+      st.day = day;
+      renderEthCalendarGrid();
+      syncPickerTriggerUI(activePickerKey);
+      if (activePickerKey === 'enrollment') autoSaveDraft();
+    }
+
+    function updateEthPickerTime() {
+      if (!activePickerKey) return;
+      const st = pickerStates[activePickerKey];
+      st.hour = document.getElementById('eth-picker-hour').value;
+      st.minute = document.getElementById('eth-picker-minute').value;
+      st.ampm = document.getElementById('eth-picker-ampm').value;
+      syncPickerTriggerUI(activePickerKey);
+    }
+
+    function selectEthToday() {
+      if (!activePickerKey) return;
+      const todayEth = gregorianToEth(new Date());
+      const st = pickerStates[activePickerKey];
+      st.year = todayEth.year;
+      st.month = todayEth.month;
+      st.day = todayEth.day;
+      viewEthYear = todayEth.year;
+      viewEthMonth = todayEth.month;
+      document.getElementById('eth-picker-month').value = viewEthMonth;
+      document.getElementById('eth-picker-year').value = viewEthYear;
+      renderEthCalendarGrid();
+      syncPickerTriggerUI(activePickerKey);
+      if (activePickerKey === 'enrollment') autoSaveDraft();
+    }
+
+    function syncPickerTriggerUI(key) {
+      if (key === 'enrollment') renderPickerTrigger('enrollment-date-picker-mount', 'enrollment');
+      if (key === 'visitDate') renderPickerTrigger('visit-date-picker-mount', 'visitDate');
+      if (key === 'nextAppt') renderPickerTrigger('next-appt-picker-mount', 'nextAppt');
+    }
+
+    // Close picker & dropdowns when clicking outside
+    document.addEventListener('mousedown', (e) => {
+      const popover = document.getElementById('eth-picker-popover');
+      if (!popover.classList.contains('hidden')) {
+        const isTrigger = e.target.closest('[id^="trigger-"]');
+        if (!popover.contains(e.target) && !isTrigger) {
+          closeEthPicker();
+        }
+      }
+      const expWrap = document.getElementById('export-menu-wrapper');
+      if (expWrap && !expWrap.contains(e.target)) {
+        document.getElementById('export-dropdown').classList.add('hidden');
+      }
+    });
+
+
+    /**
+     * 3. CLINICAL OPTIONS & PAGE 2 REFERENCE DEFINITIONS
+     */
+    const DM_SYMPTOMS = [
+      { code: 'None', label: 'No DM Symptoms' },
+      { code: 'HyperG', label: 'HyperG (Polyuria, Nocturia, Polydipsia, Fatigue)' },
+      { code: 'DKA', label: 'DKA (Nausea, Vomiting, Fast/deep breathing, Abd pain)' },
+      { code: 'HypoG', label: 'HypoG (Hunger, Palpitations, Dizziness, Sweating)' },
+      { code: 'Inf-F', label: 'Infection: F (Fever)' },
+      { code: 'Inf-C', label: 'Infection: C (Cough)' },
+      { code: 'Inf-SL', label: 'Infection: SL (Skin lesions)' },
+      { code: 'UTI', label: 'UTI (Dysuria, Frequency)' },
+      { code: 'DFU', label: 'DFU (Diabetic Foot Ulcer)' },
+      { code: 'PN', label: 'PN (Tingling, Numbness, Burning feet/hands)' },
+      { code: 'AutoN', label: 'AutoN (Postural dizziness, Sexual dysfunction)' },
+      { code: 'VisB', label: 'VisB (Visual Blurring)' }
+    ];
+
+    const HTN_SYMPTOMS = [
+      { code: 'None', label: 'No HTN Symptoms' },
+      { code: 'Dysp', label: 'Dysp (Dyspnea)' },
+      { code: 'Ortp', label: 'Ortp (Orthopnea)' },
+      { code: 'PND', label: 'PND (Paroxysmal Nocturnal Dyspnea)' },
+      { code: 'LSw', label: 'LSw (Leg swelling)' },
+      { code: 'Ang', label: 'Ang (Angina)' },
+      { code: 'IntCl', label: 'IntCl (Intermittent claudication)' },
+      { code: 'HemP', label: 'HemP (Hemiparesis/Hemiplegia)' },
+      { code: 'SpA', label: 'SpA (Speech Abnormality)' },
+      { code: 'Seiz', label: 'Seiz (Seizure)' },
+      { code: 'HA', label: 'HA (Headache)' },
+      { code: 'PhP', label: 'PhP (Photophobia)' },
+      { code: 'NkP', label: 'NkP (Neck pain & Stiffness)' },
+      { code: 'UOP', label: 'UOP (Decreased Urine Output)' }
+    ];
+
+    const RISK_FACTORS = [
+      { code: 'None', label: 'None Active' },
+      { code: 'Tbco', label: 'Tbco (Tobacco/Shisha)' },
+      { code: 'Phin', label: 'Phin (Physical Inactivity)' },
+      { code: 'Alc', label: 'Alc (Alcohol >2W / >3M drinks/d)' },
+      { code: 'Salt', label: 'Salt (High Salt)' },
+      { code: 'Sug', label: 'Sug (High Sugar)' },
+      { code: 'Fat', label: 'Fat (High Fat)' },
+      { code: 'Veg', label: 'Veg (Low Veg & Fruit)' },
+      { code: 'Khat', label: 'Khat (Khat Consumption)' }
+    ];
+
+    const ORAL_CODES = [
+      { code: 'GOH', label: 'GOH (Adequately hygienic)' },
+      { code: 'POH', label: 'POH (Poor Oral Hygiene)' },
+      { code: 'DNTC', label: 'DNTC (Dental Caries)' },
+      { code: 'Ging', label: 'Ging (Gingivitis)' },
+      { code: 'DNTL', label: 'DNTL (Dental Loss)' },
+      { code: 'Cand', label: 'Cand (Oral Candidiasis)' }
+    ];
+
+    const CVS_CODES = [
+      { code: '1', label: '1. Normal Cardiac Exam' },
+      { code: '2', label: '2. S3 and/or S4 gallop' },
+      { code: '3', label: '3. Murmurs' },
+      { code: '4', label: '4. Neck Veins engorged / JVP raised' },
+      { code: '5', label: '5. Signs of arrhythmia' }
+    ];
+
+    const SKIN_CODES = [
+      { code: '1', label: '1. Normal findings' },
+      { code: '2', label: '2. Atrophic injection site' },
+      { code: '3', label: '3. Hypertrophic injection site' },
+      { code: '4', label: '4. Signs of infection' },
+      { code: '5', label: '5. Wrong injection site' }
+    ];
+
+    const FOOT_CODES = [
+      { code: '9', label: '9. Normal findings' },
+      { code: '1', label: '1. Dry skin / Callus / Deformity' },
+      { code: '2', label: '2. Ulcer' },
+      { code: '3', label: '3. Absent/asymmetric pulses, poor cap refill' },
+      { code: '4', label: '4. Reduced/absent light touch, vibration/position' },
+      { code: '5', label: '5. Decreased/Absent DTR' },
+      { code: '6', label: '6. Infected wound' },
+      { code: '7', label: '7. Pedal edema' },
+      { code: '8', label: '8. Pretibial edema' }
+    ];
+
+    const LIFESTYLE_CODES = [
+      { code: '1', label: '1. Cessation of smoking' },
+      { code: '2', label: '2. Exercise (150 min/week)' },
+      { code: '3', label: '3. Healthy Diet' },
+      { code: '4', label: '4. Reduce alcohol use' },
+      { code: '5', label: '5. Medication adherence' },
+      { code: '6', label: '6. Medication side effects' },
+      { code: '7', label: '7. Daily Foot inspection' },
+      { code: '8', label: '8. Family screening' },
+      { code: '9', label: '9. Injection Techniques' }
+    ];
+
+    const CLINICAL_GUIDE_SECTIONS = [
+      {
+        title: 'Symptoms (DM) — Column (c)',
+        items: [
+          '<strong>HyperG:</strong> Polyuria, Nocturia, Polydipsia, Fatigue.',
+          '<strong>DKA:</strong> Nausea, Vomiting, fast and deep breathing, weakness, worsening Poly symptoms, abdominal pain.',
+          '<strong>HypoG:</strong> Hunger, palpitations, light headedness, dizziness, sweating, extreme fatigue, confusion, bad dreams.',
+          '<strong>Infections:</strong> F: fever, C: cough, SL: skin lesions.',
+          '<strong>UTI:</strong> dysuria, frequency.',
+          '<strong>DFU:</strong> Diabetic Foot Ulcer.',
+          '<strong>PN:</strong> tingling, numbness, burning sensation of Feet and hands.',
+          '<strong>AutoN:</strong> Postural dizziness, Sexual dysfunction.',
+          '<strong>VisB:</strong> Visual Blurring.'
+        ]
+      },
+      {
+        title: 'Symptoms (HTN) — Column (c)',
+        items: [
+          '<strong>Dysp:</strong> Dyspnea | <strong>Ortp:</strong> Orthopnea | <strong>PND:</strong> Paroxysmal Nocturnal Dyspnea',
+          '<strong>LSw:</strong> Leg swelling | <strong>Ang:</strong> Angina | <strong>IntCl:</strong> Intermittent claudication',
+          '<strong>HemP:</strong> Hemiparesis/Hemiplegia | <strong>SpA:</strong> Speech Abnormality | <strong>Seiz:</strong> Seizure',
+          '<strong>HA:</strong> Headache | <strong>PhP:</strong> Photophobia | <strong>NkP:</strong> Neck pain and Stiffness | <strong>UOP:</strong> Decreased Urine Output'
+        ]
+      },
+      {
+        title: 'Risk Factors Status — Column (d)',
+        items: [
+          '<strong>Tbco:</strong> Tobacco Use including shisha',
+          '<strong>Phin:</strong> Physical inactivity',
+          '<strong>Alc:</strong> Alcohol use (&gt;2 drinks/day for women and &gt;3 drinks/day for men)',
+          '<strong>Salt:</strong> High Salt consumption | <strong>Sug:</strong> High Sugar Consumption | <strong>Fat:</strong> High Fat Consumption',
+          '<strong>Veg:</strong> Low Vegetable and fruit consumption | <strong>Khat:</strong> Khat Consumption'
+        ]
+      },
+      {
+        title: 'BP (mmHg) & Anthropometry / BMI — Columns (e, f, g)',
+        items: [
+          '<strong>BP Goal:</strong> Measured at every visit with Goal of <strong>&lt;140/90 mmHg</strong> (check for orthostatic changes when indicated).',
+          '<strong>Height & Weight:</strong> Measure height of an adult at enrollment and children every visit. Measure weight at initial assessment and each visit.',
+          '<strong>BMI Formula:</strong> Weight (kg) ÷ Height (m)². Interpretations: <strong>&lt;18.5</strong> Malnourished | <strong>18.5–24.9</strong> Normal | <strong>25–29.9</strong> Overweight | <strong>30–39.9</strong> Obese | <strong>&gt;40</strong> Morbid Obesity.'
+        ]
+      },
+      {
+        title: 'Physical Examination Codes — Columns (h, i, j, k, l)',
+        items: [
+          '<strong>Oral/Dental (h):</strong> GOH (Adequately hygienic), POH (Poor Oral Hygiene), DNTC (Dental Caries), Ging (Gingivitis), DNTL (Dental Loss), Cand (Oral Candidiasis).',
+          '<strong>Cardiovascular (i):</strong> 1. Normal Cardiac Exam, 2. S3 and/or S4 gallop, 3. Murmurs, 4. Neck Veins engorged or JVP raised, 5. Signs of arrhythmia.',
+          '<strong>Skin & Injection Site (j):</strong> 1. Normal findings, 2. Atrophic injection site, 3. Hypertrophic injection site, 4. Signs of infection, 5. Wrong injection site.',
+          '<strong>MSS / Foot Exam (k):</strong> 1. Dry skin/Callus/deformity, 2. Ulcer, 3. Absent/asymmetric pulses, poor capillary filling, 4. Reduced/absent light touch, Vibration or position senses, 5. Decreased/Absent DTR, 6. Infected wound, 7. Pedal edema, 8. Pretibial edema, 9. Normal findings.',
+          '<strong>Neurologic & Dilated Eye Exam (l):</strong> Dilated eye exam should be done annually for all Type 2 patients starting from Dx, annually for Type 1 starting 5 yrs from Dx, and for HTN patients with suspected hypertensive urgency/emergency.'
+        ]
+      },
+      {
+        title: 'Lab Investigations, Treatment & Adherence — Columns (m – u)',
+        items: [
+          '<strong>Lab Tests (m,n,o,p):</strong> 1. FBS at every visit or HbA1c every 3 months. 2. U/A Protein (P- to P++++) annually; Ketone (K- to K++++) every visit for Type 1 DM and for Type 2 when FBS/RBS &gt;300 mg/dl; Microscopy for Casts. 3. RFT (Cr) annually for Type 2 DM; for Type 1 starting 5 years after diagnosis.',
+          '<strong>Lifestyle Changes (r):</strong> 1. Cessation of smoking, 2. Exercise (150 min/week), 3. Healthy Diet, 4. Reduce alcohol use, 5. Medication adherence, 6. Medication side effects, 7. Daily Foot inspection, 8. Family screening, 9. Injection Techniques.',
+          '<strong>Treatment (s, t):</strong> 1. Insulin (1a NPH, 1b Regular, 1c Premixed) | 2. OHA (2a Glibenclamide, 2b Metformin, 2c Glimepiride, 2d Other) | 3. Antihypertensives (Nf, Am, Fl, HCT, Ena, Lis, Cap, Atn, Metp, Other) | 4. Antiplatelets (ASA, Clop) | 5. Statins (Smv, Lvs, Atv, Prv, Rsv, Other).',
+          '<strong>Adherence (u):</strong> Good (missed &lt;20% of doses last month) vs. Poor (missed &ge;20% of doses last month).'
+        ]
+      }
+    ];
+
+
+    /**
+     * 3B. COMPREHENSIVE FMOH CODE DICTIONARY & MOUSE-OVER TOOLTIP ENGINE
+     * Maps every coded value across columns (b) through (u) to its official Page 2 definition.
+     */
+    const FMOH_CODE_DICTIONARY = {
+      // Column (b): Visit Type
+      'b:Scheduled':   { col: 'Col (b) • Visit Type', title: 'Scheduled Follow-Up Visit', desc: 'Routine planned chronic care appointment according to the patient’s follow-up schedule.' },
+      'b:Unscheduled': { col: 'Col (b) • Visit Type', title: 'Unscheduled Visit', desc: 'Unplanned visit due to acute symptoms, hypoglycemia/hyperglycemia, medication refill issue, or emergency.' },
+
+      // Column (c): Symptoms (DM & HTN)
+      'c:None':   { col: 'Col (c) • Symptoms', title: 'Asymptomatic (No DM/HTN Symptoms)', desc: 'Patient reports no acute Diabetes Mellitus or Hypertension warning symptoms at this visit.' },
+      'c:HyperG': { col: 'Col (c) • DM Symptoms', title: 'HyperG — Hyperglycemia Symptoms', desc: 'Polyuria (frequent urination), Nocturia, Polydipsia (excessive thirst), and Fatigue.' },
+      'c:DKA':    { col: 'Col (c) • DM Symptoms', title: 'DKA — Diabetic Ketoacidosis Warning', desc: 'Nausea, Vomiting, fast and deep breathing (Kussmaul), weakness, worsening poly-symptoms, abdominal pain.' },
+      'c:HypoG':  { col: 'Col (c) • DM Symptoms', title: 'HypoG — Hypoglycemia Symptoms', desc: 'Hunger, palpitations, light-headedness, dizziness, sweating, extreme fatigue, confusion, bad dreams.' },
+      'c:Inf-F':  { col: 'Col (c) • DM Infections', title: 'Inf-F — Fever', desc: 'Febrile illness / elevated body temperature requiring infection workup in diabetic patient.' },
+      'c:Inf-C':  { col: 'Col (c) • DM Infections', title: 'Inf-C — Cough', desc: 'Respiratory cough symptom; evaluate for pneumonia, bronchitis, or tuberculosis.' },
+      'c:Inf-SL': { col: 'Col (c) • DM Infections', title: 'Inf-SL — Skin Lesions', desc: 'Cutaneous infections, boils, cellulitis, or fungal/bacterial skin lesions.' },
+      'c:UTI':    { col: 'Col (c) • DM Symptoms', title: 'UTI — Urinary Tract Infection', desc: 'Dysuria (painful urination) and urinary frequency.' },
+      'c:DFU':    { col: 'Col (c) • DM Symptoms', title: 'DFU — Diabetic Foot Ulcer', desc: 'Active foot ulceration or breakdown requiring urgent wound care and offloading.' },
+      'c:PN':     { col: 'Col (c) • DM Symptoms', title: 'PN — Peripheral Neuropathy', desc: 'Tingling, numbness, or burning sensation of the feet and hands.' },
+      'c:AutoN':  { col: 'Col (c) • DM Symptoms', title: 'AutoN — Autonomic Neuropathy', desc: 'Postural dizziness (orthostatic hypotension), gastroparesis, or sexual dysfunction.' },
+      'c:VisB':   { col: 'Col (c) • DM Symptoms', title: 'VisB — Visual Blurring', desc: 'Blurred or decreased vision; evaluate for refractive changes from glycemia or diabetic retinopathy.' },
+      'c:Dysp':   { col: 'Col (c) • HTN Symptoms', title: 'Dysp — Dyspnea', desc: 'Shortness of breath on exertion or at rest.' },
+      'c:Ortp':   { col: 'Col (c) • HTN Symptoms', title: 'Ortp — Orthopnea', desc: 'Shortness of breath when lying flat, relieved by propping up with pillows.' },
+      'c:PND':    { col: 'Col (c) • HTN Symptoms', title: 'PND — Paroxysmal Nocturnal Dyspnea', desc: 'Sudden episodes of severe shortness of breath awakening the patient from sleep.' },
+      'c:LSw':    { col: 'Col (c) • HTN Symptoms', title: 'LSw — Leg Swelling', desc: 'Bilateral or unilateral lower extremity edema suggestive of heart failure, renal disease, or CCB side effect.' },
+      'c:Ang':    { col: 'Col (c) • HTN Symptoms', title: 'Ang — Angina', desc: 'Chest pain, pressure, or tightness suggestive of myocardial ischemia.' },
+      'c:IntCl':  { col: 'Col (c) • HTN Symptoms', title: 'IntCl — Intermittent Claudication', desc: 'Cramping leg pain induced by walking/exercise due to peripheral arterial disease.' },
+      'c:HemP':   { col: 'Col (c) • HTN Symptoms', title: 'HemP — Hemiparesis / Hemiplegia', desc: 'Weakness or paralysis on one side of the body (stroke/TIA warning sign).' },
+      'c:SpA':    { col: 'Col (c) • HTN Symptoms', title: 'SpA — Speech Abnormality', desc: 'Slurred speech (dysarthria) or difficulty speaking/understanding (aphasia).' },
+      'c:Seiz':   { col: 'Col (c) • HTN Symptoms', title: 'Seiz — Seizure', desc: 'Convulsions or seizure activity; evaluate for hypertensive encephalopathy or severe hypoglycemia.' },
+      'c:HA':     { col: 'Col (c) • HTN Symptoms', title: 'HA — Headache', desc: 'Persistent or severe headache associated with elevated blood pressure.' },
+      'c:PhP':    { col: 'Col (c) • HTN Symptoms', title: 'PhP — Photophobia', desc: 'Abnormal visual sensitivity to light.' },
+      'c:NkP':    { col: 'Col (c) • HTN Symptoms', title: 'NkP — Neck Pain and Stiffness', desc: 'Cervical pain or nuchal stiffness.' },
+      'c:UOP':    { col: 'Col (c) • HTN Symptoms', title: 'UOP — Decreased Urine Output', desc: 'Oliguria / reduced urine volume suggestive of acute or chronic renal impairment.' },
+
+      // Column (d): Risk Factors
+      'd:None': { col: 'Col (d) • Risk Factors', title: 'No Active Behavioral Risk Factors', desc: 'Patient reports no active tobacco, alcohol, khat, physical inactivity, or high-risk dietary habits.' },
+      'd:Tbco': { col: 'Col (d) • Risk Factors', title: 'Tbco — Tobacco Use', desc: 'Current use of cigarettes, smokeless tobacco, or shisha.' },
+      'd:Phin': { col: 'Col (d) • Risk Factors', title: 'Phin — Physical Inactivity', desc: 'Less than the recommended 150 minutes of moderate-intensity physical activity per week.' },
+      'd:Alc':  { col: 'Col (d) • Risk Factors', title: 'Alc — Harmful Alcohol Use', desc: 'Alcohol consumption exceeding >2 standard drinks/day for women or >3 drinks/day for men.' },
+      'd:Salt': { col: 'Col (d) • Risk Factors', title: 'Salt — High Salt Consumption', desc: 'Excessive dietary sodium intake (added table salt, salty sauces, or processed foods).' },
+      'd:Sug':  { col: 'Col (d) • Risk Factors', title: 'Sug — High Sugar Consumption', desc: 'Frequent intake of refined sugars, sweetened beverages, or high-glycemic foods.' },
+      'd:Fat':  { col: 'Col (d) • Risk Factors', title: 'Fat — High Fat Consumption', desc: 'High intake of saturated fats, fried foods, or fatty meats.' },
+      'd:Veg':  { col: 'Col (d) • Risk Factors', title: 'Veg — Low Vegetable & Fruit Intake', desc: 'Inadequate daily servings of fresh vegetables and fruits.' },
+      'd:Khat': { col: 'Col (d) • Risk Factors', title: 'Khat — Khat Consumption', desc: 'Regular chewing of khat (associated with hypertension, tachycardia, and poor glycemic control).' },
+
+      // Column (h): Oral / Dental
+      'h:GOH':  { col: 'Col (h) • Oral / Dental', title: 'GOH — Good Oral Hygiene', desc: 'Adequately hygienic oral cavity with healthy gingiva and dentition.' },
+      'h:POH':  { col: 'Col (h) • Oral / Dental', title: 'POH — Poor Oral Hygiene', desc: 'Plaque/calculus buildup or inadequate oral care requiring hygiene counseling.' },
+      'h:DNTC': { col: 'Col (h) • Oral / Dental', title: 'DNTC — Dental Caries', desc: 'Tooth decay / dental cavities present.' },
+      'h:Ging': { col: 'Col (h) • Oral / Dental', title: 'Ging — Gingivitis', desc: 'Inflammation, redness, or bleeding of the gums (periodontal disease risk in DM).' },
+      'h:DNTL': { col: 'Col (h) • Oral / Dental', title: 'DNTL — Dental Loss', desc: 'Missing teeth due to periodontal disease or caries.' },
+      'h:Cand': { col: 'Col (h) • Oral / Dental', title: 'Cand — Oral Candidiasis', desc: 'Oral thrush (fungal Candida plaques), often linked to uncontrolled hyperglycemia.' },
+
+      // Column (i): Cardiovascular (CVS)
+      'i:1': { col: 'Col (i) • CVS Exam', title: 'Code 1 — Normal Cardiac Exam', desc: 'Regular rate and rhythm, normal S1/S2 heart sounds, no murmurs, gallops, or JVP elevation.' },
+      'i:2': { col: 'Col (i) • CVS Exam', title: 'Code 2 — S3 and/or S4 Gallop', desc: 'Extra diastolic heart sounds indicating ventricular volume overload (S3) or stiff ventricle/LVH (S4).' },
+      'i:3': { col: 'Col (i) • CVS Exam', title: 'Code 3 — Murmurs', desc: 'Audible systolic or diastolic cardiac murmur on auscultation.' },
+      'i:4': { col: 'Col (i) • CVS Exam', title: 'Code 4 — Neck Veins Engorged / JVP Raised', desc: 'Jugular venous distension indicating elevated central venous pressure / right heart strain.' },
+      'i:5': { col: 'Col (i) • CVS Exam', title: 'Code 5 — Signs of Arrhythmia', desc: 'Irregular pulse or cardiac rhythm abnormality (e.g., atrial fibrillation, ectopy).' },
+
+      // Column (j): Skin & Injection Site
+      'j:1': { col: 'Col (j) • Skin & Inj. Site', title: 'Code 1 — Normal Findings', desc: 'Healthy skin and insulin injection sites without lipodystrophy, erythema, or infection.' },
+      'j:2': { col: 'Col (j) • Skin & Inj. Site', title: 'Code 2 — Atrophic Injection Site', desc: 'Lipoatrophy (loss of subcutaneous fat) at repeated insulin injection areas.' },
+      'j:3': { col: 'Col (j) • Skin & Inj. Site', title: 'Code 3 — Hypertrophic Injection Site', desc: 'Lipohypertrophy (rubbery subcutaneous swelling) impairing insulin absorption; rotate sites.' },
+      'j:4': { col: 'Col (j) • Skin & Inj. Site', title: 'Code 4 — Signs of Infection', desc: 'Erythema, warmth, tenderness, or abscess at injection site or skin.' },
+      'j:5': { col: 'Col (j) • Skin & Inj. Site', title: 'Code 5 — Wrong Injection Site', desc: 'Patient injecting insulin into inappropriate anatomical locations; re-educate on technique.' },
+
+      // Column (k): MSS / Foot Exam
+      'k:1': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 1 — Dry Skin / Callus / Deformity', desc: 'Anhidrosis, hyperkeratotic callus, claw toes, bunion, or Charcot foot deformity.' },
+      'k:2': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 2 — Ulcer', desc: 'Open diabetic foot ulceration present.' },
+      'k:3': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 3 — Absent/Asymmetric Pulses / Poor Cap Refill', desc: 'Diminished or absent dorsalis pedis/posterior tibial pulses or delayed capillary refill (PAD).' },
+      'k:4': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 4 — Reduced/Absent Light Touch, Vibration or Position', desc: 'Loss of protective sensation on 10g monofilament, tuning fork vibration, or proprioception.' },
+      'k:5': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 5 — Decreased/Absent DTR', desc: 'Diminished or absent deep tendon reflexes (e.g., ankle jerk).' },
+      'k:6': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 6 — Infected Wound', desc: 'Foot wound with purulence, surrounding cellulitis, warmth, or foul odor.' },
+      'k:7': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 7 — Pedal Edema', desc: 'Pitting or non-pitting swelling of the dorsum of the foot/ankle.' },
+      'k:8': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 8 — Pretibial Edema', desc: 'Edema over the anterior tibia/shin.' },
+      'k:9': { col: 'Col (k) • MSS / Foot Exam', title: 'Code 9 — Normal Findings', desc: 'Intact skin, normal pulses, preserved protective sensation, no deformity or edema.' },
+
+      // Column (m): Urinalysis
+      'm:P-':    { col: 'Col (m) • U/A Protein', title: 'P- — Urine Protein Negative', desc: 'No proteinuria detected on urine dipstick (screened annually).' },
+      'm:P+':    { col: 'Col (m) • U/A Protein', title: 'P+ — Trace / 1+ Proteinuria', desc: 'Mild proteinuria (~30 mg/dL); evaluate for diabetic or hypertensive nephropathy.' },
+      'm:P++':   { col: 'Col (m) • U/A Protein', title: 'P++ — 2+ Proteinuria', desc: 'Moderate proteinuria (~100 mg/dL); assess renal function (Cr) and ACEi/ARB therapy.' },
+      'm:P+++':  { col: 'Col (m) • U/A Protein', title: 'P+++ — 3+ Proteinuria', desc: 'Significant proteinuria (~300 mg/dL) indicating overt nephropathy.' },
+      'm:P++++': { col: 'Col (m) • U/A Protein', title: 'P++++ — 4+ Proteinuria', desc: 'Heavy / nephrotic-range proteinuria (≥1000 mg/dL).' },
+      'm:K-':    { col: 'Col (m) • U/A Ketone', title: 'K- — Urine Ketone Negative', desc: 'No ketonuria detected.' },
+      'm:K+':    { col: 'Col (m) • U/A Ketone', title: 'K+ — 1+ Ketonuria', desc: 'Mild ketonuria; check hydration and blood glucose (required every visit for Type 1 DM or FBS/RBS >300 mg/dL).' },
+      'm:K++':   { col: 'Col (m) • U/A Ketone', title: 'K++ — 2+ Ketonuria', desc: 'Moderate ketonuria; evaluate closely for impending DKA.' },
+      'm:K+++':  { col: 'Col (m) • U/A Ketone', title: 'K+++ — 3+ Ketonuria', desc: 'Marked ketonuria; urgent DKA assessment required.' },
+      'm:K++++': { col: 'Col (m) • U/A Ketone', title: 'K++++ — 4+ Ketonuria', desc: 'Severe ketonuria; emergency DKA management indicated.' },
+
+      // Column (q): Final Outcome
+      'q:Controlled':   { col: 'Col (q) • Final Outcome', title: 'Controlled Clinical Status', desc: 'Glycemic and blood pressure targets achieved (BP <140/90 mmHg, FBS/HbA1c at goal) without acute complications.' },
+      'q:Uncontrolled': { col: 'Col (q) • Final Outcome', title: 'Uncontrolled Clinical Status', desc: 'Blood pressure ≥140/90 mmHg and/or glycemia above target; requires therapy titration and lifestyle reinforcement.' },
+      'q:Complicated':  { col: 'Col (q) • Final Outcome', title: 'Complicated Clinical Status', desc: 'Presence of acute (DKA/HHS/severe hypoglycemia) or chronic microvascular/macrovascular complications.' },
+      'q:Dead':         { col: 'Col (q) • Final Outcome', title: 'Deceased (Dead)', desc: 'Patient mortality recorded during follow-up period.' },
+
+      // Column (r): Lifestyle Changes
+      'r:1': { col: 'Col (r) • Lifestyle Education', title: 'Code 1 — Cessation of Smoking', desc: 'Counseled on complete tobacco and shisha cessation.' },
+      'r:2': { col: 'Col (r) • Lifestyle Education', title: 'Code 2 — Exercise (150 min/week)', desc: 'Advised at least 150 minutes/week of moderate aerobic physical activity.' },
+      'r:3': { col: 'Col (r) • Lifestyle Education', title: 'Code 3 — Healthy Diet', desc: 'Dietary counseling: low salt, low refined sugar/fat, high fiber, vegetables, and fruits.' },
+      'r:4': { col: 'Col (r) • Lifestyle Education', title: 'Code 4 — Reduce Alcohol Use', desc: 'Advised limiting alcohol to ≤2 drinks/day (women) or ≤3 drinks/day (men), or complete abstinence.' },
+      'r:5': { col: 'Col (r) • Lifestyle Education', title: 'Code 5 — Medication Adherence', desc: 'Reinforced taking prescribed doses consistently at scheduled times.' },
+      'r:6': { col: 'Col (r) • Lifestyle Education', title: 'Code 6 — Medication Side Effects', desc: 'Educated on recognizing and reporting hypoglycemia, hypotension, cough, or GI side effects.' },
+      'r:7': { col: 'Col (r) • Lifestyle Education', title: 'Code 7 — Daily Foot Inspection', desc: 'Instructed on daily self-inspection of feet, proper footwear, and nail/skin hygiene.' },
+      'r:8': { col: 'Col (r) • Lifestyle Education', title: 'Code 8 — Family Screening', desc: 'Advised blood pressure and diabetes screening for first-degree adult family members.' },
+      'r:9': { col: 'Col (r) • Lifestyle Education', title: 'Code 9 — Injection Techniques', desc: 'Reviewed insulin storage, dosing, subcutaneous injection angle, and site rotation.' },
+
+      // Column (s): Treatment Regimen Codes
+      's:1a':   { col: 'Col (s) • Insulin', title: '1a — NPH Insulin', desc: 'Intermediate-acting human insulin (Isophane) for basal glycemic control.' },
+      's:1b':   { col: 'Col (s) • Insulin', title: '1b — Regular Insulin', desc: 'Short-acting soluble human insulin for prandial/bolus coverage.' },
+      's:1c':   { col: 'Col (s) • Insulin', title: '1c — Premixed Insulin', desc: 'Biphasic insulin formulation (e.g., 70/30 NPH/Regular).' },
+      's:2a':   { col: 'Col (s) • Oral Hypoglycemic', title: '2a — Glibenclamide', desc: 'Sulfonylurea insulin secretagogue; monitor for hypoglycemia.' },
+      's:2b':   { col: 'Col (s) • Oral Hypoglycemic', title: '2b — Metformin', desc: 'First-line biguanide insulin sensitizer for Type 2 Diabetes Mellitus.' },
+      's:2c':   { col: 'Col (s) • Oral Hypoglycemic', title: '2c — Glimepiride', desc: 'Second-generation sulfonylurea oral hypoglycemic agent.' },
+      's:2d':   { col: 'Col (s) • Oral Hypoglycemic', title: '2d — Other OHA', desc: 'Other oral antidiabetic medication (e.g., DPP-4i, SGLT2i).' },
+      's:Nf':   { col: 'Col (s) • Antihypertensive', title: 'Nf — Nifedipine', desc: 'Dihydropyridine calcium channel blocker (CCB) antihypertensive.' },
+      's:Am':   { col: 'Col (s) • Antihypertensive', title: 'Am — Amlodipine', desc: 'Long-acting dihydropyridine calcium channel blocker (CCB).' },
+      's:Fl':   { col: 'Col (s) • Antihypertensive', title: 'Fl — Felodipine', desc: 'Dihydropyridine calcium channel blocker (CCB).' },
+      's:HCT':  { col: 'Col (s) • Antihypertensive', title: 'HCT — Hydrochlorothiazide', desc: 'Thiazide diuretic antihypertensive.' },
+      's:Ena':  { col: 'Col (s) • Antihypertensive', title: 'Ena — Enalapril', desc: 'ACE inhibitor antihypertensive (renoprotective in diabetic proteinuria).' },
+      's:Lis':  { col: 'Col (s) • Antihypertensive', title: 'Lis — Lisinopril', desc: 'Long-acting ACE inhibitor antihypertensive.' },
+      's:Cap':  { col: 'Col (s) • Antihypertensive', title: 'Cap — Captopril', desc: 'Short-acting ACE inhibitor.' },
+      's:Atn':  { col: 'Col (s) • Antihypertensive', title: 'Atn — Atenolol', desc: 'Cardioselective beta-1 adrenergic blocker.' },
+      's:Metp': { col: 'Col (s) • Antihypertensive', title: 'Metp — Metoprolol', desc: 'Cardioselective beta-1 adrenergic blocker.' },
+      's:ASA':  { col: 'Col (s) • Antiplatelet', title: 'ASA — Aspirin', desc: 'Low-dose acetylsalicylic acid antiplatelet therapy for secondary/high-risk ASCVD prevention.' },
+      's:Clop': { col: 'Col (s) • Antiplatelet', title: 'Clop — Clopidogrel', desc: 'P2Y12 platelet aggregation inhibitor.' },
+      's:Smv':  { col: 'Col (s) • Statin', title: 'Smv — Simvastatin', desc: 'HMG-CoA reductase inhibitor for LDL cholesterol reduction.' },
+      's:Lvs':  { col: 'Col (s) • Statin', title: 'Lvs — Lovastatin', desc: 'HMG-CoA reductase inhibitor lipid-lowering agent.' },
+      's:Atv':  { col: 'Col (s) • Statin', title: 'Atv — Atorvastatin', desc: 'High/moderate-intensity HMG-CoA reductase inhibitor (statin).' },
+      's:Prv':  { col: 'Col (s) • Statin', title: 'Prv — Pravastatin', desc: 'Hydrophilic HMG-CoA reductase inhibitor (statin).' },
+      's:Rsv':  { col: 'Col (s) • Statin', title: 'Rsv — Rosuvastatin', desc: 'Potent HMG-CoA reductase inhibitor (statin).' },
+
+      // Column (u): Adherence
+      'u:Good': { col: 'Col (u) • Adherence', title: 'Good Medication Adherence', desc: 'Patient missed <20% of prescribed doses during the last month.' },
+      'u:Poor': { col: 'Col (u) • Adherence', title: 'Poor Medication Adherence', desc: 'Patient missed ≥20% of prescribed doses during the last month; document reason (e.g., stockout, side effects).' }
+    };
+
+    function getCodeMeta(colPrefix, rawCode) {
+      const clean = String(rawCode || '').trim();
+      const directKey = `${colPrefix}:${clean}`;
+      if (FMOH_CODE_DICTIONARY[directKey]) return FMOH_CODE_DICTIONARY[directKey];
+
+      // Handle regimen strings like "2b. Metformin" or "Ena - Enalapril"
+      if (colPrefix === 's') {
+        const prefixToken = clean.split(/[\s.\-—]/)[0];
+        if (FMOH_CODE_DICTIONARY[`s:${prefixToken}`]) {
+          return FMOH_CODE_DICTIONARY[`s:${prefixToken}`];
+        }
+        return {
+          col: 'Col (s) • Treatment Regimen',
+          title: clean,
+          desc: 'Prescribed chronic care pharmacotherapy from FMoH DM & HTN formulary.'
+        };
+      }
+
+      return {
+        col: `Col (${colPrefix}) • Clinical Code`,
+        title: clean,
+        desc: 'Standardized Federal Ministry of Health DM & Hypertension follow-up code.'
+      };
+    }
+
+    function renderCodedBadge(colPrefix, codeValue, displayLabel = null, extraClasses = '') {
+      const label = displayLabel !== null ? displayLabel : codeValue;
+      const safeCol = String(colPrefix).replace(/'/g, "\\'");
+      const safeCode = String(codeValue).replace(/'/g, "\\'");
+      return `<span tabindex="0"
+        data-code-col="${safeCol}"
+        data-code-val="${safeCode}"
+        onmouseenter="showCodeTooltip(event, '${safeCol}', '${safeCode}')"
+        onmouseleave="hideCodeTooltip()"
+        onfocus="showCodeTooltip(event, '${safeCol}', '${safeCode}')"
+        onblur="hideCodeTooltip()"
+        onclick="showCodeTooltip(event, '${safeCol}', '${safeCode}')"
+        class="inline-flex items-center px-1.5 py-0.5 rounded border border-dashed border-slate-400/80 bg-slate-50/90 hover:bg-teal-100/80 hover:border-teal-600 text-slate-800 font-semibold cursor-help transition ${extraClasses}">${label}</span>`;
+    }
+
+    function showCodeTooltip(e, colPrefix, codeValue) {
+      const tooltip = document.getElementById('code-tooltip');
+      if (!tooltip) return;
+      const meta = getCodeMeta(colPrefix, codeValue);
+
+      document.getElementById('tt-col-badge').textContent = meta.col;
+      document.getElementById('tt-code-pill').textContent = codeValue;
+      document.getElementById('tt-title').textContent = meta.title;
+      document.getElementById('tt-desc').textContent = meta.desc;
+
+      tooltip.classList.remove('hidden');
+      tooltip.style.opacity = '1';
+
+      const targetRect = e.currentTarget.getBoundingClientRect();
+      const ttWidth = 310;
+      const ttHeight = tooltip.offsetHeight || 115;
+
+      let left = targetRect.left + (targetRect.width / 2) - (ttWidth / 2);
+      let top = targetRect.top - ttHeight - 8;
+
+      // Clamp horizontally inside viewport
+      if (left < 10) left = 10;
+      if (left + ttWidth > window.innerWidth - 10) {
+        left = Math.max(10, window.innerWidth - ttWidth - 10);
+      }
+      // Flip below element if near top of screen
+      if (top < 10) {
+        top = targetRect.bottom + 8;
+      }
+
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+    }
+
+    function hideCodeTooltip() {
+      const tooltip = document.getElementById('code-tooltip');
+      if (!tooltip) return;
+      tooltip.style.opacity = '0';
+      tooltip.classList.add('hidden');
+    }
+
+    window.addEventListener('scroll', hideCodeTooltip, true);
+
+
+    /**
+     * 4. APPLICATION STATE, STORAGE & BMI / BP CALCULATIONS
+     */
+    const STORAGE_KEY = 'fmoh_ethiopia_dm_htn_chart_v1';
+
+    let appState = {
+      patient: {
+        name: '', age: '', sex: '', mrn: '',
+        zone: '', woreda: '', kebele: '', hno: '', tel: '',
+        enrollmentDate: { ...pickerStates.enrollment },
+        height: '', waist: '', diagnosis: ''
+      },
+      visits: []
+    };
+
+    let currentModalRegimen = [];
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-900 text-white border-emerald-500',
+        warning: 'bg-amber-900 text-white border-amber-400',
+        info: 'bg-slate-900 text-white border-teal-400'
+      };
+      toast.className = `pointer-events-auto rounded-xl border-l-4 px-4 py-3 shadow-xl text-xs sm:text-sm font-medium flex items-center justify-between gap-2 transition-all duration-300 ${colors[type] || colors.success}`;
+      toast.innerHTML = `<span>${message}</span><button type="button" onclick="this.parentElement.remove()" class="text-white/70 hover:text-white ml-2 cursor-pointer">✕</button>`;
+      container.appendChild(toast);
+      setTimeout(() => { if (toast.parentElement) toast.remove(); }, 4000);
+    }
+
+    function calculateBMI(weightKg, heightCm) {
+      const w = parseFloat(weightKg);
+      const h = parseFloat(heightCm);
+      if (!w || !h || h <= 0) return null;
+      const hm = h / 100;
+      return +(w / (hm * hm)).toFixed(1);
+    }
+
+    function getBMIInterpretation(bmi) {
+      if (bmi === null || isNaN(bmi)) {
+        return { label: 'N/A', badgeClass: 'bg-slate-100 text-slate-600' };
+      }
+      if (bmi < 18.5) {
+        return { label: 'Malnourished', badgeClass: 'bg-amber-100 text-amber-800 border border-amber-300' };
+      }
+      if (bmi < 25.0) {
+        return { label: 'Normal', badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300' };
+      }
+      if (bmi < 30.0) {
+        return { label: 'Overweight', badgeClass: 'bg-orange-100 text-orange-800 border border-orange-300' };
+      }
+      if (bmi <= 40.0) {
+        return { label: 'Obese', badgeClass: 'bg-red-100 text-red-800 border border-red-300' };
+      }
+      return { label: 'Morbid Obesity', badgeClass: 'bg-rose-200 text-rose-900 border border-rose-400' };
+    }
+
+    function handleHeightChange() {
+      autoSaveDraft();
+      renderVisitsTable();
+      updateSummaryCards();
+      const ht = parseFloat(document.getElementById('pt-height').value);
+      const badge = document.getElementById('baseline-bmi-badge');
+      if (ht > 0) {
+        badge.textContent = `Baseline Height: ${ht} cm (${(ht / 100).toFixed(2)} m)`;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function appendDiagnosisTag(tag) {
+      const input = document.getElementById('pt-diagnosis');
+      const cur = input.value.trim();
+      if (!cur) {
+        input.value = tag;
+      } else if (!cur.toLowerCase().includes(tag.toLowerCase())) {
+        input.value = `${cur} + ${tag}`;
+      }
+      autoSaveDraft();
+    }
+
+    function readPatientInputsToState() {
+      appState.patient = {
+        name: document.getElementById('pt-name').value.trim(),
+        age: document.getElementById('pt-age').value.trim(),
+        sex: document.getElementById('pt-sex').value,
+        mrn: document.getElementById('pt-mrn').value.trim(),
+        zone: document.getElementById('pt-zone').value.trim(),
+        woreda: document.getElementById('pt-woreda').value.trim(),
+        kebele: document.getElementById('pt-kebele').value.trim(),
+        hno: document.getElementById('pt-hno').value.trim(),
+        tel: document.getElementById('pt-tel').value.trim(),
+        enrollmentDate: { ...pickerStates.enrollment },
+        height: document.getElementById('pt-height').value.trim(),
+        waist: document.getElementById('pt-waist').value.trim(),
+        diagnosis: document.getElementById('pt-diagnosis').value.trim()
+      };
+    }
+
+    function writePatientStateToInputs() {
+      const p = appState.patient || {};
+      document.getElementById('pt-name').value = p.name || '';
+      document.getElementById('pt-age').value = p.age || '';
+      document.getElementById('pt-sex').value = p.sex || '';
+      document.getElementById('pt-mrn').value = p.mrn || '';
+      document.getElementById('pt-zone').value = p.zone || '';
+      document.getElementById('pt-woreda').value = p.woreda || '';
+      document.getElementById('pt-kebele').value = p.kebele || '';
+      document.getElementById('pt-hno').value = p.hno || '';
+      document.getElementById('pt-tel').value = p.tel || '';
+      document.getElementById('pt-height').value = p.height || '';
+      document.getElementById('pt-waist').value = p.waist || '';
+      document.getElementById('pt-diagnosis').value = p.diagnosis || '';
+
+      if (p.enrollmentDate && p.enrollmentDate.year) {
+        pickerStates.enrollment = { ...p.enrollmentDate, showTime: false };
+      }
+      syncPickerTriggerUI('enrollment');
+      handleHeightChange();
+    }
+
+    function autoSaveDraft() {
+      readPatientInputsToState();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.warn('LocalStorage save failed', e);
+      }
+    }
+
+    function saveAllData(notify = true) {
+      autoSaveDraft();
+      if (notify) {
+        showToast('✅ Patient record & follow-up visits saved locally.');
+      }
+    }
+
+
+    /**
+     * 5. MODAL CHIP BUILDERS & INTERACTIVE REGIMEN BUILDER
+     */
+    function renderChipGroup(containerId, items, groupName, selectedCodes = ['None']) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.map(item => {
+        const checked = selectedCodes.includes(item.code) ? 'checked' : '';
+        return `
+          <label class="cursor-pointer select-none">
+            <input type="checkbox" name="${groupName}" value="${item.code}" ${checked}
+              onchange="handleExclusiveNoneChip(this, '${groupName}')" class="peer sr-only" />
+            <span class="inline-block text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 peer-checked:bg-teal-700 peer-checked:text-white peer-checked:border-teal-700 hover:border-teal-500 transition">
+              ${item.label}
+            </span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function handleExclusiveNoneChip(checkbox, groupName) {
+      const boxes = document.querySelectorAll(`input[name="${groupName}"]`);
+      if (checkbox.value === 'None' && checkbox.checked) {
+        boxes.forEach(b => { if (b.value !== 'None') b.checked = false; });
+      } else if (checkbox.value !== 'None' && checkbox.checked) {
+        boxes.forEach(b => { if (b.value === 'None') b.checked = false; });
+      }
+    }
+
+    function getCheckedChipValues(groupName) {
+      return Array.from(document.querySelectorAll(`input[name="${groupName}"]:checked`)).map(el => el.value);
+    }
+
+    function addMedicationToRegimen() {
+      const code = document.getElementById('med-code-select').value;
+      const doseInput = document.getElementById('med-dose-input');
+      const dose = doseInput.value.trim() || 'As prescribed';
+      currentModalRegimen.push({ code, dose });
+      doseInput.value = '';
+      renderActiveRegimenList();
+    }
+
+    function removeMedicationFromRegimen(idx) {
+      currentModalRegimen.splice(idx, 1);
+      renderActiveRegimenList();
+    }
+
+    function renderActiveRegimenList() {
+      const list = document.getElementById('active-regimen-list');
+      if (currentModalRegimen.length === 0) {
+        list.innerHTML = `<span class="text-xs text-slate-400 italic">No medications added yet for this visit.</span>`;
+        return;
+      }
+      list.innerHTML = currentModalRegimen.map((m, idx) => `
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs font-semibold">
+          <span>💊 <strong>${m.code}</strong> — ${m.dose}</span>
+          <button type="button" onclick="removeMedicationFromRegimen(${idx})" class="w-4 h-4 rounded-full bg-teal-200/70 hover:bg-red-500 hover:text-white flex items-center justify-center text-[10px] transition cursor-pointer">✕</button>
+        </span>
+      `).join('');
+    }
+
+    function recalculateModalBMI() {
+      const wt = document.getElementById('visit-weight').value;
+      const ht = document.getElementById('pt-height').value;
+      const bmi = calculateBMI(wt, ht);
+      const valEl = document.getElementById('modal-bmi-val');
+      const tagEl = document.getElementById('modal-bmi-tag');
+
+      if (bmi === null) {
+        valEl.textContent = '--';
+        tagEl.textContent = ht ? 'Enter weight' : 'Set height in Sec 01';
+        tagEl.className = 'text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500';
+      } else {
+        const info = getBMIInterpretation(bmi);
+        valEl.textContent = `${bmi} kg/m²`;
+        tagEl.textContent = info.label;
+        tagEl.className = `text-[11px] px-2 py-0.5 rounded-full font-semibold ${info.badgeClass}`;
+      }
+    }
+
+    function checkBPWarning() {
+      const sbp = parseInt(document.getElementById('visit-sbp').value, 10);
+      const dbp = parseInt(document.getElementById('visit-dbp').value, 10);
+      const alertEl = document.getElementById('bp-alert-badge');
+      if ((sbp && sbp >= 140) || (dbp && dbp >= 90)) {
+        alertEl.classList.remove('hidden');
+      } else {
+        alertEl.classList.add('hidden');
+      }
+    }
+
+
+    /**
+     * 6. FOLLOW-UP VISIT MODAL OPEN, POPULATE, SUBMIT & DELETE
+     */
+    function openVisitModal(editId = null) {
+      const modal = document.getElementById('visit-modal');
+      const titleEl = document.getElementById('visit-modal-title');
+      document.getElementById('edit-visit-id').value = editId || '';
+
+      if (editId) {
+        const v = appState.visits.find(item => item.id === editId);
+        if (!v) return;
+        titleEl.textContent = 'Edit Follow-Up Visit Record';
+
+        pickerStates.visitDate = { ...v.visitDate, showTime: true };
+        pickerStates.nextAppt = { ...v.nextAppt, showTime: true };
+        syncPickerTriggerUI('visitDate');
+        syncPickerTriggerUI('nextAppt');
+
+        document.querySelector(`input[name="visitType"][value="${v.visitType || 'Scheduled'}"]`).checked = true;
+        renderChipGroup('dm-symptoms-chips', DM_SYMPTOMS, 'dmSymp', v.dmSymptoms || ['None']);
+        renderChipGroup('htn-symptoms-chips', HTN_SYMPTOMS, 'htnSymp', v.htnSymptoms || ['None']);
+        document.getElementById('visit-symptoms-other').value = v.symptomsOther || '';
+        renderChipGroup('risk-factors-chips', RISK_FACTORS, 'riskFac', v.riskFactors || ['None']);
+
+        document.getElementById('visit-weight').value = v.weight || '';
+        document.getElementById('visit-sbp').value = v.sbp || '';
+        document.getElementById('visit-dbp').value = v.dbp || '';
+        recalculateModalBMI();
+        checkBPWarning();
+
+        renderChipGroup('oral-exam-chips', ORAL_CODES, 'oralExam', v.oral || ['GOH']);
+        renderChipGroup('cvs-exam-chips', CVS_CODES, 'cvsExam', v.cvs || ['1']);
+        renderChipGroup('skin-exam-chips', SKIN_CODES, 'skinExam', v.skin || ['1']);
+        renderChipGroup('foot-exam-chips', FOOT_CODES, 'footExam', v.foot || ['9']);
+        document.getElementById('visit-nervous').value = v.nervous || 'Normal Motor/Sensory';
+        document.getElementById('visit-nervous-note').value = v.nervousNote || '';
+
+        document.getElementById('visit-ua-protein').value = v.uaProtein || 'P-';
+        document.getElementById('visit-ua-ketone').value = v.uaKetone || 'K-';
+        document.getElementById('visit-ua-casts').value = v.uaCasts || '';
+        document.getElementById('visit-fbs').value = v.fbs || '';
+        document.getElementById('visit-hba1c').value = v.hba1c || '';
+        document.getElementById('visit-cr').value = v.cr || '';
+        document.getElementById('visit-tchol').value = v.tchol || '';
+        document.getElementById('visit-ldl').value = v.ldl || '';
+
+        document.getElementById('visit-outcome').value = v.outcome || 'Controlled';
+        document.getElementById('visit-months').value = v.monthsDispensed || '1';
+        document.getElementById('visit-adherence').value = v.adherence || 'Good';
+        document.getElementById('visit-adherence-why').value = v.adherenceWhy || '';
+        renderChipGroup('lifestyle-chips', LIFESTYLE_CODES, 'lifestyleEdu', v.lifestyle || ['2', '3', '5']);
+
+        currentModalRegimen = JSON.parse(JSON.stringify(v.regimen || []));
+        renderActiveRegimenList();
+
+        document.getElementById('visit-referral').value = v.referral || '';
+        document.getElementById('visit-clinician').value = v.clinician || '';
+      } else {
+        titleEl.textContent = 'Record New Follow-Up Visit';
+        const todayEth = gregorianToEth(new Date());
+        const next30Eth = jdnToEth(ethToJDN(todayEth.year, todayEth.month, todayEth.day) + 30);
+
+        pickerStates.visitDate = { ...todayEth, hour: '09', minute: '30', ampm: 'AM', showTime: true };
+        pickerStates.nextAppt = { ...next30Eth, hour: '09', minute: '00', ampm: 'AM', showTime: true };
+        syncPickerTriggerUI('visitDate');
+        syncPickerTriggerUI('nextAppt');
+
+        document.querySelector('input[name="visitType"][value="Scheduled"]').checked = true;
+        renderChipGroup('dm-symptoms-chips', DM_SYMPTOMS, 'dmSymp', ['None']);
+        renderChipGroup('htn-symptoms-chips', HTN_SYMPTOMS, 'htnSymp', ['None']);
+        document.getElementById('visit-symptoms-other').value = '';
+        renderChipGroup('risk-factors-chips', RISK_FACTORS, 'riskFac', ['None']);
+
+        document.getElementById('visit-weight').value = '';
+        document.getElementById('visit-sbp').value = '';
+        document.getElementById('visit-dbp').value = '';
+        recalculateModalBMI();
+        checkBPWarning();
+
+        renderChipGroup('oral-exam-chips', ORAL_CODES, 'oralExam', ['GOH']);
+        renderChipGroup('cvs-exam-chips', CVS_CODES, 'cvsExam', ['1']);
+        renderChipGroup('skin-exam-chips', SKIN_CODES, 'skinExam', ['1']);
+        renderChipGroup('foot-exam-chips', FOOT_CODES, 'footExam', ['9']);
+        document.getElementById('visit-nervous').value = 'Normal Motor/Sensory';
+        document.getElementById('visit-nervous-note').value = '';
+
+        document.getElementById('visit-ua-protein').value = 'P-';
+        document.getElementById('visit-ua-ketone').value = 'K-';
+        document.getElementById('visit-ua-casts').value = '';
+        document.getElementById('visit-fbs').value = '';
+        document.getElementById('visit-hba1c').value = '';
+        document.getElementById('visit-cr').value = '';
+        document.getElementById('visit-tchol').value = '';
+        document.getElementById('visit-ldl').value = '';
+
+        document.getElementById('visit-outcome').value = 'Controlled';
+        document.getElementById('visit-months').value = '1';
+        document.getElementById('visit-adherence').value = 'Good';
+        document.getElementById('visit-adherence-why').value = '';
+        renderChipGroup('lifestyle-chips', LIFESTYLE_CODES, 'lifestyleEdu', ['2', '3', '5']);
+
+        // Pre-populate medications from most recent visit if available
+        if (appState.visits.length > 0) {
+          const prev = appState.visits[appState.visits.length - 1];
+          currentModalRegimen = JSON.parse(JSON.stringify(prev.regimen || []));
+          document.getElementById('visit-clinician').value = prev.clinician || '';
+        } else {
+          currentModalRegimen = [];
+          document.getElementById('visit-clinician').value = '';
+        }
+        renderActiveRegimenList();
+        document.getElementById('visit-referral').value = '';
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeVisitModal() {
+      closeEthPicker();
+      document.getElementById('visit-modal').classList.add('hidden');
+    }
+
+    function handleVisitSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('edit-visit-id').value;
+      const visitRecord = {
+        id: editId || `visit_${Date.now()}`,
+        visitDate: { ...pickerStates.visitDate },
+        visitType: document.querySelector('input[name="visitType"]:checked').value,
+        dmSymptoms: getCheckedChipValues('dmSymp'),
+        htnSymptoms: getCheckedChipValues('htnSymp'),
+        symptomsOther: document.getElementById('visit-symptoms-other').value.trim(),
+        riskFactors: getCheckedChipValues('riskFac'),
+        weight: document.getElementById('visit-weight').value.trim(),
+        sbp: document.getElementById('visit-sbp').value.trim(),
+        dbp: document.getElementById('visit-dbp').value.trim(),
+        oral: getCheckedChipValues('oralExam'),
+        cvs: getCheckedChipValues('cvsExam'),
+        skin: getCheckedChipValues('skinExam'),
+        foot: getCheckedChipValues('footExam'),
+        nervous: document.getElementById('visit-nervous').value,
+        nervousNote: document.getElementById('visit-nervous-note').value.trim(),
+        uaProtein: document.getElementById('visit-ua-protein').value,
+        uaKetone: document.getElementById('visit-ua-ketone').value,
+        uaCasts: document.getElementById('visit-ua-casts').value.trim(),
+        fbs: document.getElementById('visit-fbs').value.trim(),
+        hba1c: document.getElementById('visit-hba1c').value.trim(),
+        cr: document.getElementById('visit-cr').value.trim(),
+        tchol: document.getElementById('visit-tchol').value.trim(),
+        ldl: document.getElementById('visit-ldl').value.trim(),
+        outcome: document.getElementById('visit-outcome').value,
+        lifestyle: getCheckedChipValues('lifestyleEdu'),
+        regimen: [...currentModalRegimen],
+        monthsDispensed: document.getElementById('visit-months').value.trim(),
+        adherence: document.getElementById('visit-adherence').value,
+        adherenceWhy: document.getElementById('visit-adherence-why').value.trim(),
+        referral: document.getElementById('visit-referral').value.trim(),
+        clinician: document.getElementById('visit-clinician').value.trim(),
+        nextAppt: { ...pickerStates.nextAppt }
+      };
+
+      if (editId) {
+        const idx = appState.visits.findIndex(v => v.id === editId);
+        if (idx !== -1) appState.visits[idx] = visitRecord;
+        showToast('✅ Follow-up visit updated.');
+      } else {
+        appState.visits.push(visitRecord);
+        showToast('✅ New follow-up visit recorded.');
+      }
+
+      saveAllData(false);
+      renderVisitsTable();
+      updateSummaryCards();
+      closeVisitModal();
+    }
+
+    function deleteVisit(visitId) {
+      appState.visits = appState.visits.filter(v => v.id !== visitId);
+      saveAllData(false);
+      renderVisitsTable();
+      updateSummaryCards();
+      showToast('🗑️ Follow-up visit removed.', 'info');
+    }
+
+
+    /**
+     * 7. SEARCH & MULTI-CRITERIA FILTERING LOGIC FOR REGISTER TABLE
+     */
+    const registerFilters = {
+      query: '',
+      visitType: 'ALL',
+      outcome: 'ALL',
+      adherence: 'ALL',
+      clinicalAlert: 'ALL'
+    };
+
+    function handleRegisterFilterChange() {
+      const searchInput = document.getElementById('register-search-input');
+      const clearBtn = document.getElementById('register-search-clear');
+
+      registerFilters.query = searchInput.value.trim().toLowerCase();
+      registerFilters.visitType = document.getElementById('filter-visit-type').value;
+      registerFilters.outcome = document.getElementById('filter-outcome').value;
+      registerFilters.adherence = document.getElementById('filter-adherence').value;
+      registerFilters.clinicalAlert = document.getElementById('filter-clinical-alert').value;
+
+      if (registerFilters.query.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      renderVisitsTable();
+    }
+
+    function clearRegisterSearch() {
+      document.getElementById('register-search-input').value = '';
+      handleRegisterFilterChange();
+    }
+
+    function resetRegisterFilters() {
+      document.getElementById('register-search-input').value = '';
+      document.getElementById('filter-visit-type').value = 'ALL';
+      document.getElementById('filter-outcome').value = 'ALL';
+      document.getElementById('filter-adherence').value = 'ALL';
+      document.getElementById('filter-clinical-alert').value = 'ALL';
+      handleRegisterFilterChange();
+    }
+
+    function hasActiveRegisterFilters() {
+      return (
+        registerFilters.query !== '' ||
+        registerFilters.visitType !== 'ALL' ||
+        registerFilters.outcome !== 'ALL' ||
+        registerFilters.adherence !== 'ALL' ||
+        registerFilters.clinicalAlert !== 'ALL'
+      );
+    }
+
+    function visitMatchesFilters(v) {
+      // 1. Visit Type filter
+      if (registerFilters.visitType !== 'ALL' && v.visitType !== registerFilters.visitType) {
+        return false;
+      }
+
+      // 2. Outcome filter
+      if (registerFilters.outcome !== 'ALL' && v.outcome !== registerFilters.outcome) {
+        return false;
+      }
+
+      // 3. Adherence filter
+      if (registerFilters.adherence !== 'ALL' && v.adherence !== registerFilters.adherence) {
+        return false;
+      }
+
+      // 4. BP / Clinical Alert filter
+      if (registerFilters.clinicalAlert !== 'ALL') {
+        const sbpNum = parseInt(v.sbp, 10);
+        const dbpNum = parseInt(v.dbp, 10);
+        const isHighBP = (sbpNum && sbpNum >= 140) || (dbpNum && dbpNum >= 90);
+        const hasAbnormalExam =
+          (v.oral || []).some(c => c !== 'GOH') ||
+          (v.cvs || []).some(c => c !== '1') ||
+          (v.skin || []).some(c => c !== '1') ||
+          (v.foot || []).some(c => c !== '9');
+
+        if (registerFilters.clinicalAlert === 'BP_HIGH' && !isHighBP) return false;
+        if (registerFilters.clinicalAlert === 'BP_GOAL' && (isHighBP || (!sbpNum && !dbpNum))) return false;
+        if (registerFilters.clinicalAlert === 'ABNORMAL_EXAM' && !hasAbnormalExam) return false;
+      }
+
+      // 5. Free-text search across dates, codes, descriptions, labs, regimens, clinician & notes
+      if (registerFilters.query !== '') {
+        const q = registerFilters.query;
+        const codeDescriptions = [
+          ...(v.dmSymptoms || []).map(c => getCodeMeta('c', c).title),
+          ...(v.htnSymptoms || []).map(c => getCodeMeta('c', c).title),
+          ...(v.riskFactors || []).map(c => getCodeMeta('d', c).title),
+          ...(v.oral || []).map(c => getCodeMeta('h', c).title),
+          ...(v.cvs || []).map(c => getCodeMeta('i', c).title),
+          ...(v.skin || []).map(c => getCodeMeta('j', c).title),
+          ...(v.foot || []).map(c => getCodeMeta('k', c).title),
+          ...(v.lifestyle || []).map(c => getCodeMeta('r', c).title)
+        ];
+
+        const haystack = [
+          formatEthDate(v.visitDate, true),
+          formatGCDate(v.visitDate),
+          formatEthDate(v.nextAppt, true),
+          formatGCDate(v.nextAppt),
+          v.visitType,
+          ...(v.dmSymptoms || []),
+          ...(v.htnSymptoms || []),
+          v.symptomsOther,
+          ...(v.riskFactors || []),
+          v.weight,
+          `${v.sbp}/${v.dbp}`,
+          ...(v.oral || []),
+          ...(v.cvs || []),
+          ...(v.skin || []),
+          ...(v.foot || []),
+          v.nervous,
+          v.nervousNote,
+          v.uaProtein,
+          v.uaKetone,
+          v.uaCasts,
+          v.fbs,
+          v.hba1c,
+          v.cr,
+          v.tchol,
+          v.ldl,
+          v.outcome,
+          ...(v.lifestyle || []),
+          ...(v.regimen || []).map(r => `${r.code} ${r.dose}`),
+          v.adherence,
+          v.adherenceWhy,
+          v.referral,
+          v.clinician,
+          ...codeDescriptions
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        if (!haystack.includes(q)) return false;
+      }
+
+      return true;
+    }
+
+
+    /**
+     * 8. RENDERING THE FOLLOW-UP REGISTER TABLE & SUMMARY CARDS
+     */
+    function renderVisitsTable() {
+      const tbody = document.getElementById('visits-table-body');
+      const emptyState = document.getElementById('empty-visits-state');
+      const noMatchesState = document.getElementById('no-filter-matches-state');
+      const matchBadge = document.getElementById('register-match-badge');
+      const resetBtn = document.getElementById('reset-filters-btn');
+      const heightCm = document.getElementById('pt-height').value;
+
+      const totalCount = (appState.visits || []).length;
+      const filtersActive = hasActiveRegisterFilters();
+
+      if (resetBtn) {
+        resetBtn.classList.toggle('hidden', !filtersActive);
+      }
+
+      if (totalCount === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        noMatchesState.classList.add('hidden');
+        if (matchBadge) matchBadge.textContent = 'Showing 0 of 0 visits';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      const filteredVisits = appState.visits.filter(visitMatchesFilters);
+      if (matchBadge) {
+        matchBadge.textContent = filtersActive
+          ? `Showing ${filteredVisits.length} of ${totalCount} visits (filtered)`
+          : `Showing ${totalCount} of ${totalCount} visits`;
+      }
+
+      if (filteredVisits.length === 0) {
+        tbody.innerHTML = '';
+        noMatchesState.classList.remove('hidden');
+        return;
+      }
+
+      noMatchesState.classList.add('hidden');
+
+      tbody.innerHTML = filteredVisits.map(v => {
+        const bmi = calculateBMI(v.weight, heightCm);
+        const bmiInfo = getBMIInterpretation(bmi);
+
+        const sbpNum = parseInt(v.sbp, 10);
+        const dbpNum = parseInt(v.dbp, 10);
+        const isHighBP = (sbpNum && sbpNum >= 140) || (dbpNum && dbpNum >= 90);
+        const bpDisplay = (v.sbp || v.dbp) ? `${v.sbp || '?'}/${v.dbp || '?'}` : '--';
+
+        // Render interactive coded badges for Symptoms (Col c)
+        const sympCodes = [
+          ...(v.dmSymptoms || []).filter(s => s !== 'None'),
+          ...(v.htnSymptoms || []).filter(s => s !== 'None')
+        ];
+        const sympHtml = sympCodes.length
+          ? `<div class="flex flex-wrap gap-1">${sympCodes.map(c => renderCodedBadge('c', c)).join('')}</div>`
+          : renderCodedBadge('c', 'None', 'Asymptomatic (None)', 'text-slate-600');
+
+        // Render interactive coded badges for Risk Factors (Col d)
+        const rfCodes = (v.riskFactors || []).filter(r => r !== 'None');
+        const rfHtml = rfCodes.length
+          ? `<div class="flex flex-wrap gap-1">${rfCodes.map(c => renderCodedBadge('d', c)).join('')}</div>`
+          : renderCodedBadge('d', 'None', 'None', 'text-slate-600');
+
+        // Render interactive coded badges for Physical Exam (Cols h, i, j, k)
+        const oralHtml = (v.oral && v.oral.length)
+          ? `<div class="flex flex-wrap gap-1">${v.oral.map(c => renderCodedBadge('h', c)).join('')}</div>`
+          : '<span class="text-slate-400">--</span>';
+
+        const cvsHtml = (v.cvs && v.cvs.length)
+          ? `<div class="flex flex-wrap gap-1">${v.cvs.map(c => renderCodedBadge('i', c, `Code: ${c}`)).join('')}</div>`
+          : '<span class="text-slate-400">--</span>';
+
+        const skinHtml = (v.skin && v.skin.length)
+          ? `<div class="flex flex-wrap gap-1">${v.skin.map(c => renderCodedBadge('j', c, `Code: ${c}`)).join('')}</div>`
+          : '<span class="text-slate-400">--</span>';
+
+        const footHtml = (v.foot && v.foot.length)
+          ? `<div class="flex flex-wrap gap-1">${v.foot.map(c => renderCodedBadge('k', c, `Code: ${c}`)).join('')}</div>`
+          : '<span class="text-slate-400">--</span>';
+
+        // Render interactive coded badges for Lifestyle Changes (Col r)
+        const lifestyleHtml = (v.lifestyle && v.lifestyle.length)
+          ? `<div class="flex flex-wrap gap-1">${v.lifestyle.map(c => renderCodedBadge('r', c, `#${c}`)).join('')}</div>`
+          : '<span class="text-slate-400">--</span>';
+
+        const outcomeBadge = {
+          'Controlled': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+          'Uncontrolled': 'bg-amber-100 text-amber-800 border-amber-300',
+          'Complicated': 'bg-red-100 text-red-800 border-red-300',
+          'Dead': 'bg-slate-800 text-white border-slate-900'
+        }[v.outcome] || 'bg-slate-100 text-slate-700';
+
+        const regimenHtml = (v.regimen && v.regimen.length)
+          ? v.regimen.map(r => `<div class="leading-tight mb-1">${renderCodedBadge('s', r.code)} <span class="text-slate-600">${r.dose}</span></div>`).join('')
+          : '<span class="text-slate-400">--</span>';
+
+        const visitTypeStyle = v.visitType === 'Scheduled'
+          ? 'bg-teal-50 text-teal-800 border-teal-300'
+          : 'bg-amber-50 text-amber-800 border-amber-300';
+
+        const adherenceStyle = v.adherence === 'Good'
+          ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+          : 'bg-red-50 text-red-700 border-red-300';
+
+        return `
+          <tr class="hover:bg-teal-50/40 transition align-top">
+            <!-- (a) Date of Visit -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              <div class="font-bold text-slate-800 eth-font">${formatEthShort(v.visitDate)}</div>
+              <div class="text-[10px] text-teal-700">${formatGCDate(v.visitDate)}</div>
+              <div class="text-[10px] text-slate-500">${v.visitDate.hour || '09'}:${v.visitDate.minute || '00'} ${v.visitDate.ampm || 'AM'}</div>
+            </td>
+            <!-- (b) Visit Type -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              ${renderCodedBadge('b', v.visitType, v.visitType, visitTypeStyle)}
+            </td>
+            <!-- (c) Symptoms -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              ${sympHtml}
+              ${v.symptomsOther ? `<div class="text-[10px] text-slate-500 italic mt-1">${v.symptomsOther}</div>` : ''}
+            </td>
+            <!-- (d) Risk Factors -->
+            <td class="py-2.5 px-2 border-r border-slate-200">${rfHtml}</td>
+            <!-- (e) Weight -->
+            <td class="py-2.5 px-2 border-r border-slate-200 font-bold text-slate-800">${v.weight ? `${v.weight} kg` : '--'}</td>
+            <!-- (f) BMI -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              ${bmi !== null ? `
+                <div class="font-bold text-slate-800">${bmi}</div>
+                <span class="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${bmiInfo.badgeClass}">${bmiInfo.label}</span>
+              ` : '<span class="text-slate-400">--</span>'}
+            </td>
+            <!-- (g) BP -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              <span class="font-bold ${isHighBP ? 'text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200' : 'text-slate-800'}">${bpDisplay}</span>
+            </td>
+            <!-- (h) Oral/Dental -->
+            <td class="py-2.5 px-2 border-r border-slate-200">${oralHtml}</td>
+            <!-- (i) CVS -->
+            <td class="py-2.5 px-2 border-r border-slate-200">${cvsHtml}</td>
+            <!-- (j) Skin/Inj -->
+            <td class="py-2.5 px-2 border-r border-slate-200">${skinHtml}</td>
+            <!-- (k) MSS/Foot -->
+            <td class="py-2.5 px-2 border-r border-slate-200">${footHtml}</td>
+            <!-- (l) Nerv. Syst / Eye -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              <div class="font-medium text-slate-800">${v.nervous || '--'}</div>
+              ${v.nervousNote ? `<div class="text-[10px] text-slate-500">${v.nervousNote}</div>` : ''}
+            </td>
+            <!-- (m) U/A -->
+            <td class="py-2.5 px-2 border-r border-slate-200 space-y-1">
+              <div>Prot: ${renderCodedBadge('m', v.uaProtein || 'P-')}</div>
+              <div>Ket: ${renderCodedBadge('m', v.uaKetone || 'K-')}</div>
+              ${v.uaCasts ? `<div class="text-[10px] text-slate-500">Casts: ${v.uaCasts}</div>` : ''}
+            </td>
+            <!-- (n) FBS / HbA1c -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              ${v.fbs ? `<div>FBS: <strong>${v.fbs}</strong> mg/dL</div>` : ''}
+              ${v.hba1c ? `<div>HbA1c: <strong>${v.hba1c}%</strong></div>` : ''}
+              ${!v.fbs && !v.hba1c ? '<span class="text-slate-400">--</span>' : ''}
+            </td>
+            <!-- (o) Cr -->
+            <td class="py-2.5 px-2 border-r border-slate-200 font-semibold">${v.cr ? `${v.cr}` : '--'}</td>
+            <!-- (p) T.Chol / LDL -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              ${v.tchol ? `<div>TC: <strong>${v.tchol}</strong></div>` : ''}
+              ${v.ldl ? `<div>LDL: <strong>${v.ldl}</strong></div>` : ''}
+              ${!v.tchol && !v.ldl ? '<span class="text-slate-400">--</span>' : ''}
+            </td>
+            <!-- (q) Final Outcome -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              ${renderCodedBadge('q', v.outcome, v.outcome, `rounded-full px-2 ${outcomeBadge}`)}
+            </td>
+            <!-- (r) Lifestyle -->
+            <td class="py-2.5 px-2 border-r border-slate-200">${lifestyleHtml}</td>
+            <!-- (s) Regimen / Dose -->
+            <td class="py-2.5 px-2 border-r border-slate-200">${regimenHtml}</td>
+            <!-- (t) # Months Dispensed -->
+            <td class="py-2.5 px-2 border-r border-slate-200 font-bold text-center">${v.monthsDispensed || '--'}</td>
+            <!-- (u) Adherence / Why -->
+            <td class="py-2.5 px-2 border-r border-slate-200">
+              ${renderCodedBadge('u', v.adherence, v.adherence, adherenceStyle)}
+              ${v.adherenceWhy ? `<div class="text-[10px] text-slate-500 mt-1">${v.adherenceWhy}</div>` : ''}
+            </td>
+            <!-- (v) Referrals -->
+            <td class="py-2.5 px-2 border-r border-slate-200">${v.referral || '--'}</td>
+            <!-- (w) Clinician -->
+            <td class="py-2.5 px-2 border-r border-slate-200 font-semibold text-slate-800">${v.clinician || '--'}</td>
+            <!-- (x) Next Appointment -->
+            <td class="py-2.5 px-2">
+              <div class="font-bold text-teal-900 eth-font">${formatEthShort(v.nextAppt)}</div>
+              <div class="text-[10px] text-slate-500">${formatGCDate(v.nextAppt)}</div>
+              <div class="text-[10px] text-slate-500">${v.nextAppt.hour || '09'}:${v.nextAppt.minute || '00'} ${v.nextAppt.ampm || 'AM'}</div>
+            </td>
+            <!-- Actions -->
+            <td class="py-2.5 px-2 text-center no-print sticky right-0 bg-white border-l border-slate-200">
+              <div class="flex items-center justify-center gap-1">
+                <button type="button" onclick="openVisitModal('${v.id}')" title="Edit Visit" class="p-1.5 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-teal-800 transition cursor-pointer">✏️</button>
+                <button type="button" onclick="deleteVisit('${v.id}')" title="Delete Visit" class="p-1.5 rounded-lg bg-slate-100 hover:bg-red-100 text-slate-700 hover:text-red-700 transition cursor-pointer">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateSummaryCards() {
+      const count = appState.visits.length;
+      document.getElementById('stat-total-visits').textContent = count;
+
+      if (count === 0) {
+        document.getElementById('stat-last-visit').textContent = 'No visits recorded yet';
+        document.getElementById('stat-latest-bp').textContent = '-- / --';
+        document.getElementById('stat-bp-status').textContent = 'Goal: <140/90 mmHg';
+        document.getElementById('stat-latest-bmi').textContent = '--';
+        document.getElementById('stat-bmi-cat').textContent = 'Enter height & weight';
+        document.getElementById('stat-next-appt').textContent = '--';
+        document.getElementById('stat-next-appt-gc').textContent = 'Ethiopian Calendar';
+        return;
+      }
+
+      const latest = appState.visits[count - 1];
+      document.getElementById('stat-last-visit').textContent = `Last: ${formatEthShort(latest.visitDate)}`;
+
+      // BP
+      const sbp = parseInt(latest.sbp, 10);
+      const dbp = parseInt(latest.dbp, 10);
+      if (latest.sbp || latest.dbp) {
+        document.getElementById('stat-latest-bp').textContent = `${latest.sbp || '?'} / ${latest.dbp || '?'}`;
+        const high = (sbp && sbp >= 140) || (dbp && dbp >= 90);
+        const statusEl = document.getElementById('stat-bp-status');
+        statusEl.textContent = high ? '⚠️ Above Target (≥140/90)' : '✅ Within Goal (<140/90)';
+        statusEl.className = `text-[11px] font-semibold mt-0.5 ${high ? 'text-red-600' : 'text-emerald-700'}`;
+      }
+
+      // Weight & BMI
+      const ht = document.getElementById('pt-height').value;
+      const bmi = calculateBMI(latest.weight, ht);
+      if (latest.weight) {
+        document.getElementById('stat-latest-bmi').textContent = bmi ? `${latest.weight}kg • ${bmi}` : `${latest.weight} kg`;
+        const catEl = document.getElementById('stat-bmi-cat');
+        if (bmi) {
+          const info = getBMIInterpretation(bmi);
+          catEl.textContent = `BMI Category: ${info.label}`;
+          catEl.className = 'text-[11px] font-semibold text-teal-800 mt-0.5';
+        }
+      }
+
+      // Next Appt
+      if (latest.nextAppt && latest.nextAppt.year) {
+        document.getElementById('stat-next-appt').textContent = formatEthShort(latest.nextAppt);
+        document.getElementById('stat-next-appt-gc').textContent = `${formatGCDate(latest.nextAppt)} • ${latest.nextAppt.hour}:${latest.nextAppt.minute} ${latest.nextAppt.ampm}`;
+      }
+    }
+
+
+    /**
+     * 9. CLINICAL REFERENCE DRAWER (PDF PAGE 2)
+     */
+    function toggleReferenceDrawer(open) {
+      const drawer = document.getElementById('reference-drawer');
+      if (open) {
+        renderClinicalGuide(CLINICAL_GUIDE_SECTIONS);
+        drawer.classList.remove('hidden');
+      } else {
+        drawer.classList.add('hidden');
+      }
+    }
+
+    function renderClinicalGuide(sections) {
+      const container = document.getElementById('clinical-guide-content');
+      container.innerHTML = sections.map(sec => `
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2">
+          <h4 class="font-bold text-teal-900 text-sm border-b border-slate-200 pb-1.5">${sec.title}</h4>
+          <ul class="space-y-1.5 list-disc pl-4 text-slate-700">
+            ${sec.items.map(item => `<li>${item}</li>`).join('')}
+          </ul>
+        </div>
+      `).join('');
+    }
+
+    function filterClinicalGuide() {
+      const q = document.getElementById('guide-search').value.toLowerCase().trim();
+      if (!q) {
+        renderClinicalGuide(CLINICAL_GUIDE_SECTIONS);
+        return;
+      }
+      const filtered = CLINICAL_GUIDE_SECTIONS.map(sec => ({
+        title: sec.title,
+        items: sec.items.filter(i => i.toLowerCase().includes(q) || sec.title.toLowerCase().includes(q))
+      })).filter(sec => sec.items.length > 0);
+      renderClinicalGuide(filtered);
+    }
+
+
+    /**
+     * 10. EXPORT (CSV / JSON), SAMPLE PATIENT & RESET
+     */
+    function toggleExportMenu() {
+      document.getElementById('export-dropdown').classList.toggle('hidden');
+    }
+
+    function exportJSON() {
+      readPatientInputsToState();
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FMoH_DM_HTN_${appState.patient.mrn || 'Patient'}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('💾 JSON backup downloaded.');
+    }
+
+    function exportCSV() {
+      readPatientInputsToState();
+      const headers = [
+        'Patient Name', 'Age', 'Sex', 'MRN', 'Height(cm)', 'Initial Diagnosis',
+        '(a) Visit Date EC', '(a) Visit Date GC', '(b) Visit Type', '(c) Symptoms', '(d) Risk Factors',
+        '(e) Weight(kg)', '(f) BMI', '(g) BP(mmHg)', '(h) Oral', '(i) CVS', '(j) Skin', '(k) Foot',
+        '(l) Nervous/Eye', '(m) U/A', '(n) FBS/HbA1c', '(o) Cr', '(p) TChol/LDL', '(q) Outcome',
+        '(r) Lifestyle', '(s) Regimen', '(t) Months', '(u) Adherence', '(v) Referrals', '(w) Clinician', '(x) Next Appt EC'
+      ];
+
+      const rows = appState.visits.map(v => {
+        const bmi = calculateBMI(v.weight, appState.patient.height) || '';
+        const symp = [...(v.dmSymptoms || []), ...(v.htnSymptoms || [])].filter(s => s !== 'None').join('; ') || 'None';
+        const reg = (v.regimen || []).map(r => `${r.code} (${r.dose})`).join('; ');
+        return [
+          appState.patient.name, appState.patient.age, appState.patient.sex, appState.patient.mrn,
+          appState.patient.height, appState.patient.diagnosis,
+          formatEthDate(v.visitDate, true), formatGCDate(v.visitDate), v.visitType, symp,
+          (v.riskFactors || []).join('; '), v.weight, bmi, `${v.sbp}/${v.dbp}`,
+          (v.oral || []).join('; '), (v.cvs || []).join('; '), (v.skin || []).join('; '), (v.foot || []).join('; '),
+          v.nervous, `${v.uaProtein}/${v.uaKetone}`, `FBS:${v.fbs} HbA1c:${v.hba1c}`, v.cr,
+          `TC:${v.tchol} LDL:${v.ldl}`, v.outcome, (v.lifestyle || []).join('; '), reg,
+          v.monthsDispensed, `${v.adherence} ${v.adherenceWhy}`, v.referral, v.clinician, formatEthDate(v.nextAppt, true)
+        ].map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(',');
+      });
+
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FMoH_DM_HTN_${appState.patient.mrn || 'Register'}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📊 CSV spreadsheet exported.');
+    }
+
+    function loadSamplePatient() {
+      const todayEth = gregorianToEth(new Date());
+      const enrollEth = jdnToEth(ethToJDN(todayEth.year, todayEth.month, todayEth.day) - 180);
+      const visit1Eth = jdnToEth(ethToJDN(todayEth.year, todayEth.month, todayEth.day) - 90);
+      const nextApptEth = jdnToEth(ethToJDN(todayEth.year, todayEth.month, todayEth.day) + 30);
+
+      appState = {
+        patient: {
+          name: 'Mekonnen Tesfaye Lemma',
+          age: '56',
+          sex: 'Male',
+          mrn: 'ET-AA-2019-8841',
+          zone: 'Yeka Sub-city',
+          woreda: '08',
+          kebele: '13',
+          hno: '219',
+          tel: '+251 911 458 920',
+          enrollmentDate: { ...enrollEth, showTime: false },
+          height: '174',
+          waist: '96',
+          diagnosis: 'Type 2 DM + Hypertension'
+        },
+        visits: [
+          {
+            id: 'sample_v1',
+            visitDate: { ...visit1Eth, hour: '09', minute: '15', ampm: 'AM', showTime: true },
+            visitType: 'Scheduled',
+            dmSymptoms: ['HyperG'],
+            htnSymptoms: ['HA'],
+            symptomsOther: 'Mild fatigue in afternoons',
+            riskFactors: ['Salt', 'Phin'],
+            weight: '83.5',
+            sbp: '148',
+            dbp: '94',
+            oral: ['GOH'],
+            cvs: ['1'],
+            skin: ['1'],
+            foot: ['9'],
+            nervous: 'Normal Motor/Sensory',
+            nervousNote: '10g monofilament intact bilaterally',
+            uaProtein: 'P-',
+            uaKetone: 'K-',
+            uaCasts: 'None',
+            fbs: '164',
+            hba1c: '7.9',
+            cr: '0.95',
+            tchol: '205',
+            ldl: '122',
+            outcome: 'Uncontrolled',
+            lifestyle: ['2', '3', '5', '7'],
+            regimen: [
+              { code: '2b. Metformin', dose: '500mg PO BID' },
+              { code: 'Ena - Enalapril', dose: '5mg PO Daily' }
+            ],
+            monthsDispensed: '3',
+            adherence: 'Good',
+            adherenceWhy: '',
+            referral: 'Ophthalmologist (Annual Dilated Eye Exam)',
+            clinician: 'Dr. Tigist Bekele',
+            nextAppt: { ...todayEth, hour: '09', minute: '30', ampm: 'AM', showTime: true }
+          },
+          {
+            id: 'sample_v2',
+            visitDate: { ...todayEth, hour: '09', minute: '30', ampm: 'AM', showTime: true },
+            visitType: 'Scheduled',
+            dmSymptoms: ['None'],
+            htnSymptoms: ['None'],
+            symptomsOther: '',
+            riskFactors: ['None'],
+            weight: '80.2',
+            sbp: '132',
+            dbp: '82',
+            oral: ['GOH'],
+            cvs: ['1'],
+            skin: ['1'],
+            foot: ['9'],
+            nervous: 'Dilated Eye Exam Done - Normal',
+            nervousNote: 'No diabetic retinopathy noted by ophthalmologist',
+            uaProtein: 'P-',
+            uaKetone: 'K-',
+            uaCasts: 'None',
+            fbs: '124',
+            hba1c: '6.9',
+            cr: '0.92',
+            tchol: '182',
+            ldl: '96',
+            outcome: 'Controlled',
+            lifestyle: ['2', '3', '5', '7'],
+            regimen: [
+              { code: '2b. Metformin', dose: '850mg PO BID' },
+              { code: 'Ena - Enalapril', dose: '10mg PO Daily' },
+              { code: 'Atv - Atorvastatin', dose: '20mg PO Nocte' }
+            ],
+            monthsDispensed: '3',
+            adherence: 'Good',
+            adherenceWhy: '',
+            referral: 'Feedback documented from Eye Clinic',
+            clinician: 'Dr. Tigist Bekele',
+            nextAppt: { ...nextApptEth, hour: '09', minute: '00', ampm: 'AM', showTime: true }
+          }
+        ]
+      };
+
+      resetRegisterFilters();
+      writePatientStateToInputs();
+      renderVisitsTable();
+      updateSummaryCards();
+      saveAllData(false);
+      showToast('🩺 Sample FMoH Ethiopia patient record loaded.');
+    }
+
+    function confirmNewPatient() {
+      const todayEth = gregorianToEth(new Date());
+      appState = {
+        patient: {
+          name: '', age: '', sex: '', mrn: '',
+          zone: '', woreda: '', kebele: '', hno: '', tel: '',
+          enrollmentDate: { ...todayEth, showTime: false },
+          height: '', waist: '', diagnosis: ''
+        },
+        visits: []
+      };
+      resetRegisterFilters();
+      writePatientStateToInputs();
+      renderVisitsTable();
+      updateSummaryCards();
+      saveAllData(false);
+      showToast('🆕 Form cleared for a new patient.', 'info');
+    }
+
+
+    /**
+     * 11. LIVE ETHIOPIAN HEADER CLOCK & INITIALIZATION
+     */
+    function updateLiveEthiopianClock() {
+      const now = new Date();
+      const eth = gregorianToEth(now);
+      const m = ETH_MONTHS[eth.month - 1];
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const el = document.getElementById('live-ec-text');
+      if (el) {
+        el.textContent = `ዛሬ: ${m.am} (${m.en}) ${eth.day}, ${eth.year} ዓ.ም • ${timeStr}`;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initEthPickerControls();
+      updateLiveEthiopianClock();
+      setInterval(updateLiveEthiopianClock, 30000);
+
+      // Load saved state or initialize with sample patient on first run
+      const savedRaw = localStorage.getItem(STORAGE_KEY);
+      if (savedRaw) {
+        try {
+          appState = JSON.parse(savedRaw);
+          writePatientStateToInputs();
+          renderVisitsTable();
+          updateSummaryCards();
+        } catch (err) {
+          loadSamplePatient();
+        }
+      } else {
+        loadSamplePatient();
+      }
+    });
+  </script>
+</body>
+</html>

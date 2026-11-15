@@ -567,36 +567,188 @@ angular.module('bahmni.common.displaycontrol.custom')
         },
         template: '<ng-include src="contentUrl"/>'
     };
-}]).directive('whoTraumaForm', ['$http', '$q', '$window', 'appService', 'spinner', function ($http, $q, $window, appService, spinner) {
+}]).directive('whoTraumaForm', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope) {
         $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html";
         $scope.hasRecord = false;
         $scope.loading = true;
-        $scope.traumaData = null;
-        $scope.triageBorderColor = '#cbd5e1';
-        $scope.triageBgColor = '#f8fafc';
-        $scope.triageTextColor = '#334155';
-        $scope.triageStatusText = 'Not triaged';
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
 
-        var patientUuid = $scope.patient ? $scope.patient.uuid : null;
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatEthiopianDate = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return '';
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var mName = etMonthsAm[et.month - 1] || et.month;
+            return mName + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var etStr = formatEthiopianDate(isoStr);
+            return etStr ? (gregStr + ' (' + etStr + ')') : gregStr;
+        };
+
+        var formatCustomDateWithEt = function (dateVal, timeVal) {
+            if (!dateVal) return '';
+            var clean = String(dateVal).trim();
+            var parts = clean.split(' ')[0].split('-').map(Number);
+            if (parts.length === 3 && !parts.some(isNaN)) {
+                if (parts[0] <= 2030 && parts[0] >= 1900 && clean.indexOf('ዓ.ም') === -1) {
+                    // Could be Ethiopian e.g. 2019-03-06
+                    if (parts[0] <= 2025 && parts[1] <= 13) {
+                        var mName = etMonthsAm[parts[1] - 1] || parts[1];
+                        var etStr = mName + ' ' + parts[2] + ', ' + parts[0] + ' ዓ.ም';
+                        var jdn = 1724220 + 365 * (parts[0] - 1) + Math.floor(parts[0] / 4) + 30 * (parts[1] - 1) + parts[2];
+                        var a = jdn + 32044;
+                        var b = Math.floor((4 * a + 3) / 146097);
+                        var c = a - Math.floor((146097 * b) / 4);
+                        var d = Math.floor((4 * c + 3) / 1461);
+                        var e = c - Math.floor((1461 * d) / 4);
+                        var m = Math.floor((5 * e + 2) / 153);
+                        var gDay = e - Math.floor((153 * m + 2) / 5) + 1;
+                        var gMonth = m + 3 - 12 * Math.floor(m / 10);
+                        var gYear = 100 * b + d - 4800 + Math.floor(m / 10);
+                        var gMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                        var gregStr = gDay + ' ' + gMonths[gMonth - 1] + ' ' + gYear;
+                        return gregStr + (timeVal ? ' ' + timeVal : '') + ' (' + etStr + ')';
+                    }
+                }
+            }
+            return formatDateTime(dateVal + (timeVal ? ' ' + timeVal : ''));
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
 
         $scope.refreshObs = function () {
             $scope.loading = true;
             spinner.forPromise(fetchTraumaObs());
         };
 
-        $scope.openFullForm = function () {
-            var url = "/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=" + encodeURIComponent(patientUuid);
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            if (chart && chart.chartData) {
+                try {
+                    sessionStorage.setItem('trauma_active_chart', JSON.stringify(chart.chartData));
+                    if (chart.obsUuid) {
+                        localStorage.setItem('trauma_review_' + chart.obsUuid, JSON.stringify(chart.chartData));
+                    }
+                } catch (e) {}
+            }
+            var url = "/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=" + encodeURIComponent(patientUuid || '');
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
             }
-            if ($scope.latestEncounterUuid) {
-                url += "&encounterUuid=" + encodeURIComponent($scope.latestEncounterUuid);
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
             $window.open(url, '_blank');
         };
 
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                // Active trauma form in progress: do not open new, continue active only
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            try {
+                sessionStorage.removeItem('trauma_active_chart');
+            } catch (e) {}
+            var url = "/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.getTriageBorder = function (category) {
+            if (!category) return '#cbd5e1';
+            var cat = String(category).toLowerCase();
+            if (cat.indexOf('red') !== -1 || cat.indexOf('emergent') !== -1) return '#fca5a5';
+            if (cat.indexOf('yellow') !== -1 || cat.indexOf('urgent') !== -1) return '#fde047';
+            if (cat.indexOf('green') !== -1 || cat.indexOf('minor') !== -1) return '#86efac';
+            if (cat.indexOf('black') !== -1 || cat.indexOf('dead') !== -1) return '#94a3b8';
+            return '#cbd5e1';
+        };
+
+        $scope.getTriageBg = function (category) {
+            if (!category) return '#f8fafc';
+            var cat = String(category).toLowerCase();
+            if (cat.indexOf('red') !== -1 || cat.indexOf('emergent') !== -1) return '#fef2f2';
+            if (cat.indexOf('yellow') !== -1 || cat.indexOf('urgent') !== -1) return '#fefce8';
+            if (cat.indexOf('green') !== -1 || cat.indexOf('minor') !== -1) return '#f0fdf4';
+            if (cat.indexOf('black') !== -1 || cat.indexOf('dead') !== -1) return '#f1f5f9';
+            return '#f8fafc';
+        };
+
+        $scope.getTriageText = function (category) {
+            if (!category) return '#334155';
+            var cat = String(category).toLowerCase();
+            if (cat.indexOf('red') !== -1 || cat.indexOf('emergent') !== -1) return '#b91c1c';
+            if (cat.indexOf('yellow') !== -1 || cat.indexOf('urgent') !== -1) return '#a16207';
+            if (cat.indexOf('green') !== -1 || cat.indexOf('minor') !== -1) return '#15803d';
+            if (cat.indexOf('black') !== -1 || cat.indexOf('dead') !== -1) return '#0f172a';
+            return '#334155';
+        };
+
+        $scope.getTriageStatus = function (category) {
+            if (!category) return 'Not triaged';
+            var cat = String(category).toLowerCase();
+            if (cat.indexOf('red') !== -1 || cat.indexOf('emergent') !== -1) return 'Immediate resuscitation needed';
+            if (cat.indexOf('yellow') !== -1 || cat.indexOf('urgent') !== -1) return 'Urgent priority care';
+            if (cat.indexOf('green') !== -1 || cat.indexOf('minor') !== -1) return 'Non-urgent ambulatory care';
+            if (cat.indexOf('black') !== -1 || cat.indexOf('dead') !== -1) return 'Expectant / Dead on arrival';
+            return 'Triaged';
+        };
+
         var fetchTraumaObs = function () {
+            var patientUuid = getPatientUuid();
             if (!patientUuid) {
                 $scope.loading = false;
                 return $q.when();
@@ -607,26 +759,104 @@ angular.module('bahmni.common.displaycontrol.custom')
                 params: {
                     patient: patientUuid,
                     concept: conceptUuid,
-                    v: 'custom:(uuid,obsDatetime,value,encounter:(uuid,encounterDatetime))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
                 if (res.data && res.data.results && res.data.results.length > 0) {
-                    var latest = res.data.results[0];
-                    $scope.hasRecord = true;
-                    $scope.latestEncounterUuid = latest.encounter ? latest.encounter.uuid : null;
-                    $scope.obsDate = latest.obsDatetime;
+                    var sortedResults = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
 
-                    try {
-                        var parsed = JSON.parse(latest.value);
-                        $scope.traumaData = parsed;
-                        processTriageTheme(parsed.triageCategory);
-                    } catch (e) {
-                        console.warn("Could not parse WHO Trauma JSON:", e);
-                        $scope.traumaData = { raw: latest.value };
+                    var activeChart = null;
+                    var completedCharts = [];
+
+                    sortedResults.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
+
+                            // User detection: priority to lockedBy, then lastSavedByName, then creator person, then audit trail
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.lastSavedByName && parsed.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            } else if (parsed.createdByName && parsed.createdByName !== 'Attending Clinician') {
+                                userName = parsed.createdByName;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var updatedDateStr = null;
+                            if (parsed.savedAt) {
+                                var upd = formatDateTime(parsed.savedAt);
+                                if (upd && upd !== savedDateStr) {
+                                    updatedDateStr = upd;
+                                }
+                            }
+
+                            var arrivalDateTimeStr = formatCustomDateWithEt(parsed.arrivalDate, parsed.arrivalTime);
+
+                            var isLocked = Boolean(parsed.locked);
+                            var chartObj = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDate: obs.obsDatetime,
+                                savedDateFormatted: savedDateStr,
+                                updatedDateFormatted: updatedDateStr,
+                                arrivalDateTimeFormatted: arrivalDateTimeStr,
+                                userName: userName,
+                                isLocked: isLocked,
+                                lockedBy: parsed.lockedBy || null,
+                                lockedAtFormatted: parsed.lockedAt ? formatDateTime(parsed.lockedAt) : null,
+                                handovers: parsed.handovers || [],
+                                chartData: parsed
+                            };
+
+                            if (!isLocked) {
+                                if (!activeChart) {
+                                    // Single active chart: only keep the newest active revision to eliminate duplicates
+                                    activeChart = chartObj;
+                                }
+                            } else {
+                                completedCharts.push(chartObj);
+                            }
+                        } catch (e) {
+                            console.warn("Could not parse WHO Trauma JSON for obs:", obs.uuid, e);
+                        }
+                    });
+
+                    var finalCharts = [];
+                    if (activeChart) {
+                        finalCharts.push(activeChart);
+                    }
+                    finalCharts = finalCharts.concat(completedCharts);
+
+                    $scope.allCharts = finalCharts;
+                    $scope.activeChart = activeChart;
+                    $scope.hasActiveForm = Boolean(activeChart);
+                    $scope.hasRecord = finalCharts.length > 0;
+                    if (finalCharts.length > 0) {
+                        $scope.latestChart = finalCharts[0];
                     }
                 } else {
+                    $scope.allCharts = [];
+                    $scope.activeChart = null;
+                    $scope.hasActiveForm = false;
                     $scope.hasRecord = false;
                 }
             }).catch(function (err) {
@@ -635,31 +865,11 @@ angular.module('bahmni.common.displaycontrol.custom')
             });
         };
 
-        var processTriageTheme = function (category) {
-            if (!category) return;
-            var cat = String(category).toLowerCase();
-            if (cat.indexOf('red') !== -1 || cat.indexOf('emergent') !== -1) {
-                $scope.triageBorderColor = '#fca5a5';
-                $scope.triageBgColor = '#fef2f2';
-                $scope.triageTextColor = '#b91c1c';
-                $scope.triageStatusText = 'Immediate resuscitation needed';
-            } else if (cat.indexOf('yellow') !== -1 || cat.indexOf('urgent') !== -1) {
-                $scope.triageBorderColor = '#fde047';
-                $scope.triageBgColor = '#fefce8';
-                $scope.triageTextColor = '#a16207';
-                $scope.triageStatusText = 'Urgent priority care';
-            } else if (cat.indexOf('green') !== -1 || cat.indexOf('minor') !== -1) {
-                $scope.triageBorderColor = '#86efac';
-                $scope.triageBgColor = '#f0fdf4';
-                $scope.triageTextColor = '#15803d';
-                $scope.triageStatusText = 'Non-urgent ambulatory care';
-            } else if (cat.indexOf('black') !== -1 || cat.indexOf('dead') !== -1) {
-                $scope.triageBorderColor = '#94a3b8';
-                $scope.triageBgColor = '#f1f5f9';
-                $scope.triageTextColor = '#0f172a';
-                $scope.triageStatusText = 'Expectant / Dead on arrival';
+        $scope.$watch('patient.uuid', function (newUuid) {
+            if (newUuid) {
+                spinner.forPromise(fetchTraumaObs());
             }
-        };
+        });
 
         spinner.forPromise(fetchTraumaObs());
     };

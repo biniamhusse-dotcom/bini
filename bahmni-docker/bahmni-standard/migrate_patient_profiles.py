@@ -299,6 +299,25 @@ WHERE mtm.code IN ('emr.primaryIdentifierType', 'primaryIdentifierType');
 UPDATE {LIVE_DB}.idgen_seq_id_gen SET prefix = NULL, suffix = NULL WHERE id = 1;
 UPDATE {LIVE_DB}.idgen_identifier_source SET name = 'Patient Identifier', description = 'ID sequence source for patients' WHERE id = 1;
 
+-- Synchronize Consultation Order Sets (All Orderables: Lab, Radiology, Pathology, Ophthalmology, Procedure)
+INSERT INTO {LIVE_DB}.order_type_class_map (order_type_id, concept_class_id)
+SELECT (SELECT order_type_id FROM {LIVE_DB}.order_type WHERE name = 'Pathology Order'),
+       (SELECT concept_class_id FROM {LIVE_DB}.concept_class WHERE name = 'Pathology')
+WHERE NOT EXISTS (
+  SELECT 1 FROM {LIVE_DB}.order_type_class_map 
+  WHERE order_type_id = (SELECT order_type_id FROM {LIVE_DB}.order_type WHERE name = 'Pathology Order')
+    AND concept_class_id = (SELECT concept_class_id FROM {LIVE_DB}.concept_class WHERE name = 'Pathology')
+);
+
+DELETE FROM {LIVE_DB}.concept_set WHERE concept_set = 129;
+INSERT INTO {LIVE_DB}.concept_set (concept_set, concept_id, sort_weight, creator, date_created, uuid)
+VALUES
+(129, 10, 0, 1, NOW(), '57e9760f-b987-4e20-a1e0-2dd971e912bb'),
+(129, 67585, 1, 1, NOW(), '82a4dd2a-ce4e-4bcb-b326-a4672a806546'),
+(129, 67418, 2, 1, NOW(), '91a46982-4a5e-47b4-a84a-e9066e84a3fa'),
+(129, 67419, 3, 1, NOW(), 'eb70f0e4-f8f3-4464-a6f6-4cdb336e8021'),
+(129, 57369, 4, 1, NOW(), '40a7936c-9104-4c37-82fe-cae513da9893');
+
 UPDATE {LIVE_DB}.global_property SET property_value = NULL WHERE property = 'patient.identifierPrefix';
 UPDATE {LIVE_DB}.global_property SET property_value = '.*' WHERE property = 'patient.identifierRegex';
 UPDATE {LIVE_DB}.global_property SET property_value = 'ANYWHERE' WHERE property = 'patientIdentifierSearch.matchMode';

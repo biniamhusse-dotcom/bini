@@ -770,6 +770,31 @@ def fix_concept_duplicates_and_uuids():
     run_mysql(fix_sql)
 
 
+def fix_consultation_order_sets():
+    print("[openmrs] Ensuring all Consultation Orders (Lab, Radiology, Pathology, Ophtha, Procedure) are configured...",
+          flush=True)
+    order_sql = """
+    INSERT INTO order_type_class_map (order_type_id, concept_class_id)
+    SELECT (SELECT order_type_id FROM order_type WHERE name = 'Pathology Order'),
+           (SELECT concept_class_id FROM concept_class WHERE name = 'Pathology')
+    WHERE NOT EXISTS (
+      SELECT 1 FROM order_type_class_map 
+      WHERE order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Pathology Order')
+        AND concept_class_id = (SELECT concept_class_id FROM concept_class WHERE name = 'Pathology')
+    );
+
+    DELETE FROM concept_set WHERE concept_set = 129;
+    INSERT INTO concept_set (concept_set, concept_id, sort_weight, creator, date_created, uuid)
+    VALUES
+    (129, 10, 0, 1, NOW(), '57e9760f-b987-4e20-a1e0-2dd971e912bb'),
+    (129, 67585, 1, 1, NOW(), '82a4dd2a-ce4e-4bcb-b326-a4672a806546'),
+    (129, 67418, 2, 1, NOW(), '91a46982-4a5e-47b4-a84a-e9066e84a3fa'),
+    (129, 67419, 3, 1, NOW(), 'eb70f0e4-f8f3-4464-a6f6-4cdb336e8021'),
+    (129, 57369, 4, 1, NOW(), '40a7936c-9104-4c37-82fe-cae513da9893');
+    """
+    run_mysql(order_sql)
+
+
 def configure_auto_mrn(starting_mrn):
     print(f"[openmrs] Configuring Auto-MRN starting sequence to {starting_mrn} (prefix=NULL, pure numeric)...",
           flush=True)
@@ -816,6 +841,7 @@ def task_openmrs(start_mrn):
     cleanup_openmrs_persons()
     fix_global_properties_and_id_search()
     fix_concept_duplicates_and_uuids()
+    fix_consultation_order_sets()
     configure_auto_mrn(_SEQ_START[0])
     patients_after, users_after = openmrs_counts()
     return (f"OpenMRS: patients {patients_before} -> {patients_after}, "
