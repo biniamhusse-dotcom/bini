@@ -342,6 +342,11 @@ angular.module('bahmni.common.displaycontrol.custom')
         };
 
         $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                // Active form in progress! Do not open other new, continue active only
+                $scope.openChart($scope.activeChart);
+                return;
+            }
             var patientUuid = getPatientUuid();
             try {
                 sessionStorage.removeItem('lcg_active_chart');
@@ -433,13 +438,16 @@ angular.module('bahmni.common.displaycontrol.custom')
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
-                    var parsedCharts = [];
+                    var activeChart = null;
+                    var completedCharts = [];
+
                     sortedResults.forEach(function (obs) {
                         try {
                             var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
                             var metrics = extractSummaryMetrics(parsed);
 
-                            // User detection: priority to lockedBy, then lastSavedByName, then creator person, then audit trail, then session
+                            // User detection: priority to lockedBy, then lastSavedByName, then creator person, then audit trail
                             var userName = null;
                             if (parsed.locked && parsed.lockedBy) {
                                 userName = parsed.lockedBy;
@@ -459,17 +467,6 @@ angular.module('bahmni.common.displaycontrol.custom')
                             }
 
                             if (!userName || userName === 'Attending Clinician') {
-                                try {
-                                    var rootScope = ($window.parent && $window.parent.angular) ? $window.parent.angular.element($window.parent.document.body).injector().get('$rootScope') : null;
-                                    if (rootScope && rootScope.currentUser && rootScope.currentUser.person && rootScope.currentUser.person.display) {
-                                        userName = rootScope.currentUser.person.display;
-                                    } else if (rootScope && rootScope.currentProvider && rootScope.currentProvider.name) {
-                                        userName = rootScope.currentProvider.name;
-                                    }
-                                } catch (e) {}
-                            }
-
-                            if (!userName || userName === 'Attending Clinician') {
                                 userName = 'Super Man';
                             }
 
@@ -482,31 +479,68 @@ angular.module('bahmni.common.displaycontrol.custom')
                                 }
                             }
 
-                            parsedCharts.push({
+                            var handoversFormatted = [];
+                            if (parsed.handovers && parsed.handovers.length > 0) {
+                                handoversFormatted = parsed.handovers.map(function(ho) {
+                                    return {
+                                        outgoingUser: ho.outgoingUser || 'Clinician',
+                                        incomingUser: ho.incomingUser || 'Incoming Staff',
+                                        hoursCovered: ho.hoursCovered || 'Shift Hours',
+                                        timestamp: ho.timestamp,
+                                        timestampFormatted: formatDateTime(ho.timestamp),
+                                        timestampEt: ho.timestampEt || '',
+                                        clinicalSummary: ho.clinicalSummary || ''
+                                    };
+                                });
+                            }
+
+                            var isLocked = Boolean(parsed.locked);
+                            var chartObj = {
                                 obsUuid: obs.uuid,
                                 encounterUuid: obs.encounter ? obs.encounter.uuid : null,
                                 obsDate: obs.obsDatetime,
                                 savedDateFormatted: savedDateStr,
                                 updatedDateFormatted: updatedDateStr,
                                 userName: userName,
-                                isLocked: Boolean(parsed.locked),
+                                isLocked: isLocked,
                                 lockedBy: parsed.lockedBy || null,
                                 lockedAtFormatted: parsed.lockedAt ? formatDateTime(parsed.lockedAt) : null,
+                                handovers: handoversFormatted,
                                 metrics: metrics,
                                 chartData: parsed
-                            });
+                            };
+
+                            if (!isLocked) {
+                                if (!activeChart) {
+                                    // Single active chart: only keep the newest active revision
+                                    activeChart = chartObj;
+                                }
+                                // Older unlocked observations are prior incremental saves of the same active labour: collapse them so they do not duplicate!
+                            } else {
+                                completedCharts.push(chartObj);
+                            }
                         } catch (e) {
                             console.warn("Could not parse WHO LCG JSON for obs:", obs.uuid, e);
                         }
                     });
 
-                    $scope.allCharts = parsedCharts;
-                    $scope.hasRecord = parsedCharts.length > 0;
-                    if (parsedCharts.length > 0) {
-                        $scope.latestChart = parsedCharts[0];
+                    var finalCharts = [];
+                    if (activeChart) {
+                        finalCharts.push(activeChart);
+                    }
+                    finalCharts = finalCharts.concat(completedCharts);
+
+                    $scope.allCharts = finalCharts;
+                    $scope.activeChart = activeChart;
+                    $scope.hasActiveForm = Boolean(activeChart);
+                    $scope.hasRecord = finalCharts.length > 0;
+                    if (finalCharts.length > 0) {
+                        $scope.latestChart = finalCharts[0];
                     }
                 } else {
                     $scope.allCharts = [];
+                    $scope.activeChart = null;
+                    $scope.hasActiveForm = false;
                     $scope.hasRecord = false;
                 }
             }).catch(function (err) {

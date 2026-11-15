@@ -92,7 +92,7 @@
     },
     "label": "Active",
     "order": 2,
-    "requiredPrivilege": "app:emergency2"
+    "requiredPrivilege": "app:clinical"
   },
   "bahmniClinicalLinkageInPatients": {
     "id": "bahmni.clinical.patients.search.linkedPatients",

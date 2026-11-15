@@ -387,6 +387,11 @@
           <span id="txtLockForm">Lock Form</span>
         </button>
 
+        <button id="btnShiftHandover" onclick="openShiftHandoverModal()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition" title="Handover clinical care to incoming shift/clinician without locking the entire form">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          <span id="txtShiftHandover">Shift Handover</span>
+        </button>
+
         <button id="btnQuickRecord" onclick="openRecordModal()" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           Record Assessment
@@ -671,6 +676,40 @@
         </div>
       </div>
 
+      <!-- Section 8A: Shift Handover & Clinician Sign-off Records -->
+      <div class="mb-4 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 rounded-xl p-3.5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5 pb-2 border-b border-indigo-200/80 dark:border-indigo-800/80">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-md bg-indigo-600 text-white flex items-center justify-center text-xs font-black">🔄</div>
+            <h4 class="text-xs font-bold text-indigo-950 dark:text-indigo-200 uppercase tracking-wider">
+              Shift Handover &amp; Clinician Sign-off Records (የፈረቃ ርክክብ መረጃ)
+            </h4>
+            <span id="handoverCountBadge" class="px-2 py-0.5 bg-indigo-200 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-[10px] rounded-full font-bold">0 Handovers</span>
+          </div>
+          <button type="button" onclick="openShiftHandoverModal()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+            <span>+ Record Shift Handover</span>
+          </button>
+        </div>
+        
+        <div class="overflow-x-auto rounded-lg border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-950">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-indigo-100/70 dark:bg-indigo-950/70 text-indigo-950 dark:text-indigo-200 font-bold border-b border-indigo-200 dark:border-indigo-800">
+                <th class="p-2 w-44">Handover Date &amp; Time</th>
+                <th class="p-2 w-48">Outgoing Clinician (አስረካቢ)</th>
+                <th class="p-2 w-40">Documented Hours</th>
+                <th class="p-2">Clinical Handover Summary &amp; Transfer of Care Plan</th>
+                <th class="p-2 w-44">Incoming Clinician (ተረካቢ)</th>
+                <th class="p-2 w-28 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="shiftHandoverTableBody">
+              <tr><td colspan="6" class="p-3 text-center text-slate-400 italic">No shift handover recorded yet for this labour episode. Current shift in progress.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Audit Trail Table -->
       <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-inner">
         <table class="w-full text-left text-xs border-collapse">
@@ -717,6 +756,54 @@
       <div style="display:flex; gap:6px;">
         <button type="button" id="etClearBtn" style="padding:4px 8px; font-size:11px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:5px; cursor:pointer; color:#334155;">Clear</button>
         <button type="button" id="etCloseBtn" style="padding:4px 8px; font-size:11px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:5px; cursor:pointer; color:#334155;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Shift Handover Modal -->
+  <div id="shiftHandoverModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-base">🔄</div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Shift Handover &amp; Clinician Sign-off</h3>
+            <p class="text-[11px] text-slate-500">Lock your documented hours while leaving remaining hours open for the next shift</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeShiftHandoverModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Outgoing Clinician Full Name (አስረካቢ ባለሙያ):</label>
+          <input type="text" id="hoOutgoingName" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-bold text-slate-800 dark:text-white" readonly>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Select Documented Hours to Sign-off &amp; Lock (የተመዘገቡ ሰዓቶች):</label>
+          <div id="hoHoursContainer" class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex flex-wrap gap-1.5 text-xs max-h-36 overflow-y-auto">
+            <!-- Dynamically populated checkboxes for hours entered -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Incoming Clinician / Relieving Staff Name (ተረካቢ ባለሙያ):</label>
+          <input type="text" id="hoIncomingName" placeholder="Enter full name of doctor/midwife taking over..." class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-white outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Clinical Handover Summary / SBAR Report (የክሊኒካል ርክክብ ማጠቃለያ):</label>
+          <textarea id="hoSummary" rows="3" placeholder="Summarize mother's current active labour status (dilatation, FHR, contractions, plan for next shift)..." class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-white outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <button type="button" onclick="closeShiftHandoverModal()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold transition">Cancel</button>
+        <button type="button" onclick="submitShiftHandover()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-md transition flex items-center gap-1.5">
+          <span>Confirm Handover &amp; Sign-off Shift ✓</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1172,6 +1259,8 @@
         locked: false,
         lockedBy: "",
         lockedAt: "",
+        handovers: [],
+        signedHours: {},
         auditTrail: [],
         times: {},
         records: {}
@@ -1223,10 +1312,14 @@
           COLUMNS.forEach((colKey, colIdx) => {
             const td = document.createElement('td');
             const isStage2 = colKey.startsWith('s');
-            td.className = `cell-editable ${isStage2 ? 'col-stage2' : 'col-hour'}`;
+            const isSigned = Boolean(lcgData.signedHours && lcgData.signedHours[colKey]);
+            td.className = `cell-editable ${isStage2 ? 'col-stage2' : 'col-hour'} ${isSigned ? 'bg-indigo-50/50 dark:bg-indigo-950/20' : ''}`;
             td.dataset.col = colKey;
             td.dataset.row = row.key;
             td.id = `cell_${row.key}_${colKey}`;
+            if (isSigned) {
+              td.title = `Signed off by ${lcgData.signedHours[colKey].signedBy}`;
+            }
 
             // Handle special plotting grid for Cervix and Descent
             if (row.plotKey) {
@@ -1259,6 +1352,11 @@
         showToast("This Labour Care Guide is locked. Unlock to make edits.", true);
         return;
       }
+      if (lcgData.signedHours && lcgData.signedHours[colKey]) {
+        const signInfo = lcgData.signedHours[colKey];
+        showToast(`${colKey.toUpperCase()} observations were signed off and locked by ${signInfo.signedBy} during shift handover. Please document remaining care in subsequent active hours.`, true);
+        return;
+      }
       if (!lcgData.records[colKey]) lcgData.records[colKey] = {};
       const current = lcgData.records[colKey][type];
 
@@ -1279,6 +1377,11 @@
     function openQuickCellEditor(e, colKey, row) {
       if (lcgData.locked) {
         showToast("This Labour Care Guide is locked. Unlock to make edits.", true);
+        return;
+      }
+      if (lcgData.signedHours && lcgData.signedHours[colKey]) {
+        const signInfo = lcgData.signedHours[colKey];
+        showToast(`${colKey.toUpperCase()} observations were signed off and locked by ${signInfo.signedBy} during shift handover. Please document remaining care in subsequent active hours.`, true);
         return;
       }
       const picker = document.getElementById('quickPicker');
@@ -1344,6 +1447,11 @@
     function setCellValue(colKey, rowKey, val, paramLabel) {
       if (lcgData.locked) {
         showToast("Form is locked. Unlock to make edits.", true);
+        return;
+      }
+      if (lcgData.signedHours && lcgData.signedHours[colKey]) {
+        const signInfo = lcgData.signedHours[colKey];
+        showToast(`Hour ${colKey.replace('h','')} was signed off and locked by ${signInfo.signedBy}.`, true);
         return;
       }
       if (!lcgData.records[colKey]) lcgData.records[colKey] = {};
@@ -2673,6 +2781,161 @@
     }
 
     // Populate full chart data model into UI elements & re-render
+    
+    // =========================================================================
+    // Shift Handover & Clinician Sign-off Controller
+    // =========================================================================
+    function renderShiftHandovers() {
+      const tbody = document.getElementById('shiftHandoverTableBody');
+      const badge = document.getElementById('handoverCountBadge');
+      if (!tbody) return;
+
+      const handovers = lcgData.handovers || [];
+      if (badge) badge.textContent = `${handovers.length} Handover${handovers.length === 1 ? '' : 's'}`;
+
+      if (handovers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-slate-400 italic">No shift handover recorded yet for this labour episode. Current shift in progress.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = handovers.slice().reverse().map(ho => {
+        const dt = ho.timestamp ? new Date(ho.timestamp) : null;
+        const gregStr = dt && !isNaN(dt.getTime()) ? dt.toLocaleString() : (ho.timestamp || '-');
+        const etStr = ho.timestampEt || '';
+        const timeDisplay = etStr ? `${gregStr}<br><span class="text-[10px] text-indigo-600 font-semibold">${etStr}</span>` : gregStr;
+
+        return `
+          <tr class="border-b border-indigo-100 dark:border-indigo-900/60 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20">
+            <td class="p-2 font-mono text-[11px] text-slate-700 dark:text-slate-300">${timeDisplay}</td>
+            <td class="p-2 font-bold text-slate-900 dark:text-white">
+              <span class="inline-block w-2 h-2 rounded-full bg-indigo-600 mr-1.5"></span>
+              <span>${ho.outgoingUser || 'Attending Clinician'}</span>
+            </td>
+            <td class="p-2 font-semibold text-indigo-800 dark:text-indigo-300">${ho.hoursCovered || 'Logged Hours'}</td>
+            <td class="p-2 text-slate-800 dark:text-slate-200">${ho.clinicalSummary || 'Transfer of clinical monitoring care'}</td>
+            <td class="p-2 font-medium text-slate-700 dark:text-slate-300">${ho.incomingUser || 'Incoming Duty Team'}</td>
+            <td class="p-2 text-center">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-300">
+                🔒 Signed
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openShiftHandoverModal() {
+      if (lcgData.locked) {
+        showToast("Labour Care Guide is already locked.", true);
+        return;
+      }
+      const modal = document.getElementById('shiftHandoverModal');
+      const nameInput = document.getElementById('hoOutgoingName');
+      const hoursContainer = document.getElementById('hoHoursContainer');
+      const summaryInput = document.getElementById('hoSummary');
+      const incomingInput = document.getElementById('hoIncomingName');
+
+      if (nameInput) nameInput.value = currentUserName || 'Super Man';
+      if (summaryInput) summaryInput.value = '';
+      if (incomingInput) incomingInput.value = '';
+
+      if (hoursContainer) {
+        hoursContainer.innerHTML = '';
+        COLUMNS.forEach(col => {
+          const hasData = lcgData.records && lcgData.records[col] && Object.keys(lcgData.records[col]).length > 0;
+          const isAlreadySigned = Boolean(lcgData.signedHours && lcgData.signedHours[col]);
+          const colLabel = col.startsWith('h') ? `Hour ${col.replace('h','')}` : `Second Stage H${col.replace('s','')}`;
+
+          const label = document.createElement('label');
+          label.className = `flex items-center gap-1.5 px-2 py-1 rounded border text-xs cursor-pointer ${
+            isAlreadySigned ? 'bg-slate-200 dark:bg-slate-800 opacity-60 border-slate-300 cursor-not-allowed' :
+            (hasData ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold' : 'bg-white dark:bg-slate-800 border-slate-300 text-slate-600')
+          }`;
+
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = col;
+          cb.disabled = isAlreadySigned;
+          cb.checked = hasData && !isAlreadySigned;
+
+          label.appendChild(cb);
+          const span = document.createElement('span');
+          span.textContent = `${colLabel} ${isAlreadySigned ? '(Already signed)' : (hasData ? '●' : '')}`;
+          label.appendChild(span);
+          hoursContainer.appendChild(label);
+        });
+      }
+
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeShiftHandoverModal() {
+      const modal = document.getElementById('shiftHandoverModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function submitShiftHandover() {
+      const outgoingUser = document.getElementById('hoOutgoingName')?.value || currentUserName || 'Attending Clinician';
+      const incomingUser = document.getElementById('hoIncomingName')?.value?.trim() || 'Incoming Clinical Team';
+      const summary = document.getElementById('hoSummary')?.value?.trim() || 'Clinical care transferred to incoming shift';
+      
+      const checkedBoxes = Array.from(document.querySelectorAll('#hoHoursContainer input[type="checkbox"]:checked'));
+      const selectedCols = checkedBoxes.map(cb => cb.value);
+
+      if (selectedCols.length === 0) {
+        if (!confirm("No documented hours were selected to sign off. Do you want to submit general handover notes without locking specific hours?")) {
+          return;
+        }
+      }
+
+      const hoursLabel = selectedCols.length > 0 
+        ? `${selectedCols.map(c => c.toUpperCase()).join(', ')}`
+        : 'General Handover';
+
+      const now = new Date();
+      const hoId = 'ho_' + Date.now();
+      
+      let etFormatted = '';
+      try {
+        const et = gregorianToEthiopian(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        const mObj = ET_MONTHS[et.month - 1];
+        etFormatted = `${mObj ? mObj.am : et.month} ${et.day}, ${et.year} ዓ.ም ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+      } catch(e) {}
+
+      const handoverRecord = {
+        id: hoId,
+        outgoingUser: outgoingUser,
+        incomingUser: incomingUser,
+        hoursCovered: hoursLabel,
+        columns: selectedCols,
+        timestamp: now.toISOString(),
+        timestampEt: etFormatted,
+        clinicalSummary: summary
+      };
+
+      lcgData.handovers = lcgData.handovers || [];
+      lcgData.handovers.push(handoverRecord);
+
+      lcgData.signedHours = lcgData.signedHours || {};
+      selectedCols.forEach(col => {
+        lcgData.signedHours[col] = {
+          signedBy: outgoingUser,
+          signedAt: now.toISOString(),
+          handoverId: hoId
+        };
+      });
+
+      addAuditLog("SHIFT HANDOVER", `Care handed over by ${outgoingUser} (${hoursLabel}) to ${incomingUser}. Summary: ${summary}`);
+
+      closeShiftHandoverModal();
+      renderTable();
+      renderShiftHandovers();
+      renderAuditTrail();
+      saveToPatientEncounter(true);
+
+      showToast(`Shift handover completed! Documented hours signed off by ${outgoingUser}. Remaining hours open for incoming shift.`);
+    }
+
     function populateChartData(parsed) {
       if (!parsed) return;
       try {
@@ -2693,9 +2956,13 @@
           setEtPickerValue('ptRuptureDate', lcgData.meta.ruptureDate || '');
         }
 
+        if (!lcgData.handovers) lcgData.handovers = [];
+        if (!lcgData.signedHours) lcgData.signedHours = {};
+
         renderTable();
         drawCervicogramChart();
         evaluateAlerts();
+        renderShiftHandovers();
         renderAuditTrail();
         applyLockState();
         showToast("Labour Care Guide record loaded successfully!");
@@ -2717,6 +2984,7 @@
       renderTable();
       drawCervicogramChart();
       evaluateAlerts();
+      renderShiftHandovers();
       renderAuditTrail();
       applyLockState();
       loadOpenMrsPatientRecord();
@@ -2991,6 +3259,32 @@
       }
 
       if (isNewParam) {
+        // If an active unlocked chart already exists for this patient, open and continue active only!
+        if (patientUuid) {
+          fetch(`/openmrs/ws/rest/v1/obs?patient=${patientUuid}&concept=9e2a5670-3d71-4569-b1d5-894000000002&v=custom:(uuid,obsDatetime,value,encounter:(uuid,encounterDatetime))`, {
+            credentials: 'include'
+          })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && data.results && data.results.length > 0) {
+              const sorted = data.results.slice().sort((a, b) => new Date(b.obsDatetime) - new Date(a.obsDatetime));
+              for (const o of sorted) {
+                let p = null;
+                try { p = typeof o.value === 'object' ? o.value : JSON.parse(o.value); } catch(e) {}
+                if (p && !p.locked) {
+                  // Active unlocked form found! Do not open new, update active!
+                  obsUuidParam = o.uuid;
+                  if (o.encounter && o.encounter.uuid) encounterUuid = o.encounter.uuid;
+                  showToast("Active Labour Care Guide in progress. Continuing active chart.");
+                  populateChartData(p);
+                  return;
+                }
+              }
+            }
+          })
+          .catch(() => {});
+        }
+
         initData();
         if (patientNameParam) {
           lcgData.meta.name = patientNameParam;
@@ -3000,6 +3294,7 @@
         renderTable();
         drawCervicogramChart();
         evaluateAlerts();
+        renderShiftHandovers();
         applyLockState();
         renderAuditTrail();
         return;
@@ -3092,11 +3387,12 @@
     // Save observation form to patient encounter in OpenMRS
     let autoSaveTimer = null;
     function debouncedSaveToOpenMRS() {
-      if (patientUuid && !lcgData.locked) {
+      // Only auto-update if obsUuidParam is already established, to avoid creating duplicate encounters
+      if (patientUuid && obsUuidParam && !lcgData.locked) {
         clearTimeout(autoSaveTimer);
         autoSaveTimer = setTimeout(() => {
           saveToPatientEncounter(true);
-        }, 1000);
+        }, 3000);
       }
     }
 
@@ -3152,7 +3448,47 @@
         btn.disabled = true;
       }
 
-      // Prepare Concept Observations
+      // If obsUuidParam exists, update the existing observation directly in-place!
+      // This guarantees ZERO DUPLICATES on the dashboard!
+      if (obsUuidParam) {
+        try {
+          const obsUpdateRes = await fetch(`/openmrs/ws/rest/v1/obs/${obsUuidParam}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              value: JSON.stringify(lcgData)
+            })
+          });
+
+          if (obsUpdateRes.ok) {
+            const updatedObs = await obsUpdateRes.json();
+            if (updatedObs && updatedObs.uuid) {
+              obsUuidParam = updatedObs.uuid;
+              lcgData.obsUuid = obsUuidParam;
+            }
+            try {
+              sessionStorage.setItem('lcg_active_chart', JSON.stringify(lcgData));
+              localStorage.setItem('who_lcg_data', JSON.stringify(lcgData));
+              localStorage.setItem('lcg_review_' + obsUuidParam, JSON.stringify(lcgData));
+            } catch(e) {}
+
+            showToast(`Labour Care Guide updated successfully in-place!`);
+            if (!silent && txt && btn) {
+              txt.textContent = 'Updated in EMR ✓';
+              setTimeout(() => { txt.textContent = origText; btn.disabled = false; }, 3000);
+            }
+            return;
+          }
+        } catch (obsErr) {
+          console.warn("Direct obs update failed, falling back to encounter save:", obsErr);
+        }
+      }
+
+      // First time saving: Create encounter and observation
       const obsArray = [
         {
           concept: "9e2a5670-3d71-4569-b1d5-894000000002", // WHO LCG Complete Chart JSON
@@ -3160,7 +3496,6 @@
         }
       ];
 
-      // Build Encounter Payload
       const encounterPayload = {
         patient: targetPatientUuid,
         encounterType: "Consultation",
@@ -3169,7 +3504,11 @@
       };
 
       try {
-        const response = await fetch('/openmrs/ws/rest/v1/encounter', {
+        let encUrl = '/openmrs/ws/rest/v1/encounter';
+        if (encounterUuid) {
+          encUrl = `/openmrs/ws/rest/v1/encounter/${encounterUuid}`;
+        }
+        const response = await fetch(encUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

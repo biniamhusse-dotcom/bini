@@ -17,7 +17,14 @@
       <button type="button" ng-click="refreshObs()" title="Reload observations" style="background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">
         <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i>
       </button>
-      <button type="button" ng-click="openNewForm()" style="background: #0f766e; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.08);">
+      <!-- Active Form exists: Only allow continuing active form -->
+      <button ng-if="hasActiveForm" type="button" ng-click="openChart(activeChart)" title="Active Labour Care Guide in progress. Click to continue monitoring." style="background: #0f766e; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(15,118,110,0.3);">
+        <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+        <span>Continue Active Labour Guide</span>
+      </button>
+
+      <!-- No active form (all locked or none): allow starting new form -->
+      <button ng-if="!hasActiveForm" type="button" ng-click="openNewForm()" style="background: #0f766e; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.08);">
         <i class="fa fa-plus-circle" aria-hidden="true"></i>
         <span>Record New Labour Form</span>
       </button>
@@ -152,6 +159,17 @@
             <div>
               <strong style="color: #0f766e;">Agreed Plan:</strong>
               <span style="color: #334155;">{{ chart.metrics.plan }}</span>
+            </div>
+          </div>
+
+          <!-- Shift Handover Log Banner (if handover recorded) -->
+          <div ng-if="chart.handovers && chart.handovers.length > 0" style="margin-top: 8px; background: #eef2ff; border: 1px solid #c7d2fe; border-left: 3px solid #4f46e5; padding: 8px 12px; border-radius: 4px; font-size: 11px; color: #312e81;">
+            <div style="font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+              <span>🔄 Shift Handover Records ({{ chart.handovers.length }}):</span>
+            </div>
+            <div ng-repeat="ho in chart.handovers" style="margin-top: 3px; line-height: 1.4;">
+              &bull; <strong>{{ ho.outgoingUser }}</strong> documented <em>{{ ho.hoursCovered }}</em> &rarr; Transferred to <strong>{{ ho.incomingUser || 'Relieving Clinician' }}</strong> at {{ ho.timestampFormatted || ho.timestamp }}
+              <span ng-if="ho.clinicalSummary" style="color: #4338ca;"> &mdash; <em>"{{ ho.clinicalSummary }}"</em></span>
             </div>
           </div>
         </div>
