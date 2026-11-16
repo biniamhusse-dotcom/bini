@@ -93,13 +93,18 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                 var data = response.data;
                 $scope.orders.push.apply($scope.orders, data);
                 $scope.orders.forEach(async function (order) {
-                    await getOrdersSerialNumber(order.concept.uuid).then(function (data) {
-                        ordersSerialNumberBuilding.forEach(config => {
-                            if (data[0].concept_set === config.concept_id) {
-                                order.serialNumber = config.prefix + "-" + data[0].serialNumber;
-                            }
-                        });
-                    });
+                    try {
+                        var serialData = await getOrdersSerialNumber(order.concept.uuid);
+                        if (serialData && serialData.length > 0 && serialData[0] && ordersSerialNumberBuilding) {
+                            ordersSerialNumberBuilding.forEach(config => {
+                                if (serialData[0].concept_set === config.concept_id) {
+                                    order.serialNumber = config.prefix + "-" + serialData[0].serialNumber;
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.warn("Could not determine order serial number:", err);
+                    }
                     order.bahmniObservations = _.filter($scope.encounter.observations, function (observation) {
                         return observation.orderUuid === order.orderUuid;
                     }); 

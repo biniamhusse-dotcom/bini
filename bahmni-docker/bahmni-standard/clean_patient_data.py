@@ -1010,6 +1010,30 @@ def prune_odoo_partners(deep=False):
     return total
 
 
+def ensure_odoo_order_types():
+    sql = """
+INSERT INTO order_type (name, create_uid, write_uid, create_date, write_date)
+SELECT 'Ophtha Order', 2, 2, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM order_type WHERE name = 'Ophtha Order');
+
+INSERT INTO sale_shop (name, warehouse_id, location_id, payment_default_id, pricelist_id, company_id, create_uid, write_uid, create_date, write_date)
+SELECT 'Ophthalmology', 1, 1, 1, 1, 1, 2, 2, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM sale_shop WHERE name = 'Ophthalmology');
+
+INSERT INTO order_type_shop_map (order_type, shop_id, location_id, create_uid, write_uid, create_date, write_date)
+SELECT 
+    (SELECT id FROM order_type WHERE name = 'Ophtha Order'),
+    (SELECT id FROM sale_shop WHERE name = 'Ophthalmology'),
+    1, 2, 2, NOW(), NOW()
+WHERE NOT EXISTS (
+    SELECT 1 FROM order_type_shop_map m 
+    JOIN order_type t ON m.order_type = t.id 
+    WHERE t.name = 'Ophtha Order'
+);
+"""
+    run_psql(ODOO_DB, PG_ODOO_USER, PG_ODOO_DB, sql)
+
+
 def task_odoo(mode="standard"):
     t0 = time.time()
     partners_before, users_before = odoo_counts()
@@ -1017,6 +1041,7 @@ def task_odoo(mode="standard"):
         purge_odoo_business()
     users_deleted = delete_odoo_users()
     partners_deleted = prune_odoo_partners(deep=(mode == "deep"))
+    ensure_odoo_order_types()
     partners_after, users_after = odoo_counts()
     return (f"Odoo ({mode}): partners {partners_before} -> {partners_after} "
             f"({partners_deleted} pruned), users {users_before} -> {users_after} "

@@ -193,15 +193,6 @@
         "trigger": "Pathology Diagnostic Type",
         "value": "GC-GYN Cytology",
         "operator": "="
-      },
-      {
-        "trigger": "Result Stage",
-        "orValues": [
-          "Pending (In Progress)",
-          "Preliminary Result",
-          "Final (Amended) Result"
-        ],
-        "operator": "OR"
       }
     ],
     "action": "show",
@@ -214,15 +205,6 @@
         "trigger": "Pathology Diagnostic Type",
         "value": "SP-Surgicalpathology",
         "operator": "="
-      },
-      {
-        "trigger": "Result Stage",
-        "orValues": [
-          "Pending (In Progress)",
-          "Preliminary Result",
-          "Final (Amended) Result"
-        ],
-        "operator": "OR"
       }
     ],
     "formType": "result",
@@ -236,15 +218,6 @@
         "trigger": "Pathology Diagnostic Type",
         "value": "NG-Non-GYN Cytology",
         "operator": "="
-      },
-      {
-        "trigger": "Result Stage",
-        "orValues": [
-          "Pending (In Progress)",
-          "Preliminary Result",
-          "Final (Amended) Result"
-        ],
-        "operator": "OR"
       }
     ],
     "action": "show",
@@ -257,15 +230,6 @@
         "trigger": "Pathology Diagnostic Type",
         "value": "BF-Non-GYN Cytology",
         "operator": "="
-      },
-      {
-        "trigger": "Result Stage",
-        "orValues": [
-          "Pending (In Progress)",
-          "Preliminary Result",
-          "Final (Amended) Result"
-        ],
-        "operator": "OR"
       }
     ],
     "action": "show",
@@ -278,15 +242,6 @@
         "trigger": "Pathology Diagnostic Type",
         "value": "HP-Hematopathology",
         "operator": "="
-      },
-      {
-        "trigger": "Result Stage",
-        "orValues": [
-          "Pending (In Progress)",
-          "Preliminary Result",
-          "Final (Amended) Result"
-        ],
-        "operator": "OR"
       }
     ],
     "action": "show",
