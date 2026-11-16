@@ -303,19 +303,32 @@ def fetch_patient_data(pid, db_name):
     enc_sql = f"""
     SELECT 
         e.encounter_id,
-        DATE_FORMAT(e.encounter_datetime, '%Y-%m-%d') as enc_date,
-        DATE_FORMAT(e.encounter_datetime, '%H:%i') as enc_time,
-        COALESCE(et.name, 'Consultation') as enc_type,
-        COALESCE(CONCAT(pn.given_name, ' ', pn.family_name), 'Healthcare Provider') as provider_name,
-        COALESCE(l.name, 'Outpatient Department') as location_name
+        DATE_FORMAT(MAX(e.encounter_datetime), '%Y-%m-%d') as enc_date,
+        DATE_FORMAT(MAX(e.encounter_datetime), '%H:%i') as enc_time,
+        COALESCE(MAX(et.name), 'Consultation') as enc_type,
+        COALESCE(
+            CONCAT_WS(' ',
+                COALESCE(MAX(CASE WHEN pn.preferred = 1 THEN pn.given_name END), MAX(pn.given_name)),
+                COALESCE(MAX(CASE WHEN pn.preferred = 1 THEN pn.middle_name END), MAX(pn.middle_name)),
+                COALESCE(MAX(CASE WHEN pn.preferred = 1 THEN pn.family_name END), MAX(pn.family_name))),
+            CONCAT_WS(' ',
+                COALESCE(MAX(CASE WHEN cpn.preferred = 1 THEN cpn.given_name END), MAX(cpn.given_name)),
+                COALESCE(MAX(CASE WHEN cpn.preferred = 1 THEN cpn.middle_name END), MAX(cpn.middle_name)),
+                COALESCE(MAX(CASE WHEN cpn.preferred = 1 THEN cpn.family_name END), MAX(cpn.family_name))),
+            'Healthcare Provider'
+        ) as provider_name,
+        COALESCE(MAX(l.name), 'Outpatient Department') as location_name
     FROM encounter e
     LEFT JOIN encounter_type et ON e.encounter_type = et.encounter_type_id
     LEFT JOIN encounter_provider ep ON e.encounter_id = ep.encounter_id AND ep.voided = 0
     LEFT JOIN provider pr ON ep.provider_id = pr.provider_id
-    LEFT JOIN person_name pn ON pr.person_id = pn.person_id AND pn.preferred = 1
+    LEFT JOIN person_name pn ON pr.person_id = pn.person_id AND pn.voided = 0
+    LEFT JOIN users u ON u.user_id = e.creator
+    LEFT JOIN person_name cpn ON cpn.person_id = u.person_id AND cpn.voided = 0
     LEFT JOIN location l ON e.location_id = l.location_id
     WHERE e.patient_id = {pid} AND e.voided = 0
-    ORDER BY e.encounter_datetime DESC;
+    GROUP BY e.encounter_id
+    ORDER BY MAX(e.encounter_datetime) DESC;
     """
     enc_out = run_sql(enc_sql, db_name)
     enc_rows = [line.split("\t") for line in enc_out.splitlines() if line.strip()]
@@ -406,16 +419,21 @@ def fetch_patient_data(pid, db_name):
             elif cid in (25, 27):
                 if ans and ans not in ["Confirmed", "Coded Diagnosis", "False", "True"]:
                     disposition = ans
-            elif cid in (13, 16, 19, 51, 125, 129, 132, 135, 11198):
-                pass  # Internal form navigation and status flags
+            elif cid in (13, 16, 19, 50, 51, 125, 129, 132, 135, 11198, 39, 40, 41):
+                pass  # Internal form navigation, status flags, lab metadata
+                      # and diagnosis metadata (concept 50 "Bahmni Initial Diagnosis"
+                      # carries only a self-referencing group UUID, never a value;
+                      # the real diagnosis is the sibling "Coded Diagnosis" obs)
             else:
-                fname = form_tbl or p1 or "Additional Clinical Observations"
+                # Group by the observation's own form/obs-group name
+                # (parent obs-group concept first, then the encounter form)
+                fname = p1 or form_tbl or "Additional Clinical Observations"
                 other_forms.setdefault(fname, []).append((cid, cname, ans))
 
         # Prescribed Medications
         med_sql = f"""
         SELECT 
-            COALESCE(d.name, cn.name, 'Medication') as drug_name,
+            COALESCE(d.name, NULLIF(TRIM(do.drug_non_coded), ''), cn.name, 'Medication') as drug_name,
             COALESCE(CAST(do.dose AS CHAR), '') as dose,
             COALESCE(CAST(do.duration AS CHAR), '') as duration,
             COALESCE(do.dosing_instructions, o.instructions, '') as instructions
@@ -423,7 +441,8 @@ def fetch_patient_data(pid, db_name):
         JOIN drug_order do ON o.order_id = do.order_id
         LEFT JOIN drug d ON do.drug_inventory_id = d.drug_id
         LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale='en' AND cn.concept_name_type='FULLY_SPECIFIED'
-        WHERE o.encounter_id = {eid} AND o.voided = 0;
+        WHERE o.encounter_id = {eid} AND o.voided = 0
+        ORDER BY o.concept_id ASC, o.order_id ASC;
         """
         med_lines = [l.split("\t") for l in run_sql(med_sql, db_name).splitlines() if l.strip()]
         if med_lines and med_lines[0][0] == "drug_name":
@@ -445,37 +464,58 @@ def fetch_patient_data(pid, db_name):
                 "instructions": instr_clean
             })
 
-        # Lab Orders & Investigations
+        # Lab Orders & Investigations (one line per order, component results
+        # grouped under it, sorted by concept_id, metadata rows skipped)
         ord_sql = f"""
-        SELECT 
+        SELECT
             COALESCE(ot.name, 'Investigation') as order_type,
             COALESCE(cn.name, 'Order') as order_name,
-            COALESCE(ca.name, res_obs.value_text, CAST(res_obs.value_numeric AS CHAR), '') as result_val
+            o.concept_id as order_cid,
+            COALESCE(rn.name, '') as component_name,
+            res.concept_id as component_cid,
+            COALESCE(ra.name, res.value_text, CAST(res.value_numeric AS CHAR), '') as result_val
         FROM orders o
         LEFT JOIN order_type ot ON o.order_type_id = ot.order_type_id
         LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
-        LEFT JOIN obs res_obs ON o.order_id = res_obs.order_id AND res_obs.voided = 0
-        LEFT JOIN concept_name ca ON res_obs.value_coded = ca.concept_id AND ca.locale = 'en' AND (ca.concept_name_type = 'FULLY_SPECIFIED' OR ca.locale_preferred = 1) AND ca.voided = 0
-        WHERE o.encounter_id = {eid} 
+        LEFT JOIN obs res ON o.order_id = res.order_id AND res.voided = 0
+        LEFT JOIN concept_name rn ON res.concept_id = rn.concept_id AND rn.locale = 'en' AND (rn.concept_name_type = 'FULLY_SPECIFIED' OR rn.locale_preferred = 1) AND rn.voided = 0
+        LEFT JOIN concept_name ra ON res.value_coded = ra.concept_id AND ra.locale = 'en' AND (ra.concept_name_type = 'FULLY_SPECIFIED' OR ra.locale_preferred = 1) AND ra.voided = 0
+        WHERE o.encounter_id = {eid}
           AND o.order_id NOT IN (SELECT order_id FROM drug_order)
-          AND o.voided = 0;
+          AND o.voided = 0
+        ORDER BY order_cid ASC, component_cid ASC, result_val ASC;
         """
         ord_lines = [l.split("\t") for l in run_sql(ord_sql, db_name).splitlines() if l.strip()]
         if ord_lines and ord_lines[0][0] == "order_type":
             ord_lines = ord_lines[1:]
 
-        ord_items = []
+        # Internal obs concepts used for reference ranges, not clinical results
+        skip_components = {"LAB_MINNORMAL", "LAB_MAXNORMAL", "LAB_ABNORMAL"}
+        orders_map = {}
+        order_seq = []
         for orl in ord_lines:
-            if len(orl) < 3:
+            if len(orl) < 6:
                 continue
-            otype, oname, ores = orl[:3]
+            otype, oname, _ocid, comp, _ccid, ores = orl[:6]
+            otype, oname, comp, ores = otype.strip(), oname.strip(), comp.strip(), ores.strip()
             if "registration fee" in oname.lower():
                 continue
-            ord_items.append({
-                "type": otype,
-                "name": oname,
-                "result": ores
-            })
+            key = (otype, oname)
+            if key not in orders_map:
+                orders_map[key] = {"type": otype, "name": oname, "results": []}
+                order_seq.append(key)
+            entry = orders_map[key]
+            if not comp or comp in skip_components:
+                continue
+            if not ores or ores.lower() in ("null", "none", "undefined"):
+                continue
+            if ores == "True":  # LAB_ABNORMAL style flag leftover
+                continue
+            item = f"{comp}: {ores}"
+            if item not in entry["results"]:
+                entry["results"].append(item)
+
+        ord_items = [orders_map[k] for k in order_seq]
 
         # Skip empty administrative encounters with 0 clinical content
         if not chief_complaint and not hpi_narrative and not vitals and not exam_positive and not diagnoses and not med_items and not ord_items and not other_forms:
@@ -597,7 +637,7 @@ def generate_pdf(patient, date_groups, filepath):
                 story.append(Paragraph("<b>LABORATORY & INVESTIGATIONS:</b>", sec_head_style))
                 tdata = []
                 for o in enc['orders']:
-                    res_txt = o['result'] if o['result'] else "Status: Ordered"
+                    res_txt = ", ".join(o['results']) if o.get('results') else "Status: Ordered"
                     tdata.append([
                         Paragraph(f"• <b>[{escape(o['type'])}]</b> {escape(o['name'])}", body_style),
                         Paragraph(escape(str(res_txt)), body_style)
