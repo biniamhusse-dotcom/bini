@@ -166,5 +166,17 @@
         "icon": "fa-stethoscope",
         "order": 14,
         "requiredPrivilege": "app:admin"
+    },
+    "medicationConfig":{
+        "id": "bahmni.admin.medicationConfig",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {
+        },
+        "label": "Medication Dropdown Management",
+        "url": "#/medicationConfig",
+        "icon": "fa-pills",
+        "order": 15,
+        "requiredPrivilege": "app:admin"
     }
 }

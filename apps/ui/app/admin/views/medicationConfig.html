@@ -1,0 +1,389 @@
+<div class="opd-header-wrapper" style="margin-bottom: 20px;">
+    <div class="opd-header-bottom" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div>
+            <h2 style="margin: 0; color: #1e3a5f; font-size: 20px; font-weight: 700;">
+                <i class="fa fa-medkit" style="margin-right: 8px; color: #0284c7;"></i>Medication Dropdown Management
+            </h2>
+            <span style="font-size: 13px; color: #64748b;">Manage Dose Units, Dispensing Units, Frequencies, Routes, Duration Units, Instructions, and Pharmacy Locations</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" ng-click="initDefaults()" ng-disabled="saving" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
+                <i class="fa fa-bolt"></i> Initialize / Repair Standard Clinical Sets
+            </button>
+            <button class="btn" ng-click="loadConfig()" ng-disabled="loading" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; border-left: 4px solid #0284c7; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Dose Units</div>
+        <div style="font-size: 22px; font-weight: bold; color: #0284c7; margin-top: 4px;">{{ data.doseUnits.length }}</div>
+    </div>
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; border-left: 4px solid #059669; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Dispensing Units</div>
+        <div style="font-size: 22px; font-weight: bold; color: #059669; margin-top: 4px;">{{ data.dispensingUnits.length }}</div>
+    </div>
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; border-left: 4px solid #7c3aed; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Frequencies</div>
+        <div style="font-size: 22px; font-weight: bold; color: #7c3aed; margin-top: 4px;">{{ data.frequencies.length }}</div>
+    </div>
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; border-left: 4px solid #ea580c; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Routes</div>
+        <div style="font-size: 22px; font-weight: bold; color: #ea580c; margin-top: 4px;">{{ data.routes.length }}</div>
+    </div>
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; border-left: 4px solid #0d9488; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Duration Units</div>
+        <div style="font-size: 22px; font-weight: bold; color: #0d9488; margin-top: 4px;">{{ data.durationUnits.length }}</div>
+    </div>
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; border-left: 4px solid #db2777; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Instructions</div>
+        <div style="font-size: 22px; font-weight: bold; color: #db2777; margin-top: 4px;">{{ data.dosingInstructions.length }}</div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div style="display: flex; gap: 4px; border-bottom: 2px solid #cbd5e1; margin-bottom: 20px; overflow-x: auto;">
+    <button ng-click="setActiveTab('doseUnits')" ng-class="{'active-tab': activeTab === 'doseUnits'}" style="padding: 10px 18px; border: none; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px;">
+        💊 Dose Units ({{ data.doseUnits.length }})
+    </button>
+    <button ng-click="setActiveTab('dispensingUnits')" ng-class="{'active-tab': activeTab === 'dispensingUnits'}" style="padding: 10px 18px; border: none; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px;">
+        📦 Dispensing Units ({{ data.dispensingUnits.length }})
+    </button>
+    <button ng-click="setActiveTab('frequencies')" ng-class="{'active-tab': activeTab === 'frequencies'}" style="padding: 10px 18px; border: none; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px;">
+        ⏰ Frequencies ({{ data.frequencies.length }})
+    </button>
+    <button ng-click="setActiveTab('routes')" ng-class="{'active-tab': activeTab === 'routes'}" style="padding: 10px 18px; border: none; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px;">
+        💉 Routes ({{ data.routes.length }})
+    </button>
+    <button ng-click="setActiveTab('durationInstructions')" ng-class="{'active-tab': activeTab === 'durationInstructions'}" style="padding: 10px 18px; border: none; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px;">
+        📅 Duration &amp; Instructions
+    </button>
+    <button ng-click="setActiveTab('locations')" ng-class="{'active-tab': activeTab === 'locations'}" style="padding: 10px 18px; border: none; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px;">
+        🏥 Pharmacy / Dispensing Locations
+    </button>
+</div>
+
+<style>
+    .active-tab { color: #0284c7 !important; border-bottom-color: #0284c7 !important; background: #f0f9ff !important; border-radius: 6px 6px 0 0; }
+    .config-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .config-table { width: 100%; border-collapse: collapse; }
+    .config-table th { background: #f8fafc; color: #475569; font-weight: 600; font-size: 12px; text-transform: uppercase; padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    .config-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; vertical-align: middle; }
+    .config-table tr:hover { background: #f8fafc; }
+    .badge-pill { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-blue { background: #e0f2fe; color: #0369a1; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-gray { background: #f1f5f9; color: #475569; }
+</style>
+
+<!-- TAB 1: DOSE UNITS -->
+<div ng-if="activeTab === 'doseUnits'" class="config-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 style="margin: 0; color: #1e3a5f; font-size: 16px;">Dose Units (Order Drug &rarr; Dose "Units")</h3>
+            <span style="font-size: 12px; color: #64748b;">Mapped to OpenMRS Concept Set <code>Dosing Units</code> (UUID: {{ data.globalProperties['order.drugDosingUnitsConceptUuid'] }})</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" ng-model="searchQuery" placeholder="Filter dose units..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; width: 200px;">
+        </div>
+    </div>
+
+    <!-- Add Unit Form -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center;">
+        <span style="font-weight: 600; font-size: 13px; color: #334155;">Add Dose Unit:</span>
+        <input type="text" ng-model="newDoseUnit.name" placeholder="e.g. Ampoule, Sachet, Suppository" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; flex: 1; max-width: 300px;">
+        <button class="btn btn-success" ng-click="addDoseUnit()" ng-disabled="!newDoseUnit.name || saving" style="background: #059669; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: 600; cursor: pointer;">
+            <i class="fa fa-plus"></i> Add Unit
+        </button>
+    </div>
+
+    <table class="config-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Unit Name</th>
+                <th>Concept ID</th>
+                <th>UUID</th>
+                <th>Sort Weight</th>
+                <th style="width: 100px; text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="item in data.doseUnits | filter:searchQuery track by item.conceptId">
+                <td style="color: #94a3b8;">{{ $index + 1 }}</td>
+                <td style="font-weight: 600; color: #1e293b;">
+                    <span class="badge-pill badge-blue">{{ item.name }}</span>
+                </td>
+                <td style="color: #64748b;">{{ item.conceptId }}</td>
+                <td style="font-family: monospace; font-size: 11px; color: #64748b;">{{ item.uuid }}</td>
+                <td style="color: #64748b;">{{ item.sortWeight }}</td>
+                <td style="text-align: right;">
+                    <button class="btn btn-danger" ng-click="removeDoseUnit(item)" ng-disabled="saving" title="Remove unit" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                        <i class="fa fa-trash"></i> Remove
+                    </button>
+                </td>
+            </tr>
+            <tr ng-if="data.doseUnits.length === 0">
+                <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">
+                    No dose units found in set. Click "Initialize / Repair Standard Clinical Sets" above to restore defaults!
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- TAB 2: DISPENSING UNITS -->
+<div ng-if="activeTab === 'dispensingUnits'" class="config-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 style="margin: 0; color: #1e3a5f; font-size: 16px;">Dispensing Units (Order Drug &rarr; Dispensing Unit)</h3>
+            <span style="font-size: 12px; color: #64748b;">Mapped to OpenMRS Concept Set <code>Dispensing units</code> (UUID: {{ data.globalProperties['order.drugDispensingUnitsConceptUuid'] }})</span>
+        </div>
+        <div>
+            <input type="text" ng-model="searchQuery" placeholder="Filter dispensing units..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; width: 200px;">
+        </div>
+    </div>
+
+    <!-- Add Unit Form -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center;">
+        <span style="font-weight: 600; font-size: 13px; color: #334155;">Add Dispensing Unit:</span>
+        <input type="text" ng-model="newDispensingUnit.name" placeholder="e.g. Strip, Tube, Bottle, Box" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; flex: 1; max-width: 300px;">
+        <button class="btn btn-success" ng-click="addDispensingUnit()" ng-disabled="!newDispensingUnit.name || saving" style="background: #059669; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: 600; cursor: pointer;">
+            <i class="fa fa-plus"></i> Add Unit
+        </button>
+    </div>
+
+    <table class="config-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Unit Name</th>
+                <th>Concept ID</th>
+                <th>UUID</th>
+                <th>Sort Weight</th>
+                <th style="width: 100px; text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="item in data.dispensingUnits | filter:searchQuery track by item.conceptId">
+                <td style="color: #94a3b8;">{{ $index + 1 }}</td>
+                <td style="font-weight: 600; color: #1e293b;">
+                    <span class="badge-pill badge-green">{{ item.name }}</span>
+                </td>
+                <td style="color: #64748b;">{{ item.conceptId }}</td>
+                <td style="font-family: monospace; font-size: 11px; color: #64748b;">{{ item.uuid }}</td>
+                <td style="color: #64748b;">{{ item.sortWeight }}</td>
+                <td style="text-align: right;">
+                    <button class="btn btn-danger" ng-click="removeDispensingUnit(item)" ng-disabled="saving" title="Remove unit" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                        <i class="fa fa-trash"></i> Remove
+                    </button>
+                </td>
+            </tr>
+            <tr ng-if="data.dispensingUnits.length === 0">
+                <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">
+                    No dispensing units found. Click "Initialize / Repair Standard Clinical Sets" above to restore defaults!
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- TAB 3: FREQUENCIES -->
+<div ng-if="activeTab === 'frequencies'" class="config-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 style="margin: 0; color: #1e3a5f; font-size: 16px;">Order Frequencies (Frequency Dropdown)</h3>
+            <span style="font-size: 12px; color: #64748b;">Table <code>order_frequency</code> in OpenMRS</span>
+        </div>
+        <div>
+            <input type="text" ng-model="searchQuery" placeholder="Filter frequencies..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; width: 200px;">
+        </div>
+    </div>
+
+    <!-- Add Frequency Form -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <span style="font-weight: 600; font-size: 13px; color: #334155;">Add Frequency:</span>
+        <input type="text" ng-model="newFrequency.name" placeholder="e.g. Every 2 hours, PRN" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; width: 220px;">
+        <input type="number" step="any" ng-model="newFrequency.frequencyPerDay" placeholder="Times/day (e.g. 1.0, 2.0)" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; width: 140px;">
+        <button class="btn btn-success" ng-click="addFrequency()" ng-disabled="!newFrequency.name || saving" style="background: #059669; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: 600; cursor: pointer;">
+            <i class="fa fa-plus"></i> Add Frequency
+        </button>
+    </div>
+
+    <table class="config-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Frequency Name</th>
+                <th>Times Per Day</th>
+                <th>UUID</th>
+                <th style="width: 100px; text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="item in data.frequencies | filter:searchQuery track by item.frequencyId">
+                <td style="color: #94a3b8;">{{ $index + 1 }}</td>
+                <td style="font-weight: 600; color: #1e293b;">{{ item.name }}</td>
+                <td>
+                    <span class="badge-pill badge-blue">{{ item.frequencyPerDay !== null ? (item.frequencyPerDay + ' / day') : 'As needed' }}</span>
+                </td>
+                <td style="font-family: monospace; font-size: 11px; color: #64748b;">{{ item.uuid }}</td>
+                <td style="text-align: right;">
+                    <button class="btn btn-danger" ng-click="retireFrequency(item)" ng-disabled="saving" title="Retire frequency" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                        <i class="fa fa-ban"></i> Retire
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- TAB 4: ROUTES -->
+<div ng-if="activeTab === 'routes'" class="config-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 style="margin: 0; color: #1e3a5f; font-size: 16px;">Medication Administration Routes</h3>
+            <span style="font-size: 12px; color: #64748b;">Concept Set <code>order.drugRoutesConceptUuid</code></span>
+        </div>
+        <div>
+            <input type="text" ng-model="searchQuery" placeholder="Filter routes..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; width: 200px;">
+        </div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center;">
+        <span style="font-weight: 600; font-size: 13px; color: #334155;">Add Route:</span>
+        <input type="text" ng-model="newRoute.name" placeholder="e.g. Subcutaneous, Inhalation" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; flex: 1; max-width: 300px;">
+        <button class="btn btn-success" ng-click="addRoute()" ng-disabled="!newRoute.name || saving" style="background: #059669; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: 600; cursor: pointer;">
+            <i class="fa fa-plus"></i> Add Route
+        </button>
+    </div>
+
+    <table class="config-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Route Name</th>
+                <th>Concept ID</th>
+                <th>UUID</th>
+                <th style="width: 100px; text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="item in data.routes | filter:searchQuery track by item.conceptId">
+                <td style="color: #94a3b8;">{{ $index + 1 }}</td>
+                <td style="font-weight: 600; color: #1e293b;">
+                    <span class="badge-pill badge-blue">{{ item.name }}</span>
+                </td>
+                <td style="color: #64748b;">{{ item.conceptId }}</td>
+                <td style="font-family: monospace; font-size: 11px; color: #64748b;">{{ item.uuid }}</td>
+                <td style="text-align: right;">
+                    <button class="btn btn-danger" ng-click="removeRoute(item)" ng-disabled="saving" title="Remove route" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                        <i class="fa fa-trash"></i> Remove
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- TAB 5: DURATION & INSTRUCTIONS -->
+<div ng-if="activeTab === 'durationInstructions'" class="config-card">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+            <h3 style="margin-top: 0; color: #1e3a5f; font-size: 16px;">Duration Units</h3>
+            <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 12px;">e.g. Days, Weeks, Months</span>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input type="text" ng-model="newDurationUnit.name" placeholder="Add duration unit..." style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; flex: 1;">
+                <button class="btn btn-success" ng-click="addDurationUnit()" ng-disabled="!newDurationUnit.name || saving" style="background: #059669; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-plus"></i>
+                </button>
+            </div>
+            <table class="config-table">
+                <thead>
+                    <tr><th>Name</th><th style="width: 60px;">Action</th></tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="item in data.durationUnits track by item.conceptId">
+                        <td style="font-weight: 600;">{{ item.name }}</td>
+                        <td>
+                            <button class="btn btn-danger" ng-click="removeDurationUnit(item)" ng-disabled="saving" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; padding: 2px 6px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <h3 style="margin-top: 0; color: #1e3a5f; font-size: 16px;">Dosing Instructions</h3>
+            <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 12px;">e.g. Before meals, After meals, At bedtime</span>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input type="text" ng-model="newInstruction.name" placeholder="Add dosing instruction..." style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; flex: 1;">
+                <button class="btn btn-success" ng-click="addInstruction()" ng-disabled="!newInstruction.name || saving" style="background: #059669; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer;">
+                    <i class="fa fa-plus"></i>
+                </button>
+            </div>
+            <table class="config-table">
+                <thead>
+                    <tr><th>Instruction</th><th style="width: 60px;">Action</th></tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="item in data.dosingInstructions track by item.conceptId">
+                        <td style="font-weight: 600;">{{ item.name }}</td>
+                        <td>
+                            <button class="btn btn-danger" ng-click="removeInstruction(item)" ng-disabled="saving" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; padding: 2px 6px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 6: DISPENSING LOCATIONS -->
+<div ng-if="activeTab === 'locations'" class="config-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 style="margin: 0; color: #1e3a5f; font-size: 16px;">Pharmacy &amp; Dispensing Locations</h3>
+            <span style="font-size: 12px; color: #64748b;">Locations tagged with <code>Drug dispensing unit</code> appear in the Dispensing Unit dropdown at the top of the Medication order form.</span>
+        </div>
+        <div>
+            <input type="text" ng-model="searchQuery" placeholder="Filter locations..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; width: 200px;">
+        </div>
+    </div>
+
+    <table class="config-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Location Name</th>
+                <th>Description</th>
+                <th>Dispensing Unit Tag</th>
+                <th style="width: 140px; text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="loc in data.locations | filter:searchQuery track by loc.locationId">
+                <td style="color: #94a3b8;">{{ $index + 1 }}</td>
+                <td style="font-weight: 600; color: #1e293b;">{{ loc.name }}</td>
+                <td style="color: #64748b;">{{ loc.description || '—' }}</td>
+                <td>
+                    <span ng-if="loc.isDispensing" class="badge-pill badge-green"><i class="fa fa-check"></i> Enabled (Dispensing Unit)</span>
+                    <span ng-if="!loc.isDispensing" class="badge-pill badge-gray">Not Tagged</span>
+                </td>
+                <td style="text-align: right;">
+                    <button class="btn" ng-click="toggleLocationDispensing(loc)" ng-disabled="saving" ng-style="loc.isDispensing ? {'background': '#fee2e2', 'color': '#dc2626', 'border': '1px solid #fecaca'} : {'background': '#dcfce7', 'color': '#15803d', 'border': '1px solid #bbf7d0'}" style="padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                        {{ loc.isDispensing ? 'Disable' : 'Enable Tag' }}
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

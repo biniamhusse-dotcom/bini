@@ -1552,6 +1552,296 @@ def save_payment_config(payload):
 
     return load_payment_config()
 
+# ── Medication Dropdowns Management ──────────────────────────────────────────
+
+def run_omrs_query(sql):
+    omrs = get_container("openmrsdb") or "bahmni-standard-openmrsdb-1"
+    cmd = ["docker", "exec", "-i", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "-N", "-B", "openmrs", "-e", sql]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        log(f"SQL Error in run_omrs_query: {res.stderr}")
+        return []
+    lines = [l for l in res.stdout.strip().split("\n") if l.strip()]
+    return [l.split("\t") for l in lines]
+
+def run_omrs_exec(sql):
+    omrs = get_container("openmrsdb") or "bahmni-standard-openmrsdb-1"
+    cmd = ["docker", "exec", "-i", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "openmrs", "-e", sql]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        log(f"SQL Error in run_omrs_exec: {res.stderr}")
+        raise RuntimeError(res.stderr)
+    return True
+
+def load_medication_dropdown_config():
+    gp_rows = run_omrs_query("SELECT property, COALESCE(property_value, '') FROM global_property WHERE property LIKE 'order.%';")
+    gps = {r[0]: r[1] for r in gp_rows if len(r) >= 2}
+    
+    dose_uuid = gps.get("order.drugDosingUnitsConceptUuid", "d45d6060-5e07-11ef-8f7c-0242ac120002")
+    disp_uuid = gps.get("order.drugDispensingUnitsConceptUuid", "162402AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    route_uuid = gps.get("order.drugRoutesConceptUuid", "d462489d-5e07-11ef-8f7c-0242ac120002")
+    duration_uuid = gps.get("order.durationUnitsConceptUuid", "1732AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    inst_uuid = gps.get("order.dosingInstructionsConceptUuid", "d46ee786-5e07-11ef-8f7c-0242ac120002")
+
+    def get_set_members(set_uuid):
+        if not set_uuid or set_uuid == 'NULL':
+            return []
+        sql = f"""
+        SELECT c.concept_id, c.uuid, cn.name, COALESCE(cs.sort_weight, 0)
+        FROM concept parent
+        JOIN concept_set cs ON parent.concept_id = cs.concept_set
+        JOIN concept c ON cs.concept_id = c.concept_id
+        JOIN concept_name cn ON c.concept_id = cn.concept_id 
+             AND cn.concept_name_type = 'FULLY_SPECIFIED' 
+             AND (cn.locale = 'en' OR cn.locale = '')
+        WHERE parent.uuid = '{set_uuid}' AND c.retired = 0
+        GROUP BY c.concept_id, c.uuid, cn.name, cs.sort_weight
+        ORDER BY cs.sort_weight, cn.name;
+        """
+        rows = run_omrs_query(sql)
+        items = []
+        seen = set()
+        for r in rows:
+            if len(r) >= 3:
+                cid, u, name = r[0], r[1], r[2]
+                if cid not in seen:
+                    seen.add(cid)
+                    items.append({
+                        "conceptId": int(cid),
+                        "uuid": u,
+                        "name": name,
+                        "sortWeight": float(r[3]) if len(r) > 3 and r[3] else 0.0
+                    })
+        return items
+
+    dose_units = get_set_members(dose_uuid)
+    disp_units = get_set_members(disp_uuid)
+    routes = get_set_members(route_uuid)
+    duration_units = get_set_members(duration_uuid)
+    instructions = get_set_members(inst_uuid)
+
+    freq_rows = run_omrs_query("SELECT order_frequency_id, name, frequency_per_day, uuid, retired FROM order_frequency WHERE retired=0 ORDER BY frequency_per_day, name;")
+    frequencies = []
+    for r in freq_rows:
+        if len(r) >= 4:
+            frequencies.append({
+                "frequencyId": int(r[0]),
+                "name": r[1],
+                "frequencyPerDay": float(r[2]) if r[2] and r[2] != 'NULL' else None,
+                "uuid": r[3],
+                "retired": bool(int(r[4])) if len(r) > 4 and r[4] else False
+            })
+
+    loc_rows = run_omrs_query("""
+        SELECT l.location_id, l.uuid, l.name, COALESCE(l.description, ''),
+               CASE WHEN ltm.location_tag_id IS NOT NULL THEN 1 ELSE 0 END as is_dispensing
+        FROM location l
+        LEFT JOIN location_tag lt ON lt.name = 'Drug dispensing unit'
+        LEFT JOIN location_tag_map ltm ON l.location_id = ltm.location_id AND ltm.location_tag_id = lt.location_tag_id
+        WHERE l.retired = 0
+        ORDER BY is_dispensing DESC, l.name;
+    """)
+    locations = []
+    for r in loc_rows:
+        if len(r) >= 5:
+            locations.append({
+                "locationId": int(r[0]),
+                "uuid": r[1],
+                "name": r[2],
+                "description": r[3],
+                "isDispensing": bool(int(r[4]))
+            })
+
+    return {
+        "globalProperties": gps,
+        "doseUnits": dose_units,
+        "dispensingUnits": disp_units,
+        "frequencies": frequencies,
+        "routes": routes,
+        "durationUnits": duration_units,
+        "dosingInstructions": instructions,
+        "locations": locations
+    }
+
+def save_medication_dropdown_action(payload):
+    action = payload.get("action", "")
+    
+    if action == "init_defaults":
+        run_omrs_exec("""
+            UPDATE global_property SET property_value = 'd45d6060-5e07-11ef-8f7c-0242ac120002' WHERE property = 'order.drugDosingUnitsConceptUuid';
+            UPDATE global_property SET property_value = '162402AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' WHERE property = 'order.drugDispensingUnitsConceptUuid';
+            UPDATE global_property SET property_value = 'd462489d-5e07-11ef-8f7c-0242ac120002' WHERE property = 'order.drugRoutesConceptUuid';
+            UPDATE global_property SET property_value = '1732AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' WHERE property = 'order.durationUnitsConceptUuid';
+            UPDATE global_property SET property_value = 'd46ee786-5e07-11ef-8f7c-0242ac120002' WHERE property = 'order.dosingInstructionsConceptUuid';
+            UPDATE concept SET is_set = 1 WHERE uuid IN ('d45d6060-5e07-11ef-8f7c-0242ac120002', '162402AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'd462489d-5e07-11ef-8f7c-0242ac120002', '1732AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'd46ee786-5e07-11ef-8f7c-0242ac120002');
+        """)
+        
+        dose_names = ['Tablet', 'Capsule', 'Milliliter', 'Milligram', 'Gram', 'Microgram', 'Drop', 'Tablespoon', 'Teaspoon', 'Unit', 'Puff', 'Vial', 'Ampoule', 'Patch', 'Suppository']
+        for idx, dname in enumerate(dose_names):
+            run_omrs_exec(f"""
+                INSERT IGNORE INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+                SELECT c.concept_id, parent.concept_id, {(idx+1)*10.0}, 1, NOW(), UUID()
+                FROM concept parent
+                JOIN concept c ON c.concept_id = (
+                    SELECT cn.concept_id FROM concept_name cn WHERE cn.name = '{dname}' AND cn.voided = 0 LIMIT 1
+                )
+                WHERE parent.uuid = 'd45d6060-5e07-11ef-8f7c-0242ac120002'
+                AND NOT EXISTS (
+                    SELECT 1 FROM concept_set cs WHERE cs.concept_set = parent.concept_id AND cs.concept_id = c.concept_id
+                );
+            """)
+
+        disp_names = ['Bottle', 'Box', 'Packets', 'Inhaler', 'Kit', 'Each', 'Dose pack', 'Bag', 'Cartridge', 'Tablet', 'Capsule', 'Vial', 'Ampoule', 'Strip', 'Tube']
+        for idx, dname in enumerate(disp_names):
+            run_omrs_exec(f"""
+                INSERT IGNORE INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+                SELECT c.concept_id, parent.concept_id, {(idx+1)*10.0}, 1, NOW(), UUID()
+                FROM concept parent
+                JOIN concept c ON c.concept_id = (
+                    SELECT cn.concept_id FROM concept_name cn WHERE cn.name = '{dname}' AND cn.voided = 0 LIMIT 1
+                )
+                WHERE parent.uuid = '162402AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+                AND NOT EXISTS (
+                    SELECT 1 FROM concept_set cs WHERE cs.concept_set = parent.concept_id AND cs.concept_id = c.concept_id
+                );
+            """)
+
+        freqs = [
+            ("Once a day", 1.0),
+            ("Twice a day", 2.0),
+            ("Thrice a day", 3.0),
+            ("Four times a day", 4.0),
+            ("Every 4 hours", 6.0),
+            ("Every 6 hours", 4.0),
+            ("Every 8 hours", 3.0),
+            ("Every 12 hours", 2.0),
+            ("Once a week", 0.142857),
+            ("Immediately", 1.0),
+            ("As needed", None)
+        ]
+        for fname, fperday in freqs:
+            val_str = f"{fperday}" if fperday is not None else "NULL"
+            run_omrs_exec(f"""
+                INSERT INTO order_frequency (name, frequency_per_day, concept_id, creator, date_created, retired, uuid)
+                SELECT '{fname}', {val_str}, 
+                       (SELECT concept_id FROM concept_name WHERE name='{fname}' LIMIT 1),
+                       1, NOW(), 0, UUID()
+                FROM DUAL
+                WHERE NOT EXISTS (SELECT 1 FROM order_frequency WHERE name='{fname}' AND retired=0);
+            """)
+
+        run_omrs_exec("""
+            INSERT IGNORE INTO location_tag (name, description, creator, date_created, uuid)
+            VALUES ('Drug dispensing unit', 'Locations that dispense medications', 1, NOW(), UUID());
+
+            INSERT IGNORE INTO location_tag_map (location_id, location_tag_id)
+            SELECT l.location_id, lt.location_tag_id
+            FROM location l, location_tag lt
+            WHERE lt.name = 'Drug dispensing unit'
+              AND l.name = 'OPD Pharmacy'
+              AND l.retired = 0;
+        """)
+
+        return {"success": True, "message": "Standard drug dropdowns and clinical units successfully initialized!"}
+
+    elif action in ("add_dose_unit", "add_dispensing_unit", "add_route", "add_duration_unit", "add_instruction"):
+        unit_name = payload.get("name", "").strip()
+        if not unit_name:
+            raise ValueError("Unit name is required")
+        
+        target_set_uuid = {
+            "add_dose_unit": "d45d6060-5e07-11ef-8f7c-0242ac120002",
+            "add_dispensing_unit": "162402AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "add_route": "d462489d-5e07-11ef-8f7c-0242ac120002",
+            "add_duration_unit": "1732AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "add_instruction": "d46ee786-5e07-11ef-8f7c-0242ac120002"
+        }[action]
+
+        c_rows = run_omrs_query(f"SELECT concept_id FROM concept_name WHERE name = '{unit_name}' AND voided = 0 LIMIT 1;")
+        if c_rows and len(c_rows[0]) >= 1:
+            concept_id = int(c_rows[0][0])
+        else:
+            run_omrs_exec(f"""
+                INSERT INTO concept (datatype_id, class_id, is_set, creator, date_created, uuid)
+                VALUES (
+                    (SELECT concept_datatype_id FROM concept_datatype WHERE hl7_abbrev = 'N/A' LIMIT 1),
+                    (SELECT concept_class_id FROM concept_class WHERE name = 'Misc' LIMIT 1),
+                    0, 1, NOW(), UUID()
+                );
+                SET @new_cid = LAST_INSERT_ID();
+                INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, uuid)
+                VALUES (@new_cid, '{unit_name}', 'en', 1, 1, NOW(), 'FULLY_SPECIFIED', UUID());
+            """)
+            c_rows2 = run_omrs_query(f"SELECT concept_id FROM concept_name WHERE name = '{unit_name}' AND voided = 0 LIMIT 1;")
+            concept_id = int(c_rows2[0][0])
+
+        run_omrs_exec(f"""
+            INSERT IGNORE INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+            SELECT {concept_id}, concept_id, 999.0, 1, NOW(), UUID()
+            FROM concept
+            WHERE uuid = '{target_set_uuid}'
+            AND NOT EXISTS (
+                SELECT 1 FROM concept_set WHERE concept_set = concept.concept_id AND concept_id = {concept_id}
+            );
+        """)
+        return {"success": True, "message": f"Successfully added '{unit_name}'."}
+
+    elif action in ("remove_dose_unit", "remove_dispensing_unit", "remove_route", "remove_duration_unit", "remove_instruction"):
+        concept_id = int(payload.get("conceptId"))
+        target_set_uuid = {
+            "remove_dose_unit": "d45d6060-5e07-11ef-8f7c-0242ac120002",
+            "remove_dispensing_unit": "162402AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "remove_route": "d462489d-5e07-11ef-8f7c-0242ac120002",
+            "remove_duration_unit": "1732AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "remove_instruction": "d46ee786-5e07-11ef-8f7c-0242ac120002"
+        }[action]
+
+        run_omrs_exec(f"""
+            DELETE cs FROM concept_set cs
+            JOIN concept parent ON cs.concept_set = parent.concept_id
+            WHERE parent.uuid = '{target_set_uuid}' AND cs.concept_id = {concept_id};
+        """)
+        return {"success": True, "message": "Successfully removed."}
+
+    elif action == "add_frequency":
+        name = payload.get("name", "").strip()
+        f_per_day = payload.get("frequencyPerDay")
+        val_str = f"{float(f_per_day)}" if f_per_day is not None and str(f_per_day).strip() != "" else "NULL"
+        run_omrs_exec(f"""
+            INSERT INTO order_frequency (name, frequency_per_day, concept_id, creator, date_created, retired, uuid)
+            SELECT '{name}', {val_str}, 
+                   (SELECT concept_id FROM concept_name WHERE name='{name}' LIMIT 1),
+                   1, NOW(), 0, UUID();
+        """)
+        return {"success": True, "message": f"Successfully added frequency '{name}'."}
+
+    elif action == "retire_frequency":
+        fid = int(payload.get("frequencyId"))
+        run_omrs_exec(f"UPDATE order_frequency SET retired = 1 WHERE order_frequency_id = {fid};")
+        return {"success": True, "message": "Frequency retired."}
+
+    elif action == "toggle_location_dispensing":
+        loc_id = int(payload.get("locationId"))
+        enable = bool(payload.get("enable"))
+        if enable:
+            run_omrs_exec(f"""
+                INSERT IGNORE INTO location_tag (name, description, creator, date_created, uuid)
+                VALUES ('Drug dispensing unit', 'Locations that dispense medications', 1, NOW(), UUID());
+
+                INSERT IGNORE INTO location_tag_map (location_id, location_tag_id)
+                SELECT {loc_id}, location_tag_id FROM location_tag WHERE name = 'Drug dispensing unit';
+            """)
+        else:
+            run_omrs_exec(f"""
+                DELETE ltm FROM location_tag_map ltm
+                JOIN location_tag lt ON ltm.location_tag_id = lt.location_tag_id
+                WHERE ltm.location_id = {loc_id} AND lt.name = 'Drug dispensing unit';
+            """)
+        return {"success": True, "message": "Location updated."}
+
+    else:
+        raise ValueError(f"Unknown action: {action}")
+
 # ── HTTP Server Request Handler ──────────────────────────────────────────────
 
 
@@ -2470,6 +2760,13 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
 
         elif path in ("/api/payment-config", "/payment-config"):
             self._send_json(200, load_payment_config())
+
+        elif path in ("/api/medication-dropdowns", "/medication-dropdowns"):
+            try:
+                self._send_json(200, load_medication_dropdown_config())
+            except Exception as e:
+                log(f"Error loading medication dropdown config: {e}")
+                self._send_json(500, {"error": str(e)})
         else:
             self._send_json(404, {"error": "Endpoint not found", "path": path})
 
@@ -2795,6 +3092,16 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True, "message": "Payment configuration updated successfully.", "config": updated_cfg})
             except Exception as e:
                 log(f"Error saving payment configuration: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/medication-dropdowns", "/medication-dropdowns"):
+            try:
+                result = save_medication_dropdown_action(payload)
+                self._send_json(200, result)
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error executing medication dropdown action: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         else:
