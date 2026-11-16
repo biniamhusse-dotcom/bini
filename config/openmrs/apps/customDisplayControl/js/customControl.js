@@ -151,7 +151,7 @@ angular.module('bahmni.common.displaycontrol.custom')
     }
 }]).directive('patientAppointmentsDashboard', ['$http', '$q', '$window','appService', 'virtualConsultService', function ($http, $q, $window, appService, virtualConsultService) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/patientAppointmentsDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/patientAppointmentsDashboard.html?v=20261116_v7";
         var getUpcomingAppointments = function () {
             var params = {
                 q: "bahmni.sqlGet.upComingAppointments",
@@ -249,7 +249,7 @@ angular.module('bahmni.common.displaycontrol.custom')
     };
 }]).directive('whoLabourCareGuide', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -457,7 +457,19 @@ var getPatientUuid = function () {
 
                     sortedResults.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
                             var metrics = extractSummaryMetrics(parsed);
 
@@ -583,7 +595,7 @@ var getPatientUuid = function () {
     };
 }]).directive('whoTraumaForm', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -788,7 +800,19 @@ var getPatientUuid = function () {
 
                     sortedResults.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
 
                             // User detection: priority to lockedBy, then lastSavedByName, then creator person, then audit trail
@@ -900,7 +924,7 @@ var getPatientUuid = function () {
 }])
 .directive('ethiopianOtpCard', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ethiopianOtpCardDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ethiopianOtpCardDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1032,7 +1056,19 @@ var getPatientUuid = function () {
 
                     sorted.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
 
                             var userName = null;
@@ -1090,7 +1126,7 @@ var getPatientUuid = function () {
                     finalCharts = finalCharts.concat(completedCharts);
 
                     $scope.allCharts = finalCharts;
-                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasRecord = finalCharts.length > 0;
                     $scope.hasActiveForm = activeChart !== null;
                     $scope.activeChart = activeChart;
                 } else {
@@ -1129,7 +1165,7 @@ var getPatientUuid = function () {
 
 .directive('fmohDmHypertensionFollowUp', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/fmohDmHypertensionDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/fmohDmHypertensionDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1261,7 +1297,19 @@ var getPatientUuid = function () {
 
                     sorted.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
 
                             var userName = null;
@@ -1319,7 +1367,7 @@ var getPatientUuid = function () {
                     finalCharts = finalCharts.concat(completedCharts);
 
                     $scope.allCharts = finalCharts;
-                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasRecord = finalCharts.length > 0;
                     $scope.hasActiveForm = activeChart !== null;
                     $scope.activeChart = activeChart;
                 } else {
@@ -1358,7 +1406,7 @@ var getPatientUuid = function () {
 
 .directive('ophthalmicEyeExam', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ophthalmicEyeExamDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ophthalmicEyeExamDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1490,7 +1538,19 @@ var getPatientUuid = function () {
 
                     sorted.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
 
                             var userName = null;
@@ -1548,7 +1608,7 @@ var getPatientUuid = function () {
                     finalCharts = finalCharts.concat(completedCharts);
 
                     $scope.allCharts = finalCharts;
-                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasRecord = finalCharts.length > 0;
                     $scope.hasActiveForm = activeChart !== null;
                     $scope.activeChart = activeChart;
                 } else {
@@ -1587,7 +1647,7 @@ var getPatientUuid = function () {
 
 .directive('nationalPerioperativeForms', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/nationalPerioperativeDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/nationalPerioperativeDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1719,7 +1779,19 @@ var getPatientUuid = function () {
 
                     sorted.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
 
                             var userName = null;
@@ -1777,7 +1849,7 @@ var getPatientUuid = function () {
                     finalCharts = finalCharts.concat(completedCharts);
 
                     $scope.allCharts = finalCharts;
-                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasRecord = finalCharts.length > 0;
                     $scope.hasActiveForm = activeChart !== null;
                     $scope.activeChart = activeChart;
                 } else {
@@ -1816,7 +1888,7 @@ var getPatientUuid = function () {
 
 .directive('safeChildbirthChecklist', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/safeChildbirthChecklistDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/safeChildbirthChecklistDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1948,7 +2020,19 @@ var getPatientUuid = function () {
 
                     sorted.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
 
                             var userName = null;
@@ -2006,7 +2090,7 @@ var getPatientUuid = function () {
                     finalCharts = finalCharts.concat(completedCharts);
 
                     $scope.allCharts = finalCharts;
-                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasRecord = finalCharts.length > 0;
                     $scope.hasActiveForm = activeChart !== null;
                     $scope.activeChart = activeChart;
                 } else {
@@ -2045,7 +2129,7 @@ var getPatientUuid = function () {
 
 .directive('stabilisationCentreMultiChart', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/stabilisationCentreDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/stabilisationCentreDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -2177,7 +2261,19 @@ var getPatientUuid = function () {
 
                     sorted.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
 
                             var userName = null;
@@ -2235,7 +2331,7 @@ var getPatientUuid = function () {
                     finalCharts = finalCharts.concat(completedCharts);
 
                     $scope.allCharts = finalCharts;
-                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasRecord = finalCharts.length > 0;
                     $scope.hasActiveForm = activeChart !== null;
                     $scope.activeChart = activeChart;
                 } else {
@@ -2274,7 +2370,7 @@ var getPatientUuid = function () {
 
 .directive('whoPphObservationChart', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoPphDashboard.html?v=20261116_v6";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoPphDashboard.html?v=20261116_v7";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -2406,7 +2502,19 @@ var getPatientUuid = function () {
 
                     sorted.forEach(function (obs) {
                         try {
-                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
                             if (!parsed) return;
 
                             var userName = null;
@@ -2464,7 +2572,7 @@ var getPatientUuid = function () {
                     finalCharts = finalCharts.concat(completedCharts);
 
                     $scope.allCharts = finalCharts;
-                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasRecord = finalCharts.length > 0;
                     $scope.hasActiveForm = activeChart !== null;
                     $scope.activeChart = activeChart;
                 } else {
