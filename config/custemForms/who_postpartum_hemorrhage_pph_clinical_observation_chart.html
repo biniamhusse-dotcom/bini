@@ -260,7 +260,6 @@
             <input
               type="text"
               id="deliveryEtDisplay"
-              readonly
               placeholder="DD/MM/YYYY HH:MM (EC)"
               class="w-full pl-3 pr-8 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 bg-white group-hover:bg-slate-50 border border-slate-400 group-hover:border-slate-900 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10"
             />
@@ -988,13 +987,15 @@
         etCalendarGrid.innerHTML = cellsHtml;
 
         etCalendarGrid.querySelectorAll('.et-day-btn').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            draftEtDate = {
-              year: viewEtYear,
-              month: viewEtMonth,
-              day: parseInt(btn.dataset.etDay, 10)
-            };
-            renderEthiopianCalendarGrid();
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const chosenDay = parseInt(btn.dataset.etDay, 10);
+            const hour = parseInt(etHourInput.value, 10) || 0;
+            const minute = parseInt(etMinuteInput.value, 10) || 0;
+            if (activeTargetEl) {
+              applyEthiopianDateTime(activeTargetEl, viewEtYear, viewEtMonth, chosenDay, hour, minute);
+            }
+            closeEthiopianPicker();
           });
         });
       }
@@ -1027,6 +1028,7 @@
        * Opens the Ethiopian Date & Time Picker for any target element (row or delivery header)
        */
       function openEthiopianPicker(targetEl, triggerEl) {
+        if (window.BahmniCustomFormBridge && window.BahmniCustomFormBridge.isLocked) return;
         activeTargetEl = targetEl;
         activeTriggerEl = triggerEl;
 
@@ -1365,7 +1367,6 @@
               <div class="et-picker-trigger relative group cursor-pointer">
                 <input
                   type="text"
-                  readonly
                   placeholder="DD/MM/YYYY HH:MM"
                   aria-label="Observation ${rowNumber} Ethiopian Date and Time"
                   class="et-datetime-display w-full pl-2 pr-6 py-1.5 text-[11px] font-bold text-slate-900 bg-white group-hover:bg-slate-50 border border-slate-400 group-hover:border-slate-900 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/15"
@@ -1882,7 +1883,9 @@
 
       // Action Toolbar Listeners
       addRowBtn.addEventListener('click', () => {
+        if (window.BahmniCustomFormBridge && window.BahmniCustomFormBridge.isLocked) return;
         rowSequence++;
+        window.rowSequence = rowSequence;
         createObservationRow(rowSequence, true);
         evaluateAllRows();
         showToast(`Added Observation Row #${rowSequence}`);
@@ -1916,6 +1919,13 @@
         showToast('Chart cleared and reset to 4 blank rows');
       });
 
+      // Expose globally for Bahmni bridge and dynamic reconstruction
+      window.createObservationRow = createObservationRow;
+      window.evaluateAllRows = evaluateAllRows;
+      window.updateBaselineHintsAndReclassify = updateBaselineHintsAndReclassify;
+      window.applyEthiopianDateTime = applyEthiopianDateTime;
+      window.rowSequence = rowSequence;
+
       // Boot Application
       initEthiopianPickerSelects();
       initializeChart();
@@ -1936,17 +1946,54 @@
               getData: function () {
                 var rows = [];
                 document.querySelectorAll('#observationBody tr').forEach(function(tr) {
-                  var r = {};
-                  tr.querySelectorAll('input, select, textarea').forEach(function(i) {
-                    if (i.name || i.className) {
-                      r[i.name || i.className.split(' ')[0]] = i.value;
-                    }
+                  var rowNum = tr.dataset.rowNumber || '';
+                  var dtInput = tr.querySelector('.et-datetime-display');
+                  var dtAmharic = tr.querySelector('.et-amharic-sub');
+                  var dtGreg = tr.querySelector('.et-greg-sub');
+                  var bloodMl = tr.querySelector('.blood-ml-input');
+                  var volChecked = tr.querySelector('input[name^="vol_"]:checked');
+                  var flowChecked = tr.querySelector('input[name^="flow_"]:checked');
+                  var toneChecked = tr.querySelector('input[name^="tone_"]:checked');
+                  var pulseBpm = tr.querySelector('.pulse-bpm-input');
+                  var pulseChecked = tr.querySelector('input[name^="pulse_"]:checked');
+                  var bpSys = tr.querySelector('.bp-sys-input');
+                  var bpDia = tr.querySelector('.bp-dia-input');
+                  var bpChecked = tr.querySelector('input[name^="bp_"]:checked');
+                  var sig = tr.querySelector('.sig-input');
+
+                  rows.push({
+                    rowNumber: rowNum,
+                    dateTime: dtInput ? dtInput.value : '',
+                    amharicSub: dtAmharic ? dtAmharic.textContent : '',
+                    gregSub: dtGreg ? dtGreg.textContent : '',
+                    etYear: tr.dataset.etYear || '',
+                    etMonth: tr.dataset.etMonth || '',
+                    etDay: tr.dataset.etDay || '',
+                    etHour: tr.dataset.etHour || '',
+                    etMinute: tr.dataset.etMinute || '',
+                    bloodLossMl: bloodMl ? bloodMl.value : '',
+                    vol: volChecked ? volChecked.value : '',
+                    flow: flowChecked ? flowChecked.value : '',
+                    tone: toneChecked ? toneChecked.value : '',
+                    pulse: pulseBpm ? pulseBpm.value : '',
+                    pulseStatus: pulseChecked ? pulseChecked.value : '',
+                    bpSys: bpSys ? bpSys.value : '',
+                    bpDia: bpDia ? bpDia.value : '',
+                    bpStatus: bpChecked ? bpChecked.value : '',
+                    signature: sig ? sig.value : ''
                   });
-                  rows.push(r);
                 });
+
+                var delTrig = document.getElementById('deliveryEtTrigger');
                 return {
                   patientNameMrn: document.getElementById('patientNameMrn')?.value || '',
                   deliveryEt: document.getElementById('deliveryEtDisplay')?.value || '',
+                  deliveryEtSub: document.getElementById('deliveryEtSub')?.textContent || '',
+                  deliveryEtYear: delTrig?.dataset?.etYear || '',
+                  deliveryEtMonth: delTrig?.dataset?.etMonth || '',
+                  deliveryEtDay: delTrig?.dataset?.etDay || '',
+                  deliveryEtHour: delTrig?.dataset?.etHour || '',
+                  deliveryEtMinute: delTrig?.dataset?.etMinute || '',
                   baselinePulse: document.getElementById('baselinePulse')?.value || '',
                   baselineSystolic: document.getElementById('baselineSystolic')?.value || '',
                   baselineDiastolic: document.getElementById('baselineDiastolic')?.value || '',
@@ -1957,30 +2004,84 @@
                 if (!data || typeof data !== 'object') return;
                 if (data.patientNameMrn) document.getElementById('patientNameMrn').value = data.patientNameMrn;
                 if (data.deliveryEt) document.getElementById('deliveryEtDisplay').value = data.deliveryEt;
+                if (data.deliveryEtSub) document.getElementById('deliveryEtSub').textContent = data.deliveryEtSub;
+                var delTrig = document.getElementById('deliveryEtTrigger');
+                if (delTrig && data.deliveryEtYear) {
+                  delTrig.dataset.etYear = data.deliveryEtYear;
+                  delTrig.dataset.etMonth = data.deliveryEtMonth;
+                  delTrig.dataset.etDay = data.deliveryEtDay;
+                  delTrig.dataset.etHour = data.deliveryEtHour;
+                  delTrig.dataset.etMinute = data.deliveryEtMinute;
+                }
                 if (data.baselinePulse) document.getElementById('baselinePulse').value = data.baselinePulse;
                 if (data.baselineSystolic) document.getElementById('baselineSystolic').value = data.baselineSystolic;
                 if (data.baselineDiastolic) document.getElementById('baselineDiastolic').value = data.baselineDiastolic;
+                if (typeof window.updateBaselineHintsAndReclassify === 'function') {
+                  window.updateBaselineHintsAndReclassify();
+                }
+
                 if (Array.isArray(data.rows) && data.rows.length > 0) {
                   var tbody = document.getElementById('observationBody');
-                  if (tbody) {
+                  if (tbody && typeof window.createObservationRow === 'function') {
                     tbody.innerHTML = '';
-                    rowSequence = 0;
-                    data.rows.forEach(function(r) {
-                      rowSequence++;
-                      if (typeof createObservationRow === 'function') {
-                        createObservationRow(rowSequence, false);
-                        var tr = tbody.lastElementChild;
-                        if (tr) {
-                          tr.querySelectorAll('input, select, textarea').forEach(function(i) {
-                            var k = i.name || i.className.split(' ')[0];
-                            if (r[k] !== undefined) i.value = r[k];
-                          });
+                    window.rowSequence = 0;
+                    data.rows.forEach(function(r, index) {
+                      window.rowSequence++;
+                      var allowDel = index >= 4; // allow deleting added rows beyond initial 4
+                      window.createObservationRow(window.rowSequence, allowDel);
+                      var tr = tbody.lastElementChild;
+                      if (tr) {
+                        if (r.etYear) tr.dataset.etYear = r.etYear;
+                        if (r.etMonth) tr.dataset.etMonth = r.etMonth;
+                        if (r.etDay) tr.dataset.etDay = r.etDay;
+                        if (r.etHour) tr.dataset.etHour = r.etHour;
+                        if (r.etMinute) tr.dataset.etMinute = r.etMinute;
+
+                        var dtInput = tr.querySelector('.et-datetime-display');
+                        var dtAmharic = tr.querySelector('.et-amharic-sub');
+                        var dtGreg = tr.querySelector('.et-greg-sub');
+                        if (dtInput && r.dateTime) dtInput.value = r.dateTime;
+                        if (dtAmharic && r.amharicSub) dtAmharic.textContent = r.amharicSub;
+                        if (dtGreg && r.gregSub) dtGreg.textContent = r.gregSub;
+
+                        var bloodMl = tr.querySelector('.blood-ml-input');
+                        if (bloodMl && r.bloodLossMl !== undefined) bloodMl.value = r.bloodLossMl;
+
+                        if (r.vol) {
+                          var rad = tr.querySelector('input[name^="vol_"][value="' + r.vol + '"]');
+                          if (rad) rad.checked = true;
                         }
+                        if (r.flow) {
+                          var rad = tr.querySelector('input[name^="flow_"][value="' + r.flow + '"]');
+                          if (rad) rad.checked = true;
+                        }
+                        if (r.tone) {
+                          var rad = tr.querySelector('input[name^="tone_"][value="' + r.tone + '"]');
+                          if (rad) rad.checked = true;
+                        }
+                        var pulseBpm = tr.querySelector('.pulse-bpm-input');
+                        if (pulseBpm && r.pulse !== undefined) pulseBpm.value = r.pulse;
+                        if (r.pulseStatus) {
+                          var rad = tr.querySelector('input[name^="pulse_"][value="' + r.pulseStatus + '"]');
+                          if (rad) rad.checked = true;
+                        }
+                        var bpSys = tr.querySelector('.bp-sys-input');
+                        var bpDia = tr.querySelector('.bp-dia-input');
+                        if (bpSys && r.bpSys !== undefined) bpSys.value = r.bpSys;
+                        if (bpDia && r.bpDia !== undefined) bpDia.value = r.bpDia;
+                        if (r.bpStatus) {
+                          var rad = tr.querySelector('input[name^="bp_"][value="' + r.bpStatus + '"]');
+                          if (rad) rad.checked = true;
+                        }
+                        var sig = tr.querySelector('.sig-input');
+                        if (sig && r.signature !== undefined) sig.value = r.signature;
                       }
                     });
                   }
                 }
-                if (typeof evaluateAllRows === 'function') evaluateAllRows();
+                if (typeof window.evaluateAllRows === 'function') {
+                  window.evaluateAllRows();
+                }
               },
               extractSummary: function (d) {
                 return {
@@ -1991,9 +2092,44 @@
                   rowsLogged: d.rows ? d.rows.length : 0
                 };
               },
-              setLockState: function (locked) {
-                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+              setLockState: function (locked, handoverLockedFields) {
+                // Disable all form inputs
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes):not(#bahmniHoOutgoing), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
                   el.disabled = locked;
+                  if (locked) {
+                    el.style.backgroundColor = '#f8fafc';
+                  } else {
+                    el.style.backgroundColor = '';
+                  }
+                });
+
+                // Disable/enable form action buttons
+                var addRow = document.getElementById('addRowBtn');
+                var clearForm = document.getElementById('clearFormBtn');
+                var delNow = document.getElementById('deliveryNowBtn');
+                if (addRow) {
+                  addRow.disabled = locked;
+                  addRow.style.opacity = locked ? '0.45' : '1';
+                  addRow.style.cursor = locked ? 'not-allowed' : 'pointer';
+                  addRow.style.pointerEvents = locked ? 'none' : 'auto';
+                }
+                if (clearForm) {
+                  clearForm.disabled = locked;
+                  clearForm.style.opacity = locked ? '0.45' : '1';
+                  clearForm.style.cursor = locked ? 'not-allowed' : 'pointer';
+                  clearForm.style.pointerEvents = locked ? 'none' : 'auto';
+                }
+                if (delNow) {
+                  delNow.disabled = locked;
+                  delNow.style.opacity = locked ? '0.45' : '1';
+                  delNow.style.cursor = locked ? 'not-allowed' : 'pointer';
+                  delNow.style.pointerEvents = locked ? 'none' : 'auto';
+                }
+                document.querySelectorAll('.now-btn, .delete-row-btn').forEach(function(b) {
+                  b.disabled = locked;
+                  b.style.opacity = locked ? '0.45' : '1';
+                  b.style.cursor = locked ? 'not-allowed' : 'pointer';
+                  b.style.pointerEvents = locked ? 'none' : 'auto';
                 });
               }
             });

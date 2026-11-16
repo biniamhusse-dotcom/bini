@@ -665,6 +665,8 @@
       var bannerText = document.getElementById('bahmniBridgeLockBannerText');
       var btnLock = document.getElementById('bahmniBridgeBtnLock');
       var txtLock = document.getElementById('bahmniBridgeTxtLock');
+      var btnSave = document.getElementById('bahmniBridgeBtnSave');
+      var btnHandover = document.getElementById('bahmniBridgeBtnHandover');
       var statusBadge = document.getElementById('bahmniBridgeStatusBadge');
 
       if (this.isLocked) {
@@ -677,6 +679,19 @@
           btnLock.className = 'bahmni-bridge-btn bahmni-bridge-btn-unlock';
           txtLock.textContent = 'Unlock Form 🔓';
         }
+        if (btnSave) {
+          btnSave.disabled = true;
+          btnSave.style.opacity = '0.45';
+          btnSave.style.cursor = 'not-allowed';
+          btnSave.style.pointerEvents = 'none';
+          btnSave.title = 'Record is finalized & locked. Unlock the form first to save edits.';
+        }
+        if (btnHandover) {
+          btnHandover.disabled = true;
+          btnHandover.style.opacity = '0.45';
+          btnHandover.style.cursor = 'not-allowed';
+          btnHandover.style.pointerEvents = 'none';
+        }
         if (statusBadge) {
           statusBadge.style.background = '#ffe4e6';
           statusBadge.style.color = '#9f1239';
@@ -687,6 +702,19 @@
         if (btnLock && txtLock) {
           btnLock.className = 'bahmni-bridge-btn bahmni-bridge-btn-lock';
           txtLock.textContent = '🔒 Lock Form';
+        }
+        if (btnSave) {
+          btnSave.disabled = false;
+          btnSave.style.opacity = '1';
+          btnSave.style.cursor = 'pointer';
+          btnSave.style.pointerEvents = 'auto';
+          btnSave.title = 'Save clinical observations to patient encounter';
+        }
+        if (btnHandover) {
+          btnHandover.disabled = false;
+          btnHandover.style.opacity = '1';
+          btnHandover.style.cursor = 'pointer';
+          btnHandover.style.pointerEvents = 'auto';
         }
         if (statusBadge) {
           statusBadge.style.background = '#e0f2fe';
@@ -765,6 +793,12 @@
     },
 
     saveObservation: async function (silent) {
+      if (this.isLocked) {
+        if (!silent) {
+          this.showToast('This clinical record is finalized & locked. Unlock to make edits.', true);
+        }
+        return;
+      }
       var btn = document.getElementById('bahmniBridgeBtnSave');
       var txt = document.getElementById('bahmniBridgeTxtSave');
       var origText = txt ? txt.textContent : 'Save to Encounter';

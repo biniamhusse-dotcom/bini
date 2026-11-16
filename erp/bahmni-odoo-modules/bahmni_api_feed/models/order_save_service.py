@@ -555,13 +555,15 @@ class OrderSaveService(models.Model):
     @api.model
     def _is_lab_test_eligible_for_billing(self, order):
         """
-        Check if a lab test has been evaluated and confirmed AVAILABLE by OpenELIS.
-        Tests that are stock-out, pending evaluation, or not yet evaluated by OpenELIS must NOT reach Odoo.
-        Incoming lab orders from OpenMRS AtomFeed are always held until OpenELIS explicitly dispatches them via Send to Billing.
+        Check if a lab test is eligible for billing in Odoo.
+        Tests that are explicitly marked as stock-out in OpenELIS must NOT reach Odoo.
+        Available tests proceed to Odoo billing.
         """
         concept_name = (order.get('conceptName') or order.get('productName') or '').strip()
-        _logger.info("HOLDING BILLING: Lab order [%s] %s has NOT been evaluated by OpenELIS yet. Excluding from Odoo billing.", order.get('orderId'), concept_name)
-        return False
+        if self._is_test_stock_out(order):
+            _logger.info("HOLDING BILLING: Lab order [%s] %s is marked as stock-out in OpenELIS. Excluding from Odoo billing.", order.get('orderId'), concept_name)
+            return False
+        return True
 
     @api.model
     def _is_test_stock_out(self, order):

@@ -1011,6 +1011,8 @@ function applyLockState() {
   const bannerDetails = document.getElementById('lockedNoticeDetails');
   const lockBtn = document.getElementById('btnLockForm');
   const lockTxt = document.getElementById('txtLockForm');
+  const saveBtn = document.getElementById('btnSaveEncounter');
+  const hoBtn = document.getElementById('btnShiftHandover');
 
   if (traumaLocked) {
     if (banner) {
@@ -1022,6 +1024,19 @@ function applyLockState() {
       lockBtn.classList.add('locked');
       lockTxt.textContent = 'Locked (Read-Only)';
       lockBtn.title = 'Trauma form is finalized and locked. Click to unlock (authorized staff only).';
+    }
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.style.opacity = '0.45';
+      saveBtn.style.cursor = 'not-allowed';
+      saveBtn.style.pointerEvents = 'none';
+      saveBtn.title = 'Record is finalized & locked. Unlock to make edits.';
+    }
+    if (hoBtn) {
+      hoBtn.disabled = true;
+      hoBtn.style.opacity = '0.45';
+      hoBtn.style.cursor = 'not-allowed';
+      hoBtn.style.pointerEvents = 'none';
     }
     els.forEach(el => {
       el.disabled = true;
@@ -1035,6 +1050,19 @@ function applyLockState() {
       lockBtn.classList.remove('locked');
       lockTxt.textContent = 'Lock Form';
       lockBtn.title = 'Finalize and lock this Trauma record to make it non-editable';
+    }
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.style.opacity = '1';
+      saveBtn.style.cursor = 'pointer';
+      saveBtn.style.pointerEvents = 'auto';
+      saveBtn.title = 'Save Trauma documentation to patient encounter';
+    }
+    if (hoBtn) {
+      hoBtn.disabled = false;
+      hoBtn.style.opacity = '1';
+      hoBtn.style.cursor = 'pointer';
+      hoBtn.style.pointerEvents = 'auto';
     }
     const hasHandover = traumaHandovers && traumaHandovers.length > 0 && traumaHandoverLockedIndices.length > 0;
     els.forEach((el, i) => {
