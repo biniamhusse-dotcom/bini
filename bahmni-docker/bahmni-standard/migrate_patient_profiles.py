@@ -207,42 +207,44 @@ if pending_count > 0:
     # Standard attributes with concept re-mapping
     run_sql(f"""
     INSERT INTO {LIVE_DB}.person_attribute (person_id, value, person_attribute_type_id, creator, date_created, voided, uuid)
-    SELECT 
-        (m.legacy_patient_id + {offset}),
-        CASE 
-            WHEN src_pat.person_attribute_type_id = 29 AND pa.value = '7974' THEN '12121'
-            WHEN src_pat.person_attribute_type_id = 29 AND pa.value = '7973' THEN '60762'
-            WHEN src_pat.person_attribute_type_id = 29 AND pa.value = '7975' THEN '60764'
-            ELSE pa.value
-        END,
-        CASE 
-            WHEN LOWER(src_pat.name) IN ('phonenumber', 'telephonenumber', 'phone number') THEN 14
-            WHEN LOWER(src_pat.name) IN ('alternatephonenumber', 'alternate phone number') THEN 15
-            WHEN LOWER(src_pat.name) IN ('primary contact phone number') THEN 17
-            WHEN LOWER(src_pat.name) IN ('primary contact person name') THEN 18
-            WHEN LOWER(src_pat.name) IN ('referencenumber', 'reference number') THEN 27
-            WHEN LOWER(src_pat.name) IN ('paymentmethod') THEN 29
-            WHEN LOWER(src_pat.name) IN ('education') THEN 19
-            WHEN LOWER(src_pat.name) IN ('credittype') THEN 23
-            WHEN LOWER(src_pat.name) IN ('freepaymentdetails') THEN 24
-            WHEN LOWER(src_pat.name) IN ('creditcompany') THEN 25
-            WHEN LOWER(src_pat.name) IN ('cbhiagreedworeda') THEN 26
-            WHEN LOWER(src_pat.name) IN ('medicolegalcases') THEN 28
-            ELSE target_pat.person_attribute_type_id
-        END,
-        1,
-        COALESCE(pa.date_created, NOW()),
-        0,
-        UUID()
-    FROM {LIVE_DB}._legacy_patient_map m
-    JOIN {STAGE_DB}.person_attribute pa ON m.legacy_patient_id = pa.person_id AND pa.voided = 0
-    JOIN {STAGE_DB}.person_attribute_type src_pat ON pa.person_attribute_type_id = src_pat.person_attribute_type_id
-    LEFT JOIN (
-        SELECT LOWER(name) AS match_name, MIN(person_attribute_type_id) AS person_attribute_type_id
-        FROM {LIVE_DB}.person_attribute_type
-        WHERE retired = 0
-        GROUP BY LOWER(name)
-    ) target_pat ON LOWER(src_pat.name) = target_pat.match_name;
+    SELECT person_id, value, attr_type, 1, date_created, 0, uuid
+    FROM (
+        SELECT
+            (m.legacy_patient_id + {offset}) AS person_id,
+            CASE
+                WHEN src_pat.person_attribute_type_id = 29 AND pa.value = '7974' THEN '12121'
+                WHEN src_pat.person_attribute_type_id = 29 AND pa.value = '7973' THEN '60762'
+                WHEN src_pat.person_attribute_type_id = 29 AND pa.value = '7975' THEN '60764'
+                ELSE pa.value
+            END AS value,
+            CASE
+                WHEN LOWER(src_pat.name) IN ('phonenumber', 'telephonenumber', 'phone number') THEN 14
+                WHEN LOWER(src_pat.name) IN ('alternatephonenumber', 'alternate phone number') THEN 15
+                WHEN LOWER(src_pat.name) IN ('primary contact phone number') THEN 17
+                WHEN LOWER(src_pat.name) IN ('primary contact person name') THEN 18
+                WHEN LOWER(src_pat.name) IN ('referencenumber', 'reference number') THEN 27
+                WHEN LOWER(src_pat.name) IN ('paymentmethod') THEN 29
+                WHEN LOWER(src_pat.name) IN ('education') THEN 19
+                WHEN LOWER(src_pat.name) IN ('credittype') THEN 23
+                WHEN LOWER(src_pat.name) IN ('freepaymentdetails') THEN 24
+                WHEN LOWER(src_pat.name) IN ('creditcompany') THEN 25
+                WHEN LOWER(src_pat.name) IN ('cbhiagreedworeda') THEN 26
+                WHEN LOWER(src_pat.name) IN ('medicolegalcases') THEN 28
+                ELSE target_pat.person_attribute_type_id
+            END AS attr_type,
+            COALESCE(pa.date_created, NOW()) AS date_created,
+            UUID() AS uuid
+        FROM {LIVE_DB}._legacy_patient_map m
+        JOIN {STAGE_DB}.person_attribute pa ON m.legacy_patient_id = pa.person_id AND pa.voided = 0
+        JOIN {STAGE_DB}.person_attribute_type src_pat ON pa.person_attribute_type_id = src_pat.person_attribute_type_id
+        LEFT JOIN (
+            SELECT LOWER(name) AS match_name, MIN(person_attribute_type_id) AS person_attribute_type_id
+            FROM {LIVE_DB}.person_attribute_type
+            WHERE retired = 0
+            GROUP BY LOWER(name)
+        ) target_pat ON LOWER(src_pat.name) = target_pat.match_name
+    ) mapped
+    WHERE mapped.attr_type IS NOT NULL;
     """)
 
     # Also populate phoneNumber (type 14) from ReferenceNumber phone formats
@@ -339,7 +341,7 @@ join global_property gp on gp.property=\"bahmni.primaryIdentifierType\" and gp.p
 join person p on p.person_id = v.patient_id and p.voided = 0
 left join person_attribute pa on v.patient_id = pa.person_id and pa.person_attribute_type_id = 29 and pa.voided = 0
 left join person_address pad on v.patient_id = pad.person_id and pad.voided = 0
-join location l on l.uuid = \${location_uuid} and (
+join location l on l.uuid = ${{location_uuid}} and (
   v.location_id = l.location_id 
   or lower(trim(vt.name)) = lower(trim(l.name))
   or (lower(l.name) like ''%triage%'' and (lower(vt.name) like ''%triage%'' or v.location_id = l.location_id))

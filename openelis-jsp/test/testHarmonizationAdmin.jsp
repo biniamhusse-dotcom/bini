@@ -183,7 +183,7 @@
         selectedUuids = {};
         updateDeleteSelectedBtn();
 
-        fetch(apiBaseUrl + '/api/harmonization/comparison')
+        fetch(apiBaseUrl + '/harmonization/comparison')
             .then(function(res) {
                 if (!res.ok) throw new Error('Sync service returned status ' + res.status);
                 return res.json();
@@ -204,7 +204,7 @@
             .catch(function(err) {
                 tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:#c0392b;">' +
                     '<strong>Error connecting to sync service:</strong> ' + err.message + '<br>' +
-                    '<small>Make sure the result sync service is running on port 8000.</small>' +
+                    '<small>Make sure the Bahmni backup and harmonization service is running on port 5055.</small>' +
                     '</td></tr>';
             });
     }
@@ -335,7 +335,7 @@
             return;
         }
 
-        fetch(apiBaseUrl + '/api/harmonization/delete-item', {
+        fetch(apiBaseUrl + '/harmonization/delete-item', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuid: uuid, type: type })
@@ -366,7 +366,7 @@
         btn.disabled = true;
         btn.innerText = 'Deleting...';
 
-        fetch(apiBaseUrl + '/api/harmonization/delete-batch', {
+        fetch(apiBaseUrl + '/harmonization/delete-batch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuids: keys })
@@ -392,7 +392,7 @@
         var old = btn.innerText;
         btn.innerText = '...';
 
-        fetch(apiBaseUrl + '/api/harmonization/sync-single', {
+        fetch(apiBaseUrl + '/harmonization/sync-single', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuid: uuid, type: type, action: action })
@@ -424,7 +424,7 @@
         var old = btn.innerText;
         btn.innerText = 'Syncing all...';
 
-        fetch(apiBaseUrl + '/api/harmonization/sync-all', {
+        fetch(apiBaseUrl + '/harmonization/sync-all', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sync_missing: true, fix_names: true, link_unlinked: true })

@@ -2968,6 +2968,7 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/")
         # Handle path prefix if mounted at /backup-api or /api
         path = path.replace("/backup-api", "")
+        path = re.sub(r"^(/api)+", "/api", path)
         if not path:
             path = "/"
 
@@ -3240,6 +3241,7 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/").replace("/backup-api", "")
+        path = re.sub(r"^(/api)+", "/api", path)
         query_params = parse_qs(parsed.query)
 
         if path in ("/api/upload", "/upload"):
@@ -3477,6 +3479,7 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/").replace("/backup-api", "")
+        path = re.sub(r"^(/api)+", "/api", path)
         query_params = parse_qs(parsed.query)
         archive_name = query_params.get("archive", [""])[0]
         if not archive_name and (path.startswith("/backup/") or path.startswith("/api/backup/")):
