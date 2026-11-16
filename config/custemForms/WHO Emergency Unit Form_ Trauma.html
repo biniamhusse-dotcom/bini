@@ -549,6 +549,7 @@ let traumaLockedBy = null;
 let traumaLockedAt = null;
 let traumaAuditTrail = [];
 let traumaHandovers = [];
+let traumaHandoverLockedIndices = [];
 
 const K = 'who-trauma-form-v1' + (patientUuid ? '_' + patientUuid : '');
 let pins = [];
@@ -1022,7 +1023,11 @@ function applyLockState() {
       lockTxt.textContent = 'Locked (Read-Only)';
       lockBtn.title = 'Trauma form is finalized and locked. Click to unlock (authorized staff only).';
     }
-    els.forEach(el => { el.disabled = true; });
+    els.forEach(el => {
+      el.disabled = true;
+      el.style.backgroundColor = '';
+      el.title = 'Form finalized & locked';
+    });
     document.getElementById('cl').disabled = true;
   } else {
     if (banner) banner.style.display = 'none';
@@ -1031,7 +1036,18 @@ function applyLockState() {
       lockTxt.textContent = 'Lock Form';
       lockBtn.title = 'Finalize and lock this Trauma record to make it non-editable';
     }
-    els.forEach(el => { el.disabled = false; });
+    const hasHandover = traumaHandovers && traumaHandovers.length > 0 && traumaHandoverLockedIndices.length > 0;
+    els.forEach((el, i) => {
+      if (hasHandover && traumaHandoverLockedIndices.includes(i)) {
+        el.disabled = true;
+        el.style.backgroundColor = '#f1f5f9';
+        el.title = 'Documented in previous shift (locked at handover)';
+      } else {
+        el.disabled = false;
+        el.style.backgroundColor = '';
+        el.title = '';
+      }
+    });
     document.getElementById('cl').disabled = false;
   }
   drawPins();
@@ -1095,13 +1111,22 @@ function submitShiftHandover() {
     timestampEt: etStr
   };
 
+  // Freeze documented non-empty fields for this handover
+  els.forEach((e, i) => {
+    let hasVal = (e.type === 'checkbox' || e.type === 'radio') ? e.checked : (e.value && e.value.trim() !== '');
+    if (hasVal && !traumaHandoverLockedIndices.includes(i)) {
+      traumaHandoverLockedIndices.push(i);
+    }
+  });
+
   traumaHandovers.push(handoverObj);
-  addAuditTrailEntry('Shift Handover Completed', `Care transferred from ${outgoing} to ${incoming} (${hours}). Notes: ${summary || 'None'}`);
+  addAuditTrailEntry('Shift Handover Completed', `Care transferred from ${outgoing} to ${incoming} (${hours}). Notes: ${summary || 'None'}. Prior fields frozen.`);
   renderShiftHandovers();
   renderAuditTrail();
   closeShiftHandoverModal();
+  applyLockState();
   saveToPatientEncounter();
-  showToast(`Shift Handover to ${incoming} recorded!`);
+  showToast(`Shift Handover to ${incoming} recorded! Prior documentation locked.`);
 }
 
 function addAuditTrailEntry(action, details) {
@@ -1490,6 +1515,7 @@ async function saveToPatientEncounter() {
     disposition: dispoVal || 'Under Treatment',
     auditTrail: traumaAuditTrail,
     handovers: traumaHandovers,
+    handoverLockedIndices: traumaHandoverLockedIndices,
     fields: fieldValues
   };
 

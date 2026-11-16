@@ -26,6 +26,7 @@
     lockedAt: null,
     auditTrail: [],
     handovers: [],
+    handoverLockedFields: [],
 
     init: function (options) {
       this.config = Object.assign({
@@ -425,20 +426,40 @@
       var incoming = document.getElementById('bahmniHoIncoming').value.trim() || 'Incoming Clinical Team';
       var notes = document.getElementById('bahmniHoNotes').value.trim() || 'Shift handover completed';
 
+      // 1. Freeze currently documented (non-empty) fields for this handover
+      var currentLocked = this.handoverLockedFields ? this.handoverLockedFields.slice() : [];
+      var inputs = document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes):not(#bahmniHoOutgoing), select, textarea:not(#bahmniHoNotes)');
+      inputs.forEach(function (el) {
+        var key = el.id || el.name;
+        if (!key) return;
+        var hasVal = false;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          hasVal = el.checked;
+        } else if (el.value && el.value.trim() !== '') {
+          hasVal = true;
+        }
+        if (hasVal && currentLocked.indexOf(key) === -1) {
+          currentLocked.push(key);
+        }
+      });
+      this.handoverLockedFields = currentLocked;
+
       var handoverEntry = {
         timestamp: new Date().toISOString(),
         outgoingUser: outgoing,
         incomingUser: incoming,
-        notes: notes
+        notes: notes,
+        lockedFieldCount: currentLocked.length
       };
 
       if (!this.handovers) this.handovers = [];
       this.handovers.push(handoverEntry);
 
-      this.addAuditLog('SHIFT HANDOVER', `Handover from ${outgoing} to ${incoming}: ${notes}`, outgoing);
+      this.addAuditLog('SHIFT HANDOVER', `Handover from ${outgoing} to ${incoming}: ${notes}. Outgoing documentation frozen.`, outgoing);
       document.getElementById('bahmniShiftHandoverModal').style.display = 'none';
+      this.applyLockState(this.isLocked);
       this.saveObservation(false);
-      this.showToast(`Shift handover recorded successfully to ${incoming}!`);
+      this.showToast(`Shift handover recorded successfully to ${incoming}! Outgoing documentation locked.`);
     },
 
     addAuditLog: function (action, details, user) {
@@ -598,8 +619,8 @@
         }
 
         // RULE: If an active unlocked chart exists, update it!
-        // Only start fresh if all existing charts are locked!
-        var target = activeUnlocked || sorted[0];
+        // Only start fresh if all existing charts are locked (or explicit obsUuid)!
+        var target = activeUnlocked || (new URLSearchParams(window.location.search).get('obsUuid') ? sorted[0] : null);
         if (target) {
           self.applyObservationPayload(target.value, target.uuid, target.encounter && target.encounter.uuid);
         }
@@ -625,6 +646,7 @@
       this.lockedAt = parsed.lockedAt || null;
       this.auditTrail = parsed.auditTrail || [];
       this.handovers = parsed.handovers || [];
+      this.handoverLockedFields = parsed.handoverLockedFields || [];
 
       // Apply form domain data
       if (parsed.formData && typeof this.config.setData === 'function') {
@@ -675,13 +697,27 @@
 
       // Delegate field disabling to form callback
       if (typeof this.config.setLockState === 'function') {
-        this.config.setLockState(this.isLocked);
-      } else {
-        // Fallback: disable all inputs/selects/textareas
-        document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function (el) {
-          el.disabled = locked;
-        });
+        this.config.setLockState(this.isLocked, this.handoverLockedFields);
       }
+
+      // Handle input element disabling & partial handover freeze
+      var lockedKeys = (this.handovers && this.handovers.length > 0 && this.handoverLockedFields) ? this.handoverLockedFields : [];
+      document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes):not(#bahmniHoOutgoing), select, textarea:not(#bahmniHoNotes)').forEach(function (el) {
+        var key = el.id || el.name;
+        if (locked) {
+          el.disabled = true;
+          el.style.backgroundColor = '';
+          el.title = 'Form finalized & locked';
+        } else if (lockedKeys.length > 0 && key && lockedKeys.indexOf(key) !== -1) {
+          el.disabled = true;
+          el.style.backgroundColor = '#f1f5f9';
+          el.title = 'Documented in previous shift (locked at handover)';
+        } else {
+          el.disabled = false;
+          el.style.backgroundColor = '';
+          el.title = '';
+        }
+      });
     },
 
     toggleLock: function () {
@@ -757,7 +793,8 @@
         summaryMetrics: summaryMetrics,
         formData: formData,
         auditTrail: this.auditTrail,
-        handovers: this.handovers
+        handovers: this.handovers,
+        handoverLockedFields: this.handoverLockedFields || []
       };
 
       var targetPtUuid = this.patientUuid;
@@ -773,6 +810,27 @@
       }
 
       var self = this;
+
+      // Check whether an active unlocked observation exists in OpenMRS before creating a new one
+      if (!this.currentObsUuid && targetPtUuid && this.config.conceptUuid) {
+        try {
+          var checkRes = await fetch(`/openmrs/ws/rest/v1/obs?patient=${encodeURIComponent(targetPtUuid)}&concept=${encodeURIComponent(this.config.conceptUuid)}&v=custom:(uuid,obsDatetime,value,encounter:(uuid))`, { credentials: 'include' });
+          if (checkRes.ok) {
+            var checkData = await checkRes.json();
+            var results = (checkData.results || []).slice().sort(function (a, b) { return new Date(b.obsDatetime) - new Date(a.obsDatetime); });
+            for (var i = 0; i < results.length; i++) {
+              var p = null;
+              try { p = typeof results[i].value === 'string' ? JSON.parse(results[i].value) : results[i].value; } catch(e) {}
+              if (p && !p.locked) {
+                this.currentObsUuid = results[i].uuid;
+                payload.obsUuid = this.currentObsUuid;
+                if (results[i].encounter && results[i].encounter.uuid) this.encounterUuid = results[i].encounter.uuid;
+                break;
+              }
+            }
+          }
+        } catch (e) {}
+      }
 
       // In-place update if currentObsUuid already exists!
       if (this.currentObsUuid) {

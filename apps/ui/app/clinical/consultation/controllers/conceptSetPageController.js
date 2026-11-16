@@ -44,6 +44,11 @@ angular.module('bahmni.clinical')
                                     $scope.consultation.observationForms = getObservationForms(response.data);
                                     concatObservationForms();
                                 })
+                                .catch(function (err) {
+                                    console.warn("Could not load published observation forms, fallback to default templates:", err);
+                                    $scope.consultation.observationForms = [];
+                                    concatObservationForms();
+                                })
                             );
                         } else {
                             concatObservationForms();

@@ -151,7 +151,7 @@ angular.module('bahmni.common.displaycontrol.custom')
     }
 }]).directive('patientAppointmentsDashboard', ['$http', '$q', '$window','appService', 'virtualConsultService', function ($http, $q, $window, appService, virtualConsultService) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/patientAppointmentsDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/patientAppointmentsDashboard.html?v=20261116_v5";
         var getUpcomingAppointments = function () {
             var params = {
                 q: "bahmni.sqlGet.upComingAppointments",
@@ -249,7 +249,7 @@ angular.module('bahmni.common.displaycontrol.custom')
     };
 }]).directive('whoLabourCareGuide', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -329,7 +329,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {
@@ -583,7 +583,7 @@ var getPatientUuid = function () {
     };
 }]).directive('whoTraumaForm', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -678,7 +678,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {
@@ -900,7 +900,7 @@ var getPatientUuid = function () {
 }])
 .directive('ethiopianOtpCard', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ethiopianOtpCardDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ethiopianOtpCardDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -974,7 +974,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {
@@ -1119,7 +1119,7 @@ var getPatientUuid = function () {
 
 .directive('fmohDmHypertensionFollowUp', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/fmohDmHypertensionDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/fmohDmHypertensionDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1193,7 +1193,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {
@@ -1338,7 +1338,7 @@ var getPatientUuid = function () {
 
 .directive('ophthalmicEyeExam', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ophthalmicEyeExamDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ophthalmicEyeExamDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1412,7 +1412,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {
@@ -1557,7 +1557,7 @@ var getPatientUuid = function () {
 
 .directive('nationalPerioperativeForms', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/nationalPerioperativeDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/nationalPerioperativeDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1631,7 +1631,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {
@@ -1776,7 +1776,7 @@ var getPatientUuid = function () {
 
 .directive('safeChildbirthChecklist', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/safeChildbirthChecklistDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/safeChildbirthChecklistDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1850,7 +1850,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {
@@ -1995,7 +1995,7 @@ var getPatientUuid = function () {
 
 .directive('stabilisationCentreMultiChart', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/stabilisationCentreDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/stabilisationCentreDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -2069,7 +2069,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {
@@ -2214,7 +2214,7 @@ var getPatientUuid = function () {
 
 .directive('whoPphObservationChart', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoPphDashboard.html?v=20261116_v3";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoPphDashboard.html?v=20261116_v5";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -2288,7 +2288,7 @@ var getPatientUuid = function () {
 
         $scope.getVisibleCharts = function () {
             if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
-            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
         };
 
         $scope.openChart = function (chart) {

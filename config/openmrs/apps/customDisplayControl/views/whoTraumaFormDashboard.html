@@ -45,9 +45,9 @@
       <div>
         <span>Showing <b>{{ getVisibleCharts().length }}</b> of <b>{{ allCharts.length }}</b> trauma encounters recorded for this patient</span>
       </div>
-      <div ng-if="allCharts.length > 4">
+      <div ng-if="allCharts.length > 1">
         <a href="javascript:void(0)" ng-click="toggleShowAll()" style="color: #0b5cab; font-weight: 700; text-decoration: none; font-size: 12px;">
-          {{ showAllEncounters ? '▲ Collapse to recent 4' : ('▼ View all ' + allCharts.length + ' encounters') }}
+          {{ showAllEncounters ? '▲ Collapse to recent record' : ('▼ View all ' + allCharts.length + ' encounters') }}
         </a>
       </div>
     </div>

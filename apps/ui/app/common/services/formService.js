@@ -3,7 +3,11 @@
 angular.module('bahmni.common.conceptSet')
     .factory('formService', ['$http', function ($http) {
         var getFormList = function (encounterUuid) {
-            return $http.get(Bahmni.Common.Constants.latestPublishedForms, {params: {encounterUuid: encounterUuid}});
+            var params = {};
+            if (encounterUuid && encounterUuid !== 'undefined') {
+                params.encounterUuid = encounterUuid;
+            }
+            return $http.get(Bahmni.Common.Constants.latestPublishedForms, {params: params});
         };
 
         var getAllForms = function () {

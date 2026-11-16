@@ -44,9 +44,9 @@
       <div>
         <span>Showing <b>{{ getVisibleCharts().length }}</b> of <b>{{ allCharts.length }}</b> labour encounters recorded for this mother</span>
       </div>
-      <div ng-if="allCharts.length > 4">
+      <div ng-if="allCharts.length > 1">
         <a href="javascript:void(0)" ng-click="toggleShowAll()" style="color: #0f766e; font-weight: 700; text-decoration: none; font-size: 12px;">
-          {{ showAllEncounters ? '▲ Collapse to recent 4' : ('▼ View all ' + allCharts.length + ' encounters') }}
+          {{ showAllEncounters ? '▲ Collapse to recent record' : ('▼ View all ' + allCharts.length + ' encounters') }}
         </a>
       </div>
     </div>
@@ -178,10 +178,10 @@
     </div>
 
     <!-- Expand / Collapse Button when more than 4 encounters exist -->
-    <div ng-if="allCharts.length > 4" style="text-align: center; margin-top: 14px;">
+    <div ng-if="allCharts.length > 1" style="text-align: center; margin-top: 14px;">
       <button type="button" ng-click="toggleShowAll()" style="background: #f1f5f9; hover:background: #e2e8f0; color: #0f766e; border: 1px solid #cbd5e1; padding: 8px 20px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
         <i class="fa" ng-class="{'fa-chevron-up': showAllEncounters, 'fa-chevron-down': !showAllEncounters}" style="margin-right: 6px;"></i>
-        <span>{{ showAllEncounters ? 'Collapse to recent 4 encounters' : ('Expand to view all ' + allCharts.length + ' labour encounter forms') }}</span>
+        <span>{{ showAllEncounters ? 'Collapse to recent record' : ('Expand to view all ' + allCharts.length + ' labour encounter forms') }}</span>
       </button>
     </div>
 
