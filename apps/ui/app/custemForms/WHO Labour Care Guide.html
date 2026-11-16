@@ -3261,6 +3261,21 @@
         lcgData.meta.name = patientNameParam;
       }
 
+      if (patientUuid) {
+        fetch(`/openmrs/ws/rest/v1/patient/${patientUuid}?v=full`, { credentials: 'include' })
+          .then(r => r.ok ? r.json() : null)
+          .then(pt => {
+            if (!pt) return;
+            const person = pt.person || {};
+            const pName = (person.preferredName ? `${person.preferredName.givenName} ${person.preferredName.middleName || ''} ${person.preferredName.familyName || ''}` : (person.display || pt.display || '')).replace(/\s+/g, ' ').trim();
+            if (pName && !document.getElementById('ptName').value) {
+              document.getElementById('ptName').value = pName;
+              lcgData.meta.name = pName;
+            }
+          })
+          .catch(() => {});
+      }
+
       if (isNewParam) {
         // If an active unlocked chart already exists for this patient, open and continue active only!
         if (patientUuid) {

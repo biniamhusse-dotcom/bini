@@ -4084,6 +4084,13 @@
               conceptUuid: 'e0790001-3d71-4569-b1d5-894000000002',
               tag: 'OTP',
               color: '#16a34a',
+              setPatientDetails: function (ptInfo) {
+                if (typeof state !== 'undefined') {
+                  if (!state.patientName) state.patientName = ptInfo.fullName;
+                  if (!state.registrationNo) state.registrationNo = ptInfo.identifier;
+                  if (typeof syncEntireUI === 'function') syncEntireUI();
+                }
+              },
               getData: function () { return state; },
               setData: function (data) {
                 if (data && typeof data === 'object') {

@@ -1347,13 +1347,21 @@ async function initPatientContext() {
       if (idInput && !idInput.value && pId !== '-') idInput.value = pId;
 
       const surnameInput = document.querySelector('[data-lbl="Patient surname"]');
-      if (surnameInput && !surnameInput.value && person.preferredName && person.preferredName.familyName) {
-        surnameInput.value = person.preferredName.familyName;
+      if (surnameInput && !surnameInput.value) {
+        if (person.preferredName && person.preferredName.familyName) {
+          surnameInput.value = person.preferredName.familyName;
+        } else if (person.preferredName && person.preferredName.middleName) {
+          surnameInput.value = person.preferredName.middleName;
+        }
       }
 
       const firstNameInput = document.querySelector('[data-lbl="First name"]');
-      if (firstNameInput && !firstNameInput.value && person.preferredName && person.preferredName.givenName) {
-        firstNameInput.value = person.preferredName.givenName;
+      if (firstNameInput && !firstNameInput.value) {
+        if (person.preferredName && person.preferredName.givenName) {
+          firstNameInput.value = person.preferredName.givenName;
+        } else if (pName) {
+          firstNameInput.value = pName.split(' ')[0] || '';
+        }
       }
 
       const dobInput = document.querySelector('[data-lbl="Date of birth"]');
@@ -1364,11 +1372,43 @@ async function initPatientContext() {
       const ageInput = document.querySelector('[data-lbl="Age"]');
       if (ageInput && !ageInput.value && pAge !== '-') ageInput.value = pAge;
 
+      // Age group (INF: < 1y, CH: 1-14y, AD: >= 15y)
+      if (pAge !== '-' && !isNaN(parseInt(pAge))) {
+        const numAge = parseInt(pAge);
+        const grpVal = numAge < 1 ? 'INF' : (numAge < 15 ? 'CH' : 'AD');
+        document.querySelectorAll('input[type=radio][value="' + grpVal + '"]').forEach(r => {
+          r.checked = true;
+        });
+      }
+
+      // Gender
       document.querySelectorAll('input[type=radio][value="' + pGender + '"]').forEach(r => {
         if (![...document.querySelectorAll('input[type=radio][name="' + r.name + '"]')].some(x => x.checked)) {
           r.checked = true;
         }
       });
+
+      // Residence (city and sub-district)
+      const resInput = document.querySelector('[data-lbl="Residence (city and sub-district)"]');
+      if (resInput && !resInput.value && person.preferredAddress) {
+        const pa = person.preferredAddress;
+        const resStr = [pa.stateProvince, pa.countyDistrict || pa.address2, pa.cityVillage, pa.address1].filter(Boolean).join(', ');
+        if (resStr) resInput.value = resStr;
+      }
+
+      // Contact phone
+      let ptPhone = '';
+      if (person.attributes && person.attributes.length > 0) {
+        for (const attr of person.attributes) {
+          const typeName = (attr.attributeType && (attr.attributeType.name || attr.attributeType.display || '')).toLowerCase();
+          if (typeName.includes('phone') || typeName.includes('tele') || typeName.includes('mobile')) {
+            ptPhone = attr.value;
+            break;
+          }
+        }
+      }
+      const phoneInput = document.querySelector('[data-lbl="Contact phone"]');
+      if (phoneInput && !phoneInput.value && ptPhone) phoneInput.value = ptPhone;
     }
 
     // Default Date of arrival and Time of arrival to today/now if empty

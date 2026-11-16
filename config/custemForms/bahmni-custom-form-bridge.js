@@ -555,25 +555,214 @@
     fetchPatientDemographics: function () {
       if (!this.patientUuid) return;
       var self = this;
-      fetch(`/openmrs/ws/rest/v1/patient/${this.patientUuid}?v=custom:(uuid,display,identifiers:(identifier),person:(display,age,gender))`, {
+      fetch(`/openmrs/ws/rest/v1/patient/${this.patientUuid}?v=full`, {
         credentials: 'include'
       })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (pt) {
         if (!pt) return;
-        var pName = (pt.person && pt.person.display) || pt.display;
-        if (pName) {
-          self.patientName = pName;
-          var ptNameEl = document.getElementById('bahmniBridgePtName');
-          if (ptNameEl) ptNameEl.textContent = pName;
+        var person = pt.person || {};
+        var preferredName = person.preferredName || {};
+        var preferredAddress = person.preferredAddress || {};
+
+        var fullName = '';
+        if (preferredName.givenName || preferredName.familyName) {
+          fullName = [preferredName.givenName, preferredName.middleName, preferredName.familyName].filter(Boolean).join(' ');
         }
-        var id = (pt.identifiers && pt.identifiers[0] && pt.identifiers[0].identifier) || '';
-        var age = pt.person ? pt.person.age : '';
-        var gender = pt.person ? pt.person.gender : '';
+        if (!fullName) {
+          fullName = (person.display) || pt.display || '';
+        }
+
+        var identifier = (pt.identifiers && pt.identifiers[0] && pt.identifiers[0].identifier) || '';
+        var age = person.age != null ? String(person.age) : '';
+        var gender = person.gender || '';
+        var genderFull = gender === 'M' ? 'Male' : (gender === 'F' ? 'Female' : gender);
+        var birthdate = person.birthdate ? person.birthdate.substring(0, 10) : '';
+
+        // Address parts
+        var kebele = preferredAddress.address1 || '';
+        var zone = preferredAddress.countyDistrict || preferredAddress.address2 || '';
+        var woreda = preferredAddress.cityVillage || '';
+        var region = preferredAddress.stateProvince || '';
+        var fullAddress = [region, zone, woreda, kebele].filter(Boolean).join(', ');
+
+        // Phone number from attributes
+        var phone = '';
+        if (person.attributes && person.attributes.length > 0) {
+          for (var a = 0; a < person.attributes.length; a++) {
+            var attr = person.attributes[a];
+            var typeName = (attr.attributeType && (attr.attributeType.name || attr.attributeType.display || '')).toLowerCase();
+            if (typeName.includes('phone') || typeName.includes('tele') || typeName.includes('mobile') || typeName.includes('contact')) {
+              phone = attr.value;
+              break;
+            }
+          }
+        }
+
+        var ptInfo = {
+          uuid: pt.uuid,
+          identifier: identifier,
+          fullName: fullName,
+          firstName: preferredName.givenName || '',
+          middleName: preferredName.middleName || '',
+          familyName: preferredName.familyName || '',
+          age: age,
+          gender: gender,
+          genderFull: genderFull,
+          birthdate: birthdate,
+          kebele: kebele,
+          zone: zone,
+          woreda: woreda,
+          region: region,
+          fullAddress: fullAddress,
+          phone: phone,
+          raw: pt
+        };
+
+        self.patientInfo = ptInfo;
+        if (fullName) self.patientName = fullName;
+
+        // 1. Update Top Bar banner
+        var ptNameEl = document.getElementById('bahmniBridgePtName');
+        if (ptNameEl) ptNameEl.textContent = fullName;
+
         var idEl = document.getElementById('bahmniBridgePtId');
-        if (idEl) idEl.textContent = `ID: ${id || pt.uuid.slice(0, 8)} | ${age ? age + 'y' : ''} ${gender || ''}`;
+        if (idEl) {
+          idEl.textContent = `ID: ${identifier || pt.uuid.slice(0, 8)} | ${age ? age + 'y' : ''} ${genderFull || gender}`;
+        }
+
+        // 2. Auto fill form inputs
+        self.autoFillFormFields(ptInfo);
+
+        // 3. Optional callback in form bridge config
+        if (typeof self.config.setPatientDetails === 'function') {
+          try { self.config.setPatientDetails(ptInfo); } catch (e) { console.warn('setPatientDetails error:', e); }
+        }
       })
-      .catch(function () {});
+      .catch(function (err) {
+        console.warn('fetchPatientDemographics error:', err);
+      });
+    },
+
+    autoFillFormFields: function (pt) {
+      if (!pt) return;
+
+      var setVal = function (el, val) {
+        if (!el || val == null || val === '') return;
+        if (!el.value || el.value.trim() === '') {
+          el.value = val;
+          try {
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          } catch (e) {}
+        }
+      };
+
+      var setChecked = function (el, checked) {
+        if (!el) return;
+        el.checked = checked;
+        try {
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        } catch (e) {}
+      };
+
+      // 1. Specific Form Mappings
+      // Ethiopian OTP Follow-up Card
+      setVal(document.getElementById('inputPatientName'), pt.fullName);
+      setVal(document.getElementById('inputRegNo'), pt.identifier);
+
+      // FMOH Ethiopia DM & Hypertension Follow-Up Form
+      setVal(document.getElementById('pt-name'), pt.fullName);
+      setVal(document.getElementById('pt-mrn'), pt.identifier);
+      setVal(document.getElementById('pt-age'), pt.age);
+      setVal(document.getElementById('pt-sex'), pt.genderFull);
+      setVal(document.getElementById('pt-zone'), pt.zone);
+      setVal(document.getElementById('pt-woreda'), pt.woreda);
+      setVal(document.getElementById('pt-kebele'), pt.kebele);
+      setVal(document.getElementById('pt-tel'), pt.phone);
+
+      // Interactive Ophthalmic Eye Examination Form
+      setVal(document.getElementById('patientName'), pt.fullName);
+      setVal(document.getElementById('mrn'), pt.identifier);
+      if (document.getElementById('dobAge')) {
+        var dobAgeStr = (pt.birthdate || '') + (pt.age ? ' (' + pt.age + 'y)' : '');
+        setVal(document.getElementById('dobAge'), dobAgeStr.trim());
+      }
+      if (pt.gender === 'M') setChecked(document.getElementById('sexMale'), true);
+      if (pt.gender === 'F') setChecked(document.getElementById('sexFemale'), true);
+      setVal(document.getElementById('phone'), pt.phone);
+
+      // WHO Postpartum Hemorrhage (PPH) Observation Chart
+      setVal(document.getElementById('patientNameMrn'), pt.fullName + (pt.identifier ? ' / ' + pt.identifier : ''));
+
+      // Safe Childbirth Checklist Ethiopian
+      setVal(document.getElementById('patientName'), pt.fullName + (pt.identifier ? ' (ID: ' + pt.identifier + ')' : ''));
+
+      // Stabilisation Centre (SC) Multi-Chart
+      setVal(document.querySelector('input[data-field="child_name"]'), pt.fullName);
+      setVal(document.querySelector('input[data-field="reg_no"]'), pt.identifier);
+      setVal(document.querySelector('input[data-field="age"]'), pt.age);
+      setVal(document.getElementById('field-age'), pt.age);
+      if (document.querySelector('select[data-field="sex"]')) {
+        var sexSel = document.querySelector('select[data-field="sex"]');
+        if (!sexSel.value) {
+          sexSel.value = pt.gender === 'M' ? 'M' : (pt.gender === 'F' ? 'F' : '');
+          try { sexSel.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+        }
+      }
+      setVal(document.querySelector('input[data-field="address"]'), pt.fullAddress || [pt.kebele, pt.woreda, pt.region].filter(Boolean).join(', '));
+
+      // National Perioperative Clinical Forms
+      ['sa_name', 'sp_name', 'an_name', 'ar_name'].forEach(function(n) {
+        setVal(document.querySelector(`input[name="${n}"]`), pt.fullName);
+      });
+      ['sa_mrn', 'sp_mrn', 'an_mrn'].forEach(function(n) {
+        setVal(document.querySelector(`input[name="${n}"]`), pt.identifier);
+      });
+      ['sa_age', 'sp_age', 'an_age', 'ar_age_wt'].forEach(function(n) {
+        setVal(document.querySelector(`input[name="${n}"]`), pt.age);
+      });
+      ['sa_gender', 'sp_gender', 'an_sex'].forEach(function(n) {
+        setVal(document.querySelector(`input[name="${n}"]`), pt.genderFull);
+      });
+
+      // 2. Generic heuristics for any input or textarea
+      var allInputs = document.querySelectorAll('input:not([type="hidden"]):not([type="button"]):not([type="submit"]), textarea, select');
+      for (var i = 0; i < allInputs.length; i++) {
+        var inp = allInputs[i];
+        if (inp.value && inp.value.trim() !== '') continue;
+        var tagId = (inp.id || '').toLowerCase();
+        var tagName = (inp.name || '').toLowerCase();
+        var tagPh = (inp.placeholder || '').toLowerCase();
+        var combined = tagId + ' ' + tagName + ' ' + tagPh;
+
+        // Skip provider, clinician, outgoing, incoming, drug inputs
+        if (combined.includes('provider') || combined.includes('clinician') || combined.includes('outgoing') || combined.includes('incoming') || combined.includes('drug') || combined.includes('facility')) {
+          continue;
+        }
+
+        if (combined.includes('patient') && combined.includes('name')) {
+          setVal(inp, pt.fullName);
+        } else if (combined.includes('mrn') || combined.includes('regno') || combined.includes('reg_no') || combined.includes('hospital_no') || combined.includes('patient_id') || combined.includes('patientid')) {
+          setVal(inp, pt.identifier);
+        } else if ((tagId === 'age' || tagName === 'age' || tagPh === 'age' || combined.includes('patient age') || combined.includes('pt age')) && !combined.includes('group')) {
+          setVal(inp, pt.age);
+        } else if (tagId === 'gender' || tagName === 'gender' || tagId === 'sex' || tagName === 'sex') {
+          setVal(inp, pt.genderFull || pt.gender);
+        } else if (combined.includes('birthdate') || combined.includes('dob') || combined.includes('date of birth')) {
+          setVal(inp, pt.birthdate);
+        } else if (combined.includes('kebele')) {
+          setVal(inp, pt.kebele);
+        } else if (combined.includes('woreda')) {
+          setVal(inp, pt.woreda);
+        } else if (combined.includes('zone') || combined.includes('subcity') || combined.includes('sub-city')) {
+          setVal(inp, pt.zone);
+        } else if (combined.includes('region')) {
+          setVal(inp, pt.region);
+        } else if (combined.includes('phone') || combined.includes('telephone') || combined.includes('tel')) {
+          setVal(inp, pt.phone);
+        }
+      }
     },
 
     loadObservationData: function () {

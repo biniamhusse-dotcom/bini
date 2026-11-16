@@ -2154,6 +2154,17 @@
               conceptUuid: 'e0790011-3d71-4569-b1d5-894000000012',
               tag: 'SAM',
               color: '#0d9488',
+              setPatientDetails: function (ptInfo) {
+                if (typeof chartState !== 'undefined') {
+                  if (!chartState.fields) chartState.fields = {};
+                  if (!chartState.fields.child_name) chartState.fields.child_name = ptInfo.fullName;
+                  if (!chartState.fields.reg_no) chartState.fields.reg_no = ptInfo.identifier;
+                  if (!chartState.fields.age) chartState.fields.age = ptInfo.age;
+                  if (!chartState.fields.sex) chartState.fields.sex = ptInfo.gender === 'M' ? 'M' : (ptInfo.gender === 'F' ? 'F' : '');
+                  if (!chartState.fields.address) chartState.fields.address = ptInfo.fullAddress || [ptInfo.kebele, ptInfo.woreda, ptInfo.region].filter(Boolean).join(', ');
+                  if (typeof applyStateToDOM === 'function') applyStateToDOM();
+                }
+              },
               getData: function () {
                 return typeof chartState !== 'undefined' ? chartState : {};
               },

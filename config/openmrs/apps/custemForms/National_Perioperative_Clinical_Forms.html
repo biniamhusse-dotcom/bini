@@ -3797,6 +3797,24 @@ window.addEventListener('DOMContentLoaded', () => {
               conceptUuid: 'e0790007-3d71-4569-b1d5-894000000008',
               tag: 'SURG',
               color: '#ea580c',
+              setPatientDetails: function (ptInfo) {
+                ['sa_name', 'sp_name', 'an_name', 'ar_name'].forEach(function(n) {
+                  const el = document.querySelector(`input[name="${n}"]`);
+                  if (el && !el.value) el.value = ptInfo.fullName;
+                });
+                ['sa_mrn', 'sp_mrn', 'an_mrn'].forEach(function(n) {
+                  const el = document.querySelector(`input[name="${n}"]`);
+                  if (el && !el.value) el.value = ptInfo.identifier;
+                });
+                ['sa_age', 'sp_age', 'an_age', 'ar_age_wt'].forEach(function(n) {
+                  const el = document.querySelector(`input[name="${n}"]`);
+                  if (el && !el.value) el.value = ptInfo.age;
+                });
+                ['sa_gender', 'sp_gender', 'an_sex'].forEach(function(n) {
+                  const el = document.querySelector(`input[name="${n}"]`);
+                  if (el && !el.value) el.value = ptInfo.genderFull || ptInfo.gender;
+                });
+              },
               getData: function () {
                 return (typeof gatherData === 'function') ? gatherData() : {};
               },

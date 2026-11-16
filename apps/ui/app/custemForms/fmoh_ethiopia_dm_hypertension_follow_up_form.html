@@ -3262,7 +3262,7 @@
       updateLiveEthiopianClock();
       setInterval(updateLiveEthiopianClock, 30000);
 
-      // Load saved state or initialize with sample patient on first run
+      // Load saved state or initialize with empty patient on first run
       const savedRaw = localStorage.getItem(STORAGE_KEY);
       if (savedRaw) {
         try {
@@ -3271,10 +3271,10 @@
           renderVisitsTable();
           updateSummaryCards();
         } catch (err) {
-          loadSamplePatient();
+          confirmNewPatient();
         }
       } else {
-        loadSamplePatient();
+        confirmNewPatient();
       }
     });
   </script>
@@ -3290,6 +3290,18 @@
               conceptUuid: 'e0790003-3d71-4569-b1d5-894000000004',
               tag: 'NCD',
               color: '#0284c7',
+              setPatientDetails: function (ptInfo) {
+                if (!appState.patient) appState.patient = {};
+                if (!appState.patient.name) appState.patient.name = ptInfo.fullName;
+                if (!appState.patient.mrn) appState.patient.mrn = ptInfo.identifier;
+                if (!appState.patient.age) appState.patient.age = ptInfo.age;
+                if (!appState.patient.sex) appState.patient.sex = ptInfo.genderFull || ptInfo.gender;
+                if (!appState.patient.zone) appState.patient.zone = ptInfo.zone;
+                if (!appState.patient.woreda) appState.patient.woreda = ptInfo.woreda;
+                if (!appState.patient.kebele) appState.patient.kebele = ptInfo.kebele;
+                if (!appState.patient.tel) appState.patient.tel = ptInfo.phone;
+                if (typeof writePatientStateToInputs === 'function') writePatientStateToInputs();
+              },
               getData: function () {
                 if (typeof readPatientInputsToState === 'function') readPatientInputsToState();
                 return appState;
