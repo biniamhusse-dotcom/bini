@@ -70,10 +70,11 @@ angular.module('bahmni.registration')
             }
 
             var hasSearchParameters = function () {
-                return $scope.searchParameters.name.trim().length > 0 ||
-                    $scope.searchParameters.addressFieldValue.trim().length > 0 ||
-                    $scope.searchParameters.customAttribute.trim().length > 0 ||
-                    $scope.searchParameters.programAttributeFieldValue.trim().length > 0;
+                return ($scope.searchParameters.name && $scope.searchParameters.name.trim().length > 0) ||
+                    ($scope.searchParameters.addressFieldValue && $scope.searchParameters.addressFieldValue.trim().length > 0) ||
+                    ($scope.searchParameters.customAttribute && $scope.searchParameters.customAttribute.trim().length > 0) ||
+                    ($scope.searchParameters.programAttributeFieldValue && $scope.searchParameters.programAttributeFieldValue.trim().length > 0) ||
+                    ($scope.searchParameters.registrationNumber && $scope.searchParameters.registrationNumber.trim().length > 0);
             };
 
             var searchBasedOnQueryParameters = function (offset) {
@@ -93,8 +94,8 @@ angular.module('bahmni.registration')
                 if (hasSearchParameters()) {
                     searching = true;
                     var searchPromise = patientService.search(
-                        $scope.searchParameters.name,
-                        undefined,
+                        $scope.searchParameters.name || undefined,
+                        $scope.searchParameters.registrationNumber || undefined,
                         $scope.addressSearchConfig.field,
                         $scope.searchParameters.addressFieldValue,
                         $scope.searchParameters.customAttribute,
@@ -345,10 +346,10 @@ angular.module('bahmni.registration')
                 }
                 $scope.results = [];
 
-                var patientIdentifier = $scope.searchParameters.registrationNumber;
+                var patientIdentifier = String($scope.searchParameters.registrationNumber).trim();
 
                 $location.search({
-                    registrationNumber: $scope.searchParameters.registrationNumber,
+                    registrationNumber: patientIdentifier,
                     programAttributeFieldName: $scope.programAttributesSearchConfig.field,
                     patientAttributes: $scope.customAttributesSearchConfig.fields,
                     programAttributeFieldValue: $scope.searchParameters.programAttributeFieldValue,
@@ -366,16 +367,30 @@ angular.module('bahmni.registration')
                         mapCustomAttributesSearchResults(data);
                         mapAddressAttributesSearchResults(data);
                         mapProgramAttributesSearchResults(data);
-                        if (data.pageOfResults.length === 1) {
+                        if (!data || !data.pageOfResults || data.pageOfResults.length === 0) {
+                            $scope.patientIdentifier = { 'patientIdentifier': patientIdentifier };
+                            $scope.noResultsMessage = 'REGISTRATION_LABEL_COULD_NOT_FIND_PATIENT';
+                            return;
+                        }
+                        var exactMatches = _.filter(data.pageOfResults, function (p) {
+                            return p.identifier && String(p.identifier).trim().toLowerCase() === String(patientIdentifier).toLowerCase();
+                        });
+                        if (exactMatches.length === 1) {
+                            var patient = exactMatches[0];
+                            var forwardUrl = appService.getAppDescriptor().getConfigValue("searchByIdForwardUrl") || "/patient/{{patientUuid}}";
+                            $location.url(appService.getAppDescriptor().formatUrl(forwardUrl, { 'patientUuid': patient.uuid }));
+                        } else if (data.pageOfResults.length === 1) {
                             var patient = data.pageOfResults[0];
                             var forwardUrl = appService.getAppDescriptor().getConfigValue("searchByIdForwardUrl") || "/patient/{{patientUuid}}";
                             $location.url(appService.getAppDescriptor().formatUrl(forwardUrl, { 'patientUuid': patient.uuid }));
-                        } else if (data.pageOfResults.length > 1) {
+                        } else {
+                            if (exactMatches.length > 0) {
+                                var exact = exactMatches[0];
+                                data.pageOfResults = _.without(data.pageOfResults, exact);
+                                data.pageOfResults.unshift(exact);
+                            }
                             $scope.results = data.pageOfResults;
                             $scope.noResultsMessage = null;
-                        } else {
-                            $scope.patientIdentifier = { 'patientIdentifier': patientIdentifier };
-                            $scope.noResultsMessage = 'REGISTRATION_LABEL_COULD_NOT_FIND_PATIENT';
                         }
                     });
                 spinner.forPromise(searchPromise);
@@ -606,10 +621,10 @@ angular.module('bahmni.registration')
                 }
                 $scope.results = [];
 
-                var patientIdentifier = $scope.searchParameters.registrationNumber;
+                var patientIdentifier = String($scope.searchParameters.registrationNumber).trim();
 
                 $location.search({
-                    registrationNumber: $scope.searchParameters.registrationNumber,
+                    registrationNumber: patientIdentifier,
                     programAttributeFieldName: $scope.programAttributesSearchConfig.field,
                     patientAttributes: $scope.customAttributesSearchConfig.fields,
                     programAttributeFieldValue: $scope.searchParameters.programAttributeFieldValue,
@@ -627,13 +642,21 @@ angular.module('bahmni.registration')
                         mapCustomAttributesSearchResults(data);
                         mapAddressAttributesSearchResults(data);
                         mapProgramAttributesSearchResults(data);
-                        if (data.pageOfResults.length >= 1) {
-                            $scope.results = data.pageOfResults;
-                            $scope.noResultsMessage = null;
-                        } else {
+                        if (!data || !data.pageOfResults || data.pageOfResults.length === 0) {
                             $scope.patientIdentifier = { 'patientIdentifier': patientIdentifier };
                             $scope.noResultsMessage = 'REGISTRATION_LABEL_COULD_NOT_FIND_PATIENT';
+                            return;
                         }
+                        var exactMatches = _.filter(data.pageOfResults, function (p) {
+                            return p.identifier && String(p.identifier).trim().toLowerCase() === String(patientIdentifier).toLowerCase();
+                        });
+                        if (exactMatches.length > 0) {
+                            var exact = exactMatches[0];
+                            data.pageOfResults = _.without(data.pageOfResults, exact);
+                            data.pageOfResults.unshift(exact);
+                        }
+                        $scope.results = data.pageOfResults;
+                        $scope.noResultsMessage = null;
                     });
                 spinner.forPromise(searchPromise);
             };

@@ -847,16 +847,20 @@ def api_run_script(script_key):
         starting_mrn = str(data.get("starting_mrn", "200000")).strip()
         clean_staging = data.get("clean_staging", True)
 
-        if confirm != "PURGE":
-            return jsonify({"error": "Confirmation word 'PURGE' required."}), 400
+        if mode == "3":
+            # MRN-only update: reconfigures the Auto-MRN sequence, purges nothing
+            cmd_args.extend(["--mode", "3", "--starting-mrn", starting_mrn])
+        else:
+            if confirm != "PURGE":
+                return jsonify({"error": "Confirmation word 'PURGE' required."}), 400
 
-        cmd_args.extend(["--mode", mode, "--confirm", "PURGE", "--starting-mrn", starting_mrn])
-        if mode == "2":
-            if not start_mrn:
-                return jsonify({"error": "Starting MRN is required for selective purge."}), 400
-            cmd_args.extend(["--start-mrn", start_mrn])
-        if clean_staging or mode == "1":
-            cmd_args.append("--clean-staging")
+            cmd_args.extend(["--mode", mode, "--confirm", "PURGE", "--starting-mrn", starting_mrn])
+            if mode == "2":
+                if not start_mrn:
+                    return jsonify({"error": "Starting MRN is required for selective purge."}), 400
+                cmd_args.extend(["--start-mrn", start_mrn])
+            if clean_staging or mode == "1":
+                cmd_args.append("--clean-staging")
 
     elif script_key == "import_kphc_excel_patients":
         excel_path = data.get("excel_path", "").strip()
@@ -1422,7 +1426,7 @@ INDEX_TEMPLATE = """
             <div id="collapseClean" class="accordion-collapse collapse show" data-bs-parent="#toolsAccordion">
               <div class="accordion-body">
                 <p class="text-muted small">
-                  Wipes test/clinical patient data from OpenMRS, OpenELIS, PACS (dcm4chee) & Odoo, deletes non-essential user accounts (keeps admin, superman and service accounts), resets primary identifier global properties, configures the starting Auto-MRN sequence, and resets integration sync state. Full Reset also performs a deep Odoo business wipe (sale orders, invoices, payments, purchases, stock movements, customer/vendor partners). Selective mode (choice 2) is MRN-scoped in OpenMRS & Odoo only.
+                  Wipes test/clinical patient data from OpenMRS, OpenELIS, PACS (dcm4chee) & Odoo, deletes non-essential user accounts (keeps admin, superman and service accounts), resets primary identifier global properties, configures the starting Auto-MRN sequence, and resets integration sync state. Full Reset also performs a deep Odoo business wipe (sale orders, invoices, payments, purchases, stock movements, customer/vendor partners). Selective mode (choice 2) is MRN-scoped in OpenMRS & Odoo only. <b>Set Auto-MRN Start Only (choice 3)</b> reconfigures the Auto-MRN sequence without deleting any data.
                 </p>
                 <div class="mb-3">
                   <label class="form-label fw-semibold small">Purge Scope Mode</label>
@@ -1434,6 +1438,10 @@ INDEX_TEMPLATE = """
                     <div class="form-check">
                       <input class="form-check-input" type="radio" name="cleanMode" id="cleanMode2" value="2" onchange="toggleCleanMode()">
                       <label class="form-check-label" for="cleanMode2">Selective Purge (Start from specific MRN)</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="cleanMode" id="cleanMode3" value="3" onchange="toggleCleanMode()">
+                      <label class="form-check-label" for="cleanMode3">Set Auto-MRN Start Only (no purge)</label>
                     </div>
                   </div>
                 </div>
@@ -1450,7 +1458,7 @@ INDEX_TEMPLATE = """
                     <label class="form-label fw-semibold small">Desired Auto-MRN Sequence Start</label>
                     <input type="number" id="cleanAutoMrn" class="form-control form-control-sm" value="200000">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-6" id="cleanConfirmGroup">
                     <label class="form-label fw-semibold small text-danger">Safety Confirmation (Type "PURGE")</label>
                     <input type="text" id="cleanConfirm" class="form-control form-control-sm" placeholder="Type PURGE to confirm">
                   </div>
@@ -1792,6 +1800,10 @@ INDEX_TEMPLATE = """
     function toggleCleanMode() {
       const mode = document.querySelector('input[name="cleanMode"]:checked').value;
       document.getElementById('startMrnGroup').style.display = mode === '2' ? 'flex' : 'none';
+      const confirmGroup = document.getElementById('cleanConfirmGroup');
+      if (confirmGroup) confirmGroup.style.display = mode === '3' ? 'none' : 'flex';
+      const stagingGroup = document.getElementById('cleanStagingGroup');
+      if (stagingGroup) stagingGroup.style.display = mode === '3' ? 'none' : 'block';
     }
 
     function appendTerminal(text) {
@@ -2339,6 +2351,19 @@ INDEX_TEMPLATE = """
       const autoMrn = document.getElementById('cleanAutoMrn').value.trim();
       const confirmWord = document.getElementById('cleanConfirm').value.trim();
       const cleanStaging = document.getElementById('cleanStagingDb') ? document.getElementById('cleanStagingDb').checked : false;
+
+      if (mode === "3") {
+        // MRN-only update: no data is deleted, no PURGE confirmation needed
+        const mrnVal = autoMrn || '200000';
+        if (!confirm(`Set Auto-MRN sequence start to ${mrnVal}? No patient data will be deleted (services will restart, ~2-3 min).`)) return;
+        triggerScript('clean_patient_data', {
+          mode: mode,
+          starting_mrn: autoMrn,
+          confirm: '',
+          clean_staging: false
+        });
+        return;
+      }
 
       if (confirmWord !== "PURGE") {
         alert("You must type 'PURGE' in the confirmation box to proceed.");

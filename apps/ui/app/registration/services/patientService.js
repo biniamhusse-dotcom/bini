@@ -42,13 +42,14 @@ angular.module('bahmni.registration')
         };
 
         var searchByNameOrIdentifier = function (query, limit) {
-            return $http.get(Bahmni.Common.Constants.bahmniCommonsSearchUrl + "/patient/lucene", {
+            var isDigits = /^\d+$/.test(String(query).trim());
+            return $http.get(Bahmni.Common.Constants.bahmniCommonsSearchUrl + "/patient", {
                 method: "GET",
                 params: {
-                    identifier: query,
+                    identifier: isDigits ? query : undefined,
+                    q: isDigits ? undefined : query,
                     filterOnAllIdentifiers: true,
-                    q: query,
-                    s: "byIdOrName",
+                    s: "byIdOrNameOrVillage",
                     limit: limit,
                     loginLocationUuid: sessionService.getLoginLocationUuid()
                 },

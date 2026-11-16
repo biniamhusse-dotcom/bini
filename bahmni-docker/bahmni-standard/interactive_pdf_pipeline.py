@@ -511,7 +511,12 @@ def generate_pdf(patient, date_groups, filepath):
     body_style = ParagraphStyle('BodyText', parent=styles['Normal'], fontName='Helvetica', fontSize=8, leading=10.5, textColor=colors.HexColor("#2D3748"), leftIndent=8, spaceBefore=0.5, spaceAfter=0.5)
 
     story = []
-    p_name = f"{patient['given_name']} {patient['family_name']}".strip() or "Unknown Patient"
+    full_name = " ".join(part for part in
+                         [patient.get('given_name', ''),
+                          patient.get('middle_name', ''),
+                          patient.get('family_name', '')]
+                         if part).strip() or "Unknown Patient"
+    p_name = full_name
     story.append(Paragraph(f"<b>PATIENT CLINICAL SUMMARY — {escape(p_name.upper())}</b>", title_style))
     story.append(Paragraph(
         f"<b>MRN:</b> {escape(patient['mrn'])} &nbsp;&nbsp;|&nbsp;&nbsp; "
@@ -629,14 +634,33 @@ def main():
     os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
 
     print(f"\n[*] Querying active patients with clinical encounters from `{db_name}`...", flush=True)
-    full_sql = """
-    SELECT p.person_id, pi.identifier, 
-           COALESCE(pn.given_name, ''), COALESCE(pn.family_name, ''), 
-           COALESCE(p.gender, ''), COALESCE(CAST(p.birthdate AS CHAR), '')
+    # Full name (given + middle + family) and exact MRN:
+    # - When working from the legacy staging DB, resolve the patient's exact
+    #   current MRN from the live `openmrs` DB (matched on the normalized
+    #   legacy identifier); fall back to the cleaned staging identifier.
+    # - Names prefer the preferred, non-voided person_name row.
+    name_cols = """COALESCE(MAX(CASE WHEN pn.preferred = 1 THEN pn.given_name END), MAX(pn.given_name), '') AS given_name,
+       COALESCE(MAX(CASE WHEN pn.preferred = 1 THEN pn.middle_name END), MAX(pn.middle_name), '') AS middle_name,
+       COALESCE(MAX(CASE WHEN pn.preferred = 1 THEN pn.family_name END), MAX(pn.family_name), '') AS family_name,"""
+    if db_name == STAGE_DB:
+        mrn_col = ("COALESCE(MAX(lpi.identifier), "
+                   "MAX(NULLIF(REGEXP_REPLACE(TRIM(pi.identifier), '^[^0-9]+', ''), '')), "
+                   "MAX(TRIM(pi.identifier))) AS identifier,")
+        live_join = (f"LEFT JOIN {TARGET_DB}.patient_identifier lpi ON lpi.voided = 0 "
+                     "AND lpi.identifier = COALESCE(NULLIF(REGEXP_REPLACE(TRIM(pi.identifier), '^[^0-9]+', ''), ''), TRIM(pi.identifier))")
+    else:
+        mrn_col = "MAX(pi.identifier) AS identifier,"
+        live_join = ""
+    full_sql = f"""
+    SELECT p.person_id, {mrn_col}
+       {name_cols}
+       COALESCE(p.gender, '') AS gender,
+       COALESCE(CAST(p.birthdate AS CHAR), '') AS birthdate
     FROM patient pt
     JOIN person p ON pt.patient_id = p.person_id
-    JOIN patient_identifier pi ON pt.patient_id = pi.patient_id
-    LEFT JOIN person_name pn ON p.person_id = pn.person_id AND pn.preferred = 1
+    JOIN patient_identifier pi ON pt.patient_id = pi.patient_id AND pi.voided = 0
+    LEFT JOIN person_name pn ON p.person_id = pn.person_id AND pn.voided = 0
+    {live_join}
     WHERE pt.voided = 0
       AND EXISTS (SELECT 1 FROM encounter e WHERE e.patient_id = pt.patient_id AND e.voided = 0)
     GROUP BY pt.patient_id;
@@ -645,14 +669,15 @@ def main():
     patients = []
     for line in full_out.splitlines():
         parts = line.split("\t")
-        if len(parts) >= 6:
+        if len(parts) >= 7:
             patients.append({
                 "person_id": parts[0],
                 "mrn": parts[1].strip(),
                 "given_name": parts[2].strip(),
-                "family_name": parts[3].strip(),
-                "gender": parts[4].strip(),
-                "birthdate": parts[5].strip()
+                "middle_name": parts[3].strip(),
+                "family_name": parts[4].strip(),
+                "gender": parts[5].strip(),
+                "birthdate": parts[6].strip()
             })
 
     total = len(patients)

@@ -817,6 +817,21 @@ def configure_auto_mrn(starting_mrn):
     """)
 
 
+def task_mrn_only():
+    t0 = time.time()
+    configure_auto_mrn(_SEQ_START[0])
+    out = run_mysql("SELECT next_sequence_value FROM idgen_seq_id_gen WHERE id = 1;")
+    seq_now = "?"
+    for line in (out or "").splitlines():
+        if line.strip():
+            seq_now = line.strip().split()[-1]
+            break
+    print(f"[openmrs] Auto-MRN sequence verified in DB: next value = {seq_now}",
+          flush=True)
+    return (f"OpenMRS: Auto-MRN sequence start set to {_SEQ_START[0]} "
+            f"(DB next value: {seq_now}) ({time.time() - t0:.0f}s)")
+
+
 def task_clean_staging():
     t0 = time.time()
     print("[staging] Dropping legacy staging database `openmrs_legacy_stage`...", flush=True)
@@ -1302,6 +1317,24 @@ def restart_services():
         threads.append(th)
     for th in threads:
         th.join()
+
+    # Some Docker hosts (e.g. Docker Desktop) can kill containers on restart
+    # without bringing them back up. Verify each target is running and start
+    # any that ended up exited.
+    print("[*] Verifying restarted containers...", flush=True)
+    time.sleep(3)
+    for t in targets:
+        try:
+            state = run_cmd(f'docker inspect -f "{{{{.State.Status}}}}" {t}',
+                            check=False)
+        except Exception:
+            state = "unknown"
+        state = (state or "").strip()
+        if state != "running":
+            print(f"[!] {t} is '{state}' after restart - starting it...",
+                  flush=True)
+            run_cmd(f"docker start {t}", check=False)
+
     print("[*] Restart signals sent (OpenMRS needs ~2-3 minutes to come back).",
           flush=True)
 
@@ -1344,8 +1377,9 @@ def safe_int(value, default):
 def main():
     parser = argparse.ArgumentParser(
         description="BAHMNI / OPENMRS / OPENELIS / PACS / ODOO DATA PURGE")
-    parser.add_argument("--mode", choices=["1", "2"],
-                        help="1: Purge ALL, 2: Selective Purge (OpenMRS/Odoo)")
+    parser.add_argument("--mode", choices=["1", "2", "3"],
+                        help="1: Purge ALL, 2: Selective Purge (OpenMRS/Odoo), "
+                             "3: Set Auto-MRN sequence start only (no purge)")
     parser.add_argument("--start-mrn", help="Starting MRN if mode 2")
     parser.add_argument("--confirm", help="Must be 'PURGE'")
     parser.add_argument("--starting-mrn", type=str, default="200000",
@@ -1357,6 +1391,7 @@ def main():
     args = parser.parse_args()
 
     clean_staging_flag = args.clean_staging
+    choice = None
     if args.mode:
         choice = args.mode
         start_mrn = args.start_mrn if choice == "2" else None
@@ -1364,7 +1399,7 @@ def main():
             print("Invalid MRN provided. Aborting.", flush=True)
             sys.exit(1)
         confirm = args.confirm or ""
-        if confirm != "PURGE":
+        if choice != "3" and confirm != "PURGE":
             print("Aborted. Confirmation required (must type 'PURGE').",
                   flush=True)
             sys.exit(0)
@@ -1377,10 +1412,24 @@ def main():
         print("Options:")
         print("  1. Purge ALL patients (Full Reset)")
         print("  2. Purge starting from a specific MRN (OpenMRS/Odoo only)")
-        choice = input("\nEnter choice [1 or 2]: ").strip()
+        print("  3. Set Auto-MRN sequence start only (no purge)")
+        choice = input("\nEnter choice [1, 2 or 3]: ").strip()
 
         start_mrn = None
-        if choice == "2":
+        if choice == "3":
+            starting_mrn_input = input(
+                "Enter desired starting number for Auto-MRN sequence (e.g., 200000): "
+            ).strip()
+            starting_mrn = (int(starting_mrn_input)
+                            if starting_mrn_input.isdigit() else 200000)
+            confirm = input(
+                f"Change Auto-MRN sequence start to {starting_mrn} "
+                "(no data will be deleted)? Type 'YES': "
+            ).strip()
+            if confirm != "YES":
+                print("Aborted.")
+                sys.exit(0)
+        elif choice == "2":
             start_mrn = input("Enter starting MRN/Identifier to delete from: ").strip()
             if not start_mrn:
                 print("Invalid MRN provided. Aborting.")
@@ -1395,17 +1444,55 @@ def main():
             if stg_ans != 'n':
                 clean_staging_flag = True
 
-        if confirm != "PURGE":
+        if choice != "3" and confirm != "PURGE":
             print("Aborted.")
             sys.exit(0)
 
-        starting_mrn_input = input(
-            "Enter desired starting number for Auto-MRN sequence (e.g., 200000): "
-        ).strip()
-        starting_mrn = (int(starting_mrn_input)
-                        if starting_mrn_input.isdigit() else 200000)
+        if choice != "3":
+            starting_mrn_input = input(
+                "Enter desired starting number for Auto-MRN sequence (e.g., 200000): "
+            ).strip()
+            starting_mrn = (int(starting_mrn_input)
+                            if starting_mrn_input.isdigit() else 200000)
 
     _SEQ_START[0] = starting_mrn
+    started = time.time()
+
+    if choice == "3":
+        # MRN-only mode: reconfigure the Auto-MRN sequence without purging data
+        print("=" * 60, flush=True)
+        print(f"  MRN-ONLY UPDATE: Auto-MRN sequence start -> {starting_mrn} "
+              "(no data will be purged)", flush=True)
+        print("=" * 60, flush=True)
+        results, errors = {}, {}
+        try:
+            results["openmrs_mrn"] = task_mrn_only()
+            print(f"[OK] {results['openmrs_mrn']}", flush=True)
+        except Exception as exc:
+            errors["openmrs_mrn"] = str(exc)
+            print(f"[!] openmrs_mrn FAILED: {exc}", flush=True)
+
+        restart_services()
+        if args.wait:
+            wait_for_openmrs()
+
+        elapsed = time.time() - started
+        print("=" * 60, flush=True)
+        if errors:
+            print(f"[!] MRN-ONLY UPDATE FINISHED WITH ERRORS in {elapsed:.0f}s "
+                  f"({', '.join(sorted(errors))})", flush=True)
+            for name, msg in errors.items():
+                print(f"    - {name}: {msg}", flush=True)
+            print("=" * 60, flush=True)
+            sys.exit(1)
+        print(f"[OK] MRN-ONLY UPDATE COMPLETE in {elapsed:.0f}s - Auto-MRN "
+              f"sequence starts at {starting_mrn}. No data was purged.",
+              flush=True)
+        print("    NOTE: services are restarting in the background; OpenMRS will "
+              "be ready in ~2-3 minutes.", flush=True)
+        print("    Refresh the login page once it is back (or use --wait to block "
+              "until ready).", flush=True)
+        return
 
     mode_label = "FULL" if not start_mrn else f"SELECTIVE:{start_mrn}"
     print("=" * 60, flush=True)
