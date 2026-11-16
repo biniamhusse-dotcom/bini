@@ -83,8 +83,8 @@
             <button class="harm-btn harm-btn-danger" id="btnDeleteSelected" onclick="deleteSelected()" disabled>
                 🗑️ Delete Selected
             </button>
-            <a href="http://localhost:8000/harmonization" target="_blank" class="harm-btn harm-btn-success">
-                ⚡ Port 8000: Full Dashboard
+            <a href="/backup-api/harmonization/comparison" target="_blank" class="harm-btn harm-btn-success">
+                ⚡ API Endpoint
             </a>
             <button class="harm-btn" onclick="loadComparisonData()">
                 ↻ Refresh
@@ -175,7 +175,7 @@
     var currentFilter = 'ALL';
     var currentType = 'ALL';
     var selectedUuids = {};
-    var apiBaseUrl = window.location.protocol + '//' + window.location.hostname + ':8000';
+    var apiBaseUrl = '/backup-api';
 
     function loadComparisonData() {
         var tbody = document.getElementById('harmTbody');

@@ -1557,20 +1557,23 @@ def save_payment_config(payload):
 def run_omrs_query(sql):
     omrs = get_container("openmrsdb") or "bahmni-standard-openmrsdb-1"
     cmd = ["docker", "exec", "-i", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "-N", "-B", "openmrs", "-e", sql]
-    res = subprocess.run(cmd, capture_output=True, text=True)
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if res.returncode != 0:
-        log(f"SQL Error in run_omrs_query: {res.stderr}")
+        err = res.stderr.decode("utf-8", errors="replace")
+        log(f"SQL Error in run_omrs_query: {err}")
         return []
-    lines = [l for l in res.stdout.strip().split("\n") if l.strip()]
+    out = res.stdout.decode("utf-8", errors="replace")
+    lines = [l for l in out.strip().split("\n") if l.strip()]
     return [l.split("\t") for l in lines]
 
 def run_omrs_exec(sql):
     omrs = get_container("openmrsdb") or "bahmni-standard-openmrsdb-1"
     cmd = ["docker", "exec", "-i", omrs, "mysql", "-uroot", f"-p{MYSQL_PASS}", "openmrs", "-e", sql]
-    res = subprocess.run(cmd, capture_output=True, text=True)
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if res.returncode != 0:
-        log(f"SQL Error in run_omrs_exec: {res.stderr}")
-        raise RuntimeError(res.stderr)
+        err = res.stderr.decode("utf-8", errors="replace")
+        log(f"SQL Error in run_omrs_exec: {err}")
+        raise RuntimeError(err)
     return True
 
 def load_medication_dropdown_config():
@@ -1871,6 +1874,297 @@ def save_medication_dropdown_action(payload):
 
     else:
         raise ValueError(f"Unknown action: {action}")
+
+# ── Lab Harmonization (OpenMRS, OpenELIS, Odoo) ───────────────────────────────────
+
+def run_elis_query(sql):
+    elisdb = get_container("openelisdb") or "bahmni-standard-openelisdb-1"
+    cmd = ["docker", "exec", "-i", elisdb, "psql", "-U", "clinlims", "-d", "clinlims", "-t", "-A", "-F", "\t", "-c", sql]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if res.returncode != 0:
+        err = res.stderr.decode("utf-8", errors="replace")
+        log(f"SQL Error in run_elis_query: {err}")
+        return []
+    out = res.stdout.decode("utf-8", errors="replace")
+    lines = [l for l in out.strip().split("\n") if l.strip()]
+    return [l.split("\t") for l in lines]
+
+def run_elis_exec(sql):
+    elisdb = get_container("openelisdb") or "bahmni-standard-openelisdb-1"
+    cmd = ["docker", "exec", "-i", elisdb, "psql", "-U", "clinlims", "-d", "clinlims", "-c", sql]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if res.returncode != 0:
+        err = res.stderr.decode("utf-8", errors="replace")
+        log(f"SQL Error in run_elis_exec: {err}")
+        raise RuntimeError(err)
+    return True
+
+def run_odoo_query(sql):
+    odoodb = get_container("odoodb") or "bahmni-standard-odoodb-1"
+    cmd = ["docker", "exec", "-i", odoodb, "psql", "-U", "odoo", "-d", "odoo", "-t", "-A", "-F", "\t", "-c", sql]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if res.returncode != 0:
+        err = res.stderr.decode("utf-8", errors="replace")
+        log(f"SQL Error in run_odoo_query: {err}")
+        return []
+    out = res.stdout.decode("utf-8", errors="replace")
+    lines = [l for l in out.strip().split("\n") if l.strip()]
+    return [l.split("\t") for l in lines]
+
+def run_odoo_exec(sql):
+    odoodb = get_container("odoodb") or "bahmni-standard-odoodb-1"
+    cmd = ["docker", "exec", "-i", odoodb, "psql", "-U", "odoo", "-d", "odoo", "-c", sql]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if res.returncode != 0:
+        err = res.stderr.decode("utf-8", errors="replace")
+        log(f"SQL Error in run_odoo_exec: {err}")
+        raise RuntimeError(err)
+    return True
+
+def get_lab_harmonization_comparison():
+    omrs_sql = """
+    SELECT c.uuid, cn.name, cc.name as class_name, c.is_set
+    FROM concept c
+    JOIN concept_name cn ON c.concept_id = cn.concept_id 
+         AND cn.concept_name_type = 'FULLY_SPECIFIED' 
+         AND cn.voided = 0
+         AND (cn.locale = 'en' OR cn.locale = '')
+    JOIN concept_class cc ON c.class_id = cc.concept_class_id
+    WHERE cc.name IN ('Test', 'LabSet', 'ConvSet', 'Laboratory') AND c.retired = 0
+    GROUP BY c.uuid, cn.name, cc.name, c.is_set
+    ORDER BY cn.name;
+    """
+    omrs_rows = run_omrs_query(omrs_sql)
+
+    elis_test_rows = run_elis_query("SELECT id, name, is_active FROM test;")
+    elis_tests = {}
+    for r in elis_test_rows:
+        if len(r) >= 2:
+            tid, tname = r[0], r[1].strip()
+            elis_tests[tname.lower()] = {"id": tid, "name": tname, "is_active": r[2] if len(r) > 2 else "Y"}
+
+    elis_panel_rows = run_elis_query("SELECT p.id, p.name, count(pi.id) FROM panel p LEFT JOIN panel_item pi ON p.id = pi.panel_id GROUP BY p.id, p.name;")
+    elis_panels = {}
+    for r in elis_panel_rows:
+        if len(r) >= 2:
+            pid, pname = r[0], r[1].strip()
+            cnt = int(r[2]) if len(r) > 2 and r[2].isdigit() else 0
+            elis_panels[pname.lower()] = {"id": pid, "name": pname, "member_count": cnt}
+
+    odoo_rows = run_odoo_query("SELECT pt.id, pt.name FROM product_template pt WHERE pt.active = true;")
+    odoo_prods = {}
+    for r in odoo_rows:
+        if len(r) >= 2:
+            p_id, p_name = r[0], r[1].strip()
+            odoo_prods[p_name.lower()] = {"id": p_id, "name": p_name}
+
+    items = []
+    total_omrs = 0
+    matched_cnt = 0
+    mismatch_cnt = 0
+    missing_elis_cnt = 0
+    matched_all_three_cnt = 0
+
+    seen_uuids = set()
+    for row in omrs_rows:
+        if len(row) < 3:
+            continue
+        uuid, name, cls_name, is_set = row[0], row[1].strip(), row[2], row[3]
+        if uuid in seen_uuids:
+            continue
+        seen_uuids.add(uuid)
+        total_omrs += 1
+
+        is_panel = (cls_name in ('LabSet', 'ConvSet') or str(is_set) == '1')
+        item_type = 'Panel' if is_panel else 'Test'
+        nl = name.lower()
+
+        elis_match = elis_panels.get(nl) if is_panel else elis_tests.get(nl)
+        if not elis_match:
+            elis_match = elis_tests.get(nl) if is_panel else elis_panels.get(nl)
+
+        odoo_match = odoo_prods.get(nl)
+
+        elis_id = elis_match["id"] if elis_match else None
+        elis_name = elis_match["name"] if elis_match else None
+        member_count = elis_match.get("member_count", 0) if elis_match else 0
+        odoo_id = odoo_match["id"] if odoo_match else None
+        odoo_name = odoo_match["name"] if odoo_match else None
+
+        if elis_match:
+            matched_cnt += 1
+            if odoo_match:
+                matched_all_three_cnt += 1
+                status = "MATCHED"
+                status_label = "Harmonized (All 3)"
+            else:
+                status = "MATCHED"
+                status_label = "Harmonized"
+        else:
+            missing_elis_cnt += 1
+            status = "MISSING_IN_OPENELIS"
+            status_label = "Missing in OpenELIS"
+
+        items.append({
+            "uuid": uuid,
+            "openmrs_name": name,
+            "type": item_type,
+            "member_count": member_count,
+            "openelis_id": elis_id,
+            "openelis_name": elis_name,
+            "odoo_id": odoo_id,
+            "odoo_name": odoo_name,
+            "status": status,
+            "status_label": status_label
+        })
+
+    summary = {
+        "total_openmrs": total_omrs,
+        "matched": matched_cnt,
+        "name_mismatch": mismatch_cnt,
+        "missing_in_openelis": missing_elis_cnt,
+        "matched_all_three": matched_all_three_cnt
+    }
+    return {"summary": summary, "items": items}
+
+def delete_single_lab_item(payload):
+    uuid = payload.get("uuid", "").strip()
+    if not uuid:
+        raise ValueError("Concept UUID is required")
+    name_rows = run_omrs_query(f"SELECT cn.name FROM concept_name cn JOIN concept c ON cn.concept_id = c.concept_id WHERE c.uuid = '{uuid}' AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1;")
+    name = name_rows[0][0].strip() if name_rows and len(name_rows[0]) >= 1 else ""
+    
+    # 1. OpenMRS
+    run_omrs_exec(f"UPDATE concept SET retired = 1 WHERE uuid = '{uuid}';")
+    
+    # 2. OpenELIS
+    if name:
+        esc_name = name.replace("'", "''")
+        run_elis_exec(f"UPDATE test SET is_active = 'N' WHERE name = '{esc_name}';")
+        run_elis_exec(f"""
+            DELETE FROM panel_item WHERE panel_id IN (SELECT id FROM panel WHERE name = '{esc_name}');
+            DELETE FROM sampletype_panel WHERE panel_id IN (SELECT id FROM panel WHERE name = '{esc_name}');
+            DELETE FROM panel WHERE name = '{esc_name}';
+        """)
+        
+        # 3. Odoo
+        try:
+            run_odoo_exec(f"UPDATE product_template SET active = false WHERE name = '{esc_name}';")
+        except Exception as e:
+            log(f"Warning: could not deactivate in Odoo: {e}")
+
+    return {"success": True, "message": f"Successfully deleted '{name or uuid}' across OpenMRS, OpenELIS & Odoo"}
+
+def delete_batch_lab_items(payload):
+    uuids = payload.get("uuids", [])
+    count = 0
+    for u in uuids:
+        try:
+            delete_single_lab_item({"uuid": u})
+            count += 1
+        except Exception as e:
+            log(f"Error deleting {u}: {e}")
+    return {"success": True, "deleted_count": count}
+
+def sync_single_lab_item(payload):
+    uuid = payload.get("uuid", "").strip()
+    action = payload.get("action", "create")
+    if not uuid:
+        raise ValueError("Concept UUID is required")
+
+    details = run_omrs_query(f"""
+        SELECT cn.name, COALESCE(cd.description, cn.name), cc.name as class_name, c.is_set
+        FROM concept c
+        JOIN concept_name cn ON c.concept_id = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+        LEFT JOIN concept_description cd ON c.concept_id = cd.concept_id
+        JOIN concept_class cc ON c.class_id = cc.concept_class_id
+        WHERE c.uuid = '{uuid}'
+        LIMIT 1;
+    """)
+    if not details or len(details[0]) < 3:
+        raise ValueError(f"Concept not found in OpenMRS with UUID {uuid}")
+
+    name = details[0][0].strip()
+    desc = details[0][1].strip() if len(details[0]) > 1 else name
+    cls_name = details[0][2].strip()
+    is_set = str(details[0][3]).strip() if len(details[0]) > 3 else "0"
+    is_panel = (cls_name in ('LabSet', 'ConvSet') or is_set == '1')
+    esc_name = name.replace("'", "''")
+    esc_desc = desc.replace("'", "''")
+
+    if action == "fix_name":
+        if is_panel:
+            run_elis_exec(f"UPDATE panel SET name = '{esc_name}', description = '{esc_desc}', lastupdated = NOW() WHERE name ILIKE '{esc_name}';")
+        else:
+            run_elis_exec(f"UPDATE test SET name = '{esc_name}', description = '{esc_desc}', lastupdated = NOW() WHERE name ILIKE '{esc_name}';")
+        try:
+            run_odoo_exec(f"UPDATE product_template SET name = '{esc_name}' WHERE name ILIKE '{esc_name}';")
+        except Exception as e:
+            log(f"Odoo fix name warning: {e}")
+        return {"success": True, "message": f"Updated name to '{name}' across OpenELIS and Odoo"}
+
+    # Default action: create
+    if is_panel:
+        run_elis_exec(f"""
+            INSERT INTO panel (id, name, description, lastupdated)
+            SELECT nextval('panel_seq'), '{esc_name}', '{esc_desc}', NOW()
+            WHERE NOT EXISTS (SELECT 1 FROM panel WHERE name = '{esc_name}');
+
+            INSERT INTO sampletype_panel (id, sample_type_id, panel_id)
+            SELECT nextval('sample_type_panel_seq'), 341, p.id
+            FROM panel p
+            WHERE p.name = '{esc_name}'
+            AND NOT EXISTS (SELECT 1 FROM sampletype_panel sp WHERE sp.panel_id = p.id);
+        """)
+    else:
+        run_elis_exec(f"""
+            INSERT INTO test (id, name, description, is_active, is_reportable, lastupdated)
+            SELECT nextval('test_seq'), '{esc_name}', '{esc_desc}', 'Y', 'Y', NOW()
+            WHERE NOT EXISTS (SELECT 1 FROM test WHERE name = '{esc_name}');
+
+            INSERT INTO sampletype_test (id, sample_type_id, test_id, is_panel)
+            SELECT nextval('sample_type_test_seq'), 341, t.id, false
+            FROM test t
+            WHERE t.name = '{esc_name}'
+            AND NOT EXISTS (SELECT 1 FROM sampletype_test st WHERE st.test_id = t.id);
+        """)
+
+    try:
+        run_odoo_exec(f"""
+            INSERT INTO product_template (name, type, categ_id, active, create_date, write_date)
+            SELECT '{esc_name}', 'service', 1, true, NOW(), NOW()
+            WHERE NOT EXISTS (SELECT 1 FROM product_template WHERE name = '{esc_name}');
+        """)
+    except Exception as e:
+        log(f"Odoo create product warning: {e}")
+
+    return {"success": True, "message": f"Successfully synchronized '{name}' into OpenELIS and Odoo!"}
+
+def sync_all_lab_items(payload):
+    comp = get_lab_harmonization_comparison()
+    items = comp.get("items", [])
+    created = 0
+    updated_names = 0
+    linked = 0
+
+    for it in items:
+        status = it.get("status")
+        uuid = it.get("uuid")
+        if status == "MISSING_IN_OPENELIS":
+            try:
+                sync_single_lab_item({"uuid": uuid, "action": "create"})
+                created += 1
+            except Exception as e:
+                log(f"Sync all error on {uuid}: {e}")
+        elif status == "NAME_MISMATCH":
+            try:
+                sync_single_lab_item({"uuid": uuid, "action": "fix_name"})
+                updated_names += 1
+            except Exception as e:
+                log(f"Fix name error on {uuid}: {e}")
+
+    return {"success": True, "results": {"created": created, "updated_names": updated_names, "linked": linked}}
+
 
 # ── HTTP Server Request Handler ──────────────────────────────────────────────
 
@@ -2797,6 +3091,13 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 log(f"Error loading medication dropdown config: {e}")
                 self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/harmonization/comparison", "/harmonization/comparison"):
+            try:
+                self._send_json(200, get_lab_harmonization_comparison())
+            except Exception as e:
+                log(f"Error getting harmonization comparison: {e}")
+                self._send_json(500, {"error": str(e)})
         else:
             self._send_json(404, {"error": "Endpoint not found", "path": path})
 
@@ -3132,6 +3433,42 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(400, {"success": False, "error": str(e)})
             except Exception as e:
                 log(f"Error executing medication dropdown action: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/harmonization/sync-single", "/harmonization/sync-single"):
+            try:
+                result = sync_single_lab_item(payload)
+                self._send_json(200, result)
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error syncing single lab item: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/harmonization/sync-all", "/harmonization/sync-all"):
+            try:
+                result = sync_all_lab_items(payload)
+                self._send_json(200, result)
+            except Exception as e:
+                log(f"Error syncing all lab items: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/harmonization/delete-item", "/harmonization/delete-item"):
+            try:
+                result = delete_single_lab_item(payload)
+                self._send_json(200, result)
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error deleting lab item: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/harmonization/delete-batch", "/harmonization/delete-batch"):
+            try:
+                result = delete_batch_lab_items(payload)
+                self._send_json(200, result)
+            except Exception as e:
+                log(f"Error batch deleting lab items: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         else:
