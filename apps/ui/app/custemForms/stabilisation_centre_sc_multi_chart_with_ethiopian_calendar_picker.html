@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stabilisation Centre (SC) Multi-Chart — Severe Acute Malnutrition (EC Datetime)</title>
+  <link rel="stylesheet" href="./tailwind-offline.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Ethiopic', 'sans-serif'],
+            ethiopic: ['Noto Sans Ethiopic', 'Inter', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+
+  /* Offline High-Fidelity System Font Stack for Amharic / English */
+  html, body, input, select, textarea, button {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Ethiopic", "Nyala", "Abyssinica SIL", sans-serif !important;
+  }
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  }
+
+    :root {
+      --border-clinical: #334155;
+      --border-subtle: #94a3b8;
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans Ethiopic', sans-serif;
+      background-color: #eef2f6;
+      color: #0f172a;
+    }
+
+    /* Official Chart Table & Form Styling */
+    .sc-sheet {
+      background: #ffffff;
+      border: 1.5px solid #1e293b;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+    }
+
+    .sc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .sc-table th,
+    .sc-table td {
+      border: 1px solid #334155;
+      padding: 3px 4px;
+      vertical-align: middle;
+    }
+
+    .sc-table th {
+      background-color: #f1f5f9;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .sc-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dotted #64748b;
+      padding: 1px 3px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #0f172a;
+      outline: none;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+
+    .sc-input:focus {
+      background-color: #f0fdfa;
+      border-bottom: 1.5px solid #0d9488;
+    }
+
+    .sc-cell-input {
+      width: 100%;
+      text-align: center;
+      background: transparent;
+      border: none;
+      padding: 2px 1px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #0f172a;
+      outline: none;
+    }
+
+    .sc-cell-input:focus {
+      background-color: #ccfbf1;
+    }
+
+    /* Interactive EC Date Trigger Pill inside Form */
+    .ec-trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      width: 100%;
+      min-height: 24px;
+      padding: 2px 6px;
+      background-color: #f0fdfa;
+      border: 1px solid #0d9488;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #115e59;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+
+    .ec-trigger-btn:hover {
+      background-color: #ccfbf1;
+      border-color: #0f766e;
+    }
+
+    .ec-trigger-btn.is-empty {
+      background-color: #f8fafc;
+      border: 1px dashed #64748b;
+      color: #475569;
+      font-weight: 500;
+    }
+
+    /* Clickable Tally / Toggle Cell */
+    .tally-btn {
+      width: 100%;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 2px;
+      transition: background-color 0.12s;
+    }
+
+    .tally-btn:hover {
+      background-color: #e2e8f0;
+    }
+
+    /* Popover Animation */
+    @keyframes popIn {
+      0% { opacity: 0; transform: translateY(-4px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .ec-popover-anim {
+      animation: popIn 0.14s ease-out forwards;
+    }
+
+    /* Authentic 2-Page A4 Print Styles */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 6mm;
+      }
+
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 9.5pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .sc-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .sc-sheet {
+        box-shadow: none !important;
+        border: 1.5px solid #000000 !important;
+        margin-bottom: 0 !important;
+        border-radius: 0 !important;
+      }
+
+      .page-break-after {
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+
+      .sc-table th,
+      .sc-table td {
+        border: 1px solid #000000 !important;
+        padding: 2px 3px !important;
+      }
+
+      .ec-trigger-btn {
+        border: none !important;
+        border-bottom: 1px solid #000000 !important;
+        background: transparent !important;
+        color: #000000 !important;
+        padding: 0 2px !important;
+        min-height: 16px !important;
+        border-radius: 0 !important;
+      }
+
+      .ec-trigger-btn svg,
+      .ec-trigger-badge {
+        display: none !important;
+      }
+
+      .sc-input {
+        border-bottom: 1px solid #475569 !important;
+        color: #000000 !important;
+      }
+    }
+  </style>
+<script src="bahmni-custom-form-bridge.js"></script>
+</head>
+<body class="min-h-screen pb-14">
+
+  <!-- Toast Notification Container (Replaces alert/confirm) -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-[100000] flex flex-col gap-2 pointer-events-none no-print"></div>
+
+  <!-- Screen-Only Interactive Clinical Toolbar & Live Decision Support Banner -->
+  <header class="sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-700 shadow-lg no-print">
+    <div class="max-w-[1440px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center font-extrabold text-white shadow-inner shrink-0">
+          SC
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-sm font-bold tracking-tight">STABILISATION CENTRE (SC) MULTI-CHART — SAM</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-900/90 text-teal-200 border border-teal-600/50">
+              Ethiopian Calendar (EC) Enabled
+            </span>
+          </div>
+          <div class="text-xs text-slate-300 flex items-center gap-2">
+            <span id="live-ec-clock">Loading Ethiopian Date &amp; Time...</span>
+            <span class="text-slate-600">|</span>
+            <span id="autosave-indicator" class="text-emerald-400 font-medium">Auto-saved locally</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toolbar Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        
+
+        <button type="button" onclick="toggleAssistantDrawer()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-700 hover:bg-teal-600 text-white border border-teal-500 transition flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          Clinical Assistant
+        </button>
+
+        <button type="button" onclick="window.print()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 hover:bg-slate-100 shadow transition flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Print Official 2-Page Form
+        </button>
+
+        <button type="button" onclick="downloadStandaloneHTML()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 transition flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Save HTML
+        </button>
+
+        <button type="button" onclick="requestResetForm()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-950/60 hover:bg-rose-900 text-rose-200 border border-rose-800/60 transition">
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- Collapsible Live Clinical Decision Support & Resuscitation Strip -->
+    <div id="clinical-assistant-bar" class="bg-slate-800/95 border-t border-slate-700 px-4 py-2.5">
+      <div class="max-w-[1440px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 text-xs">
+        <div class="bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-teal-400">SAM Classification</div>
+          <div id="assist-sam-status" class="font-bold text-white mt-0.5">Enter Weight, Height &amp; Oedema</div>
+          <div id="assist-sam-detail" class="text-[11px] text-slate-400">Auto-checks WFH &amp; Oedema</div>
+        </div>
+        <div class="bg-slate-900/90 border border-rose-900/60 rounded-lg px-3 py-2">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-rose-400">Shock IV / ReSoMal</div>
+          <div id="assist-shock-resomal" class="font-bold text-white mt-0.5">IV: -- ml/hr | ReSoMal: -- ml</div>
+          <div class="text-[11px] text-slate-400">15 ml/kg/hr IV • 5 ml/kg/30m ReSoMal</div>
+        </div>
+        <div class="bg-slate-900/90 border border-indigo-900/60 rounded-lg px-3 py-2">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">10% Glucose &amp; Blood</div>
+          <div id="assist-glucose-blood" class="font-bold text-white mt-0.5">10% Gluc: -- ml | Blood: -- ml</div>
+          <div class="text-[11px] text-slate-400">5 ml/kg 10% Gluc • 10 ml/kg Blood</div>
+        </div>
+        <div class="bg-slate-900/90 border border-amber-900/60 rounded-lg px-3 py-2">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-amber-400">F-75 Phase 1 Target</div>
+          <div id="assist-f75-target" class="font-bold text-white mt-0.5">-- ml/day (-- ml × 8 feeds)</div>
+          <div id="assist-f75-note" class="text-[11px] text-slate-400">130 ml/kg/d (100 ml/kg if +++ oedema)</div>
+        </div>
+        <div class="bg-slate-900/90 border border-emerald-900/60 rounded-lg px-3 py-2">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Active Clinical Alerts</div>
+          <div id="assist-alerts" class="font-bold text-emerald-300 mt-0.5">No acute vital alerts</div>
+          <div class="text-[11px] text-slate-400">Monitors Temp, Glucose &amp; Hb</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Inline Reset Confirmation Strip (Hidden by default, zero alert/confirm calls) -->
+  <div id="reset-confirm-banner" class="hidden bg-rose-50 border-b border-rose-300 px-4 py-2.5 no-print">
+    <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+      <span class="font-bold text-rose-900">Clear all patient entries and reset the SC Multi-Chart to a blank form?</span>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="confirmResetForm()" class="px-3 py-1 rounded bg-rose-700 text-white font-bold hover:bg-rose-800">Yes, Clear Form</button>
+        <button type="button" onclick="cancelResetForm()" class="px-3 py-1 rounded bg-white border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN DOCUMENT WRAPPER -->
+  <main class="sc-container max-w-[1440px] mx-auto px-3 sm:px-6 pt-5 space-y-8">
+
+    <!-- =====================================================================
+         PAGE 1: FRONT SHEET — REGISTRATION, INITIAL MANAGEMENT & DIET/WEIGHT
+         ===================================================================== -->
+    <section id="sc-page-1" class="sc-sheet rounded-lg p-3 sm:p-4 page-break-after">
+      <!-- Form Title Header -->
+      <div class="border-b-2 border-slate-900 pb-2 mb-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div>
+          <div class="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+            Federal Ministry of Health — Management of Severe Acute Malnutrition
+          </div>
+          <h1 class="text-base sm:text-lg font-extrabold text-slate-950 tracking-tight uppercase">
+            STABILISATION CENTRE (SC) MULTI-CHART FOR SEVERE ACUTE MALNUTRITION
+          </h1>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="px-2 py-0.5 border border-slate-800 font-bold uppercase bg-slate-100">Page 1 of 2: Initial Care &amp; Diet/Weight</span>
+        </div>
+      </div>
+
+      <!-- PATIENT REGISTRATION & ADMISSION HEADER GRID (Matches Uploaded Form) -->
+      <table class="sc-table mb-2.5">
+        <tbody>
+          <tr>
+            <td class="w-[24%]">
+              <span class="font-bold text-[10px] uppercase block text-slate-700">Health Facility / Hospital:</span>
+              <input type="text" data-field="facility" placeholder="Health Facility Name" class="sc-input" />
+            </td>
+            <td class="w-[16%]">
+              <span class="font-bold text-[10px] uppercase block text-slate-700">Registration / MRN No.:</span>
+              <input type="text" data-field="reg_no" placeholder="MRN / SC #" class="sc-input" />
+            </td>
+            <td class="w-[28%]">
+              <span class="font-bold text-[10px] uppercase block text-teal-900">Date &amp; Time of Admission (EC):</span>
+              <button type="button" class="ec-trigger-btn" data-ec-picker="admission_ec" data-ec-title="Date &amp; Time of Admission (EC)" data-mode="datetime" data-ec-time="true" data-ec-default="now">
+                <span class="ec-label">Select Admission Date (EC)</span>
+                <span class="ec-trigger-badge text-[9px] bg-teal-700 text-white px-1.5 py-0.5 rounded">EC</span>
+              </button>
+            </td>
+            <td class="w-[32%]">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Re-admission (Y/N):</span>
+                  <select data-field="readmission" class="sc-input bg-transparent">
+                    <option value="No">No</option>
+                    <option value="Yes - Relapse">Yes (Relapse)</option>
+                    <option value="Yes - Returned Defaulter">Yes (Returned Defaulter)</option>
+                  </select>
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Old Registration No.:</span>
+                  <input type="text" data-field="old_reg_no" placeholder="If re-admission" class="sc-input" />
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="font-bold text-[10px] uppercase block text-slate-700">Child's Name:</span>
+              <input type="text" data-field="child_name" placeholder="First &amp; Father's Name" class="sc-input" />
+            </td>
+            <td>
+              <div class="grid grid-cols-2 gap-1.5">
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Age (d/m/y):</span>
+                  <input type="text" id="field-age" data-field="age" placeholder="e.g. 14 m" oninput="updateClinicalAssistant()" class="sc-input" />
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Sex (M/F):</span>
+                  <select data-field="sex" class="sc-input bg-transparent">
+                    <option value="F">F</option>
+                    <option value="M">M</option>
+                  </select>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="font-bold text-[10px] uppercase block text-slate-700">Address (Kebele, Woreda, Region):</span>
+              <input type="text" data-field="address" placeholder="Kebele, Woreda, Region" class="sc-input" />
+            </td>
+            <td>
+              <div class="grid grid-cols-3 gap-1.5">
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Referred From:</span>
+                  <input type="text" data-field="referred_from" placeholder="OTP / OPD / HP" class="sc-input" />
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Breastfeeding:</span>
+                  <select data-field="breastfeeding" class="sc-input bg-transparent">
+                    <option value="Y">Yes (Y)</option>
+                    <option value="N">No (N)</option>
+                  </select>
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Compl. Feed:</span>
+                  <select data-field="comp_feeding" class="sc-input bg-transparent">
+                    <option value="Y">Yes (Y)</option>
+                    <option value="N">No (N)</option>
+                  </select>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2">
+              <div class="grid grid-cols-5 gap-1.5">
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-teal-900">Adm. Wt (kg):</span>
+                  <input type="number" step="0.1" id="field-weight" data-field="adm_weight" placeholder="kg" oninput="updateClinicalAssistant()" class="sc-input font-bold text-teal-950" />
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Ht/Len (cm):</span>
+                  <input type="number" step="0.1" id="field-height" data-field="adm_height" placeholder="cm" oninput="updateClinicalAssistant()" class="sc-input" />
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">WFH/WFL:</span>
+                  <input type="text" id="field-wfh" data-field="wfh" placeholder="<-3Z / %" class="sc-input" />
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">MUAC (cm):</span>
+                  <input type="number" step="0.1" id="field-muac" data-field="muac" placeholder="cm" oninput="updateClinicalAssistant()" class="sc-input" />
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Oedema:</span>
+                  <select id="field-oedema" data-field="oedema" onchange="updateClinicalAssistant()" class="sc-input bg-transparent">
+                    <option value="0">0 (None)</option>
+                    <option value="+">+ (Mild)</option>
+                    <option value="++">++ (Mod)</option>
+                    <option value="+++">+++ (Severe)</option>
+                  </select>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="font-bold text-[10px] uppercase block text-slate-700">Major Problems on Admission:</span>
+              <input type="text" data-field="major_problems" placeholder="e.g., Oedema ++, Watery diarrhoea, Poor appetite" class="sc-input" />
+            </td>
+            <td>
+              <div class="grid grid-cols-2 gap-1.5">
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Date/Time Discharge (EC):</span>
+                  <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="discharge_ec" data-ec-title="Date &amp; Time of Discharge (EC)" data-mode="datetime" data-ec-time="true">
+                    <span class="ec-label">Set Discharge EC</span>
+                    <span class="ec-trigger-badge text-[9px] bg-slate-600 text-white px-1 py-0.5 rounded">EC</span>
+                  </button>
+                </div>
+                <div>
+                  <span class="font-bold text-[10px] uppercase block text-slate-700">Outcome:</span>
+                  <select data-field="outcome" class="sc-input bg-transparent">
+                    <option value="Admitted">Inpatient</option>
+                    <option value="OTP">Transfer to OTP</option>
+                    <option value="Cured">Cured</option>
+                    <option value="Defaulter">Defaulter</option>
+                    <option value="Non-responder">Non-responder</option>
+                    <option value="Died">Died</option>
+                  </select>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- INITIAL MANAGEMENT & EMERGENCY PROTOCOL GRID (Matches Page 1 Middle Section of Form) -->
+      <div class="mb-2.5">
+        <div class="bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 border border-slate-900">
+          INITIAL CARE &amp; EMERGENCY MANAGEMENT (Tick signs present &amp; record exact patient-calculated doses)
+        </div>
+        <table class="sc-table">
+          <tbody>
+            <tr>
+              <!-- Column 1: SIGNS OF SHOCK -->
+              <td class="w-[26%] align-top bg-rose-50/20">
+                <div class="font-extrabold text-[11px] uppercase text-rose-950 border-b border-slate-400 pb-0.5 mb-1">
+                  SIGNS OF SHOCK
+                </div>
+                <div class="space-y-0.5 text-[10.5px]">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" data-field="shock_lethargic" class="w-3.5 h-3.5" />
+                    <span>Lethargic or unconscious</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" data-field="shock_cold_hand" class="w-3.5 h-3.5" />
+                    <span>Plus <strong>Cold hand</strong></span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" data-field="shock_cap_refill" class="w-3.5 h-3.5" />
+                    <span>Plus slow capillary refill (&gt;3 sec) OR weak/fast pulse</span>
+                  </label>
+                </div>
+                <div class="mt-1.5 p-1.5 bg-white border border-slate-400 rounded text-[10.5px] space-y-1">
+                  <div class="font-bold text-rose-900">Action: Give Oxygen, Check Blood Glucose, Give IV Fluids:</div>
+                  <div class="flex items-center justify-between">
+                    <span>Amount IV fluids/hr (15 ml × kg):</span>
+                    <span id="form-calc-shock" class="font-extrabold text-rose-800 underline px-1">-- ml/hr</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-1 pt-0.5">
+                    <div>
+                      <span class="text-[9.5px] text-slate-600 block">Time Started (EC):</span>
+                      <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="shock_time_ec" data-ec-title="Shock IV Fluids Started (EC)" data-mode="datetime" data-ec-time="true">
+                        <span class="ec-label">Time EC</span>
+                      </button>
+                    </div>
+                    <div>
+                      <span class="text-[9.5px] text-slate-600 block">Fluid Type:</span>
+                      <input type="text" data-field="shock_fluid_type" placeholder="RL + 5% Dext" class="sc-input" />
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Column 2: DIARRHOEA / DEHYDRATION -->
+              <td class="w-[24%] align-top bg-amber-50/20">
+                <div class="font-extrabold text-[11px] uppercase text-amber-950 border-b border-slate-400 pb-0.5 mb-1">
+                  DIARRHOEA / DEHYDRATION
+                </div>
+                <div class="grid grid-cols-2 gap-1 text-[10.5px] mb-1">
+                  <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" data-field="diarr_watery" class="w-3.5 h-3.5" />
+                    <span>Watery diarrhoea</span>
+                  </label>
+                  <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" data-field="diarr_vomit" class="w-3.5 h-3.5" />
+                    <span>Vomiting</span>
+                  </label>
+                  <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" data-field="diarr_skin_pinch" class="w-3.5 h-3.5" />
+                    <span>Slow skin pinch</span>
+                  </label>
+                  <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" data-field="diarr_sunken_eyes" class="w-3.5 h-3.5" />
+                    <span>Sunken eyes</span>
+                  </label>
+                </div>
+                <div class="p-1.5 bg-white border border-slate-400 rounded text-[10.5px] space-y-1">
+                  <div class="font-bold text-amber-950">Give ReSoMal every 30 min (first 2 hrs):</div>
+                  <div class="flex items-center justify-between">
+                    <span>5 ml × kg (child's wt):</span>
+                    <span id="form-calc-resomal" class="font-extrabold text-amber-900 underline px-1">-- ml</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-1 pt-0.5">
+                    <div>
+                      <span class="text-[9.5px] text-slate-600 block">Time Started (EC):</span>
+                      <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="resomal_time_ec" data-ec-title="ReSoMal Started (EC)" data-mode="datetime" data-ec-time="true">
+                        <span class="ec-label">Time EC</span>
+                      </button>
+                    </div>
+                    <div>
+                      <span class="text-[9.5px] text-slate-600 block">Passed Urine (Y/N):</span>
+                      <select data-field="init_urine" class="sc-input bg-transparent">
+                        <option value="">--</option>
+                        <option value="Yes">Yes (Y)</option>
+                        <option value="No">No (N)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Column 3: TEMPERATURE & BLOOD GLUCOSE -->
+              <td class="w-[25%] align-top">
+                <div class="font-extrabold text-[11px] uppercase text-slate-900 border-b border-slate-400 pb-0.5 mb-1">
+                  TEMPERATURE &amp; BLOOD GLUCOSE
+                </div>
+                <!-- Temperature -->
+                <div class="p-1.5 bg-slate-50 border border-slate-300 rounded mb-1.5 text-[10.5px]">
+                  <div class="flex items-center justify-between gap-1 mb-0.5">
+                    <span class="font-bold">Temp (°C):</span>
+                    <input type="number" step="0.1" id="field-temp" data-field="init_temp" placeholder="36.5" oninput="updateClinicalAssistant()" class="sc-input w-14 text-center font-bold" />
+                    <select id="field-temp-route" data-field="temp_route" onchange="updateClinicalAssistant()" class="sc-input w-20">
+                      <option value="axillary">Axillary</option>
+                      <option value="rectal">Rectal</option>
+                    </select>
+                  </div>
+                  <div class="text-[9.5px] text-slate-600">
+                    If rectal &lt;35.5°C (95.9°F) or axillary &lt;35.0°C (95°F): <strong>Actively warm child</strong>.
+                  </div>
+                </div>
+                <!-- Blood Glucose -->
+                <div class="p-1.5 bg-indigo-50/40 border border-slate-400 rounded text-[10.5px] space-y-0.5">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-indigo-950">Blood Glucose (mg/dl):</span>
+                    <input type="number" id="field-glucose" data-field="init_glucose" placeholder="mg/dl" oninput="updateClinicalAssistant()" class="sc-input w-16 text-center font-bold" />
+                  </div>
+                  <div class="text-[9.5px] text-slate-700">
+                    If &lt;54 mg/dl: Alert → Oral bolus 10% glucose; Lethargic → IV bolus <strong>5 ml/kg</strong> =
+                    <span id="form-calc-glucose" class="font-extrabold text-indigo-900 underline">-- ml</span>
+                  </div>
+                  <div class="flex items-center gap-1 pt-0.5">
+                    <span class="text-[9.5px] text-slate-600 shrink-0">Time Given (EC):</span>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="glucose_time_ec" data-ec-title="10% Glucose Bolus Given (EC)" data-mode="datetime" data-ec-time="true">
+                      <span class="ec-label">Time EC</span>
+                    </button>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Column 4: HAEMOGLOBIN, EYE SIGNS & VITAMIN A / MEASLES -->
+              <td class="w-[25%] align-top">
+                <div class="font-extrabold text-[11px] uppercase text-slate-900 border-b border-slate-400 pb-0.5 mb-1">
+                  HAEMOGLOBIN (Hb) &amp; EYE / VIT A
+                </div>
+                <!-- Hb / Transfusion -->
+                <div class="p-1.5 bg-slate-50 border border-slate-300 rounded mb-1.5 text-[10.5px] space-y-0.5">
+                  <div class="grid grid-cols-2 gap-1">
+                    <div class="flex items-center gap-1">
+                      <span class="font-bold">Hb (g/dl):</span>
+                      <input type="number" step="0.1" id="field-hb" data-field="init_hb" placeholder="g/dl" oninput="updateClinicalAssistant()" class="sc-input w-12 text-center font-bold" />
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <span class="font-bold">Blood Type:</span>
+                      <input type="text" data-field="blood_type" placeholder="O+" class="sc-input w-12 text-center" />
+                    </div>
+                  </div>
+                  <div class="text-[9.5px] text-slate-700">
+                    If Hb &lt;4 g/dl or Hct &lt;12%: Transfuse <strong>10 ml/kg</strong> whole blood =
+                    <span id="form-calc-blood" class="font-extrabold text-teal-900 underline">-- ml</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-[9.5px] text-slate-600 shrink-0">Time Started (EC):</span>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="blood_time_ec" data-ec-title="Blood Transfusion Started (EC)" data-mode="datetime" data-ec-time="true">
+                      <span class="ec-label">Time EC</span>
+                    </button>
+                  </div>
+                </div>
+                <!-- Eye Signs, Vitamin A & Measles -->
+                <div class="p-1.5 bg-white border border-slate-400 rounded text-[10px] space-y-0.5">
+                  <div class="flex flex-wrap gap-2">
+                    <label class="flex items-center gap-1 font-semibold">
+                      <input type="checkbox" data-field="eye_corneal" class="w-3 h-3" /> Corneal clouding
+                    </label>
+                    <label class="flex items-center gap-1 font-semibold">
+                      <input type="checkbox" data-field="eye_pus" class="w-3 h-3" /> Pus/Redness
+                    </label>
+                  </div>
+                  <div>
+                    <strong>Oral Vit A:</strong>
+                    <label class="ml-1"><input type="checkbox" data-field="vita_50k" /> 50,000 IU (&lt;6m)</label>
+                    <label class="ml-1"><input type="checkbox" data-field="vita_100k" /> 100,000 IU (6–12m)</label>
+                    <label class="ml-1"><input type="checkbox" data-field="vita_200k" /> 200,000 IU (&gt;12m)</label>
+                  </div>
+                  <div class="flex items-center gap-1 pt-0.5">
+                    <span class="font-bold shrink-0">Measles Date (EC):</span>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="measles_date_ec" data-ec-title="Measles Vaccination Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- THERAPEUTIC DIET & WEIGHT CHART (Days 1 to 14 — Auto-populated EC Dates) -->
+      <div>
+        <div class="bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 border border-slate-900 flex items-center justify-between">
+          <span>THERAPEUTIC DIET &amp; DAILY WEIGHT CHART (Days 1 to 14 — Dates auto-filled from Admission EC)</span>
+          <span id="diet-helper-pill" class="text-[10px] font-normal text-teal-200 no-print">Tip: Click any cell to type or toggle oedema/diet</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="sc-table" id="diet-weight-table">
+            <thead>
+              <tr>
+                <th class="w-36 text-left">DAY IN SC</th>
+                <th class="w-16">Day 1</th>
+                <th class="w-16">Day 2</th>
+                <th class="w-16">Day 3</th>
+                <th class="w-16">Day 4</th>
+                <th class="w-16">Day 5</th>
+                <th class="w-16">Day 6</th>
+                <th class="w-16">Day 7</th>
+                <th class="w-16">Day 8</th>
+                <th class="w-16">Day 9</th>
+                <th class="w-16">Day 10</th>
+                <th class="w-16">Day 11</th>
+                <th class="w-16">Day 12</th>
+                <th class="w-16">Day 13</th>
+                <th class="w-16">Day 14</th>
+              </tr>
+              <tr id="diet-ec-dates-row">
+                <th class="text-left bg-teal-50 text-teal-950">Date (EC)</th>
+                <!-- Populated dynamically via JS -->
+              </tr>
+            </thead>
+            <tbody id="diet-weight-tbody">
+              <!-- Populated dynamically via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         PAGE 2: BACK SHEET — SURVEILLANCE, MEDICINES, TESTS & COUNSELLING
+         ===================================================================== -->
+    <section id="sc-page-2" class="sc-sheet rounded-lg p-3 sm:p-4">
+      <div class="border-b-2 border-slate-900 pb-1.5 mb-2.5 flex items-center justify-between">
+        <div class="text-xs font-extrabold uppercase tracking-tight text-slate-900">
+          STABILISATION CENTRE (SC) MULTI-CHART — DAILY SURVEILLANCE, MEDICINES, LAB RESULTS &amp; COUNSELLING
+        </div>
+        <span class="px-2 py-0.5 border border-slate-800 text-[10px] font-bold uppercase bg-slate-100">Page 2 of 2: Surveillance &amp; Follow-up</span>
+      </div>
+
+      <!-- DAILY SURVEILLANCE CHART (Days 1 to 14) -->
+      <div class="mb-3">
+        <div class="bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 border border-slate-900 flex items-center justify-between">
+          <span>DAILY SURVEILLANCE CHART</span>
+          <span class="text-[10px] font-normal text-teal-200 no-print">Click Tally/YN cells to cycle states (0 → + → ++ → +++ or Y/N)</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="sc-table" id="surveillance-table">
+            <thead>
+              <tr>
+                <th class="w-40 text-left">CLINICAL PARAMETER</th>
+                <th class="w-16">Day 1</th>
+                <th class="w-16">Day 2</th>
+                <th class="w-16">Day 3</th>
+                <th class="w-16">Day 4</th>
+                <th class="w-16">Day 5</th>
+                <th class="w-16">Day 6</th>
+                <th class="w-16">Day 7</th>
+                <th class="w-16">Day 8</th>
+                <th class="w-16">Day 9</th>
+                <th class="w-16">Day 10</th>
+                <th class="w-16">Day 11</th>
+                <th class="w-16">Day 12</th>
+                <th class="w-16">Day 13</th>
+                <th class="w-16">Day 14</th>
+              </tr>
+              <tr id="surv-ec-dates-row">
+                <th class="text-left bg-teal-50 text-teal-950">Date (EC)</th>
+                <!-- Populated dynamically via JS -->
+              </tr>
+            </thead>
+            <tbody id="surveillance-tbody">
+              <!-- Populated dynamically via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOTTOM SPLIT: ROUTINE & SPECIAL MEDICINES (Left) | TEST RESULTS, OBSERVATIONS & COUNSELLING (Right) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <!-- Left 7 Cols: Routine & Special Medicines -->
+        <div class="lg:col-span-7 space-y-2.5">
+          <!-- Routine Medicines -->
+          <div>
+            <div class="bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 border border-slate-900">
+              ROUTINE MEDICINES
+            </div>
+            <table class="sc-table">
+              <thead>
+                <tr>
+                  <th class="text-left">Drug / Supplement</th>
+                  <th class="w-24">Dose / Route</th>
+                  <th class="w-32">Start Date (EC)</th>
+                  <th class="w-28">Given (Tick)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-semibold">1. Amoxicillin (or Ampicillin + Gentamicin)</td>
+                  <td><input type="text" data-field="med_amox_dose" placeholder="mg / 8h" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="med_amox_ec" data-ec-title="Amoxicillin Start Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><div class="tally-btn" data-tally-type="checks" data-field="med_amox_tick">--</div></td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">2. Folic Acid (5 mg Day 1, then 1 mg/day)</td>
+                  <td><input type="text" data-field="med_folic_dose" value="5 mg PO" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="med_folic_ec" data-ec-title="Folic Acid Start Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><div class="tally-btn" data-tally-type="checks" data-field="med_folic_tick">--</div></td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">3. Albendazole / Mebendazole (Day 2 if ≥12m)</td>
+                  <td><input type="text" data-field="med_alb_dose" placeholder="200/400 mg" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="med_alb_ec" data-ec-title="Albendazole / Mebendazole Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><div class="tally-btn" data-tally-type="checks" data-field="med_alb_tick">--</div></td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">4. Iron (Only in Phase 2 / F-100 after 2 days)</td>
+                  <td><input type="text" data-field="med_iron_dose" placeholder="3 mg/kg/d" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="med_iron_ec" data-ec-title="Iron Supplement Start Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><div class="tally-btn" data-tally-type="checks" data-field="med_iron_tick">--</div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Special Medicines & Eye Care -->
+          <div>
+            <div class="bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 border border-slate-900">
+              SPECIAL MEDICINES &amp; EYE CARE
+            </div>
+            <table class="sc-table">
+              <thead>
+                <tr>
+                  <th class="text-left">Medication / Protocol</th>
+                  <th class="w-24">Frequency</th>
+                  <th class="w-32">Start Date (EC)</th>
+                  <th class="w-28">Given (Tick)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-semibold">Tetracycline Eye Drops / Ointment</td>
+                  <td><input type="text" data-field="spec_tetra_freq" value="1 drop 4x daily" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="spec_tetra_ec" data-ec-title="Tetracycline Eye Care Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><div class="tally-btn" data-tally-type="checks" data-field="spec_tetra_tick">--</div></td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">Atropine Eye Drops (If corneal ulcer)</td>
+                  <td><input type="text" data-field="spec_atro_freq" value="1 drop 3x daily" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="spec_atro_ec" data-ec-title="Atropine Eye Drops Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><div class="tally-btn" data-tally-type="checks" data-field="spec_atro_tick">--</div></td>
+                </tr>
+                <tr>
+                  <td><input type="text" data-field="spec_other_name" placeholder="Other Special Med (e.g., Nystatin / Metronidazole)" class="sc-input" /></td>
+                  <td><input type="text" data-field="spec_other_freq" placeholder="Dose/Freq" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="spec_other_ec" data-ec-title="Special Medication Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><div class="tally-btn" data-tally-type="checks" data-field="spec_other_tick">--</div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right 5 Cols: Test Results, Observations & Counselling -->
+        <div class="lg:col-span-5 space-y-2.5">
+          <!-- Test Results -->
+          <div>
+            <div class="bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 border border-slate-900">
+              TEST RESULTS
+            </div>
+            <table class="sc-table">
+              <thead>
+                <tr>
+                  <th class="text-left w-28">Test</th>
+                  <th>Result</th>
+                  <th class="w-32">Date (EC)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-bold">HIV Test</td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="test_hiv_ec" data-ec-title="HIV Test Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-bold">Malaria RDT/BF</td>
+                  <td><input type="text" data-field="test_malaria_res" placeholder="Neg / Pf / Pv" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="test_malaria_ec" data-ec-title="Malaria Test Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-bold">TB / Stool / Urine</td>
+                  <td><input type="text" data-field="test_other_res" placeholder="Findings" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="test_other_ec" data-ec-title="Lab Investigation Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-bold">Malaria RDT/BF</td>
+                  <td><input type="text" data-field="test_malaria_res" placeholder="Neg / Pf / Pv" class="sc-input" /></td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="couns_iycf_ec" data-ec-title="IYCF &amp; Hygiene Counselling Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><input type="text" data-field="couns_iycf_sign" placeholder="Sign" class="sc-input" /></td>
+                </tr>
+                <tr>
+                  <td>
+                    <label class="flex items-center gap-1.5 font-semibold cursor-pointer">
+                      <input type="checkbox" data-field="couns_fp" /> Family Planning
+                    </label>
+                  </td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="couns_fp_ec" data-ec-title="Family Planning Counselling Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><input type="text" data-field="couns_fp_sign" placeholder="Sign" class="sc-input" /></td>
+                </tr>
+                <tr>
+                  <td>
+                    <label class="flex items-center gap-1.5 font-semibold cursor-pointer">
+                      <input type="checkbox" data-field="couns_sti" /> Sexually Transmitted Diseases (STIs)
+                    </label>
+                  </td>
+                  <td>
+                    <button type="button" class="ec-trigger-btn is-empty" data-ec-picker="couns_sti_ec" data-ec-title="STI Counselling Date (EC)" data-mode="date" data-ec-time="false">
+                      <span class="ec-label">Date EC</span>
+                    </button>
+                  </td>
+                  <td><input type="text" data-field="couns_sti_sign" placeholder="Sign" class="sc-input" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =========================================================================
+       COMPACT STANDARD ETHIOPIAN CALENDAR (EC) DATETIMEPICKER POPOVER
+       ========================================================================= -->
+  <div id="ec-picker-backdrop" class="hidden fixed inset-0 z-[99998] no-print" style="background-color: rgba(15, 23, 42, 0.14);"></div>
+
+  <div id="ec-picker-modal"
+       style="width: min(288px, calc(100vw - 20px)); max-height: calc(100dvh - 16px); z-index: 99999;"
+       class="hidden fixed overflow-y-auto bg-white rounded-xl shadow-xl border border-slate-300 ec-popover-anim no-print text-xs"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="ec-modal-field-title">
+
+    <!-- Compact Single-Line Header -->
+    <div style="background: linear-gradient(135deg, #065f46 0%, #0f766e 100%);" class="text-white px-3 py-1.5 flex items-center justify-between gap-2">
+      <div id="ec-modal-field-title" class="text-[11.5px] font-bold tracking-tight truncate">
+        Select Date &amp; Time (EC)
+      </div>
+      <button type="button" id="ec-btn-close" class="w-5 h-5 rounded-md bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition shrink-0" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Sleek Single-Row Month & Year Navigation Bar -->
+    <div class="flex items-center justify-between gap-1 px-2 py-1.5 bg-teal-50/70 border-b border-slate-200">
+      <button type="button" id="ec-btn-prev-month" class="w-6 h-6 rounded-md bg-white hover:bg-teal-100 text-teal-900 border border-slate-200 flex items-center justify-center transition shrink-0" title="Previous Month">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <div class="flex items-center gap-1 flex-1 min-w-0">
+        <select id="ec-select-month" aria-label="Ethiopian Month" class="flex-1 min-w-0 bg-white hover:border-teal-600 text-slate-900 text-[11px] font-bold px-1.5 py-1 rounded-md border border-slate-300 focus:outline-none focus:border-teal-600 cursor-pointer truncate"></select>
+        <select id="ec-select-year" aria-label="Ethiopian Year" class="w-[74px] shrink-0 bg-white hover:border-teal-600 text-slate-900 text-[11px] font-bold px-1 py-1 rounded-md border border-slate-300 focus:outline-none focus:border-teal-600 cursor-pointer"></select>
+      </div>
+
+      <button type="button" id="ec-btn-next-month" class="w-6 h-6 rounded-md bg-white hover:bg-teal-100 text-teal-900 border border-slate-200 flex items-center justify-center transition shrink-0" title="Next Month">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Compact Weekday Header -->
+    <div class="grid grid-cols-7 bg-slate-50 border-b border-slate-200 px-2 py-1 text-center">
+      <div class="text-[9.5px] font-bold text-rose-600 leading-tight">እሑ<span class="block text-[8px] text-rose-400 font-medium">Su</span></div>
+      <div class="text-[9.5px] font-bold text-slate-600 leading-tight">ሰኞ<span class="block text-[8px] text-slate-400 font-medium">Mo</span></div>
+      <div class="text-[9.5px] font-bold text-slate-600 leading-tight">ማክ<span class="block text-[8px] text-slate-400 font-medium">Tu</span></div>
+      <div class="text-[9.5px] font-bold text-slate-600 leading-tight">ረቡ<span class="block text-[8px] text-slate-400 font-medium">We</span></div>
+      <div class="text-[9.5px] font-bold text-slate-600 leading-tight">ሐሙ<span class="block text-[8px] text-slate-400 font-medium">Th</span></div>
+      <div class="text-[9.5px] font-bold text-slate-600 leading-tight">ዓር<span class="block text-[8px] text-slate-400 font-medium">Fr</span></div>
+      <div class="text-[9.5px] font-bold text-teal-800 leading-tight">ቅዳ<span class="block text-[8px] text-teal-600 font-medium">Sa</span></div>
+    </div>
+
+    <!-- Tight Crisp 7-Column Days Grid (28px cells) -->
+    <div id="ec-grid-days" class="grid grid-cols-7 gap-0.5 px-2 py-1.5 bg-white"></div>
+
+    <!-- Single-Line Compact Time Row -->
+    <div id="ec-time-panel" class="px-2.5 py-1.5 bg-slate-50 border-t border-slate-200">
+      <div class="flex items-center justify-between gap-1">
+        <div class="flex items-center gap-1">
+          <span class="text-[10.5px] font-bold text-slate-600">Time:</span>
+          <select id="ec-select-hour" aria-label="Hour" class="px-1 py-0.5 rounded border border-slate-300 bg-white text-[11px] font-bold text-slate-900 focus:outline-none focus:border-teal-600"></select>
+          <span class="font-bold text-slate-400 text-[11px]">:</span>
+          <select id="ec-select-minute" aria-label="Minute" class="px-1 py-0.5 rounded border border-slate-300 bg-white text-[11px] font-bold text-slate-900 focus:outline-none focus:border-teal-600"></select>
+          <div class="inline-flex rounded border border-slate-300 bg-white p-0.5">
+            <button type="button" id="ec-btn-am" class="px-1.5 py-0.5 rounded-xs text-[10px] font-bold transition">AM</button>
+            <button type="button" id="ec-btn-pm" class="px-1.5 py-0.5 rounded-xs text-[10px] font-bold transition">PM</button>
+          </div>
+        </div>
+        <span id="ec-local-time-preview" class="text-[9.5px] font-bold text-teal-900 bg-teal-100/80 px-1.5 py-0.5 rounded truncate"></span>
+      </div>
+    </div>
+
+    <!-- Slim Footer Action Bar -->
+    <div class="px-2.5 py-1.5 bg-slate-100/90 border-t border-slate-200 flex items-center justify-between gap-1.5">
+      <div id="ec-gc-preview" class="text-[10px] font-bold text-slate-700 truncate" title="Gregorian Calendar Equivalent">--</div>
+      <div class="flex items-center gap-1 shrink-0">
+        <button type="button" id="ec-btn-clear" class="px-2 py-1 rounded text-[10.5px] font-bold text-rose-600 hover:bg-rose-50 transition">
+          Clear
+        </button>
+        <button type="button" id="ec-btn-now" class="px-2 py-1 rounded text-[10.5px] font-bold text-teal-900 bg-teal-100 hover:bg-teal-200/80 transition">
+          Now
+        </button>
+        <button type="button" id="ec-btn-apply" style="background-color: #0f766e;" class="px-2.5 py-1 rounded text-[10.5px] font-bold text-white hover:opacity-95 shadow-xs transition">
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       APPLICATION SCRIPT: ETHIOPIAN CALENDAR ENGINE, PICKER & CLINICAL LOGIC
+       ========================================================================= -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* -----------------------------------------------------------------------
+         1. ETHIOPIAN CALENDAR <-> GREGORIAN CALENDAR EXACT JDN MATH ENGINE
+         ----------------------------------------------------------------------- */
+      const EC_MONTHS = [
+        { index: 1,  en: 'Meskerem', am: 'መስከረም' },
+        { index: 2,  en: 'Tikimt',   am: 'ጥቅምት' },
+        { index: 3,  en: 'Hidar',    am: 'ህዳር' },
+        { index: 4,  en: 'Tahsas',   am: 'ታህሳስ' },
+        { index: 5,  en: 'Tir',      am: 'ጥር' },
+        { index: 6,  en: 'Yekatit',  am: 'የካቲት' },
+        { index: 7,  en: 'Megabit',  am: 'መጋቢት' },
+        { index: 8,  en: 'Miazia',   am: 'ሚያዝያ' },
+        { index: 9,  en: 'Ginbot',   am: 'ግንቦት' },
+        { index: 10, en: 'Sene',     am: 'ሰኔ' },
+        { index: 11, en: 'Hamle',    am: 'ሐምሌ' },
+        { index: 12, en: 'Nehase',   am: 'ነሐሴ' },
+        { index: 13, en: 'Pagume',   am: 'ጳጉሜን' }
+      ];
+
+      const GC_MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const GC_WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      // Exact Julian Day Number epoch for Meskerem 1, 0001 E.C. (= August 29, 0008 A.D. Julian)
+      // Verification: Nov 14, 2026 G.C. -> JDN 2461359 -> Hidar (3) 05, 2019 E.C. (Saturday)
+      const EC_EPOCH_JDN = 1724221;
+
+      function isEcLeapYear(ey) {
+        return (((ey % 4) + 4) % 4) === 3;
+      }
+
+      function getEcMonthDays(ey, em) {
+        if (em < 13) return 30;
+        return isEcLeapYear(ey) ? 6 : 5;
+      }
+
+      function gcToJdn(gy, gm, gd) {
+        const a = Math.floor((14 - gm) / 12);
+        const y = gy + 4800 - a;
+        const m = gm + 12 * a - 3;
+        return gd + Math.floor((153 * m + 2) / 5) + 365 * y +
+               Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+      }
+
+      function jdnToGc(jdn) {
+        const a = jdn + 32044;
+        const b = Math.floor((4 * a + 3) / 146097);
+        const c = a - Math.floor((146097 * b) / 4);
+        const d = Math.floor((4 * c + 3) / 1461);
+        const e = c - Math.floor((1461 * d) / 4);
+        const m = Math.floor((5 * e + 2) / 153);
+        const day = e - Math.floor((153 * m + 2) / 5) + 1;
+        const month = m + 3 - 12 * Math.floor(m / 10);
+        const year = 100 * b + d - 4800 + Math.floor(m / 10);
+        const weekday = (jdn + 1) % 7; // 0 = Sun .. 6 = Sat
+        return { year, month, day, weekday };
+      }
+
+      function ecToJdn(ey, em, ed) {
+        return EC_EPOCH_JDN + 365 * (ey - 1) + Math.floor(ey / 4) + 30 * (em - 1) + ed - 1;
+      }
+
+      function jdnToEc(jdn) {
+        const r = (((jdn - EC_EPOCH_JDN) % 1461) + 1461) % 1461;
+        const n = (r % 365) + 365 * Math.floor(r / 1460);
+        const year = 4 * Math.floor((jdn - EC_EPOCH_JDN) / 1461) +
+                     Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+        const month = Math.floor(n / 30) + 1;
+        const day = (n % 30) + 1;
+        return { year, month, day };
+      }
+
+      function dateObjToEc(d) {
+        return jdnToEc(gcToJdn(d.getFullYear(), d.getMonth() + 1, d.getDate()));
+      }
+
+      function ecToGc(ey, em, ed) {
+        return jdnToGc(ecToJdn(ey, em, ed));
+      }
+
+      function getEcWeekday(ey, em, ed) {
+        return (((ecToJdn(ey, em, ed) + 1) % 7) + 7) % 7; // 0 = Sun .. 6 = Sat
+      }
+
+      function addEcDays(ecDate, offsetDays) {
+        return jdnToEc(ecToJdn(ecDate.year, ecDate.month, ecDate.day) + offsetDays);
+      }
+
+      function formatEcCompact(ec, timeObj, includeTime) {
+        const m = EC_MONTHS[ec.month - 1];
+        const dd = String(ec.day).padStart(2, '0');
+        const base = `${m.am} (${m.en}) ${dd}, ${ec.year}`;
+        if (!includeTime || !timeObj) return base;
+        const hh = String(timeObj.hour).padStart(2, '0');
+        const mm = String(timeObj.minute).padStart(2, '0');
+        return `${base} ${hh}:${mm} ${timeObj.ampm}`;
+      }
+
+      function formatEcShortDayMonth(ec) {
+        const m = EC_MONTHS[ec.month - 1];
+        return `${String(ec.day).padStart(2, '0')}/${String(ec.month).padStart(2, '0')} (${m.en.slice(0, 3)})`;
+      }
+
+      function formatGcReadable(gc) {
+        const wd = gc.weekday !== undefined ? `${GC_WEEKDAY_SHORT[gc.weekday]}, ` : '';
+        return `${wd}${GC_MONTH_SHORT[gc.month - 1]} ${gc.day}, ${gc.year} G.C.`;
+      }
+
+      function getEthiopianLocalClock(h12, minute, ampm) {
+        let h24 = h12 % 12;
+        if (ampm === 'PM') h24 += 12;
+        let ethHour = (h24 + 6) % 12;
+        if (ethHour === 0) ethHour = 12;
+        let period = 'ከጠዋቱ';
+        if (h24 >= 12 && h24 < 18) period = 'ከሰዓት';
+        else if (h24 >= 18) period = 'ከምሽቱ';
+        else if (h24 < 6) period = 'ከሌሊቱ';
+        return `የኢትዮጵያ ሰዓት: ${ethHour}:${String(minute).padStart(2, '0')} ${period}`;
+      }
+
+      function getEcMonthDays(ey, em) {
+        if (em < 13) return 30;
+        return isEcLeapYear(ey) ? 6 : 5;
+      }
+
+      function gcToJdn(gy, gm, gd) {
+        const a = Math.floor((14 - gm) / 12);
+        const y = gy + 4800 - a;
+        const m = gm + 12 * a - 3;
+        return gd + Math.floor((153 * m + 2) / 5) + 365 * y +
+               Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+      }
+
+      function jdnToGc(jdn) {
+        const a = jdn + 32044;
+        const b = Math.floor((4 * a + 3) / 146097);
+        const c = a - Math.floor((146097 * b) / 4);
+        const d = Math.floor((4 * c + 3) / 1461);
+        const e = c - Math.floor((1461 * d) / 4);
+        const m = Math.floor((5 * e + 2) / 153);
+        const day = e - Math.floor((153 * m + 2) / 5) + 1;
+        const month = m + 3 - 12 * Math.floor(m / 10);
+        const year = 100 * b + d - 4800 + Math.floor(m / 10);
+        return { year, month, day };
+      }
+
+      function ecToJdn(ey, em, ed) {
+        return EC_EPOCH_JDN + 365 * (ey - 1) + Math.floor(ey / 4) + 30 * (em - 1) + ed - 1;
+      }
+
+      function jdnToEc(jdn) {
+        const r = (jdn - EC_EPOCH_JDN) % 1461;
+        const n = (r % 365) + 365 * Math.floor(r / 1460);
+        const year = 4 * Math.floor((jdn - EC_EPOCH_JDN) / 1461) +
+                     Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+        const month = Math.floor(n / 30) + 1;
+        const day = (n % 30) + 1;
+        return { year, month, day };
+      }
+
+      function dateObjToEc(d) {
+        return jdnToEc(gcToJdn(d.getFullYear(), d.getMonth() + 1, d.getDate()));
+      }
+
+      function ecToGc(ey, em, ed) {
+        return jdnToGc(ecToJdn(ey, em, ed));
+      }
+
+      function getEcWeekday(ey, em, ed) {
+        return (ecToJdn(ey, em, ed) + 1) % 7; // 0 = Sun .. 6 = Sat
+      }
+
+      function addEcDays(ecDate, offsetDays) {
+        return jdnToEc(ecToJdn(ecDate.year, ecDate.month, ecDate.day) + offsetDays);
+      }
+
+      function formatEcCompact(ec, timeObj, includeTime) {
+        const m = EC_MONTHS[ec.month - 1];
+        const dd = String(ec.day).padStart(2, '0');
+        const base = `${m.am} (${m.en}) ${dd}, ${ec.year}`;
+        if (!includeTime || !timeObj) return base;
+        const hh = String(timeObj.hour).padStart(2, '0');
+        const mm = String(timeObj.minute).padStart(2, '0');
+        return `${base} ${hh}:${mm} ${timeObj.ampm}`;
+      }
+
+      function formatEcShortDayMonth(ec) {
+        const m = EC_MONTHS[ec.month - 1];
+        return `${String(ec.day).padStart(2, '0')}/${String(ec.month).padStart(2, '0')} (${m.en.slice(0, 3)})`;
+      }
+
+      function formatGcReadable(gc) {
+        return `${GC_MONTH_SHORT[gc.month - 1]} ${gc.day}, ${gc.year} G.C.`;
+      }
+
+      function getEthiopianLocalClock(h12, minute, ampm) {
+        let h24 = h12 % 12;
+        if (ampm === 'PM') h24 += 12;
+        let ethHour = (h24 + 6) % 12;
+        if (ethHour === 0) ethHour = 12;
+        let period = 'ከጠዋቱ';
+        if (h24 >= 12 && h24 < 18) period = 'ከሰዓት';
+        else if (h24 >= 18) period = 'ከምሽቱ';
+        else if (h24 < 6) period = 'ከሌሊቱ';
+        return `${ethHour}:${String(minute).padStart(2, '0')} ${period}`;
+      }
+
+      /* -----------------------------------------------------------------------
+         2. STATE STORE & AUTO-SAVE ENGINE
+         ----------------------------------------------------------------------- */
+      const STORAGE_KEY = 'sc_multichart_ec_v2';
+      let chartState = {
+        fields: {},
+        ecDates: {},
+        dietGrid: {},
+        survGrid: {}
+      };
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(chartState));
+          const ind = document.getElementById('autosave-indicator');
+          if (ind) {
+            ind.textContent = 'Saved just now';
+            setTimeout(() => { ind.textContent = 'Auto-saved locally'; }, 1500);
+          }
+        } catch (err) {
+          // Ignore storage quota errors in restricted sandboxes
+        }
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') {
+              chartState = {
+                fields: parsed.fields || {},
+                ecDates: parsed.ecDates || {},
+                dietGrid: parsed.dietGrid || {},
+                survGrid: parsed.survGrid || {}
+              };
+            }
+          }
+        } catch (err) {
+          // Fallback to fresh state
+        }
+      }
+
+      /* -----------------------------------------------------------------------
+         3. ROCK-SOLID EVENT-DELEGATED ETHIOPIAN CALENDAR DATETIMEPICKER
+         ----------------------------------------------------------------------- */
+      let activePickerKey = null;
+      let activeIncludeTime = true;
+      let activeTriggerEl = null;
+      let pickerDraft = {
+        viewYear: 2019,
+        viewMonth: 3,
+        selYear: 2019,
+        selMonth: 3,
+        selDay: 5,
+        hour: 9,
+        minute: 30,
+        ampm: 'AM'
+      };
+
+      function initEcPickerDOM() {
+        const monthSel = document.getElementById('ec-select-month');
+        monthSel.innerHTML = EC_MONTHS.map(m =>
+          `<option value="${m.index}">${m.index} - ${m.am} (${m.en})</option>`
+        ).join('');
+
+        const yearSel = document.getElementById('ec-select-year');
+        let yHtml = '';
+        for (let y = 2010; y <= 2030; y++) {
+          yHtml += `<option value="${y}">${y} E.C.</option>`;
+        }
+        yearSel.innerHTML = yHtml;
+
+        const hourSel = document.getElementById('ec-select-hour');
+        let hHtml = '';
+        for (let h = 1; h <= 12; h++) {
+          hHtml += `<option value="${h}">${String(h).padStart(2, '0')}</option>`;
+        }
+        hourSel.innerHTML = hHtml;
+
+        const minSel = document.getElementById('ec-select-minute');
+        let mHtml = '';
+        for (let m = 0; m < 60; m++) {
+          mHtml += `<option value="${m}">${String(m).padStart(2, '0')}</option>`;
+        }
+        minSel.innerHTML = mHtml;
+
+        // Global event delegation so every EC button works reliably across desktop & mobile
+        document.addEventListener('click', (e) => {
+          const trigger = e.target.closest('[data-ec-picker]');
+          if (trigger) {
+            e.preventDefault();
+            e.stopPropagation();
+            const key = trigger.getAttribute('data-ec-picker');
+            const mode = trigger.getAttribute('data-mode');
+            const incTime = mode ? (mode === 'datetime') : (trigger.getAttribute('data-ec-time') !== 'false');
+            const fieldTitle = trigger.getAttribute('data-ec-title') || 'Select Ethiopian Date (EC)';
+            openEcModal(key, incTime, fieldTitle, trigger);
+            return;
+          }
+
+          const dayBtn = e.target.closest('[data-ec-day]');
+          if (dayBtn) {
+            e.preventDefault();
+            pickerDraft.selYear = pickerDraft.viewYear;
+            pickerDraft.selMonth = pickerDraft.viewMonth;
+            pickerDraft.selDay = parseInt(dayBtn.getAttribute('data-ec-day'), 10);
+            renderPickerDays();
+            updatePickerPreviews();
+            return;
+          }
+        });
+
+        // Picker internal controls
+        document.getElementById('ec-btn-close').addEventListener('click', closeEcModal);
+        document.getElementById('ec-picker-backdrop').addEventListener('click', closeEcModal);
+
+        document.getElementById('ec-btn-prev-month').addEventListener('click', () => {
+          pickerDraft.viewMonth -= 1;
+          if (pickerDraft.viewMonth < 1) {
+            pickerDraft.viewMonth = 13;
+            pickerDraft.viewYear = Math.max(2010, pickerDraft.viewYear - 1);
+          }
+          renderPickerDays();
+        });
+
+        document.getElementById('ec-btn-next-month').addEventListener('click', () => {
+          pickerDraft.viewMonth += 1;
+          if (pickerDraft.viewMonth > 13) {
+            pickerDraft.viewMonth = 1;
+            pickerDraft.viewYear = Math.min(2030, pickerDraft.viewYear + 1);
+          }
+          renderPickerDays();
+        });
+
+        monthSel.addEventListener('change', () => {
+          pickerDraft.viewMonth = parseInt(monthSel.value, 10);
+          renderPickerDays();
+        });
+
+        yearSel.addEventListener('change', () => {
+          pickerDraft.viewYear = parseInt(yearSel.value, 10);
+          renderPickerDays();
+        });
+
+        hourSel.addEventListener('change', () => {
+          pickerDraft.hour = parseInt(hourSel.value, 10);
+          updatePickerPreviews();
+        });
+
+        minSel.addEventListener('change', () => {
+          pickerDraft.minute = parseInt(minSel.value, 10);
+          updatePickerPreviews();
+        });
+
+        document.getElementById('ec-btn-am').addEventListener('click', () => setDraftAmPm('AM'));
+        document.getElementById('ec-btn-pm').addEventListener('click', () => setDraftAmPm('PM'));
+
+        document.getElementById('ec-btn-now').addEventListener('click', () => {
+          const now = new Date();
+          const ecNow = dateObjToEc(now);
+          let h12 = now.getHours() % 12;
+          if (h12 === 0) h12 = 12;
+          const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+          pickerDraft = {
+            viewYear: ecNow.year,
+            viewMonth: ecNow.month,
+            selYear: ecNow.year,
+            selMonth: ecNow.month,
+            selDay: ecNow.day,
+            hour: h12,
+            minute: now.getMinutes(),
+            ampm
+          };
+          syncPickerTimeUI();
+          renderPickerDays();
+          updatePickerPreviews();
+        });
+
+        document.getElementById('ec-btn-clear').addEventListener('click', () => {
+          if (activePickerKey) {
+            delete chartState.ecDates[activePickerKey];
+            renderAllEcButtons();
+            if (activePickerKey === 'admission_ec') renderDailyTables();
+            saveState();
+          }
+          closeEcModal();
+        });
+
+        document.getElementById('ec-btn-apply').addEventListener('click', applyEcDraft);
+
+        document.addEventListener('keydown', (e) => {
+          if (!activePickerKey) return;
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            closeEcModal();
+          } else if (e.key === 'Enter' && document.activeElement.tagName !== 'SELECT') {
+            e.preventDefault();
+            applyEcDraft();
+          }
+        });
+
+        window.addEventListener('resize', () => {
+          if (activePickerKey) positionEcModal(activeTriggerEl);
+        });
+      }
+
+      function applyEcDraft() {
+        if (!activePickerKey) return;
+        chartState.ecDates[activePickerKey] = {
+          year: pickerDraft.selYear,
+          month: pickerDraft.selMonth,
+          day: pickerDraft.selDay,
+          hour: pickerDraft.hour,
+          minute: pickerDraft.minute,
+          ampm: pickerDraft.ampm
+        };
+        renderAllEcButtons();
+        if (activePickerKey === 'admission_ec') {
+          renderDailyTables();
+        }
+        saveState();
+        showToast('Ethiopian Calendar date updated');
+        closeEcModal();
+      }
+
+      function positionEcModal(triggerEl) {
+        const modal = document.getElementById('ec-picker-modal');
+        if (!modal || modal.classList.contains('hidden')) return;
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const modalW = modal.offsetWidth || Math.min(288, vw - 20);
+        const modalH = modal.offsetHeight || 335;
+
+        if (!triggerEl) {
+          modal.style.left = `${Math.max(10, Math.round((vw - modalW) / 2))}px`;
+          modal.style.top = `${Math.max(10, Math.round((vh - modalH) / 2))}px`;
+          return;
+        }
+
+        const rect = triggerEl.getBoundingClientRect();
+        let left = rect.left;
+        if (left + modalW > vw - 10) {
+          left = Math.max(10, rect.right - modalW);
+        }
+        if (left + modalW > vw - 10) {
+          left = Math.max(10, vw - modalW - 10);
+        }
+
+        let top = rect.bottom + 4;
+        if (top + modalH > vh - 10) {
+          top = Math.max(10, rect.top - modalH - 4);
+        }
+        if (top + modalH > vh - 10) {
+          top = Math.max(10, Math.round((vh - modalH) / 2));
+        }
+
+        modal.style.left = `${left}px`;
+        modal.style.top = `${top}px`;
+      }
+
+      function openEcModal(key, includeTime, fieldTitle, triggerEl) {
+        activePickerKey = key;
+        activeIncludeTime = includeTime;
+        activeTriggerEl = triggerEl;
+
+        document.getElementById('ec-modal-field-title').textContent = fieldTitle;
+
+        const now = new Date();
+        const todayEc = dateObjToEc(now);
+        let h12 = now.getHours() % 12;
+        if (h12 === 0) h12 = 12;
+        const defaultAmPm = now.getHours() >= 12 ? 'PM' : 'AM';
+
+        const existing = chartState.ecDates[key];
+        if (existing) {
+          pickerDraft = {
+            viewYear: existing.year,
+            viewMonth: existing.month,
+            selYear: existing.year,
+            selMonth: existing.month,
+            selDay: existing.day,
+            hour: existing.hour || h12,
+            minute: existing.minute !== undefined ? existing.minute : now.getMinutes(),
+            ampm: existing.ampm || defaultAmPm
+          };
+        } else {
+          pickerDraft = {
+            viewYear: todayEc.year,
+            viewMonth: todayEc.month,
+            selYear: todayEc.year,
+            selMonth: todayEc.month,
+            selDay: todayEc.day,
+            hour: h12,
+            minute: now.getMinutes(),
+            ampm: defaultAmPm
+          };
+        }
+
+        document.getElementById('ec-time-panel').style.display = includeTime ? 'block' : 'none';
+        syncPickerTimeUI();
+        renderPickerDays();
+        updatePickerPreviews();
+
+        const modal = document.getElementById('ec-picker-modal');
+        const backdrop = document.getElementById('ec-picker-backdrop');
+        backdrop.classList.remove('hidden');
+        modal.classList.remove('hidden');
+
+        positionEcModal(triggerEl);
+      }
+
+      function closeEcModal() {
+        document.getElementById('ec-picker-modal').classList.add('hidden');
+        document.getElementById('ec-picker-backdrop').classList.add('hidden');
+        activePickerKey = null;
+        activeTriggerEl = null;
+      }
+
+      function renderPickerDays() {
+        const { viewYear, viewMonth, selYear, selMonth, selDay } = pickerDraft;
+        document.getElementById('ec-select-month').value = String(viewMonth);
+        document.getElementById('ec-select-year').value = String(viewYear);
+
+        const totalDays = getEcMonthDays(viewYear, viewMonth);
+        if (pickerDraft.selYear === viewYear && pickerDraft.selMonth === viewMonth && pickerDraft.selDay > totalDays) {
+          pickerDraft.selDay = totalDays;
+        }
+        const startWeekday = getEcWeekday(viewYear, viewMonth, 1);
+        const todayEc = dateObjToEc(new Date());
+
+        let html = '';
+        for (let i = 0; i < startWeekday; i++) {
+          html += `<div class="h-7"></div>`;
+        }
+
+        for (let d = 1; d <= totalDays; d++) {
+          const isSelected = (viewYear === selYear && viewMonth === selMonth && d === pickerDraft.selDay);
+          const isToday = (viewYear === todayEc.year && viewMonth === todayEc.month && d === todayEc.day);
+          const gc = ecToGc(viewYear, viewMonth, d);
+
+          let cls = 'h-7 rounded-md flex flex-col items-center justify-center cursor-pointer transition select-none leading-none ';
+          if (isSelected) {
+            cls += 'text-white font-extrabold shadow-xs';
+          } else if (isToday) {
+            cls += 'bg-emerald-50 text-teal-950 font-extrabold ring-1 ring-emerald-500 hover:bg-emerald-100';
+          } else {
+            cls += 'text-slate-800 hover:bg-slate-100 font-semibold';
+          }
+
+          const inlineBg = isSelected ? 'style="background-color: #0f766e;"' : '';
+
+          html += `
+            <button type="button" data-ec-day="${d}" ${inlineBg} class="${cls}" title="${formatGcReadable(gc)}">
+              <span class="text-[11px] leading-none">${d}</span>
+              <span class="text-[7.5px] leading-none mt-0.5 ${isSelected ? 'text-teal-100' : 'text-slate-400'}">${gc.day}/${gc.month}</span>
+            </button>
+          `;
+        }
+
+        document.getElementById('ec-grid-days').innerHTML = html;
+      }
+
+      function setDraftAmPm(ampm) {
+        pickerDraft.ampm = ampm;
+        const btnAm = document.getElementById('ec-btn-am');
+        const btnPm = document.getElementById('ec-btn-pm');
+        if (ampm === 'AM') {
+          btnAm.style.backgroundColor = '#0f766e';
+          btnAm.className = 'px-1.5 py-0.5 rounded-xs text-[10px] font-bold text-white transition';
+          btnPm.style.backgroundColor = 'transparent';
+          btnPm.className = 'px-1.5 py-0.5 rounded-xs text-[10px] font-bold text-slate-600 hover:text-slate-900 transition';
+        } else {
+          btnPm.style.backgroundColor = '#0f766e';
+          btnPm.className = 'px-1.5 py-0.5 rounded-xs text-[10px] font-bold text-white transition';
+          btnAm.style.backgroundColor = 'transparent';
+          btnAm.className = 'px-1.5 py-0.5 rounded-xs text-[10px] font-bold text-slate-600 hover:text-slate-900 transition';
+        }
+        updatePickerPreviews();
+      }
+
+      function syncPickerTimeUI() {
+        document.getElementById('ec-select-hour').value = String(pickerDraft.hour);
+        document.getElementById('ec-select-minute').value = String(pickerDraft.minute);
+        setDraftAmPm(pickerDraft.ampm);
+      }
+
+      function updatePickerPreviews() {
+        const gc = ecToGc(pickerDraft.selYear, pickerDraft.selMonth, pickerDraft.selDay);
+        document.getElementById('ec-gc-preview').textContent = `${GC_MONTH_SHORT[gc.month - 1]} ${gc.day}, ${gc.year} G.C.`;
+        document.getElementById('ec-local-time-preview').textContent =
+          getEthiopianLocalClock(pickerDraft.hour, pickerDraft.minute, pickerDraft.ampm);
+      }
+
+      function renderAllEcButtons() {
+        document.querySelectorAll('[data-ec-picker]').forEach(btn => {
+          const key = btn.getAttribute('data-ec-picker');
+          const mode = btn.getAttribute('data-mode');
+          const incTime = mode ? (mode === 'datetime') : (btn.getAttribute('data-ec-time') !== 'false');
+          const labelSpan = btn.querySelector('.ec-label');
+          const val = chartState.ecDates[key];
+          if (val) {
+            btn.classList.remove('is-empty');
+            labelSpan.textContent = formatEcCompact(val, val, incTime);
+          } else {
+            btn.classList.add('is-empty');
+            labelSpan.textContent = incTime ? 'Select Date/Time (EC)' : 'Select Date (EC)';
+          }
+        });
+      }
+
+      /* -----------------------------------------------------------------------
+         4. DAILY DIET/WEIGHT TABLE & DAILY SURVEILLANCE TABLE GENERATION
+         ----------------------------------------------------------------------- */
+      const DIET_ROWS = [
+        { key: 'diet_type',   label: 'Diet Type (F-75 / F-100)', type: 'select', options: ['', 'F-75', 'F-100', 'RUTF'] },
+        { key: 'ml_per_feed', label: 'ml / feed',                type: 'input',  placeholder: 'ml' },
+        { key: 'feeds_day',   label: 'Feeds / day (8 or 12)',    type: 'input',  placeholder: '8' },
+        { key: 'ml_offered',  label: 'Total ml offered',         type: 'input',  placeholder: 'ml' },
+        { key: 'ml_taken',    label: 'Total ml taken',           type: 'input',  placeholder: 'ml' },
+        { key: 'daily_wt',    label: 'WEIGHT (kg)',              type: 'input',  placeholder: 'kg', bold: true },
+        { key: 'oedema_day',  label: 'Oedema (0 / + / ++ / +++)', type: 'tally', tallyType: 'oedema' }
+      ];
+
+      const SURVEILLANCE_ROWS = [
+        { key: 'surv_diarr',   label: 'Diarrhoea (Tally)',         type: 'tally', tallyType: 'tally' },
+        { key: 'surv_vomit',   label: 'Vomiting (Tally)',          type: 'tally', tallyType: 'tally' },
+        { key: 'surv_dehyd',   label: 'Dehydration (Y/N)',         type: 'tally', tallyType: 'yn' },
+        { key: 'surv_shock',   label: 'Shock (Y/N)',               type: 'tally', tallyType: 'yn' },
+        { key: 'surv_urine',   label: 'Passed Urine (Y/N)',        type: 'tally', tallyType: 'yn' },
+        { key: 'surv_cough',   label: 'Cough / Fast Breathing',    type: 'tally', tallyType: 'yn' },
+        { key: 'surv_rr',      label: 'Respiratory Rate (/min)',   type: 'input', placeholder: '/m' },
+        { key: 'surv_pulse',   label: 'Pulse Rate (/min)',         type: 'input', placeholder: '/m' },
+        { key: 'surv_temp_am', label: 'Temperature AM (°C)',       type: 'input', placeholder: '°C' },
+        { key: 'surv_temp_pm', label: 'Temperature PM (°C)',       type: 'input', placeholder: '°C' },
+        { key: 'surv_liver',   label: 'Liver Size (cm)',           type: 'input', placeholder: 'cm' }
+      ];
+
+      const TALLY_SEQUENCES = {
+        tally:  ['', '0', '|', '||', '|||', '||||'],
+        yn:     ['', 'N', 'Y'],
+        oedema: ['', '0', '+', '++', '+++'],
+        checks: ['--', '✓', '✓✓', '✓✓✓']
+      };
+
+      function renderDailyTables() {
+        const admEc = chartState.ecDates['admission_ec'] || dateObjToEc(new Date());
+
+        // Populate 14 consecutive EC Date headers in both Diet and Surveillance tables
+        let dateHeadersHtml = '';
+        for (let d = 0; d < 14; d++) {
+          const dayEc = addEcDays(admEc, d);
+          dateHeadersHtml += `<th class="text-center text-[10px] font-bold bg-teal-50/70 text-teal-950">${formatEcShortDayMonth(dayEc)}</th>`;
+        }
+        document.getElementById('diet-ec-dates-row').innerHTML =
+          `<th class="text-left bg-teal-50 text-teal-950">Date (EC)</th>` + dateHeadersHtml;
+        document.getElementById('surv-ec-dates-row').innerHTML =
+          `<th class="text-left bg-teal-50 text-teal-950">Date (EC)</th>` + dateHeadersHtml;
+
+        // Render Diet & Weight Table Body
+        const dietBody = document.getElementById('diet-weight-tbody');
+        dietBody.innerHTML = DIET_ROWS.map(row => {
+          let cells = `<td class="font-bold text-slate-800 bg-slate-50/70">${row.label}</td>`;
+          for (let d = 1; d <= 14; d++) {
+            const cellId = `${row.key}_d${d}`;
+            const val = chartState.dietGrid[cellId] || '';
+            if (row.type === 'select') {
+              cells += `<td>
+                <select data-grid="diet" data-cell="${cellId}" class="sc-cell-input bg-transparent">
+                  ${row.options.map(opt => `<option value="${opt}" ${val === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                </select>
+              </td>`;
+            } else if (row.type === 'tally') {
+              cells += `<td><div class="tally-btn" data-grid="diet" data-tally-type="${row.tallyType}" data-cell="${cellId}">${val || '--'}</div></td>`;
+            } else {
+              cells += `<td><input type="text" data-grid="diet" data-cell="${cellId}" value="${val}" placeholder="${row.placeholder || ''}" class="sc-cell-input ${row.bold ? 'font-extrabold text-teal-900' : ''}" /></td>`;
+            }
+          }
+          return `<tr>${cells}</tr>`;
+        }).join('');
+
+        // Render Surveillance Table Body
+        const survBody = document.getElementById('surveillance-tbody');
+        survBody.innerHTML = SURVEILLANCE_ROWS.map(row => {
+          let cells = `<td class="font-bold text-slate-800 bg-slate-50/70">${row.label}</td>`;
+          for (let d = 1; d <= 14; d++) {
+            const cellId = `${row.key}_d${d}`;
+            const val = chartState.survGrid[cellId] || '';
+            if (row.type === 'tally') {
+              cells += `<td><div class="tally-btn" data-grid="surv" data-tally-type="${row.tallyType}" data-cell="${cellId}">${val || '--'}</div></td>`;
+            } else {
+              cells += `<td><input type="text" data-grid="surv" data-cell="${cellId}" value="${val}" placeholder="${row.placeholder || ''}" class="sc-cell-input" /></td>`;
+            }
+          }
+          return `<tr>${cells}</tr>`;
+        }).join('');
+      }
+
+      /* -----------------------------------------------------------------------
+         5. CLINICAL ASSISTANT & RESUSCITATION PROTOCOL ENGINE
+         ----------------------------------------------------------------------- */
+      function updateClinicalAssistant() {
+        const wt = parseFloat(document.getElementById('field-weight').value);
+        const ht = parseFloat(document.getElementById('field-height').value);
+        const muac = parseFloat(document.getElementById('field-muac').value);
+        const oedema = document.getElementById('field-oedema').value;
+        const temp = parseFloat(document.getElementById('field-temp').value);
+        const tempRoute = document.getElementById('field-temp-route').value;
+        const glucose = parseFloat(document.getElementById('field-glucose').value);
+        const hb = parseFloat(document.getElementById('field-hb').value);
+
+        // 1. Weight-based Emergency Formulas inside Form & Assistant Bar
+        if (!isNaN(wt) && wt > 0) {
+          const shockMl = (wt * 15).toFixed(1);
+          const resomalMl = (wt * 5).toFixed(1);
+          const glucoseMl = (wt * 5).toFixed(1);
+          const bloodMl = (wt * 10).toFixed(1);
+
+          document.getElementById('form-calc-shock').textContent = `${shockMl} ml/hr`;
+          document.getElementById('form-calc-resomal').textContent = `${resomalMl} ml`;
+          document.getElementById('form-calc-glucose').textContent = `${glucoseMl} ml`;
+          document.getElementById('form-calc-blood').textContent = `${bloodMl} ml`;
+
+          document.getElementById('assist-shock-resomal').textContent = `IV: ${shockMl} ml/hr | ReSoMal: ${resomalMl} ml`;
+          document.getElementById('assist-glucose-blood').textContent = `10% Gluc: ${glucoseMl} ml | Blood: ${bloodMl} ml`;
+
+          // F-75 Therapeutic Feeding Target (100 ml/kg/day if severe oedema +++, else 130 ml/kg/day)
+          const ratePerKg = oedema === '+++' ? 100 : 130;
+          const totalF75 = Math.round(wt * ratePerKg);
+          const per8Feeds = Math.round(totalF75 / 8);
+          document.getElementById('assist-f75-target').textContent = `${totalF75} ml/day (${per8Feeds} ml × 8 feeds)`;
+          document.getElementById('assist-f75-note').textContent =
+            oedema === '+++' ? 'Severe Oedema (+++): Restricted 100 ml/kg/day' : 'Standard Phase 1 F-75: 130 ml/kg/day';
+        } else {
+          document.getElementById('form-calc-shock').textContent = '-- ml/hr';
+          document.getElementById('form-calc-resomal').textContent = '-- ml';
+          document.getElementById('form-calc-glucose').textContent = '-- ml';
+          document.getElementById('form-calc-blood').textContent = '-- ml';
+          document.getElementById('assist-shock-resomal').textContent = 'IV: -- ml/hr | ReSoMal: -- ml';
+          document.getElementById('assist-glucose-blood').textContent = '10% Gluc: -- ml | Blood: -- ml';
+          document.getElementById('assist-f75-target').textContent = '-- ml/day (-- ml × 8 feeds)';
+        }
+
+        // 2. SAM Criteria Evaluation
+        const samReasons = [];
+        if (oedema && oedema !== '0') samReasons.push(`Bilateral Oedema (${oedema})`);
+        if (!isNaN(muac) && muac > 0 && muac < 11.5) samReasons.push(`MUAC ${muac} cm (<11.5 cm)`);
+        if (!isNaN(wt) && !isNaN(ht) && ht > 45) {
+          // Approximate WHO WFH/WFL severe wasting flag
+          const bmiProxy = wt / Math.pow(ht / 100, 2);
+          if (bmiProxy < 12.2) samReasons.push('Severe Wasting (WFH <-3 Z)');
+        }
+
+        const samStatusEl = document.getElementById('assist-sam-status');
+        const samDetailEl = document.getElementById('assist-sam-detail');
+        if (samReasons.length > 0) {
+          samStatusEl.textContent = 'CONFIRMED SAM CRITERIA';
+          samStatusEl.className = 'font-extrabold text-amber-300 mt-0.5';
+          samDetailEl.textContent = samReasons.join(' + ');
+        } else {
+          samStatusEl.textContent = (!isNaN(wt) || !isNaN(muac)) ? 'Check Anthropometry / Complications' : 'Enter Weight, Height & Oedema';
+          samStatusEl.className = 'font-bold text-white mt-0.5';
+          samDetailEl.textContent = 'Criteria: WFH <-3Z, MUAC <11.5cm, or Oedema';
+        }
+
+        // 3. Vital Sign Danger Alerts
+        const alerts = [];
+        if (!isNaN(temp)) {
+          if ((tempRoute === 'rectal' && temp < 35.5) || (tempRoute === 'axillary' && temp < 35.0)) {
+            alerts.push(`HYPOTHERMIA (${temp}°C) — Rewarm immediately`);
+          }
+        }
+        if (!isNaN(glucose) && glucose < 54) {
+          alerts.push(`HYPOGLYCAEMIA (${glucose} mg/dl) — Give 10% Glucose`);
+        }
+        if (!isNaN(hb) && hb < 4.0) {
+          alerts.push(`SEVERE ANAEMIA (Hb ${hb} g/dl) — Transfuse`);
+        }
+
+        const alertsEl = document.getElementById('assist-alerts');
+        if (alerts.length > 0) {
+          alertsEl.textContent = alerts.join(' | ');
+          alertsEl.className = 'font-extrabold text-rose-400 mt-0.5';
+        } else {
+          alertsEl.textContent = 'No acute vital alerts';
+          alertsEl.className = 'font-bold text-emerald-300 mt-0.5';
+        }
+      }
+
+      /* -----------------------------------------------------------------------
+         6. FORM BINDINGS, TALLY CYCLING, SAMPLE CASE & EXPORT
+         ----------------------------------------------------------------------- */
+      function bindFormInputs() {
+        // Bind standard inputs, selects, checkboxes, textareas
+        document.querySelectorAll('[data-field]').forEach(el => {
+          const key = el.getAttribute('data-field');
+          if (el.classList.contains('tally-btn')) return;
+
+          if (el.type === 'checkbox') {
+            el.checked = Boolean(chartState.fields[key]);
+            el.addEventListener('change', () => {
+              chartState.fields[key] = el.checked;
+              saveState();
+            });
+          } else {
+            if (chartState.fields[key] !== undefined) {
+              el.value = chartState.fields[key];
+            }
+            el.addEventListener('input', () => {
+              chartState.fields[key] = el.value;
+              saveState();
+            });
+            el.addEventListener('change', () => {
+              chartState.fields[key] = el.value;
+              saveState();
+            });
+          }
+        });
+
+        // Delegate grid inputs & tally buttons
+        document.addEventListener('input', (e) => {
+          const gridInput = e.target.closest('[data-grid]');
+          if (gridInput && gridInput.tagName === 'INPUT') {
+            const g = gridInput.getAttribute('data-grid');
+            const c = gridInput.getAttribute('data-cell');
+            if (g === 'diet') chartState.dietGrid[c] = gridInput.value;
+            if (g === 'surv') chartState.survGrid[c] = gridInput.value;
+            saveState();
+          }
+        });
+
+        document.addEventListener('change', (e) => {
+          const gridSelect = e.target.closest('[data-grid]');
+          if (gridSelect && gridSelect.tagName === 'SELECT') {
+            const g = gridSelect.getAttribute('data-grid');
+            const c = gridSelect.getAttribute('data-cell');
+            if (g === 'diet') chartState.dietGrid[c] = gridSelect.value;
+            if (g === 'surv') chartState.survGrid[c] = gridSelect.value;
+            saveState();
+          }
+        });
+
+        document.addEventListener('click', (e) => {
+          const tallyBtn = e.target.closest('.tally-btn');
+          if (!tallyBtn) return;
+
+          const tType = tallyBtn.getAttribute('data-tally-type') || 'tally';
+          const seq = TALLY_SEQUENCES[tType] || TALLY_SEQUENCES.tally;
+          const current = tallyBtn.textContent.trim();
+          const idx = seq.indexOf(current === '--' ? '' : current);
+          const nextVal = seq[(idx + 1) % seq.length];
+
+          tallyBtn.textContent = nextVal || '--';
+
+          const grid = tallyBtn.getAttribute('data-grid');
+          const cell = tallyBtn.getAttribute('data-cell');
+          const field = tallyBtn.getAttribute('data-field');
+
+          if (grid === 'diet' && cell) chartState.dietGrid[cell] = nextVal;
+          else if (grid === 'surv' && cell) chartState.survGrid[cell] = nextVal;
+          else if (field) chartState.fields[field] = nextVal;
+
+          saveState();
+        });
+      }
+
+      function restoreMedicineTicks() {
+        document.querySelectorAll('.tally-btn[data-field]').forEach(btn => {
+          const f = btn.getAttribute('data-field');
+          if (chartState.fields[f]) {
+            btn.textContent = chartState.fields[f];
+          }
+        });
+      }
+
+      window.loadSampleCase = function () {
+        const now = new Date();
+        const admEc = addEcDays(dateObjToEc(now), -3);
+        const day2Ec = addEcDays(admEc, 1);
+
+        chartState = {
+          fields: {
+            facility: 'Yekatit 12 Hospital Medical College — SC Unit',
+            reg_no: 'SC-2019-0184',
+            readmission: 'No',
+            child_name: 'Hanna Bekele Tadesse',
+            age: '15 m',
+            sex: 'F',
+            address: 'Kebele 08, Arada Sub-City, Addis Ababa',
+            referred_from: 'OTP Health Center',
+            breastfeeding: 'Y',
+            comp_feeding: 'Y',
+            adm_weight: '6.2',
+            adm_height: '71.5',
+            wfh: '<-3 Z-score',
+            muac: '10.8',
+            oedema: '++',
+            major_problems: 'Bilateral pitting oedema (++), watery diarrhoea (4x), poor appetite',
+            outcome: 'Admitted',
+            diarr_watery: true,
+            diarr_skin_pinch: true,
+            init_urine: 'Yes',
+            init_temp: '35.8',
+            temp_route: 'axillary',
+            init_glucose: '62',
+            init_hb: '8.4',
+            blood_type: 'O+',
+            vita_200k: true,
+            med_amox_dose: '150 mg PO 8h',
+            med_amox_tick: '✓✓✓',
+            med_folic_dose: '5 mg Day 1',
+            med_folic_tick: '✓',
+            med_alb_dose: '200 mg PO',
+            med_alb_tick: '✓',
+            test_hiv_res: 'Non-Reactive',
+            test_malaria_res: 'Negative',
+            clinical_observations: 'Day 1-3: Stabilised on F-75 (100 ml x 8 feeds). Diarrhoea resolved by Day 3. Oedema reducing from ++ to +.'
+          },
+          ecDates: {
+            admission_ec: { year: admEc.year, month: admEc.month, day: admEc.day, hour: 10, minute: 30, ampm: 'AM' },
+            resomal_time_ec: { year: admEc.year, month: admEc.month, day: admEc.day, hour: 10, minute: 45, ampm: 'AM' },
+            measles_date_ec: { year: admEc.year, month: admEc.month, day: admEc.day, hour: 12, minute: 0, ampm: 'PM' },
+            med_amox_ec: { year: admEc.year, month: admEc.month, day: admEc.day, hour: 11, minute: 0, ampm: 'AM' },
+            med_folic_ec: { year: admEc.year, month: admEc.month, day: admEc.day, hour: 11, minute: 0, ampm: 'AM' },
+            med_alb_ec: { year: day2Ec.year, month: day2Ec.month, day: day2Ec.day, hour: 9, minute: 0, ampm: 'AM' },
+            test_hiv_ec: { year: admEc.year, month: admEc.month, day: admEc.day, hour: 2, minute: 15, ampm: 'PM' },
+            test_malaria_ec: { year: admEc.year, month: admEc.month, day: admEc.day, hour: 2, minute: 15, ampm: 'PM' }
+          },
+          dietGrid: {
+            diet_type_d1: 'F-75', diet_type_d2: 'F-75', diet_type_d3: 'F-75', diet_type_d4: 'F-100',
+            ml_per_feed_d1: '100', ml_per_feed_d2: '100', ml_per_feed_d3: '100', ml_per_feed_d4: '115',
+            feeds_day_d1: '8', feeds_day_d2: '8', feeds_day_d3: '8', feeds_day_d4: '8',
+            ml_offered_d1: '800', ml_offered_d2: '800', ml_offered_d3: '800', ml_offered_d4: '920',
+            ml_taken_d1: '720', ml_taken_d2: '780', ml_taken_d3: '800', ml_taken_d4: '900',
+            daily_wt_d1: '6.20', daily_wt_d2: '6.15', daily_wt_d3: '6.05', daily_wt_d4: '6.12',
+            oedema_day_d1: '++', oedema_day_d2: '++', oedema_day_d3: '+', oedema_day_d4: '+'
+          },
+          survGrid: {
+            surv_diarr_d1: '||||', surv_diarr_d2: '||', surv_diarr_d3: '0', surv_diarr_d4: '0',
+            surv_vomit_d1: '|', surv_vomit_d2: '0', surv_vomit_d3: '0', surv_vomit_d4: '0',
+            surv_dehyd_d1: 'Y', surv_dehyd_d2: 'N', surv_dehyd_d3: 'N', surv_dehyd_d4: 'N',
+            surv_shock_d1: 'N', surv_shock_d2: 'N', surv_shock_d3: 'N', surv_shock_d4: 'N',
+            surv_urine_d1: 'Y', surv_urine_d2: 'Y', surv_urine_d3: 'Y', surv_urine_d4: 'Y',
+            surv_rr_d1: '38', surv_rr_d2: '34', surv_rr_d3: '32', surv_rr_d4: '30',
+            surv_pulse_d1: '128', surv_pulse_d2: '118', surv_pulse_d3: '112', surv_pulse_d4: '108',
+            surv_temp_am_d1: '35.8', surv_temp_am_d2: '36.4', surv_temp_am_d3: '36.7', surv_temp_am_d4: '36.8'
+          }
+        };
+
+        saveState();
+        applyStateToDOM();
+        showToast('Sample SAM patient case loaded with Ethiopian Calendar dates');
+      };
+
+      window.requestResetForm = function () {
+        document.getElementById('reset-confirm-banner').classList.remove('hidden');
+      };
+
+      window.cancelResetForm = function () {
+        document.getElementById('reset-confirm-banner').classList.add('hidden');
+      };
+
+      window.confirmResetForm = function () {
+        document.getElementById('reset-confirm-banner').classList.add('hidden');
+        const now = new Date();
+        const todayEc = dateObjToEc(now);
+        let h12 = now.getHours() % 12;
+        if (h12 === 0) h12 = 12;
+        chartState = {
+          fields: {},
+          ecDates: {
+            admission_ec: { year: todayEc.year, month: todayEc.month, day: todayEc.day, hour: h12, minute: now.getMinutes(), ampm: now.getHours() >= 12 ? 'PM' : 'AM' }
+          },
+          dietGrid: {},
+          survGrid: {}
+        };
+        saveState();
+        applyStateToDOM();
+        showToast('SC Multi-Chart cleared to a blank form');
+      };
+
+      window.toggleAssistantDrawer = function () {
+        const bar = document.getElementById('clinical-assistant-bar');
+        bar.classList.toggle('hidden');
+      };
+
+      window.downloadStandaloneHTML = function () {
+        const htmlStr = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([htmlStr], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'SC-MultiChart-SAM-Ethiopian-Calendar.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Standalone HTML file downloaded');
+      };
+
+      function showToast(msg) {
+        const container = document.getElementById('toast-container');
+        const el = document.createElement('div');
+        el.className = 'pointer-events-auto px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-xl border border-slate-700 flex items-center gap-2 transition-opacity duration-300';
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-teal-400"></span><span>${msg}</span>`;
+        container.appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = '0';
+          setTimeout(() => el.remove(), 300);
+        }, 2600);
+      }
+
+      function applyStateToDOM() {
+        document.querySelectorAll('[data-field]').forEach(el => {
+          const k = el.getAttribute('data-field');
+          if (el.classList.contains('tally-btn')) {
+            el.textContent = chartState.fields[k] || '--';
+            return;
+          }
+          if (el.type === 'checkbox') {
+            el.checked = Boolean(chartState.fields[k]);
+          } else {
+            el.value = chartState.fields[k] !== undefined ? chartState.fields[k] : '';
+          }
+        });
+        renderAllEcButtons();
+        renderDailyTables();
+        restoreMedicineTicks();
+        updateClinicalAssistant();
+      }
+
+      window.updateClinicalAssistant = updateClinicalAssistant;
+
+      /* -----------------------------------------------------------------------
+         7. BOOTSTRAP APPLICATION
+         ----------------------------------------------------------------------- */
+      window.addEventListener('DOMContentLoaded', () => {
+        loadState();
+
+        // Ensure default Admission EC Date is set to Now if empty
+        const now = new Date();
+        const todayEc = dateObjToEc(now);
+        let h12 = now.getHours() % 12;
+        if (h12 === 0) h12 = 12;
+        const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+
+        document.getElementById('live-ec-clock').textContent =
+          `Today: ${formatEcCompact(todayEc, { hour: h12, minute: now.getMinutes(), ampm }, true)} (${formatGcReadable(ecToGc(todayEc.year, todayEc.month, todayEc.day))})`;
+
+        if (!chartState.ecDates['admission_ec']) {
+          chartState.ecDates['admission_ec'] = {
+            year: todayEc.year,
+            month: todayEc.month,
+            day: todayEc.day,
+            hour: h12,
+            minute: now.getMinutes(),
+            ampm
+          };
+        }
+
+        initEcPickerDOM();
+        bindFormInputs();
+        applyStateToDOM();
+      });
+    })();
+  </script>
+
+  <script>
+    (function() {
+      window.addEventListener('DOMContentLoaded', function() {
+        
+          if (window.BahmniCustomFormBridge) {
+            BahmniCustomFormBridge.init({
+              formId: 'stabilisation_centre',
+              formTitle: 'Stabilisation Centre (SC) Multi-Chart',
+              conceptUuid: 'e0790011-3d71-4569-b1d5-894000000012',
+              tag: 'SAM',
+              color: '#0d9488',
+              getData: function () {
+                return typeof chartState !== 'undefined' ? chartState : {};
+              },
+              setData: function (data) {
+                if (data && typeof data === 'object') {
+                  chartState = data;
+                  if (typeof applyStateToDOM === 'function') applyStateToDOM();
+                }
+              },
+              extractSummary: function (d) {
+                var f = d.fields || {};
+                return {
+                  patientName: f['field-patient-name'] || f['name'] || '',
+                  samType: f['field-sam-type'] || f['field-oedema'] || '',
+                  admissionWeight: f['field-weight'] || '',
+                  admissionMuac: f['field-muac'] || '',
+                  currentPhase: f['field-phase'] || 'Phase 1'
+                };
+              },
+              setLockState: function (locked) {
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+                  el.disabled = locked;
+                });
+              }
+            });
+          }
+        
+      });
+    })();
+  </script>
+</body>
+
+</html>

@@ -2,10 +2,10 @@
 
 angular.module('bahmni.common.displaycontrol.custom')
     .directive('birthCertificate', ['observationsService', 'appService', 'spinner', function (observationsService, appService, spinner) {
-            var link = function ($scope) {
+            var link = function ($scope, element) {
                 console.log("inside birth certificate");
                 var conceptNames = ["HEIGHT"];
-                $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/birthCertificate.html";
+                $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/birthCertificate.html?v=20261116_v2";
                 spinner.forPromise(observationsService.fetch($scope.patient.uuid, conceptNames, "latest", undefined, $scope.visitUuid, undefined).then(function (response) {
                     $scope.observations = response.data;
                 }));
@@ -17,9 +17,9 @@ angular.module('bahmni.common.displaycontrol.custom')
                 link: link
             }
     }]).directive('deathCertificate', ['observationsService', 'appService', 'spinner', function (observationsService, appService, spinner) {
-        var link = function ($scope) {
+        var link = function ($scope, element) {
             var conceptNames = ["WEIGHT"];
-            $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/deathCertificate.html";
+            $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/deathCertificate.html?v=20261116_v2";
             spinner.forPromise(observationsService.fetch($scope.patient.uuid, conceptNames, "latest", undefined, $scope.visitUuid, undefined).then(function (response) {
                 $scope.observations = response.data;
             }));
@@ -31,7 +31,7 @@ angular.module('bahmni.common.displaycontrol.custom')
             template: '<ng-include src="contentUrl"/>'
         }
     }]).directive('customTreatmentChart', ['appService', 'treatmentConfig', 'TreatmentService', 'spinner', '$q', function (appService, treatmentConfig, treatmentService, spinner, $q) {
-    var link = function ($scope) {
+    var link = function ($scope, element) {
         var Constants = Bahmni.Clinical.Constants;
         var days = [
             'Sunday',
@@ -42,7 +42,7 @@ angular.module('bahmni.common.displaycontrol.custom')
             'Friday',
             'Saturday'
         ];
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/customTreatmentChart.html";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/customTreatmentChart.html?v=20261116_v2";
 
         $scope.atLeastOneDrugForDay = function (day) {
             var atLeastOneDrugForDay = false;
@@ -150,8 +150,8 @@ angular.module('bahmni.common.displaycontrol.custom')
         template: '<ng-include src="contentUrl"/>'
     }
 }]).directive('patientAppointmentsDashboard', ['$http', '$q', '$window','appService', 'virtualConsultService', function ($http, $q, $window, appService, virtualConsultService) {
-    var link = function ($scope) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/patientAppointmentsDashboard.html";
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/patientAppointmentsDashboard.html?v=20261116_v3";
         var getUpcomingAppointments = function () {
             var params = {
                 q: "bahmni.sqlGet.upComingAppointments",
@@ -248,8 +248,8 @@ angular.module('bahmni.common.displaycontrol.custom')
         template: '<ng-include src="contentUrl"/>'
     };
 }]).directive('whoLabourCareGuide', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
-    var link = function ($scope) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html";
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html?v=20261116_v3";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -297,7 +297,21 @@ angular.module('bahmni.common.displaycontrol.custom')
             return etStr ? (gregStr + ' (' + etStr + ')') : gregStr;
         };
 
-        var getPatientUuid = function () {
+        
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+var getPatientUuid = function () {
             return ($scope.patient && $scope.patient.uuid) ||
                    ($stateParams && $stateParams.patientUuid) ||
                    ($scope.section && $scope.section.patientUuid) ||
@@ -568,8 +582,8 @@ angular.module('bahmni.common.displaycontrol.custom')
         template: '<ng-include src="contentUrl"/>'
     };
 }]).directive('whoTraumaForm', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
-    var link = function ($scope) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html";
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html?v=20261116_v3";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -883,4 +897,1536 @@ angular.module('bahmni.common.displaycontrol.custom')
         },
         template: '<ng-include src="contentUrl"/>'
     };
-}]);
+}])
+.directive('ethiopianOtpCard', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ethiopianOtpCardDashboard.html?v=20261116_v3";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+        $scope.hasActiveForm = false;
+        $scope.activeChart = null;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var etStr = etMonthsAm[et.month - 1] + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+            return gregStr + ' (' + etStr + ')';
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/ethiopian_otp_follow_up_card.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/ethiopian_otp_follow_up_card.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+                return $q.when();
+            }
+
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: 'e0790001-3d71-4569-b1d5-894000000002',
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var sorted = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var activeChart = null;
+                    var charts = [];
+
+                    sorted.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
+
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.lastSavedByName && parsed.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var lastHandover = (parsed.handovers && parsed.handovers.length > 0) ? parsed.handovers[parsed.handovers.length - 1] : null;
+
+                            var item = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDatetime: obs.obsDatetime,
+                                savedDate: savedDateStr,
+                                userName: userName,
+                                isLocked: Boolean(parsed.locked),
+                                lockedBy: parsed.lockedBy,
+                                lockedAt: parsed.lockedAt,
+                                metrics: parsed.summaryMetrics || {},
+                                lastHandover: lastHandover,
+                                chartData: parsed
+                            };
+
+                            charts.push(item);
+                            if (!item.isLocked && !activeChart) {
+                                activeChart = item;
+                            }
+                        } catch (e) {}
+                    });
+
+                    $scope.allCharts = charts;
+                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasActiveForm = activeChart !== null;
+                    $scope.activeChart = activeChart;
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasRecord = false;
+                    $scope.hasActiveForm = false;
+                    $scope.activeChart = null;
+                }
+            }).catch(function () {
+                $scope.loading = false;
+                $scope.allCharts = [];
+                $scope.hasRecord = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshObs();
+            }
+        });
+
+        $scope.refreshObs();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}])
+
+
+.directive('fmohDmHypertensionFollowUp', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/fmohDmHypertensionDashboard.html?v=20261116_v3";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+        $scope.hasActiveForm = false;
+        $scope.activeChart = null;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var etStr = etMonthsAm[et.month - 1] + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+            return gregStr + ' (' + etStr + ')';
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/fmoh_ethiopia_dm_hypertension_follow_up_form.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/fmoh_ethiopia_dm_hypertension_follow_up_form.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+                return $q.when();
+            }
+
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: 'e0790003-3d71-4569-b1d5-894000000004',
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var sorted = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var activeChart = null;
+                    var charts = [];
+
+                    sorted.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
+
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.lastSavedByName && parsed.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var lastHandover = (parsed.handovers && parsed.handovers.length > 0) ? parsed.handovers[parsed.handovers.length - 1] : null;
+
+                            var item = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDatetime: obs.obsDatetime,
+                                savedDate: savedDateStr,
+                                userName: userName,
+                                isLocked: Boolean(parsed.locked),
+                                lockedBy: parsed.lockedBy,
+                                lockedAt: parsed.lockedAt,
+                                metrics: parsed.summaryMetrics || {},
+                                lastHandover: lastHandover,
+                                chartData: parsed
+                            };
+
+                            charts.push(item);
+                            if (!item.isLocked && !activeChart) {
+                                activeChart = item;
+                            }
+                        } catch (e) {}
+                    });
+
+                    $scope.allCharts = charts;
+                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasActiveForm = activeChart !== null;
+                    $scope.activeChart = activeChart;
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasRecord = false;
+                    $scope.hasActiveForm = false;
+                    $scope.activeChart = null;
+                }
+            }).catch(function () {
+                $scope.loading = false;
+                $scope.allCharts = [];
+                $scope.hasRecord = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshObs();
+            }
+        });
+
+        $scope.refreshObs();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}])
+
+
+.directive('ophthalmicEyeExam', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ophthalmicEyeExamDashboard.html?v=20261116_v3";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+        $scope.hasActiveForm = false;
+        $scope.activeChart = null;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var etStr = etMonthsAm[et.month - 1] + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+            return gregStr + ' (' + etStr + ')';
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/interactive_ophthalmic_eye_examination_form.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/interactive_ophthalmic_eye_examination_form.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+                return $q.when();
+            }
+
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: 'e0790005-3d71-4569-b1d5-894000000006',
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var sorted = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var activeChart = null;
+                    var charts = [];
+
+                    sorted.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
+
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.lastSavedByName && parsed.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var lastHandover = (parsed.handovers && parsed.handovers.length > 0) ? parsed.handovers[parsed.handovers.length - 1] : null;
+
+                            var item = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDatetime: obs.obsDatetime,
+                                savedDate: savedDateStr,
+                                userName: userName,
+                                isLocked: Boolean(parsed.locked),
+                                lockedBy: parsed.lockedBy,
+                                lockedAt: parsed.lockedAt,
+                                metrics: parsed.summaryMetrics || {},
+                                lastHandover: lastHandover,
+                                chartData: parsed
+                            };
+
+                            charts.push(item);
+                            if (!item.isLocked && !activeChart) {
+                                activeChart = item;
+                            }
+                        } catch (e) {}
+                    });
+
+                    $scope.allCharts = charts;
+                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasActiveForm = activeChart !== null;
+                    $scope.activeChart = activeChart;
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasRecord = false;
+                    $scope.hasActiveForm = false;
+                    $scope.activeChart = null;
+                }
+            }).catch(function () {
+                $scope.loading = false;
+                $scope.allCharts = [];
+                $scope.hasRecord = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshObs();
+            }
+        });
+
+        $scope.refreshObs();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}])
+
+
+.directive('nationalPerioperativeForms', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/nationalPerioperativeDashboard.html?v=20261116_v3";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+        $scope.hasActiveForm = false;
+        $scope.activeChart = null;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var etStr = etMonthsAm[et.month - 1] + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+            return gregStr + ' (' + etStr + ')';
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/National_Perioperative_Clinical_Forms.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/National_Perioperative_Clinical_Forms.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+                return $q.when();
+            }
+
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: 'e0790007-3d71-4569-b1d5-894000000008',
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var sorted = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var activeChart = null;
+                    var charts = [];
+
+                    sorted.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
+
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.lastSavedByName && parsed.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var lastHandover = (parsed.handovers && parsed.handovers.length > 0) ? parsed.handovers[parsed.handovers.length - 1] : null;
+
+                            var item = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDatetime: obs.obsDatetime,
+                                savedDate: savedDateStr,
+                                userName: userName,
+                                isLocked: Boolean(parsed.locked),
+                                lockedBy: parsed.lockedBy,
+                                lockedAt: parsed.lockedAt,
+                                metrics: parsed.summaryMetrics || {},
+                                lastHandover: lastHandover,
+                                chartData: parsed
+                            };
+
+                            charts.push(item);
+                            if (!item.isLocked && !activeChart) {
+                                activeChart = item;
+                            }
+                        } catch (e) {}
+                    });
+
+                    $scope.allCharts = charts;
+                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasActiveForm = activeChart !== null;
+                    $scope.activeChart = activeChart;
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasRecord = false;
+                    $scope.hasActiveForm = false;
+                    $scope.activeChart = null;
+                }
+            }).catch(function () {
+                $scope.loading = false;
+                $scope.allCharts = [];
+                $scope.hasRecord = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshObs();
+            }
+        });
+
+        $scope.refreshObs();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}])
+
+
+.directive('safeChildbirthChecklist', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/safeChildbirthChecklistDashboard.html?v=20261116_v3";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+        $scope.hasActiveForm = false;
+        $scope.activeChart = null;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var etStr = etMonthsAm[et.month - 1] + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+            return gregStr + ' (' + etStr + ')';
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/safe_childbirth_checklist_ethiopian.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/safe_childbirth_checklist_ethiopian.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+                return $q.when();
+            }
+
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: 'e0790009-3d71-4569-b1d5-894000000010',
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var sorted = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var activeChart = null;
+                    var charts = [];
+
+                    sorted.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
+
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.lastSavedByName && parsed.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var lastHandover = (parsed.handovers && parsed.handovers.length > 0) ? parsed.handovers[parsed.handovers.length - 1] : null;
+
+                            var item = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDatetime: obs.obsDatetime,
+                                savedDate: savedDateStr,
+                                userName: userName,
+                                isLocked: Boolean(parsed.locked),
+                                lockedBy: parsed.lockedBy,
+                                lockedAt: parsed.lockedAt,
+                                metrics: parsed.summaryMetrics || {},
+                                lastHandover: lastHandover,
+                                chartData: parsed
+                            };
+
+                            charts.push(item);
+                            if (!item.isLocked && !activeChart) {
+                                activeChart = item;
+                            }
+                        } catch (e) {}
+                    });
+
+                    $scope.allCharts = charts;
+                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasActiveForm = activeChart !== null;
+                    $scope.activeChart = activeChart;
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasRecord = false;
+                    $scope.hasActiveForm = false;
+                    $scope.activeChart = null;
+                }
+            }).catch(function () {
+                $scope.loading = false;
+                $scope.allCharts = [];
+                $scope.hasRecord = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshObs();
+            }
+        });
+
+        $scope.refreshObs();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}])
+
+
+.directive('stabilisationCentreMultiChart', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/stabilisationCentreDashboard.html?v=20261116_v3";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+        $scope.hasActiveForm = false;
+        $scope.activeChart = null;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var etStr = etMonthsAm[et.month - 1] + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+            return gregStr + ' (' + etStr + ')';
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/stabilisation_centre_sc_multi_chart_with_ethiopian_calendar_picker.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/stabilisation_centre_sc_multi_chart_with_ethiopian_calendar_picker.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+                return $q.when();
+            }
+
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: 'e0790011-3d71-4569-b1d5-894000000012',
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var sorted = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var activeChart = null;
+                    var charts = [];
+
+                    sorted.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
+
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.lastSavedByName && parsed.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var lastHandover = (parsed.handovers && parsed.handovers.length > 0) ? parsed.handovers[parsed.handovers.length - 1] : null;
+
+                            var item = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDatetime: obs.obsDatetime,
+                                savedDate: savedDateStr,
+                                userName: userName,
+                                isLocked: Boolean(parsed.locked),
+                                lockedBy: parsed.lockedBy,
+                                lockedAt: parsed.lockedAt,
+                                metrics: parsed.summaryMetrics || {},
+                                lastHandover: lastHandover,
+                                chartData: parsed
+                            };
+
+                            charts.push(item);
+                            if (!item.isLocked && !activeChart) {
+                                activeChart = item;
+                            }
+                        } catch (e) {}
+                    });
+
+                    $scope.allCharts = charts;
+                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasActiveForm = activeChart !== null;
+                    $scope.activeChart = activeChart;
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasRecord = false;
+                    $scope.hasActiveForm = false;
+                    $scope.activeChart = null;
+                }
+            }).catch(function () {
+                $scope.loading = false;
+                $scope.allCharts = [];
+                $scope.hasRecord = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshObs();
+            }
+        });
+
+        $scope.refreshObs();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}])
+
+
+.directive('whoPphObservationChart', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoPphDashboard.html?v=20261116_v3";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+        $scope.hasActiveForm = false;
+        $scope.activeChart = null;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var etStr = etMonthsAm[et.month - 1] + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+            return gregStr + ' (' + etStr + ')';
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 4);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/who_postpartum_hemorrhage_pph_clinical_observation_chart.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/who_postpartum_hemorrhage_pph_clinical_observation_chart.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+                return $q.when();
+            }
+
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: 'e0790013-3d71-4569-b1d5-894000000014',
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                if (res.data && res.data.results && res.data.results.length > 0) {
+                    var sorted = res.data.results.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var activeChart = null;
+                    var charts = [];
+
+                    sorted.forEach(function (obs) {
+                        try {
+                            var parsed = typeof obs.value === 'string' ? JSON.parse(obs.value) : obs.value;
+                            if (!parsed) return;
+
+                            var userName = null;
+                            if (parsed.locked && parsed.lockedBy) {
+                                userName = parsed.lockedBy;
+                            } else if (parsed.lastSavedByName && parsed.lastSavedByName !== 'Attending Clinician') {
+                                userName = parsed.lastSavedByName;
+                            } else if (obs.creator && obs.creator.person && obs.creator.person.display) {
+                                userName = obs.creator.person.display;
+                            } else if (obs.creator && obs.creator.display) {
+                                userName = obs.creator.display;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) || (ep.provider && ep.provider.display) || ep.display;
+                            } else if (parsed.auditTrail && parsed.auditTrail.length > 0 && parsed.auditTrail[parsed.auditTrail.length - 1].user) {
+                                userName = parsed.auditTrail[parsed.auditTrail.length - 1].user;
+                            }
+
+                            if (!userName || userName === 'Attending Clinician') {
+                                userName = 'Super Man';
+                            }
+
+                            var savedDateStr = formatDateTime(obs.obsDatetime);
+                            var lastHandover = (parsed.handovers && parsed.handovers.length > 0) ? parsed.handovers[parsed.handovers.length - 1] : null;
+
+                            var item = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: obs.encounter ? obs.encounter.uuid : null,
+                                obsDatetime: obs.obsDatetime,
+                                savedDate: savedDateStr,
+                                userName: userName,
+                                isLocked: Boolean(parsed.locked),
+                                lockedBy: parsed.lockedBy,
+                                lockedAt: parsed.lockedAt,
+                                metrics: parsed.summaryMetrics || {},
+                                lastHandover: lastHandover,
+                                chartData: parsed
+                            };
+
+                            charts.push(item);
+                            if (!item.isLocked && !activeChart) {
+                                activeChart = item;
+                            }
+                        } catch (e) {}
+                    });
+
+                    $scope.allCharts = charts;
+                    $scope.hasRecord = charts.length > 0;
+                    $scope.hasActiveForm = activeChart !== null;
+                    $scope.activeChart = activeChart;
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasRecord = false;
+                    $scope.hasActiveForm = false;
+                    $scope.activeChart = null;
+                }
+            }).catch(function () {
+                $scope.loading = false;
+                $scope.allCharts = [];
+                $scope.hasRecord = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshObs();
+            }
+        });
+
+        $scope.refreshObs();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "="
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}])
+;

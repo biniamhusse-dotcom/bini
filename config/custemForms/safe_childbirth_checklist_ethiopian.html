@@ -630,6 +630,7 @@
     header { box-shadow: none; border: 1px solid #000; }
   }
 </style>
+<script src="bahmni-custom-form-bridge.js"></script>
 </head>
 <body>
 
@@ -1838,5 +1839,70 @@
 
   loadState();
 </script>
+
+  <script>
+    (function() {
+      window.addEventListener('DOMContentLoaded', function() {
+        
+          if (window.BahmniCustomFormBridge) {
+            BahmniCustomFormBridge.init({
+              formId: 'safe_childbirth_checklist',
+              formTitle: 'Safe Childbirth Checklist (Ethiopian)',
+              conceptUuid: 'e0790009-3d71-4569-b1d5-894000000010',
+              tag: 'MCH',
+              color: '#d97706',
+              getData: function () {
+                var s = {};
+                document.querySelectorAll('input, select, textarea').forEach(function(el) {
+                  if (!el.id && !el.name) return;
+                  var k = el.id || el.name;
+                  if (el.type === 'radio') {
+                    if (el.checked) s[el.name] = el.value;
+                  } else if (el.type === 'checkbox') {
+                    s[k] = el.checked;
+                  } else {
+                    s[k] = el.value;
+                  }
+                });
+                return s;
+              },
+              setData: function (data) {
+                if (!data || typeof data !== 'object') return;
+                Object.keys(data).forEach(function(k) {
+                  var el = document.getElementById(k) || document.querySelector('[name="' + k + '"]');
+                  if (!el) return;
+                  if (el.type === 'radio') {
+                    var r = document.querySelector('[name="' + k + '"][value="' + data[k] + '"]');
+                    if (r) r.checked = true;
+                  } else if (el.type === 'checkbox') {
+                    el.checked = Boolean(data[k]);
+                  } else {
+                    el.value = data[k];
+                  }
+                });
+                if (typeof updateProgress === 'function') updateProgress();
+              },
+              extractSummary: function (d) {
+                return {
+                  patientName: d['patientName'] || '',
+                  facility: d['facilityName'] || '',
+                  stage1Sig: d['s1_sig'] || '',
+                  stage2Sig: d['s2_sig'] || '',
+                  stage3Sig: d['s3_sig'] || '',
+                  stage4Sig: d['s4_sig'] || ''
+                };
+              },
+              setLockState: function (locked) {
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+                  el.disabled = locked;
+                });
+              }
+            });
+          }
+        
+      });
+    })();
+  </script>
 </body>
+
 </html>

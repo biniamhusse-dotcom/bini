@@ -4,9 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ophthalmic & Optometric Eye Examination Record</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./tailwind-offline.css">
   <style>
+
+  /* Offline High-Fidelity System Font Stack for Amharic / English */
+  html, body, input, select, textarea, button {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Ethiopic", "Nyala", "Abyssinica SIL", sans-serif !important;
+  }
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  }
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: #f1f5f9;
@@ -141,6 +149,7 @@
       }
     }
   </style>
+<script src="bahmni-custom-form-bridge.js"></script>
 </head>
 <body class="pb-16">
 
@@ -1751,5 +1760,48 @@
       });
     });
   </script>
+
+  <script>
+    (function() {
+      window.addEventListener('DOMContentLoaded', function() {
+        
+          if (window.BahmniCustomFormBridge) {
+            BahmniCustomFormBridge.init({
+              formId: 'ophthalmic_eye_exam',
+              formTitle: 'Ophthalmic Eye Examination Record',
+              conceptUuid: 'e0790005-3d71-4569-b1d5-894000000006',
+              tag: 'EYE',
+              color: '#7c3aed',
+              getData: function () {
+                return (typeof collectFormData === 'function') ? collectFormData() : {};
+              },
+              setData: function (data) {
+                if (typeof applyLoadedData === 'function') {
+                  applyLoadedData(data);
+                }
+              },
+              extractSummary: function (d) {
+                var f = d.fields || {};
+                return {
+                  chiefComplaint: f['chiefComplaint'] || '',
+                  vaOD: f['vaDistanceOD'] || '',
+                  vaOS: f['vaDistanceOS'] || '',
+                  iopOD: f['iopOD'] || '',
+                  iopOS: f['iopOS'] || '',
+                  diagnosis: f['clinicalDiagnosis'] || ''
+                };
+              },
+              setLockState: function (locked) {
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+                  el.disabled = locked;
+                });
+              }
+            });
+          }
+        
+      });
+    })();
+  </script>
 </body>
+
 </html>

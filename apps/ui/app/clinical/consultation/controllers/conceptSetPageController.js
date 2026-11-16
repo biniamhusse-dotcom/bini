@@ -119,6 +119,7 @@ angular.module('bahmni.clinical')
                 template.isOpen = true;
                 template.isLoaded = true;
                 template.klass = "active";
+                template.isAdded = true;
             };
 
             var initializeDefaultTemplates = function () {

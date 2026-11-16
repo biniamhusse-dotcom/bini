@@ -1,0 +1,3831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ministry of Health Ethiopia - National Perioperative Forms & Checklists</title>
+<style>
+  :root {
+    --primary: #0f4c81;
+    --primary-light: #e6f0fa;
+    --secondary: #1e7e6c;
+    --bg: #f4f7f9;
+    --card-bg: #ffffff;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: #d1d5db;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --success: #059669;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  body { background-color: var(--bg); color: var(--text); line-height: 1.5; }
+  
+  /* Header */
+  header {
+    background: linear-gradient(135deg, var(--primary) 0%, #093256 100%);
+    color: white;
+    padding: 1.25rem 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .header-title h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.3px; }
+  .header-title p { font-size: 0.85rem; opacity: 0.9; margin-top: 2px; }
+  .header-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  
+  /* Buttons */
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-light { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+  .btn-light:hover { background: rgba(255,255,255,0.25); }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #0c3d68; }
+  .btn-success { background: var(--secondary); color: white; }
+  .btn-success:hover { background: #166355; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: white; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { background: #f9fafb; }
+  .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.78rem; }
+
+  /* Layout */
+  .container {
+    max-width: 1360px;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 900px) {
+    .container { grid-template-columns: 1fr; }
+  }
+
+  /* Sidebar Navigation */
+  .sidebar {
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 1rem;
+    height: calc(100vh - 5rem);
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+  }
+  #navList {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 2px;
+    margin-top: 0.25rem;
+  }
+  #navList::-webkit-scrollbar {
+    width: 6px;
+  }
+  #navList::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  #navList::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  #navList::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  .sidebar-search {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+  }
+  .nav-group-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin: 0.85rem 0 0.35rem 0.5rem;
+  }
+  .nav-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.55rem 0.75rem;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    margin-bottom: 2px;
+    transition: background 0.15s;
+  }
+  .nav-item:hover { background: var(--primary-light); color: var(--primary); }
+  .nav-item.active {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+  }
+
+  /* Main Form Panel */
+  .main-panel {
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 1.75rem;
+  }
+  .form-section { display: none; }
+  .form-section.active { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .form-header {
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .form-header h2 { color: var(--primary); font-size: 1.35rem; }
+  .form-header .badge {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* Form Elements */
+  .card-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.15rem;
+    margin-bottom: 1.25rem;
+    background: #fcfdfe;
+  }
+  .card-box h3 {
+    font-size: 1rem;
+    color: var(--primary);
+    margin-bottom: 0.85rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.4rem;
+  }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.9rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.9rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; }
+
+  .field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .field label { font-size: 0.82rem; font-weight: 600; color: #374151; }
+  input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="datetime-local"], select, textarea {
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    width: 100%;
+    background: white;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.12);
+  }
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { border: 1px solid #e5e7eb; padding: 0.55rem 0.65rem; text-align: left; vertical-align: middle; }
+  th { background: #f1f5f9; font-weight: 600; color: #1e293b; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .center { text-align: center; }
+
+  /* Radio & Checkbox groups */
+  .radio-inline { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+  .radio-inline label, .check-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 400;
+    cursor: pointer;
+  }
+  input[type="radio"], input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+
+  /* Alert Banner */
+  .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid;
+  }
+  .alert-info { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+  .alert-warning { background: #fffbeb; border-color: #f59e0b; color: #92400e; }
+  .alert-danger { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+  .alert-success { background: #ecfdf5; border-color: #10b981; color: #065f46; }
+
+  /* Toast Notification */
+  #toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: #1f2937;
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    z-index: 9999;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Print styles */
+  @media print {
+    header, .sidebar, .no-print, .header-actions { display: none !important; }
+    .container { display: block; margin: 0; padding: 0; max-width: 100%; }
+    .main-panel { box-shadow: none; padding: 0; }
+    .form-section { display: none !important; }
+    .form-section.active { display: block !important; }
+    body { background: white; }
+    .card-box { break-inside: avoid; border: 1px solid #999; }
+  }
+
+  /* Ethiopian Calendar Date/Time Picker */
+  .et-date-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    min-width: 135px;
+  }
+  .et-date-input {
+    width: 100%;
+    padding: 0.45rem 2.1rem 0.45rem 0.6rem !important;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: clamp(0.75rem, 1vw, 0.86rem) !important;
+    background: #ffffff;
+    color: var(--text);
+    cursor: pointer;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .et-date-wrap.compact .et-date-input {
+    padding: 0.35rem 1.75rem 0.35rem 0.45rem !important;
+    font-size: 0.78rem !important;
+  }
+  .et-date-icon {
+    position: absolute;
+    right: 0.45rem;
+    pointer-events: none;
+    font-size: 0.9rem;
+    color: var(--primary);
+    opacity: 0.85;
+  }
+  .et-popover {
+    position: fixed;
+    z-index: 10000;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+    width: 292px;
+    padding: 0.75rem;
+    display: none;
+    user-select: none;
+  }
+  .et-popover.open { display: block; animation: fadeIn 0.15s ease; }
+  .et-pop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .et-pop-header select {
+    padding: 0.25rem 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 5px;
+    border: 1px solid #cbd5e1;
+    color: var(--primary);
+  }
+  .et-nav-btn {
+    background: var(--primary-light);
+    color: var(--primary);
+    border: none;
+    border-radius: 5px;
+    width: 26px;
+    height: 26px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .et-nav-btn:hover { background: var(--primary); color: #fff; }
+  .et-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+  }
+  .et-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .et-day {
+    text-align: center;
+    padding: 0.32rem 0;
+    font-size: 0.8rem;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .et-day:hover:not(.empty) { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .et-day.selected { background: var(--primary); color: #fff; font-weight: 700; }
+  .et-day.today { border-color: var(--secondary); font-weight: 700; }
+  .et-day.empty { cursor: default; }
+  .et-time-bar {
+    margin-top: 0.55rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+  }
+  .et-time-bar select {
+    width: auto;
+    padding: 0.22rem 0.3rem;
+    font-size: 0.78rem;
+  }
+  .et-pop-footer {
+    margin-top: 0.55rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .et-greg-preview {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+
+  /* Interactive Anesthesia Chart & Grid */
+  .anest-chart-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .anest-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    background: #f8fafc;
+    padding: 0.6rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 0.75rem;
+    font-size: 0.82rem;
+  }
+  .legend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+  }
+  .anest-svg-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+  }
+  .anest-tools-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .anest-mode-btn {
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .anest-mode-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  .anest-log-table input[type="text"], .anest-log-table input[type="number"], .anest-log-table select {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.78rem;
+    min-width: 58px;
+  }
+  .anest-log-table th {
+    font-size: 0.76rem;
+    padding: 0.4rem 0.45rem;
+    text-align: center;
+  }
+  .anest-log-table td {
+    padding: 0.35rem 0.4rem;
+  }
+  .total-cell {
+    background: #eff6ff !important;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+  }
+
+
+
+  /* Official Single-Page A4 Print Template matching Annex 7 Official Layout */
+  #anest-a4-print-sheet {
+    display: none;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 4mm;
+  }
+
+  @media print {
+    body.printing-anest-a4 {
+      background: #fff !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body.printing-anest-a4 .main-panel {
+      padding: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      background: #fff !important;
+    }
+    body.printing-anest-a4 #form-anest-rec .form-header,
+    body.printing-anest-a4 #form-anest-rec .card-box,
+    body.printing-anest-a4 #form-anest-rec .anest-chart-card {
+      display: none !important;
+    }
+    body.printing-anest-a4 #anest-a4-print-sheet {
+      display: block !important;
+      width: 200mm;
+      height: 287mm;
+      margin: 0 auto;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #000000;
+      font-size: 7pt;
+      line-height: 1.12;
+      box-sizing: border-box;
+    }
+  }
+
+  .a4-sheet {
+    padding: 1.5mm 2mm;
+    background: #fff;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+  .a4-title {
+    text-align: center;
+    font-size: 13.5pt;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+  }
+  .a4-hosp-line {
+    font-size: 8.5pt;
+    font-weight: 700;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #000;
+    padding-bottom: 1.5px;
+  }
+  .a4-hosp-line span.val { font-weight: 400; margin-left: 6px; }
+  .a4-top-split {
+    display: grid;
+    grid-template-columns: 35% 65%;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+  .a4-pat-lines {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2px 0;
+  }
+  .a4-pat-lines div {
+    border-bottom: 1px solid #000;
+    padding: 2px 1px;
+    font-weight: 700;
+    font-size: 7.5pt;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .a4-pat-lines span.val { font-weight: 400; margin-left: 4px; }
+
+  .a4-hdr-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .a4-hdr-table td {
+    border: 1px solid #000;
+    padding: 1.2px 2.5px;
+    font-size: 5.9pt;
+    font-weight: 700;
+    vertical-align: middle;
+    line-height: 1.1;
+  }
+  .a4-hdr-table span.val { font-weight: 400; }
+  .opt-pill {
+    display: inline-block;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .opt-pill.active {
+    border: 1.2px solid #000;
+    background: #e2e8f0 !important;
+    font-weight: 800;
+  }
+
+  .a4-sys-lines {
+    margin-bottom: 2px;
+    font-size: 7pt;
+    font-weight: 700;
+  }
+  .a4-sys-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+  .a4-sys-cell {
+    flex: 1;
+    border-bottom: 1px solid #000;
+    padding: 1px 1px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .a4-sys-cell span.val { font-weight: 400; margin-left: 4px; }
+
+  .a4-body-split {
+    display: grid;
+    grid-template-columns: 82.5% 17.5%;
+    gap: 4px;
+    align-items: stretch;
+  }
+  .a4-grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .a4-grid-table th, .a4-grid-table td {
+    border: 1px solid #000;
+    padding: 0 1.5px;
+    font-size: 5.6pt;
+    height: 10.6px;
+    line-height: 1.02;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .a4-grid-table th {
+    font-weight: 700;
+    text-align: center;
+    background: #fff;
+  }
+  .shade-hr {
+    background-color: #d9dde2 !important;
+  }
+
+  .a4-chart-band {
+    display: grid;
+    grid-template-columns: 24.4% 69.6% 6.0%;
+    width: 100%;
+    height: 92mm;
+    border-left: 1px solid #000;
+    border-right: 1px solid #000;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  .a4-scale-tbl, .a4-tot-tbl {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .a4-scale-tbl td {
+    border-bottom: 1px solid #000;
+    border-right: 1px solid #000;
+    padding: 0 2px;
+    font-size: 5.5pt;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .a4-scale-tbl tr:last-child td { border-bottom: none; }
+  .a4-tot-tbl td {
+    border-bottom: 1px solid #000;
+    border-left: 1px solid #000;
+    padding: 0 1px;
+    font-size: 5.5pt;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1;
+  }
+  .a4-tot-tbl tr:last-child td { border-bottom: none; }
+  .a4-svg-box {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+  }
+
+  .a4-right-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 6.2pt;
+    padding-left: 2px;
+  }
+  .a4-key-box {
+    padding: 2px 3px;
+    line-height: 1.25;
+  }
+  .a4-key-box h4, .a4-mon-box h4 {
+    font-size: 7.5pt;
+    text-decoration: underline;
+    margin-bottom: 2px;
+    font-weight: 800;
+  }
+  .a4-mon-box {
+    padding: 2px 3px;
+  }
+  .a4-chk-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5px;
+    font-size: 5.9pt;
+    font-weight: 600;
+  }
+  .a4-sq {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border: 1px solid #000;
+    text-align: center;
+    line-height: 7.5px;
+    font-size: 6.5pt;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .a4-disp-box {
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    padding: 3px 3px;
+  }
+  .a4-time-box {
+    border-bottom: 1px solid #000;
+    padding: 2px 3px;
+    font-size: 5.8pt;
+    font-weight: 700;
+  }
+  .a4-footer {
+    margin-top: 2px;
+    display: grid;
+    grid-template-columns: 46% 54%;
+    gap: 8px;
+    font-size: 7pt;
+    font-weight: 700;
+  }
+  .a4-footer-line {
+    border-bottom: 1px solid #000;
+    padding: 1px 2px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .a4-footer-line span.val { font-weight: 400; margin-left: 4px; }
+
+
+</style>
+<script src="bahmni-custom-form-bridge.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1>Ministry of Health - Ethiopia | National Perioperative Forms</h1>
+    <p>Health Service Quality Directorate (SaLTS) — Interactive Clinical Checklists & Registers</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-light" onclick="saveProgress()">💾 Save Draft</button>
+    <button class="btn btn-light" onclick="exportJSON()">📤 Export JSON</button>
+    <button class="btn btn-light" onclick="document.getElementById('importFile').click()">📥 Import JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+    <span style="width:1px; background:rgba(255,255,255,0.28); margin:0 2px;"></span>
+    <button class="btn btn-success" onclick="saveAsPDF()">📄 Save PDF</button>
+    <button class="btn btn-info" style="background:#0284c7; color:#fff;" onclick="printActiveForm()">🖨️ Print</button>
+    <button class="btn btn-danger" onclick="clearCurrentForm()">🗑️ Clear Form</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <input type="text" class="sidebar-search" id="navSearch" placeholder="🔍 Search forms & checklists..." onkeyup="filterNav()">
+    <div id="navList">
+      <div class="nav-group-title">1. Preoperative Care</div>
+      <button class="nav-item active" data-target="form-surg-adult">Adult Surgical Preoperative Checklist</button>
+      <button class="nav-item" data-target="form-surg-peds">Pediatric Surgical Preoperative Checklist</button>
+      <button class="nav-item" data-target="form-anesthesia">Preoperative Anesthesia Checklist</button>
+      <button class="nav-item" data-target="form-presched">Pre-Scheduling Readiness Checklist</button>
+      <button class="nav-item" data-target="form-consent">Informed Consent Forms (Amharic)</button>
+      <button class="nav-item" data-target="form-preop-conf">Preoperative Conference Checklist</button>
+      <button class="nav-item" data-target="form-or-sched">Operating Theatre Schedule</button>
+      <button class="nav-item" data-target="form-preop-nurse">Preoperative Nursing Care Checklist</button>
+      <button class="nav-item" data-target="form-preop-handover">Preoperative Handover Checklist</button>
+      <button class="nav-item" data-target="form-or-ready">Operating Room Readiness Checklist</button>
+
+      <div class="nav-group-title">2. Intraoperative Care</div>
+      <button class="nav-item" data-target="form-who-ssc">WHO Surgical Safety Checklist</button>
+      <button class="nav-item" data-target="form-intra-nurse">Intraoperative Nursing Care Checklist</button>
+      <button class="nav-item" data-target="form-anest-rec">Anesthesia Recording & Monitoring Sheet</button>
+      <button class="nav-item" data-target="form-op-note">Operation Note</button>
+      <button class="nav-item" data-target="form-count">Intraoperative Surgical Count Sheet</button>
+      <button class="nav-item" data-target="form-adverse-anest">Adverse Anesthetic Events Report</button>
+
+      <div class="nav-group-title">3. Postoperative & Surveillance</div>
+      <button class="nav-item" data-target="form-postop-handover">Postoperative Handover Checklist</button>
+      <button class="nav-item" data-target="form-ssi">WHO SSI Surveillance Form</button>
+      <button class="nav-item" data-target="form-discharge">Surgical Patient Discharge Summary</button>
+
+      <div class="nav-group-title">4. Safety, Registers & Efficiency</div>
+      <button class="nav-item" data-target="form-incident">Perioperative Critical Incident Report</button>
+      <button class="nav-item" data-target="form-briefing">Pre/Post-Operative Briefing & Debriefing</button>
+      <button class="nav-item" data-target="form-efficiency">OR Table Efficiency Assessment</button>
+      <button class="nav-item" data-target="form-registers">Operation, SSI & Cancellation Registers</button>
+    </div>
+  </aside>
+
+  <!-- Main Form Content -->
+  <main class="main-panel">
+
+    <!-- 1. TABLE 1: SURGICAL PREOP CHECKLIST (ADULT) -->
+    <section id="form-surg-adult" class="form-section active">
+      <div class="form-header">
+        <div>
+          <h2>Surgical Preoperative Checklist — Adult Patients</h2>
+          <p class="text-muted">Completed by Surgeon/Gynecologist at SRC/GRC upon admission</p>
+        </div>
+        <span class="badge">Preoperative • Surgical</span>
+      </div>
+
+      <div class="card-box">
+        <h3>Patient Demographics</h3>
+        <div class="grid-3">
+          <div class="field"><label>Patient Name</label><input type="text" name="sa_name"></div>
+          <div class="field"><label>MRN</label><input type="text" name="sa_mrn"></div>
+          <div class="field"><label>Age (Years)</label><input type="number" name="sa_age"></div>
+          <div class="field"><label>Gender</label><select name="sa_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
+          <div class="field"><label>Ward & Bed Number</label><input type="text" name="sa_ward"></div>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>History</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>History Item</th><th class="center">Present</th><th class="center">Absent</th><th class="center">N/A</th><th>Details / Specification</th></tr></thead>
+            <tbody id="sa-history-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>Physical Examination & Vital Signs</h3>
+        <div class="grid-4" style="margin-bottom: 1rem;">
+          <div class="field"><label>Blood Pressure (mmHg)</label><input type="text" name="sa_bp" placeholder="120/80"></div>
+          <div class="field"><label>Pulse Rate (bpm)</label><input type="number" name="sa_pr"></div>
+          <div class="field"><label>PR Rhythm</label><select name="sa_rhythm"><option>Regular</option><option>Irregular</option></select></div>
+          <div class="field"><label>Respiratory Rate (/min)</label><input type="number" name="sa_rr"></div>
+          <div class="field"><label>Temperature (°C)</label><input type="number" step="0.1" name="sa_temp"></div>
+          <div class="field"><label>Weight (kg)</label><input type="number" step="0.1" id="sa_wt" oninput="calcBMI('sa_wt','sa_ht','sa_bmi')"></div>
+          <div class="field"><label>Height (m)</label><input type="number" step="0.01" id="sa_ht" oninput="calcBMI('sa_wt','sa_ht','sa_bmi')"></div>
+          <div class="field"><label>Calculated BMI (kg/m²)</label><input type="text" id="sa_bmi" name="sa_bmi" readonly style="background:#f3f4f6;"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Examination Finding</th><th class="center">Present</th><th class="center">Absent</th><th class="center">N/A</th><th>Specify Abnormality</th></tr></thead>
+            <tbody id="sa-pe-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>Investigations & Treatment</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Investigation / Treatment Item</th><th class="center">Done</th><th class="center">Not Done</th><th class="center">N/A</th><th>Result / Notes</th></tr></thead>
+            <tbody id="sa-inv-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>Surgical Fitness Determination</h3>
+        <div class="grid-2">
+          <div class="field"><label>Diagnosis</label><input type="text" name="sa_diag"></div>
+          <div class="field">
+            <label>Is the patient fit for surgery?</label>
+            <div class="radio-inline" style="margin-top:6px;">
+              <label><input type="radio" name="sa_fit" value="Yes"> 1. Yes</label>
+              <label><input type="radio" name="sa_fit" value="No"> 2. No</label>
+            </div>
+          </div>
+          <div class="field"><label>If No, specify reason</label><input type="text" name="sa_unfit_reason"></div>
+          <div class="field"><label>Physician's Name & Signature</label><input type="text" name="sa_phys"></div>
+          <div class="field"><label>Date</label><input type="date" name="sa_date"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ANNEX 4: PEDIATRIC SURGICAL CHECKLIST -->
+    <section id="form-surg-peds" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Surgical Perioperative Checklist — Pediatric Patients</h2>
+          <p class="text-muted">Preoperative surgical evaluation tailored for pediatric patients</p>
+        </div>
+        <span class="badge">Preoperative • Pediatric</span>
+      </div>
+      <div class="card-box">
+        <h3>Pediatric Patient Details & Anthropometrics</h3>
+        <div class="grid-4">
+          <div class="field"><label>Patient Name</label><input type="text" name="sp_name"></div>
+          <div class="field"><label>MRN</label><input type="text" name="sp_mrn"></div>
+          <div class="field"><label>Age</label><input type="text" name="sp_age" placeholder="e.g., 3 yrs / 8 mos"></div>
+          <div class="field"><label>Gender</label><select name="sp_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
+          <div class="field"><label>Ward & Bed No.</label><input type="text" name="sp_ward"></div>
+          <div class="field"><label>Weight (kg)</label><input type="number" step="0.1" id="sp_wt" oninput="calcPedsBlood()"></div>
+          <div class="field"><label>MUAC (cm)</label><input type="number" step="0.1" name="sp_muac"></div>
+          <div class="field"><label>Est. Cross-Match Blood (20ml/kg)</label><input type="text" id="sp_blood_calc" readonly style="background:#f3f4f6;" placeholder="Auto-calculated"></div>
+        </div>
+        <div class="grid-4" style="margin-top:0.8rem;">
+          <div class="field"><label>BP (mmHg)</label><input type="text" name="sp_bp"></div>
+          <div class="field"><label>PR (Regular/Irregular)</label><input type="text" name="sp_pr"></div>
+          <div class="field"><label>RR (/min)</label><input type="number" name="sp_rr"></div>
+          <div class="field"><label>Temperature (°C)</label><input type="number" step="0.1" name="sp_temp"></div>
+          <div class="field"><label>Wasting Assessment</label><input type="text" name="sp_wasting"></div>
+          <div class="field"><label>Stunting Assessment</label><input type="text" name="sp_stunting"></div>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>Pediatric History & Physical Examination</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Clinical Parameter</th><th class="center">Present</th><th class="center">Absent</th><th class="center">N/A</th><th>Specification</th></tr></thead>
+            <tbody id="sp-hist-pe-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>Pediatric Investigations & Treatment</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Item (Note: NPO ≥ 4 hrs for pediatrics; Vit K for neonates/jaundice)</th><th class="center">Done</th><th class="center">Not Done</th><th class="center">N/A</th><th>Notes</th></tr></thead>
+            <tbody id="sp-inv-tx-body"></tbody>
+          </table>
+        </div>
+        <div class="grid-2" style="margin-top:1rem;">
+          <div class="field"><label>Diagnosis</label><input type="text" name="sp_diag"></div>
+          <div class="field">
+            <label>Is the patient fit for surgery?</label>
+            <div class="radio-inline" style="margin-top:6px;">
+              <label><input type="radio" name="sp_fit" value="Yes"> Yes</label>
+              <label><input type="radio" name="sp_fit" value="No"> No</label>
+            </div>
+          </div>
+          <div class="field"><label>If No, reason for cancellation</label><input type="text" name="sp_reason"></div>
+          <div class="field"><label>Physician Name, Signature & Date</label><input type="text" name="sp_phys"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. TABLE 2: PREOPERATIVE ANESTHESIA CHECKLIST -->
+    <section id="form-anesthesia" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Preoperative Anesthesia Checklist</h2>
+          <p class="text-muted">Completed by Anesthetist / Anesthesiologist prior to admission & day before surgery</p>
+        </div>
+        <span class="badge">Preoperative • Anesthesia</span>
+      </div>
+
+      <div class="card-box">
+        <h3>Patient Identification & Anthropometrics</h3>
+        <div class="grid-4">
+          <div class="field"><label>Patient Name</label><input type="text" name="an_name"></div>
+          <div class="field"><label>Date</label><input type="date" name="an_date"></div>
+          <div class="field"><label>Age (Years)</label><input type="number" name="an_age"></div>
+          <div class="field"><label>Sex</label><select name="an_sex"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
+          <div class="field"><label>Card / MRN Number</label><input type="text" name="an_mrn"></div>
+          <div class="field"><label>Ward</label><input type="text" name="an_ward"></div>
+          <div class="field"><label>Weight (kg)</label><input type="number" step="0.1" id="an_wt" oninput="calcBMI('an_wt','an_ht','an_bmi')"></div>
+          <div class="field"><label>Height (m)</label><input type="number" step="0.01" id="an_ht" oninput="calcBMI('an_wt','an_ht','an_bmi')"></div>
+          <div class="field"><label>BMI</label><input type="text" id="an_bmi" readonly style="background:#f3f4f6;"></div>
+          <div class="field"><label>Surgical Diagnosis</label><input type="text" name="an_diag"></div>
+          <div class="field"><label>Planned Procedure</label><input type="text" name="an_proc"></div>
+          <div class="field"><label>Presentation</label><select name="an_pres"><option>Elective</option><option>Emergency</option><option>Urgent</option></select></div>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>Medical, Surgical & Social History</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>History Item</th><th class="center">Yes</th><th class="center">No</th><th>Document Details</th></tr></thead>
+            <tbody id="an-hist-body"></tbody>
+          </table>
+        </div>
+        <div class="field"><label>Functional Status (METs)</label><input type="text" name="an_mets" placeholder="e.g., >4 METs (can climb flight of stairs)"></div>
+      </div>
+
+      <div class="card-box">
+        <h3>Physical Exam, Airway & System Review</h3>
+        <div class="grid-4" style="margin-bottom:1rem;">
+          <div class="field"><label>BP (Sys/Dia)</label><input type="text" name="an_bp"></div>
+          <div class="field"><label>PR (bpm)</label><input type="number" name="an_pr"></div>
+          <div class="field"><label>RR (/min)</label><input type="number" name="an_rr"></div>
+          <div class="field"><label>SpO₂ (%)</label><input type="number" name="an_spo2"></div>
+          <div class="field"><label>Temp (°C)</label><input type="number" step="0.1" name="an_temp"></div>
+          <div class="field"><label>Pain Score (0-10)</label><input type="number" min="0" max="10" name="an_pain"></div>
+          <div class="field"><label>Mallampati Grade (MG)</label><select name="an_mg"><option>Class I</option><option>Class II</option><option>Class III</option><option>Class IV</option></select></div>
+          <div class="field"><label>Thyromental Dist. (TMD)</label><input type="text" name="an_tmd" placeholder="e.g., >6.5 cm"></div>
+          <div class="field"><label>Mouth Opening</label><input type="text" name="an_mouth" placeholder="e.g., >3 fingers"></div>
+          <div class="field"><label>Neck Mobility</label><input type="text" name="an_neck" placeholder="Full / Limited"></div>
+          <div class="field"><label>Dentition</label><input type="text" name="an_teeth" placeholder="Normal / Loose / Dentures"></div>
+          <div class="field"><label>HEENT / Conjunctiva</label><select name="an_conj"><option>Pink</option><option>Pale</option><option>Icteric</option></select></div>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label>CVS (Heart sounds, arrhythmias, devices)</label><input type="text" name="an_cvs"></div>
+          <div class="field"><label>Respiratory (Breath sounds)</label><input type="text" name="an_resp"></div>
+          <div class="field"><label>Abdomen (Organomegaly/ascites)</label><input type="text" name="an_abd"></div>
+          <div class="field"><label>GU System (Catheter, UOP, LNMP)</label><input type="text" name="an_gu"></div>
+          <div class="field"><label>MSK (DVT, Edema grade)</label><input type="text" name="an_msk"></div>
+          <div class="field"><label>CNS (GCS, Pupils, Motor Power)</label><input type="text" name="an_cns"></div>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>Investigations & Risk Stratification</h3>
+        <div class="grid-4" style="margin-bottom:1rem;">
+          <div class="field"><label>CBC (HGB / HCT / PLT / WBC)</label><input type="text" name="an_cbc"></div>
+          <div class="field"><label>Blood Group & Rh</label><input type="text" name="an_bg"></div>
+          <div class="field"><label>Electrolytes (Na / K / Ca / Mg / Cl)</label><input type="text" name="an_elec"></div>
+          <div class="field"><label>RFT (Cr / BUN)</label><input type="text" name="an_rft"></div>
+          <div class="field"><label>LFT (ALT / AST / Bili / Alb)</label><input type="text" name="an_lft"></div>
+          <div class="field"><label>Coagulation (INR / PT / PTT)</label><input type="text" name="an_coag"></div>
+          <div class="field"><label>Endocrine (RBS / HbA1C / TFT)</label><input type="text" name="an_endo"></div>
+          <div class="field"><label>ECG / Echo / CXR / CT</label><input type="text" name="an_img"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>ASA Physical Status Classification</label>
+            <select name="an_asa">
+              <option value="ASA I">ASA I — Normal healthy patient (0-0.3% mortality)</option>
+              <option value="ASA II">ASA II — Mild systemic disease (0.3-1.4% mortality)</option>
+              <option value="ASA III">ASA III — Severe systemic disease limiting activity (1.8-5.4%)</option>
+              <option value="ASA IV">ASA IV — Severe disease constant threat to life (7.8-25%)</option>
+              <option value="ASA V">ASA V — Moribund patient (9.4-57.8%)</option>
+              <option value="ASA VI">ASA VI — Declared brain-dead patient</option>
+              <option value="ASA E">Add 'E' — Emergency Case</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Surgical Risk Classification</label>
+            <select name="an_risk">
+              <option value="Low (<1%)">Low Risk (&lt;1%) — Superficial, Breast, Dental, Thyroid, Eye, Minor Gyn/Ortho/Urol</option>
+              <option value="Intermediate (1-5%)">Intermediate Risk (1-5%) — Abdominal, Head/Neck, Neuro, Major Gyn/Urol/Ortho</option>
+              <option value="High (>5%)">High Risk (&gt;5%) — Aortic/Major Vascular, Duodeno-pancreatic, Liver/Lung/Esophageal</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>Final Anesthesia Plan</h3>
+        <div class="grid-3">
+          <div class="field">
+            <label>Mode of Anesthesia</label>
+            <select name="an_mode">
+              <option>GA with ETT</option><option>GA with LMA</option><option>GA with Mask</option>
+              <option>Spinal / Epidural</option><option>IV Sedation</option><option>Local / Peripheral Nerve Block</option>
+            </select>
+          </div>
+          <div class="field"><label>Premedication Needed & Details</label><input type="text" name="an_premed"></div>
+          <div class="field"><label>Medications to Hold</label><input type="text" name="an_hold"></div>
+          <div class="field"><label>Medications to Continue</label><input type="text" name="an_cont"></div>
+          <div class="field"><label>Blood & Blood Products Needed</label><input type="text" name="an_blood"></div>
+          <div class="field"><label>NPO Time Ordered</label><input type="text" name="an_npo" placeholder="e.g., Clear fluids 2h, Solids 6-8h"></div>
+          <div class="field"><label>Post-op Disposition</label><select name="an_disp"><option>PACU → Surgical Ward</option><option>ICU</option><option>HDU</option></select></div>
+          <div class="field"><label>Post-op Analgesia Plan</label><input type="text" name="an_analgesia"></div>
+          <div class="field"><label>Evaluator Name & Signature</label><input type="text" name="an_eval"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. SECTION 3.3.1: PRE-SCHEDULING CHECKLIST -->
+    <section id="form-presched" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Pre-Scheduling Readiness Checklist</h2>
+          <p class="text-muted">Completed sequentially by Surgical, Anesthesia, and Ward Nursing teams prior to scheduling</p>
+        </div>
+        <span class="badge">Preoperative • Scheduling</span>
+      </div>
+      <div class="alert alert-warning">
+        <strong>Critical Rule:</strong> If postoperative ICU bed or Mechanical Ventilator (MV) is unlikely to be available when required, <strong>DO NOT schedule the patient</strong>.
+      </div>
+      <div class="card-box">
+        <h3>Patient Identification</h3>
+        <div class="grid-4">
+          <div class="field"><label>Patient Name</label><input type="text"></div>
+          <div class="field"><label>MRN</label><input type="text"></div>
+          <div class="field"><label>Age / Sex</label><input type="text"></div>
+          <div class="field"><label>Ward / Bed No.</label><input type="text"></div>
+          <div class="field"><label>Weight / Height / BMI</label><input type="text"></div>
+          <div class="field"><label>Blood Group</label><input type="text"></div>
+          <div class="field"><label>COVID-19 Test Result</label><input type="text"></div>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>1. Surgical Team Readiness</h3>
+        <div class="grid-2" style="margin-bottom:0.8rem;">
+          <div class="field"><label>Date Surgical Evaluation Done</label><input type="date"></div>
+          <div class="field"><label>Surgical Diagnosis</label><input type="text"></div>
+          <div class="field"><label>Planned Procedure</label><input type="text"></div>
+          <div class="field"><label>Alternative Procedure</label><input type="text"></div>
+          <div class="field"><label>Estimated Blood Loss & Blood Products Prepared</label><input type="text"></div>
+          <div class="field"><label>Responsible Surgeon Name & Signature</label><input type="text"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Surgical Readiness Item</th><th class="center">Yes</th><th class="center">No</th></tr></thead>
+            <tbody id="presched-surg-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>2. Anesthesia Team Readiness</h3>
+        <div class="grid-3" style="margin-bottom:0.8rem;">
+          <div class="field"><label>Date Pre-Anesthesia Eval Done</label><input type="date"></div>
+          <div class="field"><label>ASA Status & Risk Stratification</label><input type="text"></div>
+          <div class="field"><label>Planned Type of Anesthesia</label><input type="text"></div>
+          <div class="field"><label>ICU Bed & MV Availability</label><select><option>Not Needed</option><option>Likely Available</option><option>Unlikely (DO NOT SCHEDULE)</option></select></div>
+          <div class="field"><label>Post-op Disposition Planned</label><select><option>Ward</option><option>ICU</option></select></div>
+          <div class="field"><label>Anesthesia Provider Name & Signature</label><input type="text"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Anesthesia Readiness Item</th><th class="center">Yes</th><th class="center">No</th><th>Details</th></tr></thead>
+            <tbody id="presched-anest-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>3. Administrative & Ward Nursing Sign-off</h3>
+        <div class="grid-3">
+          <div class="field"><label>Admission Card Verified?</label><select><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Payment Deposited / Free Stamp?</label><select><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Overall Readiness Complete?</label><select><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Ward Nurse Name & Signature</label><input type="text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. SECTION 3.3.3: INFORMED CONSENT (AMHARIC) -->
+    <section id="form-consent" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>የቀዶ ህክምና እና የአንስቴዢያ ስምምነት ቅፅ (Informed Consent)</h2>
+          <p class="text-muted">Official Amharic Surgical & Anesthesia Informed Consent Forms</p>
+        </div>
+        <span class="badge">Preoperative • Legal Consent</span>
+      </div>
+
+      <div class="card-box">
+        <h3>ሀ. የቀዶ ህክምና ስምምነት ቅፅ (Surgical Informed Consent Form)</h3>
+        <div class="grid-3" style="margin-bottom:1rem;">
+          <div class="field"><label>የታካሚው ሙሉ ስም (Patient Full Name)</label><input type="text"></div>
+          <div class="field"><label>አድራሻ፡ ክ/ከ/ክልል፣ ወረዳ፣ ቀበሌ</label><input type="text"></div>
+          <div class="field"><label>ስልክ ቁጥር (Phone)</label><input type="text"></div>
+          <div class="field"><label>የበሽታው(የህመሙ) አይነት (Diagnosis)</label><input type="text"></div>
+          <div class="field"><label>የታቀደው የቀዶ ህክምና አይነት (Planned Surgery)</label><input type="text"></div>
+          <div class="field"><label>የቀዶ ህክምና ሐኪም ስም (Surgeon Name)</label><input type="text"></div>
+        </div>
+        <div class="card-box" style="background:#f8fafc;">
+          <p style="font-size:0.88rem; margin-bottom:0.75rem;">
+            እኔ ስሜ ከዚህ በላይ የተጠቀሰው ታካሚ ስላለኝ የጤና ችግር እና ስላሉት የህክምና አማራጮች በቂ ገለጻ ተደርጎልኛል። ለጠየኩዋቸው ጥያቄዎች በቂ ማብራሪያ ተደርጎልኛል። ለበሽታዬ ቀዶ ህክምና ባይደረግ ሊያመጣ የሚችለው ችግር የተገለጸልኝ ሲሆን በማንኛውም ቀዶ ህክምና ወቅት እርግጠኛ የሆነ ውጤት ሊኖር እንደማይችል በምረዳው ቋንቋ ተነግሮኝ ተገንዝቤአለሁ።
+          </p>
+          <div class="grid-2">
+            <div class="field">
+              <label>ደም / የደም ተዋፅዎች ልገሳ ቢያስፈልገኝ (Blood Transfusion Consent):</label>
+              <div class="radio-inline">
+                <label><input type="radio" name="blood_consent" value="agree"> ተስማምቻለሁ (I Agree)</label>
+                <label><input type="radio" name="blood_consent" value="disagree"> አልተስማማሁም (I Disagree)</label>
+              </div>
+            </div>
+            <div class="field">
+              <label>የታካሚው / ሞግዚት ውሳኔ (Overall Surgical Consent):</label>
+              <div class="radio-inline">
+                <label><input type="radio" name="surg_consent" value="agree"> ተስማምቼ ፈርሜያለሁ (Signed & Agreed)</label>
+                <label><input type="radio" name="surg_consent" value="refuse"> አልተስማማሁም (Refused)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label>ታካሚ / ቤተሰብ / ተወካይ ስምና ፊርማ</label><input type="text"></div>
+          <div class="field"><label>የሀኪሙ ስምና ፊርማ</label><input type="text"></div>
+          <div class="field"><label>ካልተስማማ ያልተስማማበት ምክንያት</label><input type="text"></div>
+          <div class="field"><label>እማኝ 1 (Witness 1 Name & Sign)</label><input type="text"></div>
+          <div class="field"><label>እማኝ 2 (Witness 2 Name & Sign)</label><input type="text"></div>
+          <div class="field"><label>እማኝ 3 (Witness 3 Name & Sign)</label><input type="text"></div>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>ለ. የአንስቴዢያ ስምምነት ቅጽ (Anesthesia Informed Consent Form)</h3>
+        <div class="grid-3" style="margin-bottom:1rem;">
+          <div class="field"><label>የታካሚው ሙሉ ስም</label><input type="text"></div>
+          <div class="field"><label>ፆታ / እድሜ (Sex / Age)</label><input type="text"></div>
+          <div class="field"><label>የታቀደው የአነስቴዚያ አይነት (Planned Anesthesia)</label><input type="text"></div>
+          <div class="field"><label>የአነስቴዢያ ባለሙያ ስም (Anesthetist Name)</label><input type="text"></div>
+          <div class="field"><label>የታካሚዋ/ው ስምና ፊርማ</label><input type="text"></div>
+          <div class="field"><label>የእማኞች ስምና ፊርማ (1, 2, 3)</label><input type="text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. TABLE 6: PREOPERATIVE CONFERENCE CHECKLIST -->
+    <section id="form-preop-conf" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Preoperative Conference Checklist</h2>
+          <p class="text-muted">Surgeon-led multidisciplinary conference conducted 1 day prior to surgery</p>
+        </div>
+        <span class="badge">Preoperative • Multidisciplinary</span>
+      </div>
+      <div class="card-box">
+        <div class="grid-3" style="margin-bottom:1rem;">
+          <div class="field"><label>Patient Full Name</label><input type="text"></div>
+          <div class="field"><label>Patient MRN</label><input type="text"></div>
+          <div class="field"><label>Procedure & Laterality (Left/Right)</label><input type="text"></div>
+          <div class="field"><label>Team Member 1 (Surgeon)</label><input type="text"></div>
+          <div class="field"><label>Team Member 2 (Anesthetist)</label><input type="text"></div>
+          <div class="field"><label>Team Member 3 & 4 (OR & Ward Nurses)</label><input type="text"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Conference Check Item</th><th>Status</th><th>Specifics / Remarks</th></tr></thead>
+            <tbody>
+              <tr><td>Known Allergy</td><td><select><option>No</option><option>Yes</option><option>N/A</option></select></td><td><input type="text"></td></tr>
+              <tr><td>Anesthesia Type & Difficult Airway</td><td><select><option>No Difficult Airway</option><option>Difficult Airway Anticipated</option></select></td><td><input type="text" placeholder="Type & airway equipment"></td></tr>
+              <tr><td>Aspiration Risk</td><td><select><option>No</option><option>Yes</option></select></td><td><input type="text"></td></tr>
+              <tr><td>Instruments & Special Equipment / Implants</td><td><select><option>Yes</option><option>N/A</option></select></td><td><input type="text" placeholder="Specify implants/equipment"></td></tr>
+              <tr><td>Pertinent Lab Results Reviewed</td><td><select><option>Yes</option><option>Pending</option></select></td><td><input type="text"></td></tr>
+              <tr><td>Risk of &gt;500 ml Blood Loss & Cross-match</td><td><select><option>No</option><option>Yes - Access & Blood Confirmed</option></select></td><td><input type="text" placeholder="Units cross-matched"></td></tr>
+              <tr><td>Prophylactic Antibiotics & DVT Prophylaxis</td><td><select><option>Yes</option><option>N/A</option></select></td><td><input type="text"></td></tr>
+              <tr><td>Anticipated Critical Events (Surgeon / Anesth / Nurse)</td><td><select><option>Discussed</option></select></td><td><input type="text"></td></tr>
+              <tr><td>Post-op Disposition & Bed Availability</td><td><select><option>Ward Confirmed</option><option>ICU Confirmed</option></select></td><td><input type="text"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. TABLE 9: OPERATING SCHEDULE TEMPLATE -->
+    <section id="form-or-sched" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Operating Theatre Schedule</h2>
+          <p class="text-muted">Daily OR list disseminated to OR, Surgical Ward, and Blood Bank</p>
+        </div>
+        <span class="badge">OR Management • Schedule</span>
+      </div>
+      <div class="card-box">
+        <div class="grid-3" style="margin-bottom:1rem;">
+          <div class="field"><label>Department</label><input type="text"></div>
+          <div class="field"><label>OR Table Number</label><input type="text"></div>
+          <div class="field"><label>Day / Date of Surgery</label><input type="date"></div>
+        </div>
+        <div class="table-wrap">
+          <table id="or-sched-table">
+            <thead>
+              <tr>
+                <th>No</th><th>Patient Name</th><th>Age/Sex</th><th>MRN</th><th>Ward</th><th>COVID</th><th>BG</th>
+                <th>Diagnosis</th><th>Procedure</th><th>Anesthesia</th><th>Surgeon / Asst</th><th>Anesthetist</th><th>Scrub / Circ Nurse</th><th>Order</th><th>Remark</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button class="btn btn-outline btn-sm no-print" onclick="addScheduleRow()">+ Add Case Row</button>
+      </div>
+    </section>
+
+    <!-- 8. SECTION 3.3.8: PREOPERATIVE NURSING CARE CHECKLIST -->
+    <section id="form-preop-nurse" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Preoperative Nursing Care Checklist</h2>
+          <p class="text-muted">Ward nurse verification upon scheduling and on the morning of surgery</p>
+        </div>
+        <span class="badge">Preoperative • Nursing</span>
+      </div>
+      <div class="card-box">
+        <h3>Review of Medical Record & Baseline Vitals</h3>
+        <div class="grid-4">
+          <div class="field"><label>Patient Name</label><input type="text"></div>
+          <div class="field"><label>MRN</label><input type="text"></div>
+          <div class="field"><label>Age / Sex</label><input type="text"></div>
+          <div class="field"><label>Weight / Height</label><input type="text"></div>
+          <div class="field"><label>Blood Group</label><input type="text"></div>
+          <div class="field"><label>Allergy</label><input type="text"></div>
+          <div class="field"><label>Baseline Vitals Time</label><input type="time"></div>
+          <div class="field"><label>BP / PR / RR / T / SpO₂ / RBS</label><input type="text"></div>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>Chart Review & Day of Surgery Verification</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nursing Verification Item</th><th class="center">Yes</th><th class="center">No</th><th>Notes / Time</th></tr></thead>
+            <tbody id="preop-nurse-body"></tbody>
+          </table>
+        </div>
+        <div class="grid-4">
+          <div class="field"><label>Last Vitals Time</label><input type="time"></div>
+          <div class="field"><label>Last Vitals (BP/PR/RR/T/SpO₂/RBS)</label><input type="text"></div>
+          <div class="field"><label>Time Sent to OR</label><input type="time"></div>
+          <div class="field"><label>Transported By & Ward Nurse Sign</label><input type="text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. SECTION 3.3.9: PREOPERATIVE HANDOVER CHECKLIST -->
+    <section id="form-preop-handover" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Preoperative Handover Checklist (Ward to OR Gate)</h2>
+          <p class="text-muted">Structured handover using I PASS THE BATON principles</p>
+        </div>
+        <span class="badge">Preoperative • Handover</span>
+      </div>
+      <div class="card-box">
+        <div class="grid-4" style="margin-bottom:1rem;">
+          <div class="field"><label>Patient Name</label><input type="text"></div>
+          <div class="field"><label>MRN</label><input type="text"></div>
+          <div class="field"><label>Ward & Bed No.</label><input type="text"></div>
+          <div class="field"><label>Age / Sex</label><input type="text"></div>
+          <div class="field"><label>Planned Surgical Procedure</label><input type="text"></div>
+          <div class="field"><label>Site Marked (Y/N)</label><select><option>Yes</option><option>No</option><option>N/A</option></select></div>
+          <div class="field"><label>Allergy (Y/N & Details)</label><input type="text"></div>
+          <div class="field"><label>NPO Status / Last Meal</label><input type="text"></div>
+          <div class="field"><label>Blood Prepared & Consent Signed</label><select><option>Yes</option><option>No</option><option>N/A</option></select></div>
+          <div class="field"><label>Surgical & Anesthesia Consent</label><select><option>Both Signed</option><option>Incomplete</option></select></div>
+          <div class="field"><label>COVID Status</label><input type="text"></div>
+          <div class="field"><label>Pre-op Vitals (BP/HR/RR/SpO₂/Temp)</label><input type="text"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Medication Given (incl. Antibiotics & DVT Prophylaxis)</th><th>Time Given</th><th>Given By</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><input type="text"></td><td><input type="time"></td><td><input type="text"></td></tr>
+              <tr><td>2</td><td><input type="text"></td><td><input type="time"></td><td><input type="text"></td></tr>
+              <tr><td>3</td><td><input type="text"></td><td><input type="time"></td><td><input type="text"></td></tr>
+              <tr><td>4</td><td><input type="text"></td><td><input type="time"></td><td><input type="text"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Special Concerns / Any New Clinical Development</label><input type="text"></div>
+          <div class="field"><label>Ward Nurse Name & Signature</label><input type="text"></div>
+          <div class="field"><label>Anesthesia Provider Name & Signature</label><input type="text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. TABLE 11: OPERATING ROOM READINESS CHECKLIST -->
+    <section id="form-or-ready" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Operating Room Readiness Checklist</h2>
+          <p class="text-muted">Completed by Runner OR Nurse prior to bringing patient into the OR</p>
+        </div>
+        <span class="badge">Preoperative • OR Prep</span>
+      </div>
+      <div class="card-box">
+        <h3>Cleanliness, Dust & Environment</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Environment Check</th><th class="center">Yes</th><th class="center">No</th><th>Remark</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Inspect floor for cleanliness and dust (Clean & damp dust if required)</td><td class="center"><input type="radio" name="orr_c1"></td><td class="center"><input type="radio" name="orr_c1"></td><td><input type="text"></td></tr>
+              <tr><td>2</td><td>Inspect lights for cleanliness and dust</td><td class="center"><input type="radio" name="orr_c2"></td><td class="center"><input type="radio" name="orr_c2"></td><td><input type="text"></td></tr>
+              <tr><td>3</td><td>Inspect furniture for cleanliness and dust</td><td class="center"><input type="radio" name="orr_c3"></td><td class="center"><input type="radio" name="orr_c3"></td><td><input type="text"></td></tr>
+              <tr><td>4</td><td>Check temperature and humidity of the room</td><td class="center"><input type="radio" name="orr_c4"></td><td class="center"><input type="radio" name="orr_c4"></td><td><input type="text"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>Equipment & Supplies Availability and Functionality (25 Items)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Equipment / Supply</th><th class="center">Available (Y/N)</th><th class="center">Functional (Y/N)</th></tr></thead>
+            <tbody id="or-ready-body"></tbody>
+          </table>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label>Facility-Specific Additional Equipment</label><input type="text"></div>
+          <div class="field"><label>Runner Nurse Name & Signature</label><input type="text"></div>
+          <div class="field"><label>Date</label><input type="date"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. FIGURE 5: WHO SURGICAL SAFETY CHECKLIST -->
+    <section id="form-who-ssc" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>WHO Surgical Safety Checklist</h2>
+          <p class="text-muted">Mandatory 3-Phase Safety Verification (19 Essential Items)</p>
+        </div>
+        <span class="badge">Intraoperative • WHO Safety</span>
+      </div>
+      <div class="alert alert-danger">
+        <strong>Stop-the-Line Safety Rule:</strong> Do not proceed if Pulse Oximeter is non-functional, difficult airway equipment is unavailable, or &gt;500ml blood loss access/fluids are not prepared.
+      </div>
+      <div class="grid-3">
+        <!-- SIGN IN -->
+        <div class="card-box" style="border-top: 4px solid #2563eb;">
+          <h3>1. SIGN IN (Before Induction of Anesthesia)</h3>
+          <p style="font-size:0.78rem; color:#6b7280; margin-bottom:0.75rem;">With at least Nurse and Anesthetist</p>
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <label class="check-item"><input type="checkbox"> Patient confirmed identity, site, procedure, and consent</label>
+            <div class="field"><label>Is the site marked?</label><select><option>Yes</option><option>Not applicable</option></select></div>
+            <label class="check-item"><input type="checkbox"> Anesthesia machine and medication check complete</label>
+            <label class="check-item"><input type="checkbox"> Pulse oximeter on patient and functioning</label>
+            <div class="field"><label>Does the patient have a known allergy?</label><select><option>No</option><option>Yes</option></select></div>
+            <div class="field"><label>Difficult airway or aspiration risk?</label><select><option>No</option><option>Yes, and equipment/assistance available</option></select></div>
+            <div class="field"><label>Risk of &gt;500ml blood loss (7ml/kg in children)?</label><select><option>No</option><option>Yes, two IVs/central access & fluids planned</option></select></div>
+          </div>
+        </div>
+
+        <!-- TIME OUT -->
+        <div class="card-box" style="border-top: 4px solid #d97706;">
+          <h3>2. TIME OUT (Before Skin Incision)</h3>
+          <p style="font-size:0.78rem; color:#6b7280; margin-bottom:0.75rem;">With Nurse, Anesthetist, and Surgeon</p>
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <label class="check-item"><input type="checkbox"> Confirm all team members introduced themselves by name and role</label>
+            <label class="check-item"><input type="checkbox"> Confirm patient's name, procedure, and where incision will be made</label>
+            <div class="field"><label>Antibiotic prophylaxis given within last 60 min?</label><select><option>Yes</option><option>Not applicable</option></select></div>
+            <div class="field"><label>Surgeon: Critical steps, duration & est. blood loss reviewed</label><input type="text" placeholder="Notes..."></div>
+            <div class="field"><label>Anesthetist: Patient-specific concerns reviewed</label><input type="text" placeholder="Notes..."></div>
+            <div class="field"><label>Nursing: Sterility (indicator results) & equipment confirmed</label><select><option>Yes</option><option>Concerns noted</option></select></div>
+            <div class="field"><label>Is essential imaging displayed?</label><select><option>Yes</option><option>Not applicable</option></select></div>
+          </div>
+        </div>
+
+        <!-- SIGN OUT -->
+        <div class="card-box" style="border-top: 4px solid #059669;">
+          <h3>3. SIGN OUT (Before Patient Leaves OR)</h3>
+          <p style="font-size:0.78rem; color:#6b7280; margin-bottom:0.75rem;">With Nurse, Anesthetist, and Surgeon</p>
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <label class="check-item"><input type="checkbox"> Nurse verbally confirms name of the procedure recorded</label>
+            <label class="check-item"><input type="checkbox"> Completion of instrument, sponge, and needle counts</label>
+            <label class="check-item"><input type="checkbox"> Specimen labelling (read specimen labels aloud, incl. patient name)</label>
+            <label class="check-item"><input type="checkbox"> Whether there are any equipment problems to be addressed</label>
+            <div class="field"><label>Surgeon, Anesthetist & Nurse: Key concerns for recovery & management</label><textarea placeholder="Document recovery concerns..."></textarea></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. TABLE 12: INTRAOPERATIVE NURSING CARE CHECKLIST -->
+    <section id="form-intra-nurse" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Intraoperative Nursing Care Checklist</h2>
+          <p class="text-muted">Circulating Nurse (Non-sterile) & Scrub Nurse (Sterile) verification</p>
+        </div>
+        <span class="badge">Intraoperative • Nursing</span>
+      </div>
+      <div class="grid-2">
+        <div class="card-box">
+          <h3>Circulating Nurse / Non-Sterile Activities</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Activity</th><th class="center">Done</th><th>Initials</th></tr></thead>
+              <tbody id="circ-nurse-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-box">
+          <h3>Scrub Nurse / Sterile Activities</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Activity</th><th class="center">Done</th><th>Initials</th></tr></thead>
+              <tbody id="scrub-nurse-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. ANESTHESIA RECORDING & MONITORING SHEET -->
+    <section id="form-anest-rec" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Anesthesia Recording & Monitoring Sheet</h2>
+          <p class="text-muted">Interactive intraoperative physiological chart, airway/induction parameters, drug & fluid balance</p>
+        </div>
+        <span class="badge">Intraoperative • Anesthesia</span>
+      </div>
+
+      <!-- Patient & Pre-Induction Header -->
+      <div class="card-box">
+        <h3>1. Patient Identification & Pre-Induction Assessment</h3>
+        <div class="grid-4" style="margin-bottom:0.85rem;">
+          <div class="field"><label>Name of Hospital</label><input type="text" name="ar_hosp"></div>
+          <div class="field"><label>Patient Name</label><input type="text" name="ar_name"></div>
+          <div class="field"><label>Hospital / Card No.</label><input type="text" name="ar_card"></div>
+          <div class="field"><label>Date (EC)</label><input type="date" name="ar_date"></div>
+          <div class="field"><label>Age / Weight (Kg)</label><input type="text" name="ar_age_wt" placeholder="e.g. 34y / 65 kg"></div>
+          <div class="field"><label>Address / Ward</label><input type="text" name="ar_ward"></div>
+          <div class="field"><label>Baseline BP (mmHg) & PR (/m)</label><input type="text" name="ar_base_bp" placeholder="120/80 mmHg | 76/m"></div>
+          <div class="field"><label>Hgb (g/dl) / Hct (%) / BSA (m²)</label><input type="text" name="ar_hgb" placeholder="13.5 / 40% / 1.72"></div>
+          <div class="field"><label>Blood Group & Rh</label><select name="ar_bg"><option value="">Select...</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+          <div class="field"><label>Risk & ASA Class</label><select name="ar_asa"><option>Low Risk • ASA I</option><option>Low Risk • ASA II</option><option>High Risk • ASA III</option><option>High Risk • ASA IV</option><option>High Risk • ASA V</option></select></div>
+          <div class="field"><label>Mallampati Grade</label><select name="ar_mallampati"><option>Class I</option><option>Class II</option><option>Class III</option><option>Class IV</option></select></div>
+          <div class="field"><label>No. of Tested Blood Units</label><input type="text" name="ar_blood_units"></div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:0.85rem;">
+          <div class="field"><label>Diagnosis</label><input type="text" name="ar_diag"></div>
+          <div class="field"><label>CVS / Heart</label><input type="text" name="ar_cvs" placeholder="Normal S1/S2, no murmur"></div>
+          <div class="field"><label>Resp / Lungs</label><input type="text" name="ar_resp" placeholder="Clear bilateral air entry"></div>
+          <div class="field"><label>Renal / Kidney</label><input type="text" name="ar_renal"></div>
+          <div class="field"><label>Special Remarks</label><input type="text" name="ar_special"></div>
+          <div class="field"><label>Allergy</label><input type="text" name="ar_allergy" placeholder="NKDA or specify"></div>
+        </div>
+
+        <div class="grid-4" style="margin-bottom:0.85rem;">
+          <div class="field"><label>Anesthesia Type</label><select name="ar_type"><option>General</option><option>Spinal</option><option>Epidural</option><option>Regional / Block</option><option>Combined / Other</option></select></div>
+          <div class="field"><label>Ventilation Mode</label><select name="ar_vent"><option>Controlled Ventilation</option><option>Assisted Ventilation</option><option>Spontaneous Breathing</option></select></div>
+          <div class="field"><label>Breathing System & Airway Tube</label><input type="text" name="ar_tube" placeholder="Circle / Pediatric • Oral ETT #7.0"></div>
+          <div class="field"><label>Induction & Relaxation</label><input type="text" name="ar_ind" placeholder="IV / Inhalation • Crash Preox / Cricoid"></div>
+        </div>
+
+        <div class="grid-4">
+          <div class="field"><label>Premedication & Ordered By</label><input type="text" name="ar_premed"></div>
+          <div class="field"><label>Premed Ordered Time / On-Call</label><input type="text" placeholder="Time / On-call"></div>
+          <div class="field"><label>Given By & Time Given</label><input type="text"></div>
+          <div class="field"><label>Anesthesia Machine Apparatus</label><input type="text" value="Checked & Functional"></div>
+        </div>
+      </div>
+
+      <!-- Interactive Intraoperative Chart -->
+      <div class="anest-chart-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.65rem;">
+          <h3 style="color:var(--primary); font-size:1.05rem; margin:0;">2. Interactive Intraoperative Physiological & Event Chart</h3>
+          <span style="font-size:0.78rem; color:var(--text-muted);">Synced live with the 10-minute log below — or click directly on the graph to plot</span>
+        </div>
+
+        <div class="anest-legend">
+          <span class="legend-badge" style="color:#dc2626;">▼ Systolic BP (mmHg)</span>
+          <span class="legend-badge" style="color:#2563eb;">▲ Diastolic BP (mmHg)</span>
+          <span class="legend-badge" style="color:#059669;">● Pulse Rate (bpm)</span>
+          <span class="legend-badge" style="color:#0891b2;">◆ SpO₂ (%)</span>
+          <span class="legend-badge" style="color:#7c3aed;">■ EtCO₂ (mmHg)</span>
+          <span style="border-left:1px solid #cbd5e1; height:16px;"></span>
+          <span class="legend-badge" style="color:#b45309;"><strong>X</strong> Start/End Anesthesia</span>
+          <span class="legend-badge" style="color:#0f4c81;"><strong>I</strong> Intubation/Extubation</span>
+          <span class="legend-badge" style="color:#be123c;"><strong>ʘ</strong> Start/End Operation</span>
+        </div>
+
+        <div class="anest-tools-bar no-print">
+          <div style="display:flex; flex-wrap:wrap; gap:0.35rem; align-items:center;">
+            <span style="font-size:0.78rem; font-weight:600; color:#374151;">Click-to-Plot Tool:</span>
+            <button type="button" class="anest-mode-btn active" data-plot="sbp" onclick="setAnestPlotMode(this)">▼ Systolic BP</button>
+            <button type="button" class="anest-mode-btn" data-plot="dbp" onclick="setAnestPlotMode(this)">▲ Diastolic BP</button>
+            <button type="button" class="anest-mode-btn" data-plot="pr" onclick="setAnestPlotMode(this)">● Pulse Rate</button>
+            <button type="button" class="anest-mode-btn" data-plot="spo2" onclick="setAnestPlotMode(this)">◆ SpO₂</button>
+            <button type="button" class="anest-mode-btn" data-plot="etco2" onclick="setAnestPlotMode(this)">■ EtCO₂</button>
+          </div>
+          <div style="display:flex; gap:0.4rem;">
+            
+            <button type="button" class="btn btn-outline btn-sm" onclick="addAnestInterval()">+ Add 10-Min Column</button>
+          </div>
+        </div>
+
+        <div class="anest-svg-wrap">
+          <svg id="anestChartSvg" width="960" height="340" viewBox="0 0 960 340" style="display:block; width:100%; min-width:760px; cursor:crosshair;"></svg>
+        </div>
+      </div>
+
+      <!-- Synchronized 10-Minute Interval Data Table -->
+      <div class="card-box">
+        <h3>3. Intraoperative Time-Series Vitals, Events, Gases & Fluid Balance (10-Min Intervals)</h3>
+        <div class="table-wrap">
+          <table id="anest-log-table" class="anest-log-table">
+            <thead>
+              <tr>
+                <th>Time (Min)</th>
+                <th>Key Event (X / I / ʘ)</th>
+                <th>Sys BP</th>
+                <th>Dia BP</th>
+                <th>Pulse (PR)</th>
+                <th>SpO₂ (%)</th>
+                <th>EtCO₂</th>
+                <th>O₂ / N₂O (L/m)</th>
+                <th>Volatile / IV Drugs</th>
+                <th>IV Fluids / Blood (ml)</th>
+                <th>Urine / Blood Loss (ml)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="7" style="text-align:right; font-weight:700;">Cumulative Intraoperative Totals:</td>
+                <td class="total-cell" id="tot_gas">-</td>
+                <td class="total-cell" id="tot_drugs">-</td>
+                <td class="total-cell" id="tot_fluids">0 ml</td>
+                <td class="total-cell" id="tot_loss">0 ml</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm no-print" onclick="addAnestInterval()">+ Add 10-Min Interval</button>
+      </div>
+
+      <!-- Intraoperative Monitoring & Disposition Footer -->
+      <div class="card-box">
+        <h3>4. Active Monitoring Modalities, Duration & Post-Op Disposition</h3>
+        <div class="grid-2" style="margin-bottom:1rem;">
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; display:block; margin-bottom:0.4rem;">Intraoperative Monitoring Used:</label>
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.35rem;">
+              <label class="check-item"><input type="checkbox" checked> Pulse Oximeter</label>
+              <label class="check-item"><input type="checkbox" checked> Capnography</label>
+              <label class="check-item"><input type="checkbox"> Urinary Catheter</label>
+              <label class="check-item"><input type="checkbox" checked> ECG Monitoring</label>
+              <label class="check-item"><input type="checkbox"> Temp Monitoring</label>
+              <label class="check-item"><input type="checkbox"> CVP Line</label>
+              <label class="check-item"><input type="checkbox" checked> IV Cannula</label>
+              <label class="check-item"><input type="checkbox"> NG Tube</label>
+              <label class="check-item"><input type="checkbox"> Precordial Steth</label>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Total Time of Surgery</label><input type="text" placeholder="Hrs : Mins"></div>
+            <div class="field"><label>Total Time of Anesthesia</label><input type="text" placeholder="Hrs : Mins"></div>
+            <div class="field"><label>Patient Disposition</label><select><option>To Recovery (PACU)</option><option>To ICU</option><option>To Surgical Ward</option></select></div>
+            <div class="field"><label>Chart Copy Distribution</label><select><option>1st Copy w/ Chart & 2nd Copy w/ Anesth Record</option></select></div>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label>Operation Performed</label><input type="text"></div>
+          <div class="field"><label>Surgeon Name & Signature</label><input type="text"></div>
+          <div class="field"><label>Anesthetist / Anesthesiologist Signature</label><input type="text"></div>
+        </div>
+      </div>
+    
+      <!-- OFFICIAL SINGLE-PAGE A4 PRINT TEMPLATE (Matches Annex 7 Official Template) -->
+      <div id="anest-a4-print-sheet">
+        <div class="a4-sheet">
+          <div class="a4-title">ANESTHESIA RECORDING &amp; MONITORING SHEET</div>
+          <div class="a4-hosp-line">NAME OF THE HOSPITAL <span class="val" id="p_ar_hosp"></span></div>
+
+          <div class="a4-top-split">
+            <div class="a4-pat-lines">
+              <div>Name <span class="val" id="p_ar_name"></span></div>
+              <div>Hospital/ Card No. / <span class="val" id="p_ar_card"></span></div>
+              <div>Address <span class="val" id="p_ar_addr"></span></div>
+              <div>Ward <span class="val" id="p_ar_ward"></span></div>
+            </div>
+            <div>
+              <table class="a4-hdr-table">
+                <colgroup>
+                  <col style="width:9%;"><col style="width:9%;"><col style="width:11%;"><col style="width:10%;"><col style="width:9%;"><col style="width:9%;">
+                  <col style="width:11%;"><col style="width:8%;"><col style="width:8%;"><col style="width:8%;"><col style="width:8%;">
+                </colgroup>
+                <tr>
+                  <td colspan="6" style="font-size:6.3pt;">DEPARTMENT OF ANESTHESIA</td>
+                  <td colspan="2">DAY<br><span class="val" id="p_ar_day"></span></td>
+                  <td colspan="2">MONTH<br><span class="val" id="p_ar_month"></span></td>
+                  <td colspan="1">YEAR<br>20<span class="val" id="p_ar_year"></span></td>
+                </tr>
+                <tr>
+                  <td colspan="2">AGE<br><span class="val" id="p_ar_age"></span></td>
+                  <td>Weight<br><span class="val" id="p_ar_wt"></span> Kg</td>
+                  <td colspan="2">BP <span class="val" id="p_ar_bp"></span> mmHg<br>P/R <span class="val" id="p_ar_pr"></span> /m</td>
+                  <td>Hgb <span class="val" id="p_ar_hgb"></span> dl<br>Hct <span class="val" id="p_ar_hct"></span> %</td>
+                  <td>BSA<br><span class="val" id="p_ar_bsa"></span> m²</td>
+                  <td></td>
+                  <td style="text-align:center;"><span class="opt-pill" id="bg_A">A</span></td>
+                  <td style="text-align:center;"><span class="opt-pill" id="bg_B">B</span></td>
+                  <td style="text-align:center;"><span class="opt-pill" id="bg_RHP">RH<sup>+</sup></span></td>
+                </tr>
+                <tr>
+                  <td rowspan="2" style="text-align:center;"><span class="opt-pill" id="risk_HIGH">HIGH<br>RISK</span></td>
+                  <td rowspan="2" style="text-align:center;"><span class="opt-pill" id="risk_LOW">LOW<br>RISK</span></td>
+                  <td colspan="2"><span class="opt-pill" id="tech_GEN">GENERAL</span></td>
+                  <td colspan="2"><span class="opt-pill" id="tech_OTH">OTHER</span></td>
+                  <td colspan="2"></td>
+                  <td style="text-align:center;"><span class="opt-pill" id="bg_AB">AB</span></td>
+                  <td style="text-align:center;"><span class="opt-pill" id="bg_O">O</span></td>
+                  <td style="text-align:center;"><span class="opt-pill" id="bg_RHN">RH-</span></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><span class="opt-pill" id="tech_SPI">SPINAL</span></td>
+                  <td colspan="2"><span class="opt-pill" id="tech_EPI">EPIDURAL</span></td>
+                  <td colspan="5"><span class="opt-pill" id="vent_SPONT">SPONTANEOUS BREATHING</span></td>
+                </tr>
+                <tr>
+                  <td colspan="2" rowspan="2">Cycle/Pediatric<br>Sys. <span class="val" id="p_ar_sys"></span></td>
+                  <td><span class="opt-pill" id="tube_NASAL">NASAL</span></td>
+                  <td><span class="opt-pill" id="tube_MASK">MASK</span></td>
+                  <td colspan="2"><span class="opt-pill" id="tube_ORAL">ORAL</span></td>
+                  <td colspan="2"><span class="opt-pill" id="vent_ASS">ASSITED VNT.</span></td>
+                  <td colspan="3"><span class="opt-pill" id="vent_CTRL">CONTROLED VENT.</span></td>
+                </tr>
+                <tr>
+                  <td colspan="2">TUBES</td>
+                  <td colspan="2">No <span class="val" id="p_ar_tube_no"></span></td>
+                  <td>AIR</td>
+                  <td>O₂</td>
+                  <td>N₂O</td>
+                  <td colspan="2">ENFLUR.</td>
+                </tr>
+                <tr>
+                  <td colspan="2">MALLAPATI<br><span class="opt-pill" id="mal_I">I</span> <span class="opt-pill" id="mal_II">II</span> <span class="opt-pill" id="mal_III">III</span> <span class="opt-pill" id="mal_IV">IV</span></td>
+                  <td><span class="opt-pill" id="ind_IV">IV</span></td>
+                  <td><span class="opt-pill" id="ind_IM">IM</span></td>
+                  <td colspan="2"><span class="opt-pill" id="ind_INH">INHALATION INDUCTION</span></td>
+                  <td colspan="2">HALOTHAN.</td>
+                  <td colspan="3">ISOFLURANE</td>
+                </tr>
+                <tr>
+                  <td colspan="2">ASA ➔ <span class="opt-pill" id="asa_1">1</span> <span class="opt-pill" id="asa_2">2</span> <span class="opt-pill" id="asa_3">3</span> <span class="opt-pill" id="asa_4">4</span> <span class="opt-pill" id="asa_5">5</span></td>
+                  <td colspan="4">CRASH PREOX, CRICOID PRESSURE</td>
+                  <td colspan="5">RELAXATION &nbsp;1.INDUCTION _________<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.MENTANANCE _______</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="a4-sys-lines">
+            <div class="a4-sys-row">
+              <div class="a4-sys-cell">DIAGNOSIS <span class="val" id="p_ar_diag"></span></div>
+            </div>
+            <div class="a4-sys-row">
+              <div class="a4-sys-cell">CVS/HEART/ <span class="val" id="p_ar_cvs"></span></div>
+              <div class="a4-sys-cell">RESP/LUNGS/ <span class="val" id="p_ar_resp"></span></div>
+              <div class="a4-sys-cell">RENAL/KIDNEY <span class="val" id="p_ar_renal"></span></div>
+            </div>
+            <div class="a4-sys-row">
+              <div class="a4-sys-cell" style="flex:0.85;">SPECIAL <span class="val" id="p_ar_special"></span></div>
+              <div class="a4-sys-cell" style="flex:1.15;">ALLERGY <span class="val" id="p_ar_allergy"></span></div>
+            </div>
+            <div class="a4-sys-row" style="font-size:6.3pt; border-top:1px solid #000; padding-top:2px;">
+              <div style="flex:1.2;"><strong>REMEDICATION</strong> <span class="val" id="p_ar_premed"></span><br>Ordered By <span class="val" id="p_ar_ordby"></span></div>
+              <div style="flex:0.75;">ONCALL <span class="a4-sq" id="p_ar_oncall_sq"></span><br>TIME <span class="val" id="p_ar_ordtime"></span></div>
+              <div style="flex:0.85;">Given by <span class="val" id="p_ar_givenby"></span><br>Time <span class="val" id="p_ar_giventime"></span></div>
+              <div style="flex:1.2;">No of tested blood <span class="val" id="p_ar_blood"></span><br>ANESTHESIA MACHINE APPARATUS <span class="val" id="p_ar_apparatus"></span></div>
+            </div>
+          </div>
+
+          <div class="a4-body-split">
+            <div id="a4MainGridContainer" style="border-bottom:1px solid #000;"></div>
+            <div class="a4-right-panel">
+              <div class="a4-key-box">
+                <h4>KEY</h4>
+                <div><strong>X</strong> – Start/End Anesthesia</div>
+                <div><strong>I</strong> – In/Extubation</div>
+                <div><strong>⊙</strong> – Start/End oprattion</div>
+                <div><strong>▼ / ▲</strong> } -Blood pressure</div>
+                <div><strong>●</strong> - pulse rate</div>
+                <div><strong>◆ / ■</strong> - SpO₂ / EtCO₂</div>
+              </div>
+
+              <div class="a4-mon-box">
+                <h4>MONITORING</h4>
+                <div class="a4-chk-row"><span>-Pulseoxymeter</span><span class="a4-sq" id="p_mon_0"></span></div>
+                <div class="a4-chk-row"><span>-Capnography</span><span class="a4-sq" id="p_mon_1"></span></div>
+                <div class="a4-chk-row"><span>-Urinary catheter</span><span class="a4-sq" id="p_mon_2"></span></div>
+                <div class="a4-chk-row"><span>-ECG monitoring</span><span class="a4-sq" id="p_mon_3"></span></div>
+                <div class="a4-chk-row"><span>-Temp monitoring<br><span style="font-size:4.8pt;">(skin,rec,oesoph,ear)</span></span><span class="a4-sq" id="p_mon_4"></span></div>
+                <div class="a4-chk-row"><span>-CVP</span><span class="a4-sq" id="p_mon_5"></span></div>
+                <div class="a4-chk-row"><span>IV canula</span><span class="a4-sq" id="p_mon_6"></span></div>
+                <div class="a4-chk-row"><span>NGTube</span><span class="a4-sq" id="p_mon_7"></span></div>
+                <div class="a4-chk-row"><span>Pericardial steth</span><span class="a4-sq" id="p_mon_8"></span></div>
+              </div>
+
+              <div class="a4-disp-box">
+                <div class="a4-chk-row"><span>TO WARD</span><span class="a4-sq" id="p_disp_ward"></span></div>
+                <div class="a4-chk-row"><span>TO RECOVERY</span><span class="a4-sq" id="p_disp_pacu"></span></div>
+                <div class="a4-chk-row"><span>TO ICU</span><span class="a4-sq" id="p_disp_icu"></span></div>
+              </div>
+
+              <div class="a4-time-box">
+                <div>TIME OF SURGERY</div>
+                <div style="margin-bottom:3px;"><span id="p_t_surg">HRS______ MIN______</span></div>
+                <div>TIME OF ANESTHESIA</div>
+                <div><span id="p_t_anes">HRS______ MIN______</span></div>
+              </div>
+
+              <div style="font-size:5.5pt; font-weight:700; line-height:1.2; padding:0 2px;">
+                NB<br>
+                1<sup>ST</sup> COPY-WITH CHART<br>
+                2<sup>ND</sup> COPY-WITH ANEST RECO
+              </div>
+            </div>
+          </div>
+
+          <div class="a4-footer">
+            <div>
+              <div class="a4-footer-line">Operation <span class="val" id="p_ar_op"></span></div>
+            </div>
+            <div>
+              <div class="a4-footer-line">Surgeon <span class="val" id="p_ar_surg"></span></div>
+              <div class="a4-footer-line">Anesthetist <span class="val" id="p_ar_anes"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 14. ANNEX 8: OPERATION NOTE -->
+    <section id="form-op-note" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Operation Note</h2>
+          <p class="text-muted">Completed immediately after surgery by the operating surgeon/assistant</p>
+        </div>
+        <span class="badge">Intraoperative • Surgical</span>
+      </div>
+      <div class="card-box">
+        <div class="grid-4" style="margin-bottom:1rem;">
+          <div class="field"><label>Patient Name</label><input type="text"></div>
+          <div class="field"><label>Date</label><input type="date"></div>
+          <div class="field"><label>Age / Sex</label><input type="text"></div>
+          <div class="field"><label>Card Number (MRN)</label><input type="text"></div>
+          <div class="field"><label>Surgeon</label><input type="text"></div>
+          <div class="field"><label>Assistant Surgeon</label><input type="text"></div>
+          <div class="field"><label>Scrub Nurse</label><input type="text"></div>
+          <div class="field"><label>Runner Nurse</label><input type="text"></div>
+          <div class="field"><label>Anesthetist / Anesthesiologist</label><input type="text"></div>
+          <div class="field"><label>Time (Start - End)</label><input type="text"></div>
+          <div class="field"><label>Anesthesia Type</label><input type="text"></div>
+          <div class="field"><label>Indication</label><input type="text"></div>
+        </div>
+        <div class="grid-2" style="margin-bottom:1rem;">
+          <div class="field"><label>Procedure Performed</label><input type="text"></div>
+          <div class="field"><label>Post-Operative Diagnosis</label><input type="text"></div>
+        </div>
+        <div class="field">
+          <label>Intra-Operative Findings & Procedure Narrative</label>
+          <textarea style="min-height:180px;" placeholder="Describe incision, anatomical findings, surgical steps, hemostasis, drains placed, closure, and estimated blood loss..."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- 15. ANNEX 10: COUNT SHEET -->
+    <section id="form-count" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Intraoperative Surgical Count Sheet</h2>
+          <p class="text-muted">Auto-calculates expected totals against cavity, fascia, and final skin closure counts</p>
+        </div>
+        <span class="badge">Intraoperative • Count</span>
+      </div>
+      <div class="card-box">
+        <div class="grid-3" style="margin-bottom:1rem;">
+          <div class="field"><label>Patient Name</label><input type="text"></div>
+          <div class="field"><label>Date</label><input type="date"></div>
+          <div class="field"><label>Operation</label><input type="text"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Item Category</th><th>Initial Count (Before Incision)</th><th>Added (+)</th><th>Removed (-)</th>
+                <th>Expected Total</th><th>Cavity Closure Count</th><th>Fascia Closure Count</th><th>Final Count (Skin Closure)</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="count-sheet-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16. SECTION 4.5.1: ADVERSE ANESTHETIC EVENTS -->
+    <section id="form-adverse-anest" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Adverse Anesthetic Events Reporting Tool</h2>
+          <p class="text-muted">Filled at OR discharge and at 72-hour ward follow-up</p>
+        </div>
+        <span class="badge">Quality & Safety • Anesthesia</span>
+      </div>
+      <div class="card-box">
+        <h3>Step 1: Encounter Screening</h3>
+        <div class="radio-inline">
+          <label><input type="radio" name="aae_occurred" value="no" checked onchange="toggleAAE(false)"> No adverse event associated with this anesthesia encounter (Form Complete)</label>
+          <label><input type="radio" name="aae_occurred" value="yes" onchange="toggleAAE(true)"> Yes — Fill out remainder of form below</label>
+        </div>
+      </div>
+
+      <div id="aae-details" style="display:none;">
+        <div class="card-box">
+          <h3>Step 2: Describe Adverse Event(s) (Check all that apply)</h3>
+          <div class="grid-3" id="aae-categories"></div>
+        </div>
+        <div class="card-box">
+          <h3>Step 3: Interventions Performed</h3>
+          <textarea placeholder="Describe interventions performed to treat the adverse event(s)..."></textarea>
+        </div>
+        <div class="card-box">
+          <h3>Step 4 & 5: Outcome & Auto-Severity Rating</h3>
+          <div class="grid-3">
+            <div>
+              <strong>Minimal Risk Outcome</strong><br>
+              <label class="check-item"><input type="checkbox" class="aae-out" data-sev="Minor" onchange="calcAAESeverity()"> No adverse outcome</label>
+            </div>
+            <div>
+              <strong>Moderate Risk Outcome</strong><br>
+              <label class="check-item"><input type="checkbox" class="aae-out" data-sev="Moderate" onchange="calcAAESeverity()"> Unplanned ICU admission / escalation of care</label>
+            </div>
+            <div>
+              <strong>Sentinel Outcome</strong><br>
+              <label class="check-item"><input type="checkbox" class="aae-out" data-sev="Severe" onchange="calcAAESeverity()"> Death</label><br>
+              <label class="check-item"><input type="checkbox" class="aae-out" data-sev="Severe" onchange="calcAAESeverity()"> Permanent neurologic deficit</label><br>
+              <label class="check-item"><input type="checkbox" class="aae-out" data-sev="Severe" onchange="calcAAESeverity()"> Organ failure</label>
+            </div>
+          </div>
+          <div class="alert alert-info" style="margin-top:1rem;" id="aae-severity-banner">
+            <strong>Assigned Severity Rating:</strong> Pending selection
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 17. TABLE 15: POSTOPERATIVE HANDOVER CHECKLIST -->
+    <section id="form-postop-handover" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Postoperative Handover Checklist (OR to PACU/ICU/Ward)</h2>
+          <p class="text-muted">Verbal and written handover verification + PACU discharge criteria</p>
+        </div>
+        <span class="badge">Postoperative • Handover</span>
+      </div>
+      <div class="grid-3">
+        <div class="card-box">
+          <h3>Patient</h3>
+          <div class="field"><label>Patient Identification</label><input type="text"></div>
+          <div class="field"><label>Duration of Surgery</label><input type="text"></div>
+          <div class="field"><label>Allergies</label><input type="text"></div>
+          <div class="field"><label>Procedure & Reason</label><input type="text"></div>
+          <div class="field"><label>Type of Anesthesia</label><select><option>GA</option><option>Regional</option><option>Sedation</option></select></div>
+          <div class="field"><label>Surgical/Anesthetic Complications</label><input type="text"></div>
+          <div class="field"><label>Past Medical History & METs</label><input type="text"></div>
+          <div class="field"><label>Limb Restriction & Preop Vitals</label><input type="text"></div>
+        </div>
+        <div class="card-box">
+          <h3>Procedure & Lines</h3>
+          <div class="field"><label>Primary Post-op Concern</label><input type="text"></div>
+          <div class="field"><label>Positioning of Patient</label><input type="text"></div>
+          <div class="field"><label>Intubation Conditions (Grade/BMV)</label><input type="text"></div>
+          <div class="field"><label>Lines / Catheters / Drains (IV, A-line, CVC, Foley, Chest tube, VP shunt)</label><textarea></textarea></div>
+          <div class="field"><label>Fluid Management (Fluids given, EBL, UOP, Transfusions)</label><textarea></textarea></div>
+        </div>
+        <div class="card-box">
+          <h3>Medications & PACU Discharge Criteria</h3>
+          <div class="field"><label>Analgesia Plan (Intra-op & Post-op)</label><input type="text"></div>
+          <div class="field"><label>Antiemetic Administered</label><input type="text"></div>
+          <div class="field"><label>Antibiotics Administered</label><input type="text"></div>
+          <div class="field"><label>Other Drugs (Steroids/Antihypertensives)</label><input type="text"></div>
+          <hr style="margin:0.75rem 0; border-color:#e5e7eb;">
+          <strong style="font-size:0.85rem;">PACU Discharge Criteria Met:</strong>
+          <label class="check-item"><input type="checkbox"> Uncompromised cardiopulmonary status</label>
+          <label class="check-item"><input type="checkbox"> Stable vital signs & adequate SpO₂</label>
+          <label class="check-item"><input type="checkbox"> Urine output ≥ 30 ml/hr</label>
+          <label class="check-item"><input type="checkbox"> Oriented to time, person, place</label>
+          <label class="check-item"><input type="checkbox"> Tolerable pain & no/controlled PONV</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- 18. FIGURE 7: WHO SSI SURVEILLANCE FORM -->
+    <section id="form-ssi" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>WHO Surgical Site Infection (SSI) Surveillance Form</h2>
+          <p class="text-muted">30-Day Post-Operative Surveillance & Case Classification</p>
+        </div>
+        <span class="badge">Postoperative • Surveillance</span>
+      </div>
+      <div class="card-box">
+        <h3>Box 1: Patient Identification & Contact</h3>
+        <div class="grid-4">
+          <div class="field"><label>Patient Name</label><input type="text"></div>
+          <div class="field"><label>Age / DOB</label><input type="text"></div>
+          <div class="field"><label>Inpatient Number (MRN)</label><input type="text"></div>
+          <div class="field"><label>Address (Town/Village)</label><input type="text"></div>
+          <div class="field"><label>Telephone 1 (Owner & Verified)</label><input type="text"></div>
+          <div class="field"><label>Telephone 2 (Owner & Verified)</label><input type="text"></div>
+          <div class="field"><label>Primary Operation Admission Date</label><input type="date"></div>
+          <div class="field"><label>Hospital Discharge Date</label><input type="date"></div>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>Box 2: 30-Day Follow-up Log (Minimum 3 Reviews Recommended)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Post-Op Day</th><th>Date</th><th>Event (OPD/IP/Call/Dressing)</th><th class="center">Antibx</th><th>SSI Symptoms (Pus, Pain, Swelling, Redness, Fever &gt;38°C)</th><th>HW Initials</th></tr></thead>
+            <tbody id="ssi-days-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>Box 3: SSI Classification & Microbiology</h3>
+        <div class="grid-3" style="margin-bottom:1rem;">
+          <div class="field"><label>Surgical Site Infection?</label><select><option>No</option><option>Yes — Superficial SSI (Skin/Subcutaneous)</option><option>Yes — Deep SSI (Fascia/Muscle)</option><option>Yes — Organ/Space SSI</option></select></div>
+          <div class="field"><label>Re-admitted for SSI?</label><select><option>No</option><option>Yes</option></select></div>
+          <div class="field"><label>Specimen Date & Type</label><input type="text"></div>
+          <div class="field"><label>Organism(s) Identified</label><input type="text"></div>
+          <div class="field"><label>Antibiotic Resistance / Sensitivities</label><input type="text"></div>
+          <div class="field"><label>Database Entry [Y/N] & Signature</label><input type="text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 19. ANNEX 12: DISCHARGE FORM -->
+    <section id="form-discharge" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Surgical Patient Discharge Summary Form</h2>
+          <p class="text-muted">One copy retained in chart, one copy provided to patient/family</p>
+        </div>
+        <span class="badge">Postoperative • Discharge</span>
+      </div>
+      <div class="card-box">
+        <div class="grid-4" style="margin-bottom:1rem;">
+          <div class="field"><label>Patient Name</label><input type="text"></div>
+          <div class="field"><label>DOB / Age / Sex</label><input type="text"></div>
+          <div class="field"><label>Medical Record Number</label><input type="text"></div>
+          <div class="field"><label>Address</label><input type="text"></div>
+          <div class="field"><label>Admission Date</label><input type="date"></div>
+          <div class="field"><label>Discharge Date</label><input type="date"></div>
+          <div class="field"><label>Attending Physician</label><input type="text"></div>
+          <div class="field"><label>Operating Surgeon</label><input type="text"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Condition on Discharge</label><input type="text"></div>
+          <div class="field"><label>Final Diagnosis (Primary first)</label><input type="text"></div>
+          <div class="field"><label>Procedures Performed (Dates & Complications)</label><textarea></textarea></div>
+          <div class="field"><label>History of Present Illness & Hospital Course</label><textarea></textarea></div>
+          <div class="field"><label>Pertinent Lab / Imaging Data to Follow</label><textarea></textarea></div>
+          <div class="field"><label>Discharge Medications (Dose, Frequency, Timing)</label><textarea></textarea></div>
+          <div class="field"><label>Discharge Instructions (Diet, Activity, Wound Care, Warning Signs)</label><textarea></textarea></div>
+          <div class="field"><label>Follow-up Appointment (Date, Place, Provider & Plan)</label><textarea></textarea></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 20. TABLE 17: CRITICAL INCIDENT REPORT -->
+    <section id="form-incident" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Perioperative Critical Incident Investigation & Notification Form</h2>
+          <p class="text-muted">Notify OR Manager / SaLTS focal person within 1 hour; compile report within 12 hours</p>
+        </div>
+        <span class="badge">Quality & Safety • Incident</span>
+      </div>
+      <div class="card-box">
+        <h3>A. Identification & B. Place of Incident</h3>
+        <div class="grid-4">
+          <div class="field"><label>Full Name (Patient/Staff)</label><input type="text"></div>
+          <div class="field"><label>Incident Serial Number</label><input type="text"></div>
+          <div class="field"><label>Gender / Age</label><input type="text"></div>
+          <div class="field"><label>Injured Person</label><select><option>Patient</option><option>Staff</option><option>None / Near Miss</option></select></div>
+          <div class="field"><label>Place of Incident</label><select><option>OR (Operation Room)</option><option>PACU</option><option>ICU</option><option>Male Ward</option><option>Female Ward</option><option>Other</option></select></div>
+          <div class="field"><label>Severity Classification</label><select><option>Serious Incident (Harmful)</option><option>Major Incident</option><option>Near Miss</option></select></div>
+          <div class="field"><label>Date & Time of Incident</label><input type="datetime-local"></div>
+          <div class="field"><label>Address / Phone Number</label><input type="text"></div>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>C & D. Nature, Type & Level of Incident</h3>
+        <div class="grid-2" style="margin-bottom:1rem;">
+          <div class="field">
+            <label>Primary Category</label>
+            <select>
+              <option>Anesthesia-related adverse incident</option>
+              <option>Wrong Surgical Intervention (Wrong patient/procedure/site)</option>
+              <option>Retained Instruments / Count discrepancy</option>
+              <option>Blood transfusion / Medication error</option>
+              <option>Staff exposure (Needle stick / Sharp / Splash)</option>
+              <option>Problems with OR instruments / Power / Oxygen / Water</option>
+              <option>Unnatural Death / Hospital Fall</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Level of Harm / Outcome</label>
+            <select>
+              <option>Event occurred, did not cause harm</option>
+              <option>Low potential of residual disability</option>
+              <option>High potential of residual disability</option>
+              <option>Event resulted in death</option>
+              <option>Unknown</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Brief Factual Description of Incident</label><textarea></textarea></div>
+          <div class="field"><label>Physical Findings, Diagnosis & Treatment Provided</label><textarea></textarea></div>
+          <div class="field"><label>Seen by Physician? (Name, Position, Time)</label><input type="text"></div>
+          <div class="field"><label>Reported By & Supervised By (Names, Titles, Dates)</label><input type="text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 21. ANNEX 6: BRIEFING TEMPLATES -->
+    <section id="form-briefing" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Preoperative Briefing & Postoperative Debriefing</h2>
+          <p class="text-muted">Conducted before first case enters OR and after last case leaves OR</p>
+        </div>
+        <span class="badge">Team Communication • Briefing</span>
+      </div>
+      <div class="card-box">
+        <h3>1. Preoperative Briefing (Before First Case)</h3>
+        <div class="grid-3" style="margin-bottom:1rem;">
+          <div class="field"><label>Brief Leader</label><input type="text"></div>
+          <div class="field"><label>Date</label><input type="date"></div>
+          <div class="field"><label>Theatre Number / Specialty</label><input type="text"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Case</th><th>Patient Name</th><th>Allergy</th><th>Blood</th><th>Antibiotic</th><th>Tubes</th><th>Position</th><th>Duration</th><th>Equip & Imaging</th><th>Critical Concerns</th></tr></thead>
+            <tbody>
+              <tr><td>Case 1</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+              <tr><td>Case 2</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+              <tr><td>Case 3</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+              <tr><td>Case 4</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-box">
+        <h3>2. Postoperative Debriefing (After Last Case)</h3>
+        <div class="grid-3">
+          <div class="field"><label>What Went Well and Why? (Teamwork, speaking up, prep)</label><textarea></textarea></div>
+          <div class="field"><label>What Did Not Go Well? (Misses, confusion, errors/near misses)</label><textarea></textarea></div>
+          <div class="field"><label>Feedback & Action Plan for Next Session</label><textarea></textarea></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 22. ANNEX 11: OR EFFICIENCY TOOL -->
+    <section id="form-efficiency" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Operating Theatre Table Efficiency Assessment Tool</h2>
+          <p class="text-muted">Tracks critical timestamps and auto-calculates Procedure & Turnover durations</p>
+        </div>
+        <span class="badge">OR Management • Efficiency</span>
+      </div>
+      <div class="card-box">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Critical Timestamp</th><th>Case 1</th><th>Case 2</th><th>Case 3</th><th>Case 4</th><th>Case 5</th></tr></thead>
+            <tbody>
+              <tr><td>Patient Entry to OT (Wheels In)</td><td><input type="time" id="eff_in_1" onchange="calcEfficiency()"></td><td><input type="time" id="eff_in_2" onchange="calcEfficiency()"></td><td><input type="time" id="eff_in_3" onchange="calcEfficiency()"></td><td><input type="time" id="eff_in_4" onchange="calcEfficiency()"></td><td><input type="time" id="eff_in_5" onchange="calcEfficiency()"></td></tr>
+              <tr><td>Intubation / Anesthesia Admin Time</td><td><input type="time"></td><td><input type="time"></td><td><input type="time"></td><td><input type="time"></td><td><input type="time"></td></tr>
+              <tr><td>Patient Skin Incision Time</td><td><input type="time" id="eff_inc_1" onchange="calcEfficiency()"></td><td><input type="time" id="eff_inc_2" onchange="calcEfficiency()"></td><td><input type="time" id="eff_inc_3" onchange="calcEfficiency()"></td><td><input type="time" id="eff_inc_4" onchange="calcEfficiency()"></td><td><input type="time" id="eff_inc_5" onchange="calcEfficiency()"></td></tr>
+              <tr><td>Patient Extubation Time</td><td><input type="time"></td><td><input type="time"></td><td><input type="time"></td><td><input type="time"></td><td><input type="time"></td></tr>
+              <tr><td>Transferred Out of OT (Wheels Out)</td><td><input type="time" id="eff_out_1" onchange="calcEfficiency()"></td><td><input type="time" id="eff_out_2" onchange="calcEfficiency()"></td><td><input type="time" id="eff_out_3" onchange="calcEfficiency()"></td><td><input type="time" id="eff_out_4" onchange="calcEfficiency()"></td><td><input type="time" id="eff_out_5" onchange="calcEfficiency()"></td></tr>
+              <tr style="background:#eff6ff; font-weight:600;"><td>Total OR Time (Wheels In → Out)</td><td id="eff_tot_1">-</td><td id="eff_tot_2">-</td><td id="eff_tot_3">-</td><td id="eff_tot_4">-</td><td id="eff_tot_5">-</td></tr>
+              <tr style="background:#ecfdf5; font-weight:600;"><td>Turnover Time to Next Case</td><td id="eff_turn_1">-</td><td id="eff_turn_2">-</td><td id="eff_turn_3">-</td><td id="eff_turn_4">-</td><td>End of List</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 23. ANNEX 9, 13, 14: REGISTERS -->
+    <section id="form-registers" class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Operation, SSI & Cancellation Registers</h2>
+          <p class="text-muted">Facility surgical logbooks and daily cancellation tracking</p>
+        </div>
+        <span class="badge">Facility Registers • Logs</span>
+      </div>
+
+      <div class="card-box">
+        <h3>Operation Registry</h3>
+        <div class="table-wrap">
+          <table id="reg-op-table">
+            <thead><tr><th>S.No</th><th>Name</th><th>Age/Sex</th><th>Card No</th><th>Procedure</th><th>Indication</th><th>Anesthesia</th><th>Surgeon / Asst</th><th>Anesthetist</th><th>Scrub / Runner</th><th>Outcome & Remark</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-outline btn-sm no-print" onclick="addSimpleRow('reg-op-table', 11)">+ Add Row</button>
+      </div>
+
+      <div class="card-box">
+        <h3>Surgical Site Infection (SSI) Registration Logbook</h3>
+        <div class="table-wrap">
+          <table id="reg-ssi-table">
+            <thead><tr><th>Setting</th><th>MRN</th><th>Patient Name</th><th>Bed No</th><th>Age/Sex</th><th>Date of Surgery</th><th>Procedure</th><th>Date SSI Diagnosed</th><th>Post-Op Diagnosis</th><th>Wound Culture Result</th></tr></thead>
+            <tbody>
+              <tr><td><select><option>Inpatient</option><option>Outpatient</option></select></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="date"></td><td><input type="text"></td><td><input type="date"></td><td><input type="text"></td><td><input type="text"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-outline btn-sm no-print" onclick="addSimpleRow('reg-ssi-table', 10)">+ Add Row</button>
+      </div>
+
+      <div class="card-box">
+        <h3>Cancellation & Scheduling Daily Activity Report</h3>
+        <div class="table-wrap">
+          <table id="reg-cancel-table">
+            <thead><tr><th>S.No</th><th>Name</th><th>MRN</th><th>Dept</th><th>Diagnosis</th><th>Planned Procedure</th><th>Status</th><th>Reason Category & Specific Reason</th><th>Remark</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>1</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                <td><select><option>Operated</option><option>Cancelled</option></select></td>
+                <td>
+                  <select>
+                    <option value="">-- Select if Cancelled --</option>
+                    <optgroup label="1. Patient Related"><option>Patient refusal/request</option><option>Poor bowel preparation</option><option>Financial shortage</option><option>Absent</option><option>Not fasting</option><option>Taking anticoagulant</option></optgroup>
+                    <optgroup label="2. Management Related"><option>Shortage of OR material</option><option>Power breakdown</option><option>Lack of ICU bed</option><option>Shortage of water supply</option><option>Lack of mechanical ventilator</option><option>Blood not prepared</option><option>Lack oxygen source</option></optgroup>
+                    <optgroup label="3. Staff Related"><option>Surgeon unavailable</option><option>Anesthetist unavailable</option><option>Nurse unavailable</option><option>Cleaner/Porter unavailable</option></optgroup>
+                    <optgroup label="4. Shortage of Time"><option>Previous case prolonged</option><option>Emergency priority</option><option>Over scheduling</option></optgroup>
+                    <optgroup label="5. Unexpected Emergency"><option>Cardiac arrest</option><option>Aspiration on table</option><option>Failed intubation/spinal</option></optgroup>
+                    <optgroup label="6. Uncontrolled/Acute Medical Illness"><option>High BP / Uncontrolled DM</option><option>Uncontrolled Asthma / IHD</option><option>Coagulopathy / Thyroid</option><option>Acute fever / URTI</option></optgroup>
+                    <optgroup label="7. Lack of Important Investigation"><option>Hematocrit / Electrolyte</option><option>LFT / RFT / PFT</option><option>ECG / X-Ray / CT Scan</option></optgroup>
+                  </select>
+                </td>
+                <td><input type="text"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-outline btn-sm no-print" onclick="addSimpleRow('reg-cancel-table', 9)">+ Add Row</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+
+<div id="etDatePopover" class="et-popover no-print">
+  <div class="et-pop-header">
+    <button type="button" class="et-nav-btn" id="etPrevMonth" title="Previous Month">‹</button>
+    <select id="etMonthSelect"></select>
+    <select id="etYearSelect"></select>
+    <button type="button" class="et-nav-btn" id="etNextMonth" title="Next Month">›</button>
+  </div>
+  <div class="et-weekdays">
+    <div>እሁድ<br>Sun</div><div>ሰኞ<br>Mon</div><div>ማክ<br>Tue</div><div>ረቡዕ<br>Wed</div><div>ሐሙስ<br>Thu</div><div>ዓርብ<br>Fri</div><div>ቅዳሜ<br>Sat</div>
+  </div>
+  <div class="et-days" id="etDaysGrid"></div>
+  <div class="et-time-bar" id="etTimeBar" style="display:none;">
+    <span><strong>ሰዓት / Time:</strong></span>
+    <div style="display:flex; align-items:center; gap:3px;">
+      <select id="etHourSelect"></select> :
+      <select id="etMinSelect"></select>
+      <select id="etPeriodSelect"><option value="AM">ጠዋት/AM</option><option value="PM">ከሰዓት/PM</option></select>
+    </div>
+  </div>
+  <div class="et-pop-footer">
+    <span class="et-greg-preview" id="etGregPreview">GC: -</span>
+    <div style="display:flex; gap:4px;">
+      <button type="button" class="btn btn-outline btn-sm" id="etTodayBtn">Today</button>
+      <button type="button" class="btn btn-primary btn-sm" id="etDoneBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">Saved!</div>
+
+<script>
+// Navigation Switching
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.target).classList.add('active'); window.dispatchEvent(new Event('resize'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// Search Filter
+function filterNav() {
+  const q = document.getElementById('navSearch').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.style.display = btn.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+  });
+}
+
+// Helper to build Yes/No/NA rows
+function buildTriRows(tbodyId, items, prefix) {
+  const tb = document.getElementById(tbodyId);
+  items.forEach((item, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${idx + 1}. ${item}</td>
+      <td class="center"><input type="radio" name="${prefix}_${idx}" value="Present/Done"></td>
+      <td class="center"><input type="radio" name="${prefix}_${idx}" value="Absent/NotDone"></td>
+      <td class="center"><input type="radio" name="${prefix}_${idx}" value="NA"></td>
+      <td><input type="text" name="${prefix}_note_${idx}"></td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+// Populate Table 1 (Adult Surgical)
+buildTriRows('sa-history-body', [
+  'History of respiratory tract infections in last 2 weeks (runny nose, cough, fever)',
+  'History of fluid loss in last 24 hours (vomiting, diarrhea, bleeding)',
+  'History of COVID-19 vaccination',
+  'History of recent skin rashes',
+  'History of any current medication (antibiotics, anticoagulants)',
+  'History of chronic medical illness (DM, HTN, thyroid, bleeding, liver, cardiac, COPD, renal)',
+  'History of previous surgery',
+  'History of known allergies',
+  'History of substance abuse',
+  'Last menstrual period (LNMP)'
+], 'sa_h');
+
+buildTriRows('sa-pe-body', [
+  'General appearance',
+  'Signs of respiratory distress',
+  'Signs of cardiovascular failure',
+  'Signs of anemia (conjunctiva, palm of hand)',
+  'Abnormality in respiratory system',
+  'Abnormality in cardiovascular system',
+  'Colostomy washout adequate (for patients on bowel prep)',
+  'Presence of new skin lesions/rashes'
+], 'sa_pe');
+
+buildTriRows('sa-inv-body', [
+  'INV: CBC within normal range & updated within last week',
+  'INV: Blood group and Rh factor',
+  'INV: Fasting blood sugar',
+  'INV: Pregnancy test (specify result)',
+  'INV: Serum electrolyte within normal range & updated in last week',
+  'INV: RFT within normal range & updated in last 2 weeks',
+  'INV: LFT within normal range & updated in last 2 weeks',
+  'INV: Echocardiography & Chest X-ray done',
+  'TX: Patient/attendant counseled & written consent given',
+  'TX: Counseled about NPO for at least 6 hours before surgery',
+  'TX: Required amount of cross-matched whole blood prepared',
+  'TX: Bowel prep (Clear fluids 24h prior, Enema BID 48h prior, Antibiotic bowel prep)',
+  'TX: Vitamin K administration (only for patients with jaundice)',
+  'TX: Anesthesiologist notified about subcritical/critical patient 24h prior',
+  'TX: ICU bed reserved for patients requiring postoperative ICU care'
+], 'sa_inv');
+
+// Populate Annex 4 (Pediatric Surgical)
+buildTriRows('sp-hist-pe-body', [
+  'History of URTI in last 2 weeks (runny nose, cough, fever, difficulty swallowing)',
+  'History of acute gastroenteritis symptoms (vomiting, diarrhea)',
+  'History of recent skin rashes',
+  'History of vaccination in last 2 weeks',
+  'History of current medication (antibiotics, anticoagulants)',
+  'History of known medical illnesses (DM, bleeding, thyroid, renal, cardiac)',
+  'History of previous surgery / known allergies / LNMP',
+  'PE: Signs of respiratory distress or cardiac failure',
+  'PE: Signs of anemia (conjunctiva, palm)',
+  'PE: Erythematous/swollen tonsils or runny nose',
+  'PE: Abnormality of respiratory or cardiovascular system',
+  'PE: Colostomy washout adequate / skin lesions'
+], 'sp_hpe');
+
+buildTriRows('sp-inv-tx-body', [
+  'INV: CBC, Blood Group & Rh, Electrolytes, RFT, LFT, Echo, CXR',
+  'TX: Family/patient counseled & written consent acquired',
+  'TX: Counseled about keeping patient NPO for at least 4 hours before surgery',
+  'TX: Required cross-matched whole blood prepared (20 ml/kg)',
+  'TX: Bowel preparation (Clear fluid 24h prior, Enema BID 48h prior)',
+  'TX: Vitamin K administration (neonates and jaundiced patients)',
+  'TX: Anesthesiologist notified 24h prior & ICU bed reserved if needed'
+], 'sp_it');
+
+// Populate Table 2 (Anesthesia History)
+const anHistItems = [
+  'Past surgical illness', 'Past medical illness', 'Current medical illness', 'Current medications',
+  'Known allergy', 'Smoking (pack-years)', 'Alcohol / Other substance use', 'Previous history of airway/anesthesia complications'
+];
+const anHistTb = document.getElementById('an-hist-body');
+anHistItems.forEach((item, i) => {
+  anHistTb.innerHTML += `<tr><td>${item}</td><td class="center"><input type="radio" name="anh_${i}" value="Yes"></td><td class="center"><input type="radio" name="anh_${i}" value="No"></td><td><input type="text"></td></tr>`;
+});
+
+// Populate Section 3.3.1 Pre-scheduling
+const psSurg = [
+  'Surgical instrument availability & functionality confirmed',
+  'Special surgical instrument/equipment made available',
+  'Surgical informed consent taken & patient understands risks/stoma/tubes/amputation',
+  'Imaging required in OR ready to be sent with patient',
+  'Prophylactic antibiotics ordered',
+  'Surgical readiness complete'
+];
+psSurg.forEach((item, i) => {
+  document.getElementById('presched-surg-body').innerHTML += `<tr><td>${item}</td><td class="center"><input type="radio" name="pss_${i}"></td><td class="center"><input type="radio" name="pss_${i}"></td></tr>`;
+});
+
+const psAnest = [
+  'Known allergy / Difficult airway anticipated & preparation complete',
+  'Risk of aspiration anticipated & prophylaxis ordered',
+  'Perioperative medications continued/discontinued/substituted & patient instructed',
+  'Premedication, fasting time, and DVT prophylaxis ordered',
+  'Anesthesia supply & equipment functionality confirmed (incl. special invasive lines)',
+  'Pertinent labs ready & IV access plan confirmed',
+  'Anesthesia readiness complete'
+];
+psAnest.forEach((item, i) => {
+  document.getElementById('presched-anest-body').innerHTML += `<tr><td>${item}</td><td class="center"><input type="radio" name="psa_${i}"></td><td class="center"><input type="radio" name="psa_${i}"></td><td><input type="text"></td></tr>`;
+});
+
+// Populate Section 3.3.8 Preop Nursing
+const preopNurseItems = [
+  'Chart: Anesthesia, nursing and surgical assessment in chart',
+  'Chart: Patient signed both anesthesia and surgical consent',
+  'Chart: Blood type and cross-match completed (specify units)',
+  'Chart: Past medications & preoperative orders clearly written',
+  'DOS: Verbal identification & ID band crosschecked on patient',
+  'DOS: Procedure and procedure site indicated & marked',
+  'DOS: Patient kept NPO, showered, pre-op meds given & voided urine',
+  'DOS: Imaging and lab tests sent to OR with patient'
+];
+preopNurseItems.forEach((item, i) => {
+  document.getElementById('preop-nurse-body').innerHTML += `<tr><td>${item}</td><td class="center"><input type="radio" name="pn_${i}"></td><td class="center"><input type="radio" name="pn_${i}"></td><td><input type="text"></td></tr>`;
+});
+
+// Populate Table 11 OR Readiness (25 Items)
+const orrItems = [
+  'Arm Strap X2', 'Arm Board X2', 'Back table', 'Bed', 'Bed locked',
+  'Bed made up with draw sheet is plugged in and working', 'Count board is erased', 'Count sheet',
+  'Electrocautery unit with foot pedal(s)', 'Foot stools', 'IV stand X2', 'Kick bucket and sponge counter',
+  'Linen receptacle', 'Mayo stand', 'Patient warming machine', 'Positioning materials', 'Prep table',
+  'Ring stand (2) single and (1) double', 'Safety strap', 'Sitting stools',
+  'Separate suction available for anesthesia', 'Suction plugged in and suction working',
+  'Surgical lights', 'Time-out paperwork / Surgical safety checklist', 'Trash receptacles (clean and biohazardous)'
+];
+orrItems.forEach((item, i) => {
+  document.getElementById('or-ready-body').innerHTML += `
+    <tr>
+      <td>${i + 1}</td><td>${item}</td>
+      <td class="center"><label><input type="radio" name="orra_${i}" value="Y"> Y</label> <label><input type="radio" name="orra_${i}" value="N"> N</label></td>
+      <td class="center"><label><input type="radio" name="orrf_${i}" value="Y"> Y</label> <label><input type="radio" name="orrf_${i}" value="N"> N</label></td>
+    </tr>`;
+});
+
+// Populate Table 12 Intraop Nursing
+const circTasks = [
+  'Assists with preparation of the room & checks mechanical/electrical equipment',
+  'Identifies and admits patient to OR; checks chart & relates pertinent data',
+  'Ensures patient safety in transferring and positioning',
+  'Participates in application of monitoring devices & assists with induction',
+  'Monitors draping procedure & aseptic technique in self and others',
+  'Measures blood/fluid loss & monitors urine output',
+  'Counts sponges, needles and instruments (three times)',
+  'Documents intra-op care, labels/sends specimens, records local anesthesia used',
+  'Accompanies patient to recovery area & hands over to PACU nurses'
+];
+circTasks.forEach(t => {
+  document.getElementById('circ-nurse-body').innerHTML += `<tr><td>${t}</td><td class="center"><input type="checkbox"></td><td><input type="text" style="width:65px;"></td></tr>`;
+});
+
+const scrubTasks = [
+  'Reviews anatomy, physiology and surgical procedure',
+  'Scrubs, gowns, gloves self and other surgical team members',
+  'Prepares instrument table and organizes sterile equipment',
+  'Assists with draping & ensures integrity of sterile field',
+  'Passes instruments & anticipates surgeon needs',
+  'Ensures correct counts of sponges, needles, and instruments',
+  'Reports amount of local anesthesia and solutions used by surgeon',
+  'Keeps track of irrigation fluid/tubes, applies dressing & assists PACU transfer'
+];
+scrubTasks.forEach(t => {
+  document.getElementById('scrub-nurse-body').innerHTML += `<tr><td>${t}</td><td class="center"><input type="checkbox"></td><td><input type="text" style="width:65px;"></td></tr>`;
+});
+
+// Populate Annex 10 Count Sheet
+const countItems = [
+  'Gauze', 'Abdominal packs', 'Blades (Sharps)', 'Needles (Sharps)',
+  'Scalpel handle', 'Towel clips', 'Dissecting forceps', 'Scissors', 'Forceps', 'Needle holder', 'Retractor', 'Other'
+];
+countItems.forEach((item, i) => {
+  document.getElementById('count-sheet-body').innerHTML += `
+    <tr>
+      <td><strong>${item}</strong></td>
+      <td><input type="number" id="cnt_init_${i}" value="0" min="0" oninput="calcCount(${i})"></td>
+      <td><input type="number" id="cnt_add_${i}" value="0" min="0" oninput="calcCount(${i})"></td>
+      <td><input type="number" id="cnt_rem_${i}" value="0" min="0" oninput="calcCount(${i})"></td>
+      <td><input type="number" id="cnt_exp_${i}" value="0" readonly style="background:#f3f4f6; font-weight:700;"></td>
+      <td><input type="number" id="cnt_cav_${i}" min="0" oninput="calcCount(${i})"></td>
+      <td><input type="number" id="cnt_fas_${i}" min="0" oninput="calcCount(${i})"></td>
+      <td><input type="number" id="cnt_fin_${i}" min="0" oninput="calcCount(${i})"></td>
+      <td id="cnt_stat_${i}" class="center">-</td>
+    </tr>`;
+});
+
+function calcCount(i) {
+  const init = parseInt(document.getElementById(`cnt_init_${i}`).value) || 0;
+  const add = parseInt(document.getElementById(`cnt_add_${i}`).value) || 0;
+  const rem = parseInt(document.getElementById(`cnt_rem_${i}`).value) || 0;
+  const exp = init + add - rem;
+  document.getElementById(`cnt_exp_${i}`).value = exp;
+  const finVal = document.getElementById(`cnt_fin_${i}`).value;
+  const statCell = document.getElementById(`cnt_stat_${i}`);
+  if (finVal === '') {
+    statCell.textContent = '-';
+    statCell.style.color = 'inherit';
+  } else if (parseInt(finVal) === exp) {
+    statCell.textContent = '✓ Match';
+    statCell.style.color = '#059669';
+    statCell.style.fontWeight = '700';
+  } else {
+    statCell.textContent = '⚠ Discrepancy!';
+    statCell.style.color = '#dc2626';
+    statCell.style.fontWeight = '700';
+  }
+}
+
+// Populate Section 4.5.1 Adverse Anesthetic Events
+const aaeData = {
+  'Airway': ['Difficult intubation', 'Difficult ventilation', 'Airway obstruction', 'Laryngospasm', 'Airway trauma', 'Esophageal/Endobronchial intubation'],
+  'Respiratory': ['Aspiration', 'Sustained hypoxemia', 'Premature extubation', 'Pneumothorax', 'Bronchospasm', 'Hypoventilation', 'ALI/ARDS', 'Respiratory failure'],
+  'Cardiovascular': ['Hypotension requiring vasopressors', 'Arrhythmia', 'Pulmonary embolism', 'Myocardial infarction', 'Heart failure', 'Pulmonary edema', 'Hypertensive crisis'],
+  'Neurology': ['Intraoperative awareness', 'Seizure', 'Peripheral nerve injury', 'Paresis/paralysis', 'Stroke', 'High/total spinal', 'Local anesthetic toxicity', 'Delayed awakening'],
+  'Drug Error & Misc': ['Wrong drug / dose / syringe swap', 'Allergic drug reaction', 'Acute kidney injury', 'Persistent PONV', 'Corneal abrasion', 'Malignant hyperthermia', 'Cardiac arrest / Death']
+};
+const aaeContainer = document.getElementById('aae-categories');
+for (const [cat, list] of Object.entries(aaeData)) {
+  let html = `<div style="border:1px solid #e5e7eb; padding:0.75rem; border-radius:6px;"><strong>${cat}</strong><div style="margin-top:0.4rem; display:flex; flex-direction:column; gap:0.25rem;">`;
+  list.forEach(ev => { html += `<label class="check-item"><input type="checkbox"> ${ev}</label>`; });
+  html += `</div></div>`;
+  aaeContainer.innerHTML += html;
+}
+
+function toggleAAE(show) {
+  document.getElementById('aae-details').style.display = show ? 'block' : 'none';
+}
+
+function calcAAESeverity() {
+  let sev = 'None selected';
+  const checked = Array.from(document.querySelectorAll('.aae-out:checked')).map(c => c.dataset.sev);
+  if (checked.includes('Severe')) sev = 'SEVERE Adverse Event (Sentinel Outcome)';
+  else if (checked.includes('Moderate')) sev = 'MODERATE Adverse Event';
+  else if (checked.includes('Minor')) sev = 'MINOR Adverse Event';
+  document.getElementById('aae-severity-banner').innerHTML = `<strong>Assigned Severity Rating:</strong> ${sev}`;
+}
+
+// Populate Fig 7 SSI Days
+const ssiDays = ['1 (Surgical procedure)', '2-3', '4-5', '6-7', '8-10', '11-14', '15-17', '18-21', '22-25', '26-29', 'Day 30 (End of surveillance)'];
+ssiDays.forEach(d => {
+  document.getElementById('ssi-days-body').innerHTML += `
+    <tr>
+      <td><strong>${d}</strong></td>
+      <td><input type="date"></td>
+      <td><input type="text" placeholder="Event..."></td>
+      <td class="center"><input type="checkbox"></td>
+      <td><input type="text" placeholder="Symptoms/notes..."></td>
+      <td><input type="text" style="width:65px;"></td>
+    </tr>`;
+});
+
+// Dynamic Row Helpers
+function addScheduleRow() {
+  const tb = document.querySelector('#or-sched-table tbody');
+  const idx = tb.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${idx}</td>` + '<td><input type="text"></td>'.repeat(14);
+  tb.appendChild(tr);
+  upgradeDateFieldsToEthiopian(tr);
+}
+addScheduleRow(); addScheduleRow();
+
+
+// ============================================================================
+// INTERACTIVE ANESTHESIA RECORDING CHART & LIVE TABLE SYNC
+// ============================================================================
+let anestRows = [];
+let activePlotMode = 'sbp';
+
+function setAnestPlotMode(btn) {
+  document.querySelectorAll('.anest-mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activePlotMode = btn.dataset.plot;
+}
+
+function addAnestInterval(prefill = null) {
+  const idx = anestRows.length;
+  const minLabel = idx * 10;
+  const rowObj = prefill || {
+    min: minLabel,
+    event: '',
+    sbp: '',
+    dbp: '',
+    pr: '',
+    spo2: '',
+    etco2: '',
+    gas: '',
+    drugs: '',
+    fluids: '',
+    loss: ''
+  };
+  anestRows.push(rowObj);
+
+  const tb = document.querySelector('#anest-log-table tbody');
+  const tr = document.createElement('tr');
+  tr.dataset.rowIdx = idx;
+  tr.innerHTML = `
+    <td style="text-align:center;"><strong>${minLabel}m</strong></td>
+    <td>
+      <select onchange="updateAnestCell(${idx}, 'event', this.value)">
+        <option value="">--</option>
+        <option value="X_START" ${rowObj.event==='X_START'?'selected':''}>X Start Anesth</option>
+        <option value="I_IN" ${rowObj.event==='I_IN'?'selected':''}>I Intubation</option>
+        <option value="O_START" ${rowObj.event==='O_START'?'selected':''}>ʘ Start Surg</option>
+        <option value="O_END" ${rowObj.event==='O_END'?'selected':''}>ʘ End Surg</option>
+        <option value="I_OUT" ${rowObj.event==='I_OUT'?'selected':''}>I Extubation</option>
+        <option value="X_END" ${rowObj.event==='X_END'?'selected':''}>X End Anesth</option>
+      </select>
+    </td>
+    <td><input type="number" min="30" max="240" value="${rowObj.sbp}" placeholder="120" oninput="updateAnestCell(${idx}, 'sbp', this.value)"></td>
+    <td><input type="number" min="20" max="160" value="${rowObj.dbp}" placeholder="80" oninput="updateAnestCell(${idx}, 'dbp', this.value)"></td>
+    <td><input type="number" min="30" max="220" value="${rowObj.pr}" placeholder="75" oninput="updateAnestCell(${idx}, 'pr', this.value)"></td>
+    <td><input type="number" min="50" max="100" value="${rowObj.spo2}" placeholder="99" oninput="updateAnestCell(${idx}, 'spo2', this.value)"></td>
+    <td><input type="number" min="10" max="80" value="${rowObj.etco2}" placeholder="35" oninput="updateAnestCell(${idx}, 'etco2', this.value)"></td>
+    <td><input type="text" value="${rowObj.gas}" placeholder="O₂ 2L" oninput="updateAnestCell(${idx}, 'gas', this.value)"></td>
+    <td><input type="text" value="${rowObj.drugs}" placeholder="Propofol/Fent" oninput="updateAnestCell(${idx}, 'drugs', this.value)"></td>
+    <td><input type="number" min="0" value="${rowObj.fluids}" placeholder="ml" oninput="updateAnestCell(${idx}, 'fluids', this.value)"></td>
+    <td><input type="number" min="0" value="${rowObj.loss}" placeholder="ml" oninput="updateAnestCell(${idx}, 'loss', this.value)"></td>
+  `;
+  tb.appendChild(tr);
+  updateAnestTotals();
+  renderAnestChart();
+}
+
+function updateAnestCell(idx, field, val) {
+  if (!anestRows[idx]) return;
+  anestRows[idx][field] = val;
+  updateAnestTotals();
+  renderAnestChart();
+}
+
+function updateAnestTotals() {
+  let totFluids = 0;
+  let totLoss = 0;
+  let drugCount = 0;
+  anestRows.forEach(r => {
+    totFluids += parseFloat(r.fluids) || 0;
+    totLoss += parseFloat(r.loss) || 0;
+    if (r.drugs && r.drugs.trim()) drugCount++;
+  });
+  document.getElementById('tot_fluids').textContent = `${totFluids} ml`;
+  document.getElementById('tot_loss').textContent = `${totLoss} ml`;
+  document.getElementById('tot_drugs').textContent = drugCount > 0 ? `${drugCount} entries` : '-';
+}
+
+function renderAnestChart() {
+  const svg = document.getElementById('anestChartSvg');
+  if (!svg) return;
+
+  const cols = Math.max(anestRows.length, 6);
+  const padL = 52, padR = 24, padT = 34, padB = 34;
+  const W = Math.max(960, padL + padR + cols * 72);
+  const H = 340;
+  svg.setAttribute('width', W);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const minVal = 20, maxVal = 220; // Y-axis scale 20 to 220
+
+  const valToY = v => padT + plotH - ((v - minVal) / (maxVal - minVal)) * plotH;
+  const yToVal = y => Math.round(minVal + ((padT + plotH - y) / plotH) * (maxVal - minVal));
+  const idxToX = i => padL + (cols === 1 ? plotW / 2 : (i / (cols - 1)) * plotW);
+
+  let out = `<rect x="0" y="0" width="${W}" height="${H}" fill="#ffffff"/>`;
+
+  // Horizontal gridlines every 20 units
+  for (let v = 20; v <= 220; v += 20) {
+    const y = valToY(v);
+    const isMajor = (v % 40 === 0);
+    out += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="${isMajor ? '#cbd5e1' : '#f1f5f9'}" stroke-width="${isMajor ? 1.2 : 1}"/>`;
+    out += `<text x="${padL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#475569" font-weight="${isMajor ? '600' : '400'}">${v}</text>`;
+  }
+
+  // Vertical time columns & X-axis labels
+  for (let i = 0; i < cols; i++) {
+    const x = idxToX(i);
+    const minLabel = i * 10;
+    out += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${H - padB}" stroke="#e2e8f0" stroke-width="1"/>`;
+    out += `<text x="${x}" y="${H - 12}" text-anchor="middle" font-size="11" fill="#334155" font-weight="600">${minLabel}m</text>`;
+
+    // Event markers at top banner (padT - 12)
+    const row = anestRows[i];
+    if (row && row.event) {
+      let sym = '', col = '#0f4c81', lbl = '';
+      if (row.event === 'X_START') { sym = 'X'; col = '#b45309'; lbl = 'Anesth Start'; }
+      else if (row.event === 'X_END') { sym = 'X'; col = '#b45309'; lbl = 'Anesth End'; }
+      else if (row.event === 'I_IN') { sym = 'I'; col = '#0f4c81'; lbl = 'Intub'; }
+      else if (row.event === 'I_OUT') { sym = 'I'; col = '#0f4c81'; lbl = 'Extub'; }
+      else if (row.event === 'O_START') { sym = 'ʘ'; col = '#be123c'; lbl = 'Surg Start'; }
+      else if (row.event === 'O_END') { sym = 'ʘ'; col = '#be123c'; lbl = 'Surg End'; }
+      out += `<rect x="${x - 24}" y="4" width="48" height="22" rx="4" fill="#fef3c7" stroke="${col}" stroke-width="1"/>`;
+      out += `<text x="${x}" y="19" text-anchor="middle" font-size="12" font-weight="800" fill="${col}">${sym} <tspan font-size="8.5" font-weight="600">${lbl}</tspan></text>`;
+    }
+  }
+
+  // Draw BP Vertical Range Bars (connecting Sys and Dia)
+  anestRows.forEach((r, i) => {
+    const sbp = parseFloat(r.sbp), dbp = parseFloat(r.dbp);
+    if (!isNaN(sbp) && !isNaN(dbp)) {
+      const x = idxToX(i);
+      out += `<line x1="${x}" y1="${valToY(sbp)}" x2="${x}" y2="${valToY(dbp)}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+    }
+  });
+
+  // Helper to plot polyline + markers
+  function drawSeries(key, color, shape) {
+    let pts = [];
+    anestRows.forEach((r, i) => {
+      const val = parseFloat(r[key]);
+      if (!isNaN(val) && val >= minVal && val <= maxVal) {
+        pts.push({ x: idxToX(i), y: valToY(val), val });
+      }
+    });
+    if (pts.length > 1) {
+      const polyPts = pts.map(p => `${p.x},${p.y}`).join(' ');
+      out += `<polyline fill="none" stroke="${color}" stroke-width="2" points="${polyPts}"/>`;
+    }
+    pts.forEach(p => {
+      if (shape === 'v') {
+        out += `<polygon points="${p.x-6},${p.y-6} ${p.x+6},${p.y-6} ${p.x},${p.y+4}" fill="${color}"/>`;
+      } else if (shape === '^') {
+        out += `<polygon points="${p.x},${p.y-4} ${p.x-6},${p.y+6} ${p.x+6},${p.y+6}" fill="${color}"/>`;
+      } else if (shape === 'dot') {
+        out += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="${color}"/>`;
+      } else if (shape === 'diamond') {
+        out += `<polygon points="${p.x},${p.y-5} ${p.x+5},${p.y} ${p.x},${p.y+5} ${p.x-5},${p.y}" fill="${color}"/>`;
+      } else if (shape === 'square') {
+        out += `<rect x="${p.x-4}" y="${p.y-4}" width="8" height="8" fill="${color}"/>`;
+      }
+      out += `<text x="${p.x + 7}" y="${p.y - 4}" font-size="9.5" font-weight="700" fill="${color}">${p.val}</text>`;
+    });
+  }
+
+  drawSeries('sbp', '#dc2626', 'v');
+  drawSeries('dbp', '#2563eb', '^');
+  drawSeries('pr', '#059669', 'dot');
+  drawSeries('spo2', '#0891b2', 'diamond');
+  drawSeries('etco2', '#7c3aed', 'square');
+
+  svg.innerHTML = out;
+
+  // Bind click-to-plot on SVG
+  svg.onclick = function(e) {
+    const rect = svg.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+
+    if (clickX < padL || clickX > W - padR || clickY < padT || clickY > H - padB) return;
+
+    // Nearest time column
+    let nearestIdx = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < cols; i++) {
+      const dist = Math.abs(clickX - idxToX(i));
+      if (dist < minDist) { minDist = dist; nearestIdx = i; }
+    }
+    const clampedVal = Math.max(minVal, Math.min(maxVal, yToVal(clickY)));
+    if (anestRows[nearestIdx]) {
+      anestRows[nearestIdx][activePlotMode] = clampedVal;
+      // Sync input field in table
+      const tr = document.querySelector(`#anest-log-table tbody tr[data-row-idx="${nearestIdx}"]`);
+      if (tr) {
+        const colMap = { sbp: 2, dbp: 3, pr: 4, spo2: 5, etco2: 6 };
+        const inp = tr.cells[colMap[activePlotMode]].querySelector('input');
+        if (inp) inp.value = clampedVal;
+      }
+      renderAnestChart();
+    }
+  };
+}
+
+function loadSampleAnestCase() {
+  const sample = [
+    { min: 0, event: 'X_START', sbp: 124, dbp: 78, pr: 82, spo2: 99, etco2: 36, gas: 'O₂ 4L', drugs: 'Midazolam 2mg, Fentanyl 100mcg', fluids: 250, loss: 0 },
+    { min: 10, event: 'I_IN', sbp: 112, dbp: 70, pr: 88, spo2: 100, etco2: 35, gas: 'O₂ 2L / Iso 1.2%', drugs: 'Propofol 140mg, Vecuronium 6mg', fluids: 250, loss: 20 },
+    { min: 20, event: 'O_START', sbp: 118, dbp: 74, pr: 78, spo2: 100, etco2: 34, gas: 'O₂ 2L / Iso 1.0%', drugs: 'Ceftriaxone 1g IV', fluids: 200, loss: 50 },
+    { min: 30, event: '', sbp: 115, dbp: 72, pr: 74, spo2: 99, etco2: 35, gas: 'O₂ 2L / Iso 1.0%', drugs: 'Morphine 5mg IV', fluids: 200, loss: 80 },
+    { min: 40, event: '', sbp: 110, dbp: 68, pr: 72, spo2: 99, etco2: 36, gas: 'O₂ 2L / Iso 0.8%', drugs: 'Paracetamol 1g IV', fluids: 150, loss: 40 },
+    { min: 50, event: 'O_END', sbp: 120, dbp: 76, pr: 76, spo2: 99, etco2: 37, gas: 'O₂ 3L / Iso 0%', drugs: 'Neostigmine 2.5mg + Atropine 1mg', fluids: 150, loss: 20 },
+    { min: 60, event: 'I_OUT', sbp: 126, dbp: 80, pr: 84, spo2: 98, etco2: 38, gas: 'O₂ 5L Mask', drugs: 'Ondansetron 4mg IV', fluids: 100, loss: 0 },
+    { min: 70, event: 'X_END', sbp: 122, dbp: 78, pr: 80, spo2: 99, etco2: 36, gas: 'Room Air / O₂', drugs: 'Transferred to PACU', fluids: 0, loss: 0 }
+  ];
+  anestRows = [];
+  document.querySelector('#anest-log-table tbody').innerHTML = '';
+  sample.forEach(s => addAnestInterval(s));
+  showToast('✓ Loaded sample intraoperative case & plotted chart');
+}
+
+for(let i=0; i<8; i++) addAnestInterval();
+
+function addSimpleRow(tableId, cols) {
+  const tb = document.querySelector(`#${tableId} tbody`);
+  const tr = document.createElement('tr');
+  let html = '';
+  for (let c = 0; c < cols; c++) html += '<td><input type="text"></td>';
+  tr.innerHTML = html;
+  tb.appendChild(tr);
+  upgradeDateFieldsToEthiopian(tr);
+}
+
+// Calculators
+function calcBMI(wtId, htId, outId) {
+  const w = parseFloat(document.getElementById(wtId).value);
+  const h = parseFloat(document.getElementById(htId).value);
+  if (w > 0 && h > 0) {
+    const bmi = (w / (h * h)).toFixed(1);
+    let cat = bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese';
+    document.getElementById(outId).value = `${bmi} (${cat})`;
+  } else {
+    document.getElementById(outId).value = '';
+  }
+}
+
+function calcPedsBlood() {
+  const w = parseFloat(document.getElementById('sp_wt').value);
+  document.getElementById('sp_blood_calc').value = w > 0 ? `${(w * 20).toFixed(0)} ml` : '';
+}
+
+function timeToMins(t) {
+  if (!t) return null;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function calcEfficiency() {
+  for (let c = 1; c <= 5; c++) {
+    const tIn = timeToMins(document.getElementById(`eff_in_${c}`).value);
+    const tOut = timeToMins(document.getElementById(`eff_out_${c}`).value);
+    const totCell = document.getElementById(`eff_tot_${c}`);
+    if (tIn !== null && tOut !== null) {
+      let diff = tOut - tIn;
+      if (diff < 0) diff += 1440;
+      totCell.textContent = `${diff} min`;
+    } else {
+      totCell.textContent = '-';
+    }
+    if (c < 5) {
+      const nextIn = timeToMins(document.getElementById(`eff_in_${c+1}`).value);
+      const turnCell = document.getElementById(`eff_turn_${c}`);
+      if (tOut !== null && nextIn !== null) {
+        let turn = nextIn - tOut;
+        if (turn < 0) turn += 1440;
+        turnCell.textContent = `${turn} min`;
+      } else {
+        turnCell.textContent = '-';
+      }
+    }
+  }
+}
+
+// Persistence & JSON Export/Import
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function gatherData() {
+  const data = {};
+  document.querySelectorAll('input, select, textarea').forEach((el, idx) => {
+    if (el.type === 'file') return;
+    const key = el.id || el.name || `field_${idx}`;
+    if (el.type === 'checkbox') data[key + '_' + idx] = el.checked;
+    else if (el.type === 'radio') { if (el.checked) data[el.name] = el.value; }
+    else if (el.classList.contains('et-date-input')) {
+      data[key + '_' + idx] = {
+        val: el.value,
+        etYear: el.dataset.etYear || '',
+        etMonth: el.dataset.etMonth || '',
+        etDay: el.dataset.etDay || '',
+        etHour: el.dataset.etHour || '',
+        etMinute: el.dataset.etMinute || '',
+        etPeriod: el.dataset.etPeriod || '',
+        gcIso: el.dataset.gcIso || ''
+      };
+    }
+    else data[key + '_' + idx] = el.value;
+  });
+  return data;
+}
+
+function applyData(data) {
+  document.querySelectorAll('input, select, textarea').forEach((el, idx) => {
+    if (el.type === 'file') return;
+    const key = el.id || el.name || `field_${idx}`;
+    if (el.type === 'checkbox' && data[key + '_' + idx] !== undefined) el.checked = data[key + '_' + idx];
+    else if (el.type === 'radio' && data[el.name] === el.value) el.checked = true;
+    else if (el.classList.contains('et-date-input') && data[key + '_' + idx] && typeof data[key + '_' + idx] === 'object') {
+      const dObj = data[key + '_' + idx];
+      el.value = dObj.val || '';
+      if (dObj.etYear) {
+        el.dataset.etYear = dObj.etYear;
+        el.dataset.etMonth = dObj.etMonth;
+        el.dataset.etDay = dObj.etDay;
+        el.dataset.etHour = dObj.etHour;
+        el.dataset.etMinute = dObj.etMinute;
+        el.dataset.etPeriod = dObj.etPeriod;
+        el.dataset.gcIso = dObj.gcIso;
+      }
+    }
+    else if (data[key + '_' + idx] !== undefined) el.value = data[key + '_' + idx];
+  });
+}
+
+
+function getActiveFormFilename() {
+  const activeTitle = document.querySelector('.form-section.active .form-header h2');
+  const base = activeTitle ? activeTitle.textContent.trim().replace(/[^a-zA-Z0-9]+/g, '_') : 'MoH_Perioperative_Form';
+  return `${base}_${new Date().toISOString().slice(0,10)}`;
+}
+
+
+function buildAnestA4PrintSheet() {
+  const sec = document.getElementById('form-anest-rec');
+  if (!sec) return;
+
+  const getVal = sel => {
+    const el = sec.querySelector(sel);
+    return el ? (el.value || '') : '';
+  };
+
+  // Clear previous pill highlights
+  sec.querySelectorAll('.opt-pill').forEach(p => p.classList.remove('active'));
+  const markPill = id => { const el = document.getElementById(id); if (el) el.classList.add('active'); };
+
+  // Patient lines
+  document.getElementById('p_ar_hosp').textContent = getVal('[name="ar_hosp"]');
+  document.getElementById('p_ar_name').textContent = getVal('[name="ar_name"]');
+  document.getElementById('p_ar_card').textContent = getVal('[name="ar_card"]');
+  document.getElementById('p_ar_ward').textContent = getVal('[name="ar_ward"]');
+  document.getElementById('p_ar_addr').textContent = getVal('[name="ar_ward"]');
+
+  const dateInp = sec.querySelector('[name="ar_date"]');
+  if (dateInp && dateInp.dataset.etDay) {
+    document.getElementById('p_ar_day').textContent = pad2(dateInp.dataset.etDay);
+    document.getElementById('p_ar_month').textContent = pad2(dateInp.dataset.etMonth);
+    document.getElementById('p_ar_year').textContent = String(dateInp.dataset.etYear).slice(-2);
+  } else {
+    document.getElementById('p_ar_day').textContent = '';
+    document.getElementById('p_ar_month').textContent = '';
+    document.getElementById('p_ar_year').textContent = '';
+  }
+
+  const ageWt = getVal('[name="ar_age_wt"]').split('/');
+  document.getElementById('p_ar_age').textContent = (ageWt[0] || '').trim();
+  document.getElementById('p_ar_wt').textContent = (ageWt[1] || '').replace(/kg/i,'').trim();
+
+  const bpPr = getVal('[name="ar_base_bp"]').split('|');
+  document.getElementById('p_ar_bp').textContent = (bpPr[0] || '').replace(/mmHg/i,'').trim();
+  document.getElementById('p_ar_pr').textContent = (bpPr[1] || '').replace(/\/m/i,'').trim();
+
+  const hgbParts = getVal('[name="ar_hgb"]').split('/');
+  document.getElementById('p_ar_hgb').textContent = (hgbParts[0] || '').trim();
+  document.getElementById('p_ar_hct').textContent = (hgbParts[1] || '').replace('%','').trim();
+  document.getElementById('p_ar_bsa').textContent = (hgbParts[2] || '').trim();
+
+  // Blood group pills
+  const bg = getVal('[name="ar_bg"]').toUpperCase();
+  if (bg.startsWith('AB')) markPill('bg_AB');
+  else if (bg.startsWith('A')) markPill('bg_A');
+  else if (bg.startsWith('B')) markPill('bg_B');
+  else if (bg.startsWith('O')) markPill('bg_O');
+  if (bg.includes('+')) markPill('bg_RHP');
+  if (bg.includes('-')) markPill('bg_RHN');
+
+  // Risk & ASA pills
+  const asaVal = getVal('[name="ar_asa"]');
+  if (asaVal.includes('High')) markPill('risk_HIGH');
+  if (asaVal.includes('Low')) markPill('risk_LOW');
+  const asaNum = asaVal.match(/ASA\s*(I{1,3}|IV|V)/);
+  const asaMap = { 'I': 'asa_1', 'II': 'asa_2', 'III': 'asa_3', 'IV': 'asa_4', 'V': 'asa_5' };
+  if (asaNum && asaMap[asaNum[1]]) markPill(asaMap[asaNum[1]]);
+
+  // Technique pills
+  const tech = getVal('[name="ar_type"]');
+  if (tech.includes('General')) markPill('tech_GEN');
+  else if (tech.includes('Spinal')) markPill('tech_SPI');
+  else if (tech.includes('Epidural')) markPill('tech_EPI');
+  else if (tech) markPill('tech_OTH');
+
+  // Ventilation pills
+  const vent = getVal('[name="ar_vent"]');
+  if (vent.includes('Spontaneous')) markPill('vent_SPONT');
+  else if (vent.includes('Assisted')) markPill('vent_ASS');
+  else if (vent.includes('Controlled')) markPill('vent_CTRL');
+
+  // Tube & System
+  const tube = getVal('[name="ar_tube"]');
+  document.getElementById('p_ar_sys').textContent = tube.split('•')[0]?.trim() || '';
+  if (/nasal/i.test(tube)) markPill('tube_NASAL');
+  if (/mask/i.test(tube)) markPill('tube_MASK');
+  if (/oral|ett/i.test(tube)) markPill('tube_ORAL');
+  const tubeNo = tube.match(/#?([\d.]+)\s*$/);
+  document.getElementById('p_ar_tube_no').textContent = tubeNo ? tubeNo[1] : '';
+
+  // Mallampati
+  const mal = getVal('[name="ar_mallampati"]');
+  if (mal.endsWith('IV')) markPill('mal_IV');
+  else if (mal.endsWith('III')) markPill('mal_III');
+  else if (mal.endsWith('II')) markPill('mal_II');
+  else if (mal.endsWith('I')) markPill('mal_I');
+
+  // Induction
+  const ind = getVal('[name="ar_ind"]');
+  if (/\bIV\b/i.test(ind)) markPill('ind_IV');
+  if (/\bIM\b/i.test(ind)) markPill('ind_IM');
+  if (/inhal/i.test(ind)) markPill('ind_INH');
+
+  document.getElementById('p_ar_diag').textContent = getVal('[name="ar_diag"]');
+  document.getElementById('p_ar_cvs').textContent = getVal('[name="ar_cvs"]');
+  document.getElementById('p_ar_resp').textContent = getVal('[name="ar_resp"]');
+  document.getElementById('p_ar_renal').textContent = getVal('[name="ar_renal"]');
+  document.getElementById('p_ar_special').textContent = getVal('[name="ar_special"]');
+  document.getElementById('p_ar_allergy').textContent = getVal('[name="ar_allergy"]');
+
+  // Premed & Footer
+  const cardBoxes = sec.querySelectorAll('.card-box');
+  const box1Inputs = cardBoxes[0].querySelectorAll('input');
+  document.getElementById('p_ar_premed').textContent = getVal('[name="ar_premed"]');
+  const oncallTxt = box1Inputs[16]?.value || '';
+  document.getElementById('p_ar_oncall_sq').textContent = /on/i.test(oncallTxt) ? '✓' : '';
+  document.getElementById('p_ar_ordtime').textContent = oncallTxt;
+  document.getElementById('p_ar_givenby').textContent = box1Inputs[17]?.value || '';
+  document.getElementById('p_ar_blood').textContent = getVal('[name="ar_blood_units"]');
+  document.getElementById('p_ar_apparatus').textContent = box1Inputs[18]?.value || '';
+
+  // Monitoring checkboxes
+  const monChks = cardBoxes[2].querySelectorAll('input[type="checkbox"]');
+  monChks.forEach((chk, i) => {
+    const box = document.getElementById(`p_mon_${i}`);
+    if (box) box.textContent = chk.checked ? '✓' : '';
+  });
+
+  // Disposition & Times
+  const box3Inputs = cardBoxes[2].querySelectorAll('input[type="text"]');
+  const dispSel = cardBoxes[2].querySelector('select');
+  const dispVal = dispSel ? dispSel.value : '';
+  document.getElementById('p_disp_ward').textContent = dispVal.includes('Ward') ? '✓' : '';
+  document.getElementById('p_disp_pacu').textContent = dispVal.includes('PACU') ? '✓' : '';
+  document.getElementById('p_disp_icu').textContent = dispVal.includes('ICU') ? '✓' : '';
+
+  document.getElementById('p_t_surg').textContent = box3Inputs[0]?.value || 'HRS______ MIN______';
+  document.getElementById('p_t_anes').textContent = box3Inputs[1]?.value || 'HRS______ MIN______';
+  document.getElementById('p_ar_op').textContent = box3Inputs[2]?.value || '';
+  document.getElementById('p_ar_surg').textContent = box3Inputs[3]?.value || '';
+  document.getElementById('p_ar_anes').textContent = box3Inputs[4]?.value || '';
+
+  // 24 columns = 4 hours x 6 intervals (0,10,20,30,40,50) matching the exact Annex 7 template
+  const NCOLS = 24;
+  const isShadedCol = c => (Math.floor(c / 6) % 2 === 0); // Hour 1 (0..5) and Hour 3 (12..17) shaded like official template
+  const container = document.getElementById('a4MainGridContainer');
+
+  // Column widths: Param 14.2%, Unit 5.2%, Scale 5.0% (Total Left = 24.4%), 24 x 2.9% = 69.6%, Total = 6.0% -> 100.0%
+  const colGroupHtml = `<colgroup>
+    <col style="width:14.2%;">
+    <col style="width:5.2%;">
+    <col style="width:5.0%;">
+    ${'<col style="width:2.9%;">'.repeat(NCOLS)}
+    <col style="width:6.0%;">
+  </colgroup>`;
+
+  // 1. TOP TABLE: TIME, Anes/Surg Start/End, Oxygen, Blank, Halothane, Enflurane, Isoflurane, N2O, Blank, SCCH, Pancuronium
+  let topHtml = `<table class="a4-grid-table">${colGroupHtml}<thead><tr>
+    <th style="text-align:left;">TIME</th>
+    <th></th>
+    <th></th>
+    ${Array.from({length: NCOLS}, (_, i) => `<th>${(i % 6) * 10}</th>`).join('')}
+    <th>Total</th>
+  </tr></thead><tbody>`;
+
+  // Event row
+  topHtml += `<tr><td>Anes/Surg--- Start/End/</td><td></td><td></td>`;
+  for (let c = 0; c < NCOLS; c++) {
+    const ev = anestRows[c]?.event || '';
+    let sym = '';
+    if (ev === 'X_START' || ev === 'X_END') sym = '<strong>X</strong>';
+    else if (ev === 'I_IN' || ev === 'I_OUT') sym = '<strong>I</strong>';
+    else if (ev === 'O_START' || ev === 'O_END') sym = '<strong>⊙</strong>';
+    topHtml += `<td class="${isShadedCol(c)?'shade-hr':''}" style="text-align:center;">${sym}</td>`;
+  }
+  topHtml += `<td></td></tr>`;
+
+  const renderGridRow = (label, unit, scale, cellFn, totalText = '') => {
+    let rHtml = `<tr><td>${label}</td><td style="text-align:center;">${unit}</td><td style="text-align:center;">${scale}</td>`;
+    for (let c = 0; c < NCOLS; c++) {
+      const val = cellFn ? cellFn(c) : '';
+      rHtml += `<td class="${isShadedCol(c)?'shade-hr':''}" style="text-align:center; font-size:4.9pt; font-weight:600;">${val}</td>`;
+    }
+    rHtml += `<td style="text-align:center; font-weight:700;">${totalText}</td></tr>`;
+    return rHtml;
+  };
+
+  topHtml += renderGridRow('Oxygen (O₂)', 'Lit/min', '', c => {
+    const s = (anestRows[c]?.gas || '') + ' ' + (anestRows[c]?.drugs || '');
+    const m = s.match(/O2\s*([\d.]+L?)|O₂\s*([\d.]+L?)/i);
+    return m ? (m[1]||m[2]) : (s.includes('Room') ? 'Air' : '');
+  });
+  topHtml += renderGridRow('', '', '', null);
+  topHtml += renderGridRow('Halothane', 'Vol %', '', c => {
+    const s = (anestRows[c]?.gas || '') + ' ' + (anestRows[c]?.drugs || '');
+    const m = s.match(/Halo\w*\s*([\d.]+%?)/i);
+    return m ? m[1] : '';
+  });
+  topHtml += renderGridRow('Enflurane', 'Vol %', '', c => {
+    const s = (anestRows[c]?.gas || '') + ' ' + (anestRows[c]?.drugs || '');
+    const m = s.match(/Enfl\w*\s*([\d.]+%?)/i);
+    return m ? m[1] : '';
+  });
+  topHtml += renderGridRow('Isoflurane', 'Vol %', '', c => {
+    const s = (anestRows[c]?.gas || '') + ' ' + (anestRows[c]?.drugs || '');
+    const m = s.match(/Iso\w*\s*([\d.]+%?)/i);
+    return m ? m[1] : '';
+  });
+  topHtml += renderGridRow('N₂O', 'Lit/min', '', c => {
+    const s = (anestRows[c]?.gas || '') + ' ' + (anestRows[c]?.drugs || '');
+    const m = s.match(/N2O\s*([\d.]+L?)|N₂O\s*([\d.]+L?)/i);
+    return m ? (m[1]||m[2]) : '';
+  });
+  topHtml += renderGridRow('', '', '', null);
+  topHtml += renderGridRow('SCCH', 'Mg iv', '', c => {
+    const m = (anestRows[c]?.drugs || '').match(/(?:SCCH|Succinyl\w*|Sux\w*)\s*([\d.]+\s*m?g?)/i);
+    return m ? m[1] : '';
+  });
+  topHtml += renderGridRow('Pancuronium', 'Mg iv', '', c => {
+    const m = (anestRows[c]?.drugs || '').match(/Pancuron\w*\s*([\d.]+\s*m?g?)/i);
+    return m ? m[1] : '';
+  });
+  topHtml += `</tbody></table>`;
+
+  // 2. MIDDLE CHART BAND: Exact 23 rows matching template (`220` down to `0`) + Plotted Drug Badges + Vitals SVG
+  const vitalScaleRows = [
+    { drug: 'Vecuronium', unit: 'Mg iv', scale: '220', rx: /Vecuron\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: 'Rocuronium', unit: 'Mg iv', scale: '210', rx: /Rocuron\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: 'mivacuronium', unit: 'Mg iv', scale: '200', rx: /Mivacuron\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: '', unit: 'Mg iv', scale: '190', extraSlot: 0 },
+    { drug: '', unit: 'Mg iv', scale: '180', extraSlot: 1 },
+    { drug: 'Ketamine', unit: 'Mg iv', scale: '170', rx: /Ketamin\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: 'Thiopental', unit: 'Mg iv', scale: '160', rx: /Thiopent\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: 'Propofol', unit: 'Mg iv', scale: '150', rx: /Propofol\s*([\d.]+\s*m?g?)/i },
+    { drug: 'Etomidate', unit: 'Mg iv', scale: '140', rx: /Etomidat\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: 'Midazolam', unit: 'Mg iv', scale: '130', rx: /Midazolam\s*([\d.]+\s*m?g?)/i },
+    { drug: 'Diazepam', unit: 'Mg iv', scale: '120', rx: /Diazepam\s*([\d.]+\s*m?g?)/i },
+    { drug: 'Fentaline', unit: 'Mcg iv', scale: '110', rx: /Fental?\w*\s*([\d.]+\s*(?:mcg|mg)?)/i },
+    { drug: 'Sulfentaline', unit: 'Mcg iv', scale: '100', rx: /Sulfent\w*\s*([\d.]+\s*(?:mcg|mg)?)/i },
+    { drug: 'Meperedine', unit: 'Mg iv', scale: '90', rx: /Meperid\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: 'Morphine', unit: 'Mg iv', scale: '80', rx: /Morphin\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: 'hydrocortisone', unit: 'Mg iv', scale: '70', rx: /Hydrocort\w*\s*([\d.]+\s*m?g?)/i },
+    { drug: '', unit: '', scale: '60' },
+    { drug: '', unit: '', scale: '50' },
+    { drug: 'EtCo₂', unit: 'mmHg', scale: '40' },
+    { drug: 'O₂satu', unit: '%', scale: '30' },
+    { drug: 'Dieresis', unit: 'ml', scale: '20' },
+    { drug: 'Gastric loss', unit: 'ml', scale: '10' },
+    { drug: 'Blood loss', unit: 'ml', scale: '0' }
+  ];
+
+  // Left table inside chart band: 14.2/24.4 = 58.2%, 5.2/24.4 = 21.3%, 5.0/24.4 = 20.5%
+  let leftScaleHtml = `<table class="a4-scale-tbl"><colgroup><col style="width:58.2%;"><col style="width:21.3%;"><col style="width:20.5%;"></colgroup><tbody>`;
+  vitalScaleRows.forEach(vr => {
+    leftScaleHtml += `<tr><td>${vr.drug}</td><td style="text-align:center;">${vr.unit}</td><td style="text-align:center; font-weight:700;">${vr.scale}</td></tr>`;
+  });
+  leftScaleHtml += `</tbody></table>`;
+
+  // Center SVG inside chart band (23 rows x 24 columns)
+  const NROWS = vitalScaleRows.length; // 23
+  const svgW = 720, svgH = 345;
+  const scaleAnchors = [220, 210, 200, 190, 180, 170, 160, 150, 140, 130, 120, 110, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
+  const rowH = svgH / NROWS;
+  const colW = svgW / NCOLS;
+
+  function vToY(v) {
+    if (v >= 220) return rowH * 0.5;
+    if (v <= 0) return svgH - rowH * 0.5;
+    for (let i = 0; i < scaleAnchors.length - 1; i++) {
+      const hi = scaleAnchors[i], lo = scaleAnchors[i + 1];
+      if (v <= hi && v >= lo) {
+        const frac = (hi - v) / (hi - lo);
+        return (i + 0.5 + frac) * rowH;
+      }
+    }
+    return svgH * 0.5;
+  }
+  const cToX = c => (c + 0.5) * colW;
+
+  let miniSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none" style="display:block; width:100%; height:100%;">`;
+  miniSvg += `<rect x="0" y="0" width="${svgW}" height="${svgH}" fill="#ffffff"/>`;
+
+  // Shaded 1-hour columns (cols 0..5 and cols 12..17) matching official template!
+  for (let c = 0; c < NCOLS; c++) {
+    if (isShadedCol(c)) {
+      miniSvg += `<rect x="${c * colW}" y="0" width="${colW}" height="${svgH}" fill="#d9dde2"/>`;
+    }
+  }
+
+  // Horizontal row borders matching left/right tables
+  for (let r = 1; r < NROWS; r++) {
+    const y = r * rowH;
+    miniSvg += `<line x1="0" y1="${y}" x2="${svgW}" y2="${y}" stroke="#000000" stroke-width="0.65"/>`;
+  }
+  // Vertical column borders matching 24 time columns
+  for (let c = 1; c < NCOLS; c++) {
+    const x = c * colW;
+    miniSvg += `<line x1="${x}" y1="0" x2="${x}" y2="${svgH}" stroke="#000000" stroke-width="0.65"/>`;
+  }
+
+  // Render matched IV drug doses directly inside their exact drug rows & time columns (with clean white pill for 100% visibility)
+  const knownDrugRegexes = [
+    /SCCH|Succinyl\w*|Sux\w*/i, /Pancuron\w*/i, /Vecuron\w*/i, /Rocuron\w*/i, /Mivacuron\w*/i,
+    /Ketamin\w*/i, /Thiopent\w*/i, /Propofol/i, /Etomidat\w*/i, /Midazolam/i, /Diazepam/i,
+    /Fental?\w*/i, /Sulfent\w*/i, /Meperid\w*/i, /Morphin\w*/i, /Hydrocort\w*/i,
+    /Atropin\w*|Glycop\w*|Scopol\w*/i, /Neostigmin\w*/i, /Iso\w*/i, /Halo\w*/i, /Enfl\w*/i, /O2|O₂|N2O|N₂O|Room/i
+  ];
+
+  for (let c = 0; c < NCOLS; c++) {
+    const rawDrug = (anestRows[c]?.drugs || '').trim();
+    if (!rawDrug) continue;
+
+    // 1. Place recognized drugs in their exact rows
+    vitalScaleRows.forEach((vr, rIdx) => {
+      if (vr.rx) {
+        const m = rawDrug.match(vr.rx);
+        if (m) {
+          const doseTxt = m[1];
+          const bx = c * colW + 1.5;
+          const by = rIdx * rowH + 1.5;
+          miniSvg += `<rect x="${bx}" y="${by}" width="${colW - 3}" height="${rowH - 3}" rx="2" fill="#ffffff" stroke="#0f4c81" stroke-width="0.7"/>`;
+          miniSvg += `<text x="${cToX(c)}" y="${by + rowH - 5}" text-anchor="middle" font-size="7.5" font-weight="800" fill="#0f4c81">${doseTxt}</text>`;
+        }
+      }
+    });
+
+    // 2. Place any other IV medications (e.g. Ceftriaxone 1g, Paracetamol 1g, Ondansetron 4mg) in rows 3 & 4 (190 & 180)
+    const parts = rawDrug.split(/[,;+]/).map(s => s.trim()).filter(Boolean);
+    const extraMeds = parts.filter(p => !knownDrugRegexes.some(rx => rx.test(p)));
+    extraMeds.slice(0, 2).forEach((med, mIdx) => {
+      const rIdx = 3 + mIdx; // rows 190 and 180
+      const shortMed = med.replace(/\s*IV$/i, '').slice(0, 11);
+      const bx = c * colW + 1;
+      const by = rIdx * rowH + 1.5;
+      miniSvg += `<rect x="${bx}" y="${by}" width="${colW - 2}" height="${rowH - 3}" rx="2" fill="#fef3c7" stroke="#92400e" stroke-width="0.7"/>`;
+      miniSvg += `<text x="${cToX(c)}" y="${by + rowH - 5}" text-anchor="middle" font-size="6.4" font-weight="800" fill="#78350f">${shortMed}</text>`;
+    });
+  }
+
+  // Plot BP vertical range bars & vital series
+  for (let c = 0; c < NCOLS; c++) {
+    const r = anestRows[c];
+    if (!r) continue;
+    const sbp = parseFloat(r.sbp), dbp = parseFloat(r.dbp);
+    if (!isNaN(sbp) && !isNaN(dbp)) {
+      miniSvg += `<line x1="${cToX(c)}" y1="${vToY(sbp)}" x2="${cToX(c)}" y2="${vToY(dbp)}" stroke="#334155" stroke-width="1.3" stroke-dasharray="3,2"/>`;
+    }
+  }
+
+  function plotMiniSeries(key, color, shape) {
+    let pts = [];
+    for (let c = 0; c < NCOLS; c++) {
+      const val = parseFloat(anestRows[c]?.[key]);
+      if (!isNaN(val)) pts.push({ x: cToX(c), y: vToY(val), val, colIdx: c });
+    }
+    if (pts.length > 1) {
+      miniSvg += `<polyline fill="none" stroke="${color}" stroke-width="1.8" points="${pts.map(p=>`${p.x},${p.y}`).join(' ')}"/>`;
+    }
+    pts.forEach(p => {
+      if (shape === 'v') miniSvg += `<polygon points="${p.x-5},${p.y-5} ${p.x+5},${p.y-5} ${p.x},${p.y+4}" fill="${color}"/>`;
+      else if (shape === '^') miniSvg += `<polygon points="${p.x},${p.y-4} ${p.x-5},${p.y+5} ${p.x+5},${p.y+5}" fill="${color}"/>`;
+      else if (shape === 'dot') miniSvg += `<circle cx="${p.x}" cy="${p.y}" r="3.8" fill="${color}"/>`;
+      else if (shape === 'diamond') miniSvg += `<polygon points="${p.x},${p.y-4.5} ${p.x+4.5},${p.y} ${p.x},${p.y+4.5} ${p.x-4.5},${p.y}" fill="${color}"/>`;
+      else if (shape === 'square') miniSvg += `<rect x="${p.x-3.3}" y="${p.y-3.3}" width="6.6" height="6.6" fill="${color}"/>`;
+      const tx = p.colIdx >= NCOLS - 1 ? p.x - 18 : p.x + 4;
+      // Crisp white halo behind text so gridlines never obscure numbers
+      miniSvg += `<text x="${tx}" y="${p.y - 3}" font-size="8.2" font-weight="800" stroke="#ffffff" stroke-width="2.2" paint-order="stroke" fill="${color}">${p.val}</text>`;
+    });
+  }
+  plotMiniSeries('sbp', '#dc2626', 'v');
+  plotMiniSeries('dbp', '#2563eb', '^');
+  plotMiniSeries('pr', '#059669', 'dot');
+  plotMiniSeries('spo2', '#0891b2', 'diamond');
+  plotMiniSeries('etco2', '#7c3aed', 'square');
+  miniSvg += `</svg>`;
+
+  // Right Total column inside chart band
+  let totLoss = 0;
+  anestRows.forEach(r => totLoss += parseFloat(r.loss) || 0);
+  let rightTotHtml = `<table class="a4-tot-tbl"><tbody>`;
+  vitalScaleRows.forEach(vr => {
+    const totalColVal = (vr.drug === 'Blood loss' && totLoss > 0) ? `${totLoss}` : '';
+    rightTotHtml += `<tr><td>${totalColVal}</td></tr>`;
+  });
+  rightTotHtml += `</tbody></table>`;
+
+  const midBandHtml = `<div class="a4-chart-band">
+    <div>${leftScaleHtml}</div>
+    <div class="a4-svg-box">${miniSvg}</div>
+    <div>${rightTotHtml}</div>
+  </div>`;
+
+  // 3. BOTTOM TABLE: Reversal Medications & IV Fluids (exact template names & units)
+  let totFluids = 0;
+  anestRows.forEach(r => totFluids += parseFloat(r.fluids) || 0);
+
+  const fluidRows = [
+    { label: 'Atropin/glycop/scopala/', unit: 'Mg iv', extract: d => { const m = d.match(/(?:Atropin\w*|Glycop\w*|Scopol\w*)\s*([\d.]+\s*m?g?)/i); return m ? m[1] : ''; } },
+    { label: 'Neostigmine', unit: 'Mg iv', extract: d => { const m = d.match(/Neostigmin\w*\s*([\d.]+\s*m?g?)/i); return m ? m[1] : ''; } },
+    { label: 'Hemacel', unit: 'ml iv' },
+    { label: 'Dextran', unit: 'ml iv' },
+    { label: 'Dexin saline', unit: 'ml iv' },
+    { label: '0.9%norman saline', unit: 'ml iv', isFluid: true },
+    { label: 'Ringer lactate', unit: 'ml iv' },
+    { label: '5% Dextrose', unit: 'ml iv' },
+    { label: 'Bllod N°', unit: 'ml iv' }
+  ];
+
+  let botHtml = `<table class="a4-grid-table">${colGroupHtml}<tbody>`;
+  botHtml += renderGridRow('', '', '', null); // Blank separator row matching template
+  fluidRows.forEach(fr => {
+    botHtml += renderGridRow(fr.label, fr.unit, '', c => {
+      if (fr.isFluid) return anestRows[c]?.fluids || '';
+      if (fr.extract) return fr.extract(anestRows[c]?.drugs || '');
+      return '';
+    }, (fr.isFluid && totFluids > 0) ? `${totFluids}` : '');
+  });
+  botHtml += `</tbody></table>`;
+
+  container.innerHTML = topHtml + midBandHtml + botHtml;
+}
+
+function prepareAnestA4IfActive() {
+  const active = document.querySelector('.form-section.active');
+  if (active && active.id === 'form-anest-rec') {
+    buildAnestA4PrintSheet();
+    document.body.classList.add('printing-anest-a4');
+  } else {
+    document.body.classList.remove('printing-anest-a4');
+  }
+}
+
+window.addEventListener('beforeprint', prepareAnestA4IfActive);
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing-anest-a4');
+});
+
+function saveAsPDF() {
+  prepareAnestA4IfActive();
+  const origTitle = document.title;
+  document.title = getActiveFormFilename();
+  showToast('📄 Select "Save as PDF" (A4 Portrait)');
+  setTimeout(() => {
+    window.print();
+    document.title = origTitle;
+  }, 150);
+}
+
+function printActiveForm() {
+  prepareAnestA4IfActive();
+  const origTitle = document.title;
+  document.title = getActiveFormFilename();
+  window.print();
+  document.title = origTitle;
+}
+
+function saveProgress() {
+  localStorage.setItem('moh_perioperative_forms', JSON.stringify(gatherData()));
+  showToast('✓ Draft saved locally in browser');
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(gatherData(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `MoH_Perioperative_Forms_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast('✓ Exported JSON data');
+}
+
+function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      applyData(JSON.parse(ev.target.result));
+      showToast('✓ Imported form data');
+    } catch {
+      alert('Invalid JSON file.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearCurrentForm() {
+  if (!confirm('Clear all fields in the currently active form?')) return;
+  const active = document.querySelector('.form-section.active');
+  active.querySelectorAll('input, select, textarea').forEach(el => {
+    if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+    else if (el.classList.contains('et-date-input')) { el.value = ''; delete el.dataset.etYear; delete el.dataset.etMonth; delete el.dataset.etDay; delete el.dataset.gcIso; }
+    else if (!el.readOnly) el.value = '';
+  });
+  if (active && active.id === 'form-anest-rec') {
+    anestRows.forEach(r => { r.event=''; r.sbp=''; r.dbp=''; r.pr=''; r.spo2=''; r.etco2=''; r.gas=''; r.drugs=''; r.fluids=''; r.loss=''; });
+    updateAnestTotals();
+    renderAnestChart();
+  }
+  showToast('Form cleared');
+}
+
+
+// ============================================================================
+// STANDARDIZED ETHIOPIAN CALENDAR DATE & TIME PICKER (EC <-> GC CONVERTER)
+// ============================================================================
+const ET_MONTHS = [
+  { num: 1, am: 'መስከረም', en: 'Meskerem' },
+  { num: 2, am: 'ጥቅምት', en: 'Tikimt' },
+  { num: 3, am: 'ኅዳር', en: 'Hidar' },
+  { num: 4, am: 'ታኅሣሥ', en: 'Tahsas' },
+  { num: 5, am: 'ጥር', en: 'Tir' },
+  { num: 6, am: 'የካቲት', en: 'Yekatit' },
+  { num: 7, am: 'መጋቢት', en: 'Megabit' },
+  { num: 8, am: 'ሚያዝያ', en: 'Miazia' },
+  { num: 9, am: 'ግንቦት', en: 'Ginbot' },
+  { num: 10, am: 'ሰኔ', en: 'Sene' },
+  { num: 11, am: 'ሐምሌ', en: 'Hamle' },
+  { num: 12, am: 'ነሐሴ', en: 'Nehase' },
+  { num: 13, am: 'ጳጉሜን', en: 'Pagume' }
+];
+
+function isEtLeapYear(etYear) {
+  return (etYear % 4) === 3;
+}
+
+function etDaysInMonth(etYear, etMonth) {
+  if (etMonth < 13) return 30;
+  return isEtLeapYear(etYear) ? 6 : 5;
+}
+
+// Convert Julian Day Number (JDN) to/from Ethiopian & Gregorian
+function gregorianToJDN(y, m, d) {
+  const a = Math.floor((14 - m) / 12);
+  const y2 = y + 4800 - a;
+  const m2 = m + 12 * a - 3;
+  return d + Math.floor((153 * m2 + 2) / 5) + 365 * y2 + Math.floor(y2 / 4) - Math.floor(y2 / 100) + Math.floor(y2 / 400) - 32045;
+}
+
+function jdnToGregorian(jdn) {
+  const f = jdn + 1401 + Math.floor((Math.floor((4 * jdn + 274277) / 146097) * 3) / 4) - 38;
+  const e = 4 * f + 3;
+  const g = Math.floor((e % 1461) / 4);
+  const h = 5 * g + 2;
+  const day = Math.floor((h % 153) / 5) + 1;
+  const month = ((Math.floor(h / 153) + 2) % 12) + 1;
+  const year = Math.floor(e / 1461) - 4716 + Math.floor((12 + 2 - month) / 12);
+  return { year, month, day };
+}
+
+const ET_EPOCH_JDN = 1723856; // Meskerem 1, 1 EC
+
+function etToJDN(year, month, day) {
+  return (ET_EPOCH_JDN + 365) + 365 * (year - 1) + Math.floor(year / 4) + 30 * (month - 1) + day - 1;
+}
+
+function jdnToEt(jdn) {
+  const r = (jdn - ET_EPOCH_JDN) % 1461;
+  const n = (r % 365) + 365 * Math.floor(r / 1460);
+  const year = 4 * Math.floor((jdn - ET_EPOCH_JDN) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460);
+  const month = Math.floor(n / 30) + 1;
+  const day = (n % 30) + 1;
+  return { year, month, day };
+}
+
+function getTodayEt() {
+  const now = new Date();
+  return jdnToEt(gregorianToJDN(now.getFullYear(), now.getMonth() + 1, now.getDate()));
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+// Picker State
+let activeEtInput = null;
+let pickerState = {
+  year: 2019,
+  month: 3,
+  day: 6,
+  hasTime: false,
+  hour: 12,
+  minute: 0,
+  period: 'AM'
+};
+
+function initEtPickerControls() {
+  const mSel = document.getElementById('etMonthSelect');
+  ET_MONTHS.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.num;
+    opt.textContent = `${m.am} (${m.en})`;
+    mSel.appendChild(opt);
+  });
+
+  const ySel = document.getElementById('etYearSelect');
+  for (let y = 1920; y <= 2050; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = `${y} ዓ.ም`;
+    ySel.appendChild(opt);
+  }
+
+  const hSel = document.getElementById('etHourSelect');
+  for (let h = 1; h <= 12; h++) {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = pad2(h);
+    hSel.appendChild(opt);
+  }
+
+  const minSel = document.getElementById('etMinSelect');
+  for (let m = 0; m < 60; m++) {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = pad2(m);
+    minSel.appendChild(opt);
+  }
+
+  mSel.addEventListener('change', () => {
+    pickerState.month = parseInt(mSel.value);
+    const maxD = etDaysInMonth(pickerState.year, pickerState.month);
+    if (pickerState.day > maxD) pickerState.day = maxD;
+    renderEtCalendar();
+  });
+
+  ySel.addEventListener('change', () => {
+    pickerState.year = parseInt(ySel.value);
+    const maxD = etDaysInMonth(pickerState.year, pickerState.month);
+    if (pickerState.day > maxD) pickerState.day = maxD;
+    renderEtCalendar();
+  });
+
+  document.getElementById('etPrevMonth').addEventListener('click', () => {
+    pickerState.month--;
+    if (pickerState.month < 1) { pickerState.month = 13; pickerState.year--; }
+    const maxD = etDaysInMonth(pickerState.year, pickerState.month);
+    if (pickerState.day > maxD) pickerState.day = maxD;
+    renderEtCalendar();
+  });
+
+  document.getElementById('etNextMonth').addEventListener('click', () => {
+    pickerState.month++;
+    if (pickerState.month > 13) { pickerState.month = 1; pickerState.year++; }
+    const maxD = etDaysInMonth(pickerState.year, pickerState.month);
+    if (pickerState.day > maxD) pickerState.day = maxD;
+    renderEtCalendar();
+  });
+
+  ['etHourSelect', 'etMinSelect', 'etPeriodSelect'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      pickerState.hour = parseInt(document.getElementById('etHourSelect').value);
+      pickerState.minute = parseInt(document.getElementById('etMinSelect').value);
+      pickerState.period = document.getElementById('etPeriodSelect').value;
+      commitEtValue();
+    });
+  });
+
+  document.getElementById('etTodayBtn').addEventListener('click', () => {
+    const t = getTodayEt();
+    pickerState.year = t.year;
+    pickerState.month = t.month;
+    pickerState.day = t.day;
+    renderEtCalendar();
+    commitEtValue();
+  });
+
+  document.getElementById('etDoneBtn').addEventListener('click', () => {
+    commitEtValue();
+    closeEtPopover();
+  });
+
+  document.addEventListener('click', (e) => {
+    const pop = document.getElementById('etDatePopover');
+    if (pop.classList.contains('open') && !pop.contains(e.target) && e.target !== activeEtInput) {
+      closeEtPopover();
+    }
+  });
+}
+
+function renderEtCalendar() {
+  document.getElementById('etMonthSelect').value = pickerState.month;
+  document.getElementById('etYearSelect').value = pickerState.year;
+
+  const grid = document.getElementById('etDaysGrid');
+  grid.innerHTML = '';
+
+  const firstJdn = etToJDN(pickerState.year, pickerState.month, 1);
+  // JDN % 7: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun -> convert to Sun=0..Sat=6
+  const startDow = (firstJdn + 1) % 7;
+  const totalDays = etDaysInMonth(pickerState.year, pickerState.month);
+  const today = getTodayEt();
+
+  for (let i = 0; i < startDow; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'et-day empty';
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= totalDays; d++) {
+    const cell = document.createElement('div');
+    cell.className = 'et-day';
+    if (d === pickerState.day) cell.classList.add('selected');
+    if (pickerState.year === today.year && pickerState.month === today.month && d === today.day) {
+      cell.classList.add('today');
+    }
+    cell.textContent = d;
+    cell.addEventListener('click', () => {
+      pickerState.day = d;
+      renderEtCalendar();
+      commitEtValue();
+      if (!pickerState.hasTime) closeEtPopover();
+    });
+    grid.appendChild(cell);
+  }
+
+  const gc = jdnToGregorian(etToJDN(pickerState.year, pickerState.month, pickerState.day));
+  document.getElementById('etGregPreview').textContent = `GC: ${gc.year}-${pad2(gc.month)}-${pad2(gc.day)}`;
+}
+
+function formatEtDisplay(inputEl) {
+  if (!pickerState.year) return '';
+  const mObj = ET_MONTHS[pickerState.month - 1];
+  const isCompact = inputEl.closest('td') !== null || inputEl.offsetWidth < 175;
+  // Standardized DD/MM/YYYY EC (or Meskerem 01, 2019 EC when wide)
+  const stdDate = isCompact
+    ? `${pad2(pickerState.day)}/${pad2(pickerState.month)}/${pickerState.year} EC`
+    : `${pad2(pickerState.day)}/${pad2(pickerState.month)}/${pickerState.year} (${mObj.en}) EC`;
+
+  if (pickerState.hasTime) {
+    return `${stdDate} ${pad2(pickerState.hour)}:${pad2(pickerState.minute)} ${pickerState.period}`;
+  }
+  return stdDate;
+}
+
+function commitEtValue() {
+  if (!activeEtInput) return;
+  const gc = jdnToGregorian(etToJDN(pickerState.year, pickerState.month, pickerState.day));
+  activeEtInput.dataset.etYear = pickerState.year;
+  activeEtInput.dataset.etMonth = pickerState.month;
+  activeEtInput.dataset.etDay = pickerState.day;
+  activeEtInput.dataset.etHour = pickerState.hour;
+  activeEtInput.dataset.etMinute = pickerState.minute;
+  activeEtInput.dataset.etPeriod = pickerState.period;
+  activeEtInput.dataset.gcIso = `${gc.year}-${pad2(gc.month)}-${pad2(gc.day)}`;
+  activeEtInput.value = formatEtDisplay(activeEtInput);
+  activeEtInput.title = `Ethiopian Calendar: ${pad2(pickerState.day)}/${pad2(pickerState.month)}/${pickerState.year} EC | Gregorian: ${activeEtInput.dataset.gcIso}`;
+}
+
+function openEtPopover(inputEl) {
+  activeEtInput = inputEl;
+  pickerState.hasTime = inputEl.dataset.etMode === 'datetime';
+
+  if (inputEl.dataset.etYear) {
+    pickerState.year = parseInt(inputEl.dataset.etYear);
+    pickerState.month = parseInt(inputEl.dataset.etMonth);
+    pickerState.day = parseInt(inputEl.dataset.etDay);
+    pickerState.hour = parseInt(inputEl.dataset.etHour || 12);
+    pickerState.minute = parseInt(inputEl.dataset.etMinute || 0);
+    pickerState.period = inputEl.dataset.etPeriod || 'AM';
+  } else {
+    const t = getTodayEt();
+    pickerState.year = t.year;
+    pickerState.month = t.month;
+    pickerState.day = t.day;
+    pickerState.hour = 12;
+    pickerState.minute = 0;
+    pickerState.period = 'AM';
+  }
+
+  const timeBar = document.getElementById('etTimeBar');
+  if (pickerState.hasTime) {
+    timeBar.style.display = 'flex';
+    document.getElementById('etHourSelect').value = pickerState.hour;
+    document.getElementById('etMinSelect').value = pickerState.minute;
+    document.getElementById('etPeriodSelect').value = pickerState.period;
+  } else {
+    timeBar.style.display = 'none';
+  }
+
+  renderEtCalendar();
+
+  const pop = document.getElementById('etDatePopover');
+  pop.classList.add('open');
+  const rect = inputEl.getBoundingClientRect();
+  const popH = pop.offsetHeight || 310;
+  const popW = pop.offsetWidth || 292;
+
+  let top = rect.bottom + 4;
+  if (top + popH > window.innerHeight - 8) {
+    top = Math.max(8, rect.top - popH - 4);
+  }
+  let left = rect.left;
+  if (left + popW > window.innerWidth - 8) {
+    left = Math.max(8, window.innerWidth - popW - 8);
+  }
+  pop.style.top = `${top}px`;
+  pop.style.left = `${left}px`;
+}
+
+function closeEtPopover() {
+  document.getElementById('etDatePopover').classList.remove('open');
+  activeEtInput = null;
+}
+
+// Upgrade all <input type="date"> and <input type="datetime-local"> dynamically
+function upgradeDateFieldsToEthiopian(root = document) {
+  root.querySelectorAll('input[type="date"], input[type="datetime-local"]').forEach(inp => {
+    if (inp.dataset.etUpgraded) return;
+    const isDateTime = inp.type === 'datetime-local';
+    inp.type = 'text';
+    inp.readOnly = true;
+    inp.dataset.etUpgraded = '1';
+    inp.dataset.etMode = isDateTime ? 'datetime' : 'date';
+    inp.classList.add('et-date-input');
+    inp.placeholder = isDateTime ? 'DD/MM/YYYY EC HH:MM' : 'DD/MM/YYYY EC';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'et-date-wrap' + (inp.closest('td') ? ' compact' : '');
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+
+    const icon = document.createElement('span');
+    icon.className = 'et-date-icon';
+    icon.textContent = isDateTime ? '📅🕒' : '📅';
+    wrap.appendChild(icon);
+
+    inp.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEtPopover(inp);
+    });
+  });
+}
+
+// Re-format date strings dynamically when window resizes so text compresses cleanly with field length
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.et-date-input').forEach(inp => {
+    if (inp.dataset.etYear) {
+      const mObj = ET_MONTHS[parseInt(inp.dataset.etMonth) - 1];
+      const isCompact = inp.closest('td') !== null || inp.offsetWidth < 175;
+      const stdDate = isCompact
+        ? `${pad2(inp.dataset.etDay)}/${pad2(inp.dataset.etMonth)}/${inp.dataset.etYear} EC`
+        : `${pad2(inp.dataset.etDay)}/${pad2(inp.dataset.etMonth)}/${inp.dataset.etYear} (${mObj.en}) EC`;
+      inp.value = inp.dataset.etMode === 'datetime'
+        ? `${stdDate} ${pad2(inp.dataset.etHour)}:${pad2(inp.dataset.etMinute)} ${inp.dataset.etPeriod}`
+        : stdDate;
+    }
+  });
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  initEtPickerControls();
+  upgradeDateFieldsToEthiopian(document);
+  const saved = localStorage.getItem('moh_perioperative_forms');
+  if (saved) applyData(JSON.parse(saved));
+});
+</script>
+
+  <script>
+    (function() {
+      window.addEventListener('DOMContentLoaded', function() {
+        
+          if (window.BahmniCustomFormBridge) {
+            BahmniCustomFormBridge.init({
+              formId: 'national_perioperative',
+              formTitle: 'National Perioperative Clinical Forms',
+              conceptUuid: 'e0790007-3d71-4569-b1d5-894000000008',
+              tag: 'SURG',
+              color: '#ea580c',
+              getData: function () {
+                return (typeof gatherData === 'function') ? gatherData() : {};
+              },
+              setData: function (data) {
+                if (typeof applyData === 'function') {
+                  applyData(data);
+                }
+              },
+              extractSummary: function (d) {
+                return {
+                  patientName: d['sa_name'] || d['sp_name'] || '',
+                  mrn: d['sa_mrn'] || d['sp_mrn'] || '',
+                  procedure: d['procedure_name'] || d['proposedOperation'] || d['sa_proc'] || '',
+                  urgency: d['urgency'] || d['sa_urgency'] || 'Elective',
+                  asaGrade: d['asa_grade'] || d['an_asa'] || '',
+                  surgeon: d['surgeon'] || d['sa_surgeon'] || ''
+                };
+              },
+              setLockState: function (locked) {
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+                  el.disabled = locked;
+                });
+              }
+            });
+          }
+        
+      });
+    })();
+  </script>
+</body>
+
+</html>

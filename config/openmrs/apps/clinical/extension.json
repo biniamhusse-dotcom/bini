@@ -735,11 +735,11 @@
     "extensionParams": {
       "conceptName": "WHO Emergency Unit Form - Trauma",
       "formName": "WHO Emergency Unit Form - Trauma",
-      "default": false,
+      "default": true,
       "defaultLocation": "All",
       "formUUID": "787486b1-fdae-40f8-b704-4aa241633468"
     },
-    "order": 30,
+    "order": 28,
     "requiredPrivilege": "app:clinical"
   },
   "bahmniClinicalConceptSetGroupObservationsWHOLabourCareGuide": {
@@ -752,6 +752,90 @@
       "defaultLocation": "All"
     },
     "order": 2,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsEthiopianOTP": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.ethiopianOtp",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Ethiopian OTP Follow-Up Card",
+      "default": false,
+      "defaultLocation": "All"
+    },
+    "order": 29,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsFmohDmHtn": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.fmohDmHtn",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "FMOH Ethiopia DM and Hypertension Follow-Up Form",
+      "default": false,
+      "defaultLocation": "All"
+    },
+    "order": 30,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsOphthalmicEyeExam": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.ophthalmicEyeExam",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Ophthalmic and Optometric Eye Examination Record",
+      "default": false,
+      "defaultLocation": "All"
+    },
+    "order": 31,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsNationalPerioperative": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.nationalPerioperative",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "National Perioperative Clinical Forms",
+      "default": false,
+      "defaultLocation": "All"
+    },
+    "order": 32,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsSafeChildbirthChecklist": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.safeChildbirthChecklist",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Safe Childbirth Checklist Ethiopian",
+      "default": false,
+      "defaultLocation": "All"
+    },
+    "order": 33,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsStabilisationCentre": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.stabilisationCentre",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Stabilisation Centre Multi-Chart",
+      "default": false,
+      "defaultLocation": "All"
+    },
+    "order": 34,
+    "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsWhoPph": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.whoPph",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "WHO Postpartum Hemorrhage Observation Chart",
+      "default": false,
+      "defaultLocation": "All"
+    },
+    "order": 35,
     "requiredPrivilege": "app:clinical"
   }
 }

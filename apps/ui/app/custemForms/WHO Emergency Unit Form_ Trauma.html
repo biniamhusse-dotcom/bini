@@ -1330,32 +1330,51 @@ async function initPatientContext() {
       arrTimeInput.value = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
     }
 
-    // 2. Fetch existing observations for this patient
-    const obsUrl = currentObsUuid 
-      ? `/openmrs/ws/rest/v1/obs/${currentObsUuid}?v=custom:(uuid,obsDatetime,value,encounter:(uuid))`
-      : `/openmrs/ws/rest/v1/obs?patient=${patientUuid}&concept=787486b1-fdae-40f8-b704-4aa241633401&v=custom:(uuid,obsDatetime,value,encounter:(uuid))`;
-
+    // 2. Fetch all existing observations for this patient
+    const obsUrl = `/openmrs/ws/rest/v1/obs?patient=${patientUuid}&concept=787486b1-fdae-40f8-b704-4aa241633401&v=custom:(uuid,obsDatetime,value,encounter:(uuid))`;
     const obsRes = await fetch(obsUrl, { credentials: 'include' });
     if (obsRes.ok) {
       const obsData = await obsRes.json();
-      let targetObs = null;
-      if (currentObsUuid && obsData.uuid) {
-        targetObs = obsData;
-      } else if (obsData.results && obsData.results.length > 0) {
-        targetObs = obsData.results[0];
+      const results = (obsData.results || []).slice().sort((a, b) => new Date(b.obsDatetime) - new Date(a.obsDatetime));
+      
+      let activeUnlockedObs = null;
+      let matchedObs = null;
+
+      if (currentObsUuid) {
+        matchedObs = results.find(o => o.uuid === currentObsUuid);
       }
 
+      // Find if any observation is active and unlocked
+      for (const o of results) {
+        let p = null;
+        try { p = typeof o.value === 'string' ? JSON.parse(o.value) : o.value; } catch(e) {}
+        if (p && !p.locked) {
+          activeUnlockedObs = o;
+          break; // Found active unlocked trauma record
+        }
+      }
+
+      // Priority: explicitly requested obs -> active unlocked obs -> newest record
+      let targetObs = matchedObs || activeUnlockedObs;
+
+      // RULE: If an active unlocked form exists, attach to it and update it!
+      // Only start a brand new form if ALL existing forms are locked!
       if (targetObs) {
         currentObsUuid = targetObs.uuid;
+        if (targetObs.encounter && targetObs.encounter.uuid) {
+          encounterUuid = targetObs.encounter.uuid;
+        }
         try {
           const parsed = typeof targetObs.value === 'string' ? JSON.parse(targetObs.value) : targetObs.value;
           restoreTraumaFormFromData(parsed);
-          document.getElementById('hdrStatus').textContent = 'EMR record: ' + new Date(targetObs.obsDatetime).toLocaleDateString();
+          document.getElementById('hdrStatus').textContent = (parsed.locked ? 'Locked record: ' : 'Continuing active record: ') + new Date(targetObs.obsDatetime).toLocaleDateString();
         } catch (e) {
           console.warn("Could not parse saved trauma JSON:", e);
         }
       } else {
-        document.getElementById('hdrStatus').textContent = 'New Clinical Record';
+        // All prior records are locked (or none exist) -> Clean new form
+        currentObsUuid = null;
+        document.getElementById('hdrStatus').textContent = 'New Clinical Record (All prior forms locked)';
       }
     }
   } catch (err) {
@@ -1434,7 +1453,7 @@ async function saveToPatientEncounter() {
   });
 
   // Record audit entry
-  addAuditTrailEntry(traumaLocked ? 'Record Finalized' : 'Routine Observation Save', `Saved by ${currentClinicianName}`);
+  addAuditTrailEntry(traumaLocked ? 'Record Finalized & Locked' : 'Observation Updated', `Saved by ${currentClinicianName}`);
 
   const payload = {
     savedAt: new Date().toISOString(),
@@ -1474,63 +1493,102 @@ async function saveToPatientEncounter() {
     fields: fieldValues
   };
 
-  try {
-    sessionStorage.setItem('trauma_active_chart', JSON.stringify(payload));
-    if (currentObsUuid) {
-      localStorage.setItem('trauma_review_' + currentObsUuid, JSON.stringify(payload));
-    }
-  } catch (e) {}
-
-  try {
-    const obsList = [
-      {
-        concept: "787486b1-fdae-40f8-b704-4aa241633401", // WHO Trauma Complete Form JSON
-        value: JSON.stringify(payload)
-      }
-    ];
-
-    if (triageCategory) obsList.push({ concept: "787486b1-fdae-40f8-b704-4aa241633402", value: triageCategory });
-    if (chiefComplaint) obsList.push({ concept: "787486b1-fdae-40f8-b704-4aa241633403", value: chiefComplaint });
-    if (gcsTot && gcsTot !== '–') obsList.push({ concept: "787486b1-fdae-40f8-b704-4aa241633412", value: Number(gcsTot) });
-
-    let res;
-    if (encounterUuid) {
-      res = await fetch(`/openmrs/ws/rest/v1/encounter/${encounterUuid}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ obs: obsList })
-      });
-    } else {
-      for (const singleObs of obsList) {
-        const postRes = await fetch('/openmrs/ws/rest/v1/obs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            person: targetPtUuid,
-            concept: singleObs.concept,
-            obsDatetime: new Date().toISOString(),
-            value: singleObs.value
-          })
-        });
-        if (postRes.ok && !currentObsUuid) {
-          const created = await postRes.json();
-          if (created && created.uuid) currentObsUuid = created.uuid;
+  // STEP 1: If currentObsUuid is not yet known, verify whether an active unlocked observation already exists in EMR
+  if (!currentObsUuid) {
+    try {
+      const checkRes = await fetch(`/openmrs/ws/rest/v1/obs?patient=${targetPtUuid}&concept=787486b1-fdae-40f8-b704-4aa241633401&v=custom:(uuid,obsDatetime,value,encounter:(uuid))`, { credentials: 'include' });
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        const results = (checkData.results || []).slice().sort((a, b) => new Date(b.obsDatetime) - new Date(a.obsDatetime));
+        for (const o of results) {
+          let p = null;
+          try { p = typeof o.value === 'string' ? JSON.parse(o.value) : o.value; } catch(e) {}
+          if (p && !p.locked) {
+            currentObsUuid = o.uuid;
+            if (o.encounter && o.encounter.uuid) encounterUuid = o.encounter.uuid;
+            break;
+          }
         }
       }
-      res = { ok: true };
-    }
+    } catch(e) {}
+  }
 
-    if (res.ok) {
+  // CASE 1: Active observation exists -> UPDATE IN-PLACE (ZERO DUPLICATES!)
+  if (currentObsUuid) {
+    try {
+      const updateRes = await fetch(`/openmrs/ws/rest/v1/obs/${currentObsUuid}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          value: JSON.stringify(payload)
+        })
+      });
+
+      if (updateRes.ok) {
+        const updated = await updateRes.json();
+        if (updated && updated.uuid) {
+          currentObsUuid = updated.uuid;
+          payload.obsUuid = currentObsUuid;
+        }
+        try {
+          sessionStorage.setItem('trauma_active_chart', JSON.stringify(payload));
+          localStorage.setItem('trauma_review_' + currentObsUuid, JSON.stringify(payload));
+          localStorage.setItem(K, JSON.stringify(fieldValues));
+          localStorage.setItem(K + '-pins', JSON.stringify(pins));
+        } catch(e) {}
+
+        renderAuditTrail();
+        renderShiftHandovers();
+        showToast(traumaLocked ? 'WHO Trauma Form Finalized & Locked!' : 'WHO Trauma Form updated in-place ✓');
+        document.getElementById('hdrStatus').textContent = (traumaLocked ? 'Locked at ' : 'Updated at ') + new Date().toLocaleTimeString();
+        txt.textContent = origTxt;
+        btn.disabled = false;
+        return;
+      }
+    } catch(err) {
+      console.warn("Direct obs update error, attempting creation:", err);
+    }
+  }
+
+  // CASE 2: No active unlocked observation exists (all prior forms are locked) -> CREATE NEW RECORD
+  try {
+    const postRes = await fetch('/openmrs/ws/rest/v1/obs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        person: targetPtUuid,
+        concept: "787486b1-fdae-40f8-b704-4aa241633401", // WHO Trauma Complete Form JSON
+        obsDatetime: new Date().toISOString(),
+        value: JSON.stringify(payload)
+      })
+    });
+
+    if (postRes.ok) {
+      const created = await postRes.json();
+      if (created && created.uuid) {
+        currentObsUuid = created.uuid;
+        payload.obsUuid = currentObsUuid;
+      }
+      try {
+        sessionStorage.setItem('trauma_active_chart', JSON.stringify(payload));
+        localStorage.setItem('trauma_review_' + currentObsUuid, JSON.stringify(payload));
+        localStorage.setItem(K, JSON.stringify(fieldValues));
+        localStorage.setItem(K + '-pins', JSON.stringify(pins));
+      } catch(e) {}
+
       renderAuditTrail();
       renderShiftHandovers();
-      showToast(traumaLocked ? 'WHO Trauma Form Finalized & Locked!' : 'WHO Trauma Form successfully saved!');
+      showToast(traumaLocked ? 'WHO Trauma Form Finalized & Locked!' : 'New WHO Trauma Form created & saved ✓');
       document.getElementById('hdrStatus').textContent = (traumaLocked ? 'Locked at ' : 'Saved at ') + new Date().toLocaleTimeString();
     } else {
       showToast('Saved locally in browser storage.');
     }
-  } catch (err) {
+  } catch(err) {
     console.error("Save error:", err);
     showToast('Saved locally in browser storage.');
   } finally {

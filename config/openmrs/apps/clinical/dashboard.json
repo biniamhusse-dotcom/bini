@@ -669,6 +669,62 @@
                 },
                 "formGroup": [],
                 "translationKey": "DASHBOARD_TITLE_FORMS_DISPLAY_CONTROL_KEY"
+            },
+            "ethiopianOtpCard": {
+                "type": "custom",
+                "displayOrder": 26,
+                "config": {
+                    "title": "Ethiopian OTP Follow-Up Card",
+                    "template": "<ethiopian-otp-card section='config' patient='patient'></ethiopian-otp-card>"
+                }
+            },
+            "fmohDmHypertensionFollowUp": {
+                "type": "custom",
+                "displayOrder": 27,
+                "config": {
+                    "title": "FMOH Ethiopia DM & Hypertension Follow-Up",
+                    "template": "<fmoh-dm-hypertension-follow-up section='config' patient='patient'></fmoh-dm-hypertension-follow-up>"
+                }
+            },
+            "ophthalmicEyeExam": {
+                "type": "custom",
+                "displayOrder": 28,
+                "config": {
+                    "title": "Ophthalmic Eye Examination Record",
+                    "template": "<ophthalmic-eye-exam section='config' patient='patient'></ophthalmic-eye-exam>"
+                }
+            },
+            "nationalPerioperativeForms": {
+                "type": "custom",
+                "displayOrder": 29,
+                "config": {
+                    "title": "National Perioperative Clinical Forms",
+                    "template": "<national-perioperative-forms section='config' patient='patient'></national-perioperative-forms>"
+                }
+            },
+            "safeChildbirthChecklist": {
+                "type": "custom",
+                "displayOrder": 30,
+                "config": {
+                    "title": "Safe Childbirth Checklist (Ethiopian)",
+                    "template": "<safe-childbirth-checklist section='config' patient='patient'></safe-childbirth-checklist>"
+                }
+            },
+            "stabilisationCentreMultiChart": {
+                "type": "custom",
+                "displayOrder": 31,
+                "config": {
+                    "title": "Stabilisation Centre (SC) Multi-Chart",
+                    "template": "<stabilisation-centre-multi-chart section='config' patient='patient'></stabilisation-centre-multi-chart>"
+                }
+            },
+            "whoPphObservationChart": {
+                "type": "custom",
+                "displayOrder": 32,
+                "config": {
+                    "title": "WHO Postpartum Hemorrhage (PPH) Observation Chart",
+                    "template": "<who-pph-observation-chart section='config' patient='patient'></who-pph-observation-chart>"
+                }
             }
         }
     },

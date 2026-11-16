@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ophthalmic & Optometric Eye Examination Record</title>
+  <link rel="stylesheet" href="./tailwind-offline.css">
+  <style>
+
+  /* Offline High-Fidelity System Font Stack for Amharic / English */
+  html, body, input, select, textarea, button {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Ethiopic", "Nyala", "Abyssinica SIL", sans-serif !important;
+  }
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Interactive Diagram Container */
+    .diagram-wrapper {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      margin: 0 auto;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    @media (max-width: 640px) {
+      .diagram-wrapper {
+        width: 210px;
+        height: 210px;
+      }
+    }
+
+    .diagram-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .diagram-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+      border-radius: 9999px;
+    }
+
+    /* Form Inputs Styling */
+    .clinical-input {
+      border-bottom: 1px solid #cbd5e1;
+      background: transparent;
+      padding: 2px 6px;
+      font-size: 0.875rem;
+      color: #0f172a;
+      transition: border-color 0.15s;
+    }
+    .clinical-input:focus {
+      outline: none;
+      border-bottom: 2px solid #0284c7;
+      background-color: #f8fafc;
+    }
+
+    .table-input {
+      width: 100%;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 0.8125rem;
+      background-color: #ffffff;
+    }
+    .table-input:focus {
+      outline: none;
+      border-color: #0284c7;
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.12);
+    }
+
+    /* Custom Checkbox */
+    input[type="checkbox"] {
+      accent-color: #0284c7;
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    /* Active Tool Button State */
+    .tool-btn.active {
+      background-color: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    .color-swatch.active {
+      transform: scale(1.2);
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #0f172a;
+    }
+
+    /* Linked Note Row Highlighting */
+    .note-row {
+      transition: all 0.15s ease;
+    }
+    .note-row.highlighted {
+      background-color: #e0f2fe !important;
+      border-color: #0284c7 !important;
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25);
+    }
+
+    /* Print Media Optimization */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-container {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .page-break-avoid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .clinical-input, .table-input, textarea {
+        border-color: #94a3b8 !important;
+      }
+      .note-row {
+        background-color: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+<script src="bahmni-custom-form-bridge.js"></script>
+</head>
+<body class="pb-16">
+
+  <!-- Sticky Top Physician Toolbar (Hidden on Print) -->
+  <header class="no-print sticky top-0 z-50 bg-slate-900 text-white shadow-lg border-b border-slate-700">
+    <div class="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center font-bold text-white shadow">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-semibold tracking-tight leading-tight">Ophthalmic Clinical Record</h1>
+          <p class="text-[11px] text-slate-400" id="saveStatus">Auto-saved locally</p>
+        </div>
+      </div>
+
+      <!-- Drawing Controls Bar -->
+      <div class="flex flex-wrap items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+        <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mr-1 hidden md:inline">Annotation Tool:</span>
+
+        <!-- Modes -->
+        <button type="button" data-tool="dot" class="tool-btn active px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-600 bg-slate-700 hover:bg-slate-600 transition flex items-center gap-1" title="Click/Tap to place numbered pin & auto-create finding row">
+          <span class="w-3.5 h-3.5 rounded-full bg-red-600 text-white text-[9px] font-bold inline-flex items-center justify-center">1</span> Numbered Dot
+        </button>
+        <button type="button" data-tool="pen" class="tool-btn px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-600 bg-slate-700 hover:bg-slate-600 transition flex items-center gap-1" title="Freehand draw vessels, tears, opacities">
+          ✏️ Pen
+        </button>
+        <button type="button" data-tool="shade" class="tool-btn px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-600 bg-slate-700 hover:bg-slate-600 transition flex items-center gap-1" title="Translucent shading for scotomas or edema">
+          🖌️ Shade
+        </button>
+        <button type="button" data-tool="eraser" class="tool-btn px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-600 bg-slate-700 hover:bg-slate-600 transition flex items-center gap-1" title="Click a numbered pin to delete & renumber, or erase strokes">
+          🧹 Erase / Del Pin
+        </button>
+
+        <div class="h-5 w-px bg-slate-600 mx-1"></div>
+
+        <!-- Ophthalmic Color Coding -->
+        <div class="flex items-center gap-1.5" title="Standard Ophthalmic Color Legend">
+          <button type="button" data-color="#dc2626" class="color-swatch active w-5 h-5 rounded-full bg-red-600 border border-white/40 transition" title="Red: Hemorrhage, Retinal Tear, Vascular"></button>
+          <button type="button" data-color="#2563eb" class="color-swatch w-5 h-5 rounded-full bg-blue-600 border border-white/40 transition" title="Blue: Retinal Detachment, Edema, Fluid"></button>
+          <button type="button" data-color="#16a34a" class="color-swatch w-5 h-5 rounded-full bg-green-600 border border-white/40 transition" title="Green: Fluorescein Corneal Staining / Defect"></button>
+          <button type="button" data-color="#eab308" class="color-swatch w-5 h-5 rounded-full bg-yellow-500 border border-white/40 transition" title="Yellow: Exudates, Drusen, Hypopyon"></button>
+          <button type="button" data-color="#1e293b" class="color-swatch w-5 h-5 rounded-full bg-slate-900 border border-white/60 transition" title="Black: Pigment, Scar, Nevus, Opacity"></button>
+        </div>
+
+        <div class="h-5 w-px bg-slate-600 mx-1 hidden sm:block"></div>
+
+        <!-- Size selector -->
+        <select id="brushSize" class="bg-slate-700 text-white text-xs rounded-lg px-2 py-1 border border-slate-600 focus:outline-none" title="Pin / Brush Size">
+          <option value="8">Small Pin (8px)</option>
+          <option value="10" selected>Standard Pin (10px)</option>
+          <option value="13">Large Pin (13px)</option>
+          <option value="18">XL Shade (18px)</option>
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2">
+        <input type="file" id="importJsonInput" accept=".json" class="hidden" onchange="importRecordJSON(event)" />
+        <button type="button" onclick="document.getElementById('importJsonInput').click()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600 transition">
+          Import JSON
+        </button>
+        <button type="button" onclick="exportRecordJSON()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600 transition">
+          Export JSON
+        </button>
+        <button type="button" onclick="confirmResetModal()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-rose-900/70 hover:bg-rose-800 text-rose-100 border border-rose-700 transition">
+          Reset
+        </button>
+        <button type="button" onclick="window.print()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow transition flex items-center gap-1.5">
+          <span>🖨️</span> Print / PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Ophthalmic Color Legend Strip -->
+    <div class="bg-slate-800/90 border-t border-slate-700/80 px-4 py-1 text-[11px] text-slate-300">
+      <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+        <span class="font-semibold text-slate-200">Standard Ophthalmic Color Code:</span>
+        <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></i> Red: Hemorrhage / Tear / Vessels</span>
+        <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></i> Blue: Detachment / Edema</span>
+        <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></i> Green: Fluorescein / Epithelial Defect</span>
+        <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-yellow-500 inline-block"></i> Yellow: Exudates / Drusen / Hypopyon</span>
+        <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-slate-950 border border-slate-500 inline-block"></i> Black: Pigment / Scar / Cataract</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Printable Clinical Form Sheet -->
+  <main class="print-container max-w-5xl mx-auto my-6 bg-white shadow-xl rounded-2xl border border-slate-200 p-6 sm:p-10 space-y-7">
+
+    <!-- Clinic Letterhead -->
+    <div class="border-b-2 border-slate-800 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest bg-sky-100 text-sky-800 rounded">Clinical Record</span>
+          <span class="text-xs text-slate-500">Form OPH-101</span>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 mt-1 tracking-tight">COMPREHENSIVE EYE EXAMINATION FORM</h2>
+        <p class="text-xs text-slate-500">Ophthalmology & Optometry Outpatient Clinical Documentation</p>
+      </div>
+      <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+        <label class="flex flex-col">
+          <span class="text-slate-500 font-medium">Exam Date</span>
+          <input type="date" id="examDate" class="clinical-input font-medium" />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-slate-500 font-medium">MRN / Patient ID</span>
+          <input type="text" id="mrn" placeholder="e.g. MRN-20489" class="clinical-input font-mono" />
+        </label>
+      </div>
+    </div>
+
+    <!-- SECTION 1: Patient & Visit Demographics -->
+    <section class="page-break-avoid">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-sky-900 bg-sky-50 border-l-4 border-sky-600 px-3 py-1.5 rounded-r mb-3">
+        1. Patient & Visit Demographics
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <label class="sm:col-span-2 flex flex-col">
+          <span class="text-xs font-semibold text-slate-600">Patient Full Name</span>
+          <input type="text" id="patientName" placeholder="Last, First Middle" class="clinical-input" />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-600">Date of Birth / Age</span>
+          <input type="text" id="dobAge" placeholder="DD/MM/YYYY (Age)" class="clinical-input" />
+        </label>
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-600 mb-1">Sex</span>
+          <div class="flex items-center gap-4 text-xs pt-1">
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="sexMale" /> Male</label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="sexFemale" /> Female</label>
+          </div>
+        </div>
+        <label class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-600">Occupation / Visual Demand</span>
+          <input type="text" id="occupation" placeholder="e.g. Driver, Computer work" class="clinical-input" />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-600">Phone / Contact</span>
+          <input type="text" id="phone" placeholder="+251..." class="clinical-input" />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-600">Referring Provider</span>
+          <input type="text" id="referringProvider" placeholder="Dr. / Clinic" class="clinical-input" />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-600">Examining Physician</span>
+          <input type="text" id="examiningPhysician" placeholder="Dr. Name, MD/OD" class="clinical-input" />
+        </label>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Clinical History & Chief Complaint -->
+    <section class="page-break-avoid">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-sky-900 bg-sky-50 border-l-4 border-sky-600 px-3 py-1.5 rounded-r mb-3">
+        2. Clinical History & Chief Complaint
+      </h3>
+      <div class="space-y-3 text-xs">
+        <label class="flex flex-col">
+          <span class="font-semibold text-slate-700 mb-1">Chief Complaint (CC) & Duration:</span>
+          <input type="text" id="chiefComplaint" placeholder="Describe primary visual symptoms, onset, laterality (OD/OS/OU), severity..." class="clinical-input w-full" />
+        </label>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div>
+            <span class="font-semibold text-slate-700 block mb-1.5">Past Ocular History:</span>
+            <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+              <label class="flex items-center gap-1"><input type="checkbox" id="ohNone" /> None</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="ohCataract" /> Cataract</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="ohGlaucoma" /> Glaucoma</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="ohRefractive" /> Refractive Surg</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="ohTrauma" /> Trauma</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="ohRetinal" /> Retinal Disease</label>
+            </div>
+          </div>
+
+          <div>
+            <span class="font-semibold text-slate-700 block mb-1.5">Current Optical Correction:</span>
+            <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+              <label class="flex items-center gap-1"><input type="checkbox" id="rxNone" /> None</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="rxDistance" /> Distance Glasses</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="rxNear" /> Reading</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="rxProg" /> Bifocal/Progressive</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="rxCL" /> Contact Lenses</label>
+            </div>
+          </div>
+
+          <div>
+            <span class="font-semibold text-slate-700 block mb-1.5">Systemic Medical History:</span>
+            <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+              <label class="flex items-center gap-1"><input type="checkbox" id="shDM" /> Diabetes Mellitus</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="shHTN" /> Hypertension</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="shThyroid" /> Thyroid</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="shAuto" /> Autoimmune</label>
+            </div>
+          </div>
+
+          <div class="flex flex-col justify-between">
+            <label class="flex items-center gap-2">
+              <span class="font-semibold text-slate-700 whitespace-nowrap">Drug Allergies:</span>
+              <input type="text" id="allergies" placeholder="NKDA / specify..." class="clinical-input w-full" />
+            </label>
+            <label class="flex items-center gap-2 mt-1.5">
+              <span class="font-semibold text-slate-700 whitespace-nowrap">Medications:</span>
+              <input type="text" id="medications" placeholder="Current eye drops & systemic meds..." class="clinical-input w-full" />
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Visual Acuity & Refraction -->
+    <section class="page-break-avoid">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-sky-900 bg-sky-50 border-l-4 border-sky-600 px-3 py-1.5 rounded-r mb-3">
+        3. Visual Acuity & Refraction (6m / 20ft Standard)
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs border-collapse border border-slate-300">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 font-semibold">
+              <th class="border border-slate-300 px-2.5 py-2 text-left w-1/3">Parameter</th>
+              <th class="border border-slate-300 px-2.5 py-2 text-center w-2/9">Right Eye (OD)</th>
+              <th class="border border-slate-300 px-2.5 py-2 text-center w-2/9">Left Eye (OS)</th>
+              <th class="border border-slate-300 px-2.5 py-2 text-center w-2/9">Both Eyes (OU)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Distance VA — Uncorrected (sc)</td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaDistScOD" placeholder="6/___ (20/___)" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaDistScOS" placeholder="6/___ (20/___)" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaDistScOU" placeholder="6/___ (20/___)" class="table-input text-center" /></td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Distance VA — With Current Rx (cc)</td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaDistCcOD" placeholder="6/___ (20/___)" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaDistCcOS" placeholder="6/___ (20/___)" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaDistCcOU" placeholder="6/___ (20/___)" class="table-input text-center" /></td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Distance VA — Pinhole (PH)</td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaPhOD" placeholder="6/___ (20/___)" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaPhOS" placeholder="6/___ (20/___)" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1 text-center text-slate-400">—</td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Near Visual Acuity (at 40 cm)</td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaNearOD" placeholder="J___ / N___" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaNearOS" placeholder="J___ / N___" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="vaNearOU" placeholder="J___ / N___" class="table-input text-center" /></td>
+            </tr>
+            <tr class="bg-slate-50/70">
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Habitual Rx (Lensometry)</td>
+              <td class="border border-slate-300 p-1"><input type="text" id="lensOD" placeholder="Sph / Cyl × Axis" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="lensOS" placeholder="Sph / Cyl × Axis" class="table-input text-center" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="lensAdd" placeholder="Add: +___" class="table-input text-center" /></td>
+            </tr>
+            <tr class="bg-sky-50/40">
+              <td class="border border-slate-300 px-2.5 py-1.5 font-semibold text-sky-950">Manifest / Subjective Refraction</td>
+              <td class="border border-slate-300 p-1"><input type="text" id="refOD" placeholder="Sph / Cyl × Axis" class="table-input text-center font-medium" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="refOS" placeholder="Sph / Cyl × Axis" class="table-input text-center font-medium" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="refAdd" placeholder="Add: +___ | PD: ___mm" class="table-input text-center" /></td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-semibold">Best Corrected VA (BCVA)</td>
+              <td class="border border-slate-300 p-1"><input type="text" id="bcvaOD" placeholder="6/___ (20/___)" class="table-input text-center font-semibold" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="bcvaOS" placeholder="6/___ (20/___)" class="table-input text-center font-semibold" /></td>
+              <td class="border border-slate-300 p-1"><input type="text" id="bcvaOU" placeholder="6/___ (20/___)" class="table-input text-center font-semibold" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Pupils, Motility, IOP & Interactive Confrontation Visual Fields -->
+    <section class="page-break-avoid">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-sky-900 bg-sky-50 border-l-4 border-sky-600 px-3 py-1.5 rounded-r mb-3">
+        4. Pupils, Motility, Tonometry & Confrontation Visual Fields
+      </h3>
+
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-xs border-collapse border border-slate-300">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 font-semibold">
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-1/3">Clinical Test</th>
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-1/3">Right Eye (OD)</th>
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-1/3">Left Eye (OS)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Pupils (Light / Dark mm & Reflex)</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <input type="text" id="pupilOD" placeholder="3/5 mm" class="table-input w-20 text-center" />
+                  <label class="flex items-center gap-1"><input type="checkbox" id="pupilBriskOD" /> Brisk</label>
+                  <label class="flex items-center gap-1"><input type="checkbox" id="pupilSlugOD" /> Sluggish</label>
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <input type="text" id="pupilOS" placeholder="3/5 mm" class="table-input w-20 text-center" />
+                  <label class="flex items-center gap-1"><input type="checkbox" id="pupilBriskOS" /> Brisk</label>
+                  <label class="flex items-center gap-1"><input type="checkbox" id="pupilSlugOS" /> Sluggish</label>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">RAPD (Marcus Gunn Pupil)</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="rapdNegOD" /> Negative</label>
+                  <label class="flex items-center gap-1"><input type="checkbox" id="rapdPosOD" /> Positive</label>
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="rapdNegOS" /> Negative</label>
+                  <label class="flex items-center gap-1"><input type="checkbox" id="rapdPosOS" /> Positive</label>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Extraocular Motility (EOM) & Alignment</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="eomFullOD" /> Full & Smooth</label>
+                  <input type="text" id="eomNoteOD" placeholder="Restriction / Phoria..." class="table-input flex-1 min-w-[100px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="eomFullOS" /> Full & Smooth</label>
+                  <input type="text" id="eomNoteOS" placeholder="Restriction / Phoria..." class="table-input flex-1 min-w-[100px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Color Vision (Ishihara) & IOP (mmHg)</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex items-center gap-2">
+                  <input type="text" id="ishiharaOD" placeholder="14/14" class="table-input w-16 text-center" title="Ishihara plates" />
+                  <span class="font-semibold text-slate-600">IOP:</span>
+                  <input type="text" id="iopOD" placeholder="___ mmHg" class="table-input w-24 text-center font-semibold" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex items-center gap-2">
+                  <input type="text" id="ishiharaOS" placeholder="14/14" class="table-input w-16 text-center" title="Ishihara plates" />
+                  <span class="font-semibold text-slate-600">IOP:</span>
+                  <input type="text" id="iopOS" placeholder="___ mmHg" class="table-input w-24 text-center font-semibold" />
+                  <select id="iopMethod" class="table-input w-20 text-xs">
+                    <option value="GAT">GAT</option>
+                    <option value="iCare">iCare</option>
+                    <option value="NCT">NCT</option>
+                  </select>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Interactive Confrontation Visual Fields -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wide text-slate-800">Confrontation Visual Fields (Interactive — Dot or Shade Scotomas)</h4>
+            <p class="text-[11px] text-slate-500">Patient view convention: Left diagram = Left Eye (OS), Right diagram = Right Eye (OD), or mark per clinical convention.</p>
+          </div>
+          <div class="no-print flex items-center gap-1.5">
+            <button type="button" onclick="undoCanvas('vfOD')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Undo OD</button>
+            <button type="button" onclick="clearCanvas('vfOD')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Clear OD</button>
+            <button type="button" onclick="undoCanvas('vfOS')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Undo OS</button>
+            <button type="button" onclick="clearCanvas('vfOS')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Clear OS</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+          <!-- Visual Field OD -->
+          <div class="flex flex-col items-center w-full">
+            <div class="flex items-center justify-between w-full max-w-[240px] mb-1 text-xs font-bold text-slate-700">
+              <span>Temporal</span>
+              <span class="text-sky-800">RIGHT EYE (OD)</span>
+              <span>Nasal</span>
+            </div>
+            <div class="diagram-wrapper">
+              <svg class="diagram-svg" viewBox="0 0 240 240">
+                <circle cx="120" cy="120" r="108" fill="#ffffff" stroke="#334155" stroke-width="2" />
+                <circle cx="120" cy="120" r="72" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" />
+                <circle cx="120" cy="120" r="36" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" />
+                <line x1="12" y1="120" x2="228" y2="120" stroke="#64748b" stroke-width="1.2" />
+                <line x1="120" y1="12" x2="120" y2="228" stroke="#64748b" stroke-width="1.2" />
+                <line x1="44" y1="44" x2="196" y2="196" stroke="#e2e8f0" stroke-width="1" />
+                <line x1="196" y1="44" x2="44" y2="196" stroke="#e2e8f0" stroke-width="1" />
+                <!-- Physiologic blind spot temporal OD -->
+                <ellipse cx="82" cy="124" rx="6" ry="9" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1" />
+              </svg>
+              <canvas id="vfOD" class="diagram-canvas"></canvas>
+            </div>
+            <label class="flex items-center gap-1.5 text-xs mt-2 font-medium text-slate-700">
+              <input type="checkbox" id="vfFullOD" /> Full to Finger Counting (OD)
+            </label>
+            <!-- Linked Numbered Notes Container for vfOD -->
+            <div id="notes-vfOD" class="w-full mt-2.5 space-y-1.5"></div>
+          </div>
+
+          <!-- Visual Field OS -->
+          <div class="flex flex-col items-center w-full">
+            <div class="flex items-center justify-between w-full max-w-[240px] mb-1 text-xs font-bold text-slate-700">
+              <span>Nasal</span>
+              <span class="text-sky-800">LEFT EYE (OS)</span>
+              <span>Temporal</span>
+            </div>
+            <div class="diagram-wrapper">
+              <svg class="diagram-svg" viewBox="0 0 240 240">
+                <circle cx="120" cy="120" r="108" fill="#ffffff" stroke="#334155" stroke-width="2" />
+                <circle cx="120" cy="120" r="72" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" />
+                <circle cx="120" cy="120" r="36" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" />
+                <line x1="12" y1="120" x2="228" y2="120" stroke="#64748b" stroke-width="1.2" />
+                <line x1="120" y1="12" x2="120" y2="228" stroke="#64748b" stroke-width="1.2" />
+                <line x1="44" y1="44" x2="196" y2="196" stroke="#e2e8f0" stroke-width="1" />
+                <line x1="196" y1="44" x2="44" y2="196" stroke="#e2e8f0" stroke-width="1" />
+                <!-- Physiologic blind spot temporal OS -->
+                <ellipse cx="158" cy="124" rx="6" ry="9" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1" />
+              </svg>
+              <canvas id="vfOS" class="diagram-canvas"></canvas>
+            </div>
+            <label class="flex items-center gap-1.5 text-xs mt-2 font-medium text-slate-700">
+              <input type="checkbox" id="vfFullOS" /> Full to Finger Counting (OS)
+            </label>
+            <!-- Linked Numbered Notes Container for vfOS -->
+            <div id="notes-vfOS" class="w-full mt-2.5 space-y-1.5"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: Slit-Lamp Biomicroscopy & Interactive Anterior Segment Diagram -->
+    <section class="page-break-avoid">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-sky-900 bg-sky-50 border-l-4 border-sky-600 px-3 py-1.5 rounded-r mb-3">
+        5. Slit-Lamp Biomicroscopy & Anterior Segment Diagram
+      </h3>
+
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-xs border-collapse border border-slate-300">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 font-semibold">
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-1/4">Anterior Structure</th>
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-3/8">Right Eye (OD)</th>
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-3/8">Left Eye (OS)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Lids, Lashes & Lacrimal</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="lidsNormOD" /> Normal</label>
+                  <input type="text" id="lidsNoteOD" placeholder="Blepharitis / Ptosis / Chalazion..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="lidsNormOS" /> Normal</label>
+                  <input type="text" id="lidsNoteOS" placeholder="Blepharitis / Ptosis / Chalazion..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Conjunctiva & Sclera</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="conjNormOD" /> White & Quiet</label>
+                  <input type="text" id="conjNoteOD" placeholder="Injection / Pterygium / Discharge..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="conjNormOS" /> White & Quiet</label>
+                  <input type="text" id="conjNoteOS" placeholder="Injection / Pterygium / Discharge..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Cornea</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="corneaNormOD" /> Clear & Compact</label>
+                  <input type="text" id="corneaNoteOD" placeholder="Edema / Ulcer / Scar / KPs / Staining..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="corneaNormOS" /> Clear & Compact</label>
+                  <input type="text" id="corneaNoteOS" placeholder="Edema / Ulcer / Scar / KPs / Staining..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Anterior Chamber (AC)</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="acNormOD" /> Deep & Quiet</label>
+                  <input type="text" id="acNoteOD" placeholder="Cells/Flare / Hypopyon / Van Herick..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="acNormOS" /> Deep & Quiet</label>
+                  <input type="text" id="acNoteOS" placeholder="Cells/Flare / Hypopyon / Van Herick..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Iris</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="irisNormOD" /> Normal</label>
+                  <input type="text" id="irisNoteOD" placeholder="Synechiae / NVI / Atrophy..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="irisNormOS" /> Normal</label>
+                  <input type="text" id="irisNoteOS" placeholder="Synechiae / NVI / Atrophy..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Crystalline Lens / IOL</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="lensNormOD" /> Clear</label>
+                  <input type="text" id="lensNoteOD" placeholder="NS / CC / PSC grade / PCIOL..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="lensNormOS" /> Clear</label>
+                  <input type="text" id="lensNoteOS" placeholder="NS / CC / PSC grade / PCIOL..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Interactive Anterior Segment Diagrams -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wide text-slate-800">Anterior Segment Clock-Hour Diagrams (Click/Tap to Dot or Draw Lesions)</h4>
+            <p class="text-[11px] text-slate-500">Annotate corneal ulcers (green), pterygium (red/pink), hypopyon (yellow), KPs, or lenticular opacities.</p>
+          </div>
+          <div class="no-print flex items-center gap-1.5">
+            <button type="button" onclick="undoCanvas('antOD')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Undo OD</button>
+            <button type="button" onclick="clearCanvas('antOD')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Clear OD</button>
+            <button type="button" onclick="undoCanvas('antOS')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Undo OS</button>
+            <button type="button" onclick="clearCanvas('antOS')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Clear OS</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+          <!-- Anterior Segment OD -->
+          <div class="flex flex-col items-center w-full">
+            <span class="text-xs font-bold text-sky-800 mb-1">ANTERIOR SEGMENT — RIGHT EYE (OD)</span>
+            <div class="diagram-wrapper">
+              <svg class="diagram-svg" viewBox="0 0 240 240">
+                <!-- Outer Conjunctiva / Sclera Ring -->
+                <circle cx="120" cy="120" r="106" fill="#ffffff" stroke="#334155" stroke-width="2" />
+                <!-- Clock hour ticks -->
+                <g stroke="#94a3b8" stroke-width="1">
+                  <line x1="120" y1="14" x2="120" y2="24" />
+                  <line x1="120" y1="216" x2="120" y2="226" />
+                  <line x1="14" y1="120" x2="24" y2="120" />
+                  <line x1="216" y1="120" x2="226" y2="120" />
+                  <line x1="173" y1="28" x2="168" y2="36" />
+                  <line x1="212" y1="67" x2="204" y2="72" />
+                  <line x1="212" y1="173" x2="204" y2="168" />
+                  <line x1="173" y1="212" x2="168" y2="204" />
+                  <line x1="67" y1="212" x2="72" y2="204" />
+                  <line x1="28" y1="173" x2="36" y2="168" />
+                  <line x1="28" y1="67" x2="36" y2="72" />
+                  <line x1="67" y1="28" x2="72" y2="36" />
+                </g>
+                <!-- Clock Labels -->
+                <text x="120" y="11" text-anchor="middle" font-size="10" font-weight="bold" fill="#475569">12</text>
+                <text x="233" y="123" text-anchor="middle" font-size="10" font-weight="bold" fill="#475569">3</text>
+                <text x="120" y="237" text-anchor="middle" font-size="10" font-weight="bold" fill="#475569">6</text>
+                <text x="7" y="123" text-anchor="middle" font-size="10" font-weight="bold" fill="#475569">9</text>
+                <!-- Corneal Limbus -->
+                <circle cx="120" cy="120" r="68" fill="#f8fafc" stroke="#0284c7" stroke-width="1.8" />
+                <!-- Iris Collarette -->
+                <circle cx="120" cy="120" r="46" fill="none" stroke="#94a3b8" stroke-width="0.9" stroke-dasharray="3 2" />
+                <!-- Pupil -->
+                <circle cx="120" cy="120" r="24" fill="#f1f5f9" stroke="#334155" stroke-width="1.5" />
+                <!-- Crosshair -->
+                <line x1="114" y1="120" x2="126" y2="120" stroke="#94a3b8" stroke-width="0.8" />
+                <line x1="120" y1="114" x2="120" y2="126" stroke="#94a3b8" stroke-width="0.8" />
+              </svg>
+              <canvas id="antOD" class="diagram-canvas"></canvas>
+            </div>
+            <!-- Linked Numbered Notes Container for antOD -->
+            <div id="notes-antOD" class="w-full mt-2.5 space-y-1.5"></div>
+          </div>
+
+          <!-- Anterior Segment OS -->
+          <div class="flex flex-col items-center w-full">
+            <span class="text-xs font-bold text-sky-800 mb-1">ANTERIOR SEGMENT — LEFT EYE (OS)</span>
+            <div class="diagram-wrapper">
+              <svg class="diagram-svg" viewBox="0 0 240 240">
+                <circle cx="120" cy="120" r="106" fill="#ffffff" stroke="#334155" stroke-width="2" />
+                <g stroke="#94a3b8" stroke-width="1">
+                  <line x1="120" y1="14" x2="120" y2="24" />
+                  <line x1="120" y1="216" x2="120" y2="226" />
+                  <line x1="14" y1="120" x2="24" y2="120" />
+                  <line x1="216" y1="120" x2="226" y2="120" />
+                  <line x1="173" y1="28" x2="168" y2="36" />
+                  <line x1="212" y1="67" x2="204" y2="72" />
+                  <line x1="212" y1="173" x2="204" y2="168" />
+                  <line x1="173" y1="212" x2="168" y2="204" />
+                  <line x1="67" y1="212" x2="72" y2="204" />
+                  <line x1="28" y1="173" x2="36" y2="168" />
+                  <line x1="28" y1="67" x2="36" y2="72" />
+                  <line x1="67" y1="28" x2="72" y2="36" />
+                </g>
+                <text x="120" y="11" text-anchor="middle" font-size="10" font-weight="bold" fill="#475569">12</text>
+                <text x="233" y="123" text-anchor="middle" font-size="10" font-weight="bold" fill="#475569">3</text>
+                <text x="120" y="237" text-anchor="middle" font-size="10" font-weight="bold" fill="#475569">6</text>
+                <text x="7" y="123" text-anchor="middle" font-size="10" font-weight="bold" fill="#475569">9</text>
+                <circle cx="120" cy="120" r="68" fill="#f8fafc" stroke="#0284c7" stroke-width="1.8" />
+                <circle cx="120" cy="120" r="46" fill="none" stroke="#94a3b8" stroke-width="0.9" stroke-dasharray="3 2" />
+                <circle cx="120" cy="120" r="24" fill="#f1f5f9" stroke="#334155" stroke-width="1.5" />
+                <line x1="114" y1="120" x2="126" y2="120" stroke="#94a3b8" stroke-width="0.8" />
+                <line x1="120" y1="114" x2="120" y2="126" stroke="#94a3b8" stroke-width="0.8" />
+              </svg>
+              <canvas id="antOS" class="diagram-canvas"></canvas>
+            </div>
+            <!-- Linked Numbered Notes Container for antOS -->
+            <div id="notes-antOS" class="w-full mt-2.5 space-y-1.5"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: Posterior Segment (Dilated Fundus Exam) & Retinal Diagram -->
+    <section class="page-break-avoid">
+      <div class="flex flex-wrap items-center justify-between gap-2 bg-sky-50 border-l-4 border-sky-600 px-3 py-1.5 rounded-r mb-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-sky-900">
+          6. Posterior Segment (Dilated Fundus Examination)
+        </h3>
+        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-700">
+          <span class="font-semibold">Dilation:</span>
+          <label class="flex items-center gap-1"><input type="checkbox" id="dilTrop" /> Tropicamide 1%</label>
+          <label class="flex items-center gap-1"><input type="checkbox" id="dilPhen" /> Phenylephrine 2.5%</label>
+          <label class="flex items-center gap-1"><input type="checkbox" id="dilUndil" /> Undilated</label>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-xs border-collapse border border-slate-300">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 font-semibold">
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-1/4">Posterior Structure</th>
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-3/8">Right Eye (OD)</th>
+              <th class="border border-slate-300 px-2.5 py-1.5 text-left w-3/8">Left Eye (OS)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Vitreous</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="vitClearOD" /> Clear</label>
+                  <input type="text" id="vitNoteOD" placeholder="PVD / Floaters / Vitreous Hem..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="vitClearOS" /> Clear</label>
+                  <input type="text" id="vitNoteOS" placeholder="PVD / Floaters / Vitreous Hem..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Optic Nerve Head (C/D Ratio)</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-semibold">C/D:</span>
+                  <input type="text" id="cdOD" placeholder="0.3" class="table-input w-14 text-center font-semibold" />
+                  <label class="flex items-center gap-1"><input type="checkbox" id="discPinkOD" /> Pink & Sharp</label>
+                  <input type="text" id="discNoteOD" placeholder="Notching / Edema / Pallor..." class="table-input flex-1 min-w-[90px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-semibold">C/D:</span>
+                  <input type="text" id="cdOS" placeholder="0.3" class="table-input w-14 text-center font-semibold" />
+                  <label class="flex items-center gap-1"><input type="checkbox" id="discPinkOS" /> Pink & Sharp</label>
+                  <input type="text" id="discNoteOS" placeholder="Notching / Edema / Pallor..." class="table-input flex-1 min-w-[90px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Macula & Foveal Reflex</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="macFlatOD" /> Flat & Intact</label>
+                  <input type="text" id="macNoteOD" placeholder="Drusen / CSME / CNV / Hole..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="macFlatOS" /> Flat & Intact</label>
+                  <input type="text" id="macNoteOS" placeholder="Drusen / CSME / CNV / Hole..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Retinal Vessels (A:V Ratio)</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <input type="text" id="avOD" placeholder="2:3" class="table-input w-14 text-center" />
+                  <label class="flex items-center gap-1"><input type="checkbox" id="vesNormOD" /> Normal Caliber</label>
+                  <input type="text" id="vesNoteOD" placeholder="AV nicking / NVD / NVE..." class="table-input flex-1 min-w-[100px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <input type="text" id="avOS" placeholder="2:3" class="table-input w-14 text-center" />
+                  <label class="flex items-center gap-1"><input type="checkbox" id="vesNormOS" /> Normal Caliber</label>
+                  <input type="text" id="vesNoteOS" placeholder="AV nicking / NVD / NVE..." class="table-input flex-1 min-w-[100px]" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="border border-slate-300 px-2.5 py-1.5 font-medium">Retinal Periphery (360°)</td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="perAttOD" /> Attached 360°</label>
+                  <input type="text" id="perNoteOD" placeholder="Tear / RD / Lattice / Nevus..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+              <td class="border border-slate-300 p-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="flex items-center gap-1"><input type="checkbox" id="perAttOS" /> Attached 360°</label>
+                  <input type="text" id="perNoteOS" placeholder="Tear / RD / Lattice / Nevus..." class="table-input flex-1 min-w-[120px]" />
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Interactive Fundus & Optic Disc Diagrams -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wide text-slate-800">Fundus & Retinal Schematic Diagrams (Dot Microaneurysms, Hemorrhages, Exudates, or Draw Tears/RD)</h4>
+            <p class="text-[11px] text-slate-500">Includes Ora Serrata, Equator, Temporal Vascular Arcades, Optic Nerve Head (Cup/Disc), and Foveal Crosshair.</p>
+          </div>
+          <div class="no-print flex items-center gap-1.5">
+            <button type="button" onclick="undoCanvas('funOD')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Undo OD</button>
+            <button type="button" onclick="clearCanvas('funOD')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Clear OD</button>
+            <button type="button" onclick="undoCanvas('funOS')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Undo OS</button>
+            <button type="button" onclick="clearCanvas('funOS')" class="px-2 py-1 text-[11px] bg-white border border-slate-300 rounded hover:bg-slate-100">Clear OS</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+          <!-- Fundus OD (Optic disc on nasal/right side of diagram, macula in center) -->
+          <div class="flex flex-col items-center w-full">
+            <span class="text-xs font-bold text-sky-800 mb-1">RIGHT FUNDUS (OD)</span>
+            <div class="diagram-wrapper">
+              <svg class="diagram-svg" viewBox="0 0 240 240">
+                <!-- Ora Serrata -->
+                <circle cx="120" cy="120" r="108" fill="#fffaf5" stroke="#334155" stroke-width="2" />
+                <!-- Equator dashed ring -->
+                <circle cx="120" cy="120" r="82" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" />
+                <!-- Quadrant axes -->
+                <line x1="12" y1="120" x2="228" y2="120" stroke="#e2e8f0" stroke-width="1" />
+                <line x1="120" y1="12" x2="120" y2="228" stroke="#e2e8f0" stroke-width="1" />
+                <!-- Retinal Vascular Arcades originating from Optic Disc at (156, 120) -->
+                <path d="M156,112 C145,75 105,65 75,85" fill="none" stroke="#fca5a5" stroke-width="1.6" />
+                <path d="M156,128 C145,165 105,175 75,155" fill="none" stroke="#fca5a5" stroke-width="1.6" />
+                <path d="M162,113 C175,82 195,72 210,75" fill="none" stroke="#fca5a5" stroke-width="1.3" />
+                <path d="M162,127 C175,158 195,168 210,165" fill="none" stroke="#fca5a5" stroke-width="1.3" />
+                <!-- Optic Nerve Head (Disc & Cup) -->
+                <circle cx="156" cy="120" r="14" fill="#fed7aa" stroke="#ea580c" stroke-width="1.4" />
+                <circle cx="156" cy="120" r="5.5" fill="#fff7ed" stroke="#f97316" stroke-width="1" />
+                <!-- Macula / Fovea Center -->
+                <circle cx="114" cy="120" r="16" fill="none" stroke="#cbd5e1" stroke-width="0.9" stroke-dasharray="2 2" />
+                <line x1="109" y1="120" x2="119" y2="120" stroke="#64748b" stroke-width="1.2" />
+                <line x1="114" y1="115" x2="114" y2="125" stroke="#64748b" stroke-width="1.2" />
+              </svg>
+              <canvas id="funOD" class="diagram-canvas"></canvas>
+            </div>
+            <span class="text-[10px] text-slate-500 mt-1">Optic Disc (Nasal) • Fovea (+) • Equator (Dashed)</span>
+            <!-- Linked Numbered Notes Container for funOD -->
+            <div id="notes-funOD" class="w-full mt-2.5 space-y-1.5"></div>
+          </div>
+
+          <!-- Fundus OS (Optic disc on nasal/left side of diagram, macula in center) -->
+          <div class="flex flex-col items-center w-full">
+            <span class="text-xs font-bold text-sky-800 mb-1">LEFT FUNDUS (OS)</span>
+            <div class="diagram-wrapper">
+              <svg class="diagram-svg" viewBox="0 0 240 240">
+                <circle cx="120" cy="120" r="108" fill="#fffaf5" stroke="#334155" stroke-width="2" />
+                <circle cx="120" cy="120" r="82" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" />
+                <line x1="12" y1="120" x2="228" y2="120" stroke="#e2e8f0" stroke-width="1" />
+                <line x1="120" y1="12" x2="120" y2="228" stroke="#e2e8f0" stroke-width="1" />
+                <!-- Retinal Vascular Arcades originating from Optic Disc at (84, 120) -->
+                <path d="M84,112 C95,75 135,65 165,85" fill="none" stroke="#fca5a5" stroke-width="1.6" />
+                <path d="M84,128 C95,165 135,175 165,155" fill="none" stroke="#fca5a5" stroke-width="1.6" />
+                <path d="M78,113 C65,82 45,72 30,75" fill="none" stroke="#fca5a5" stroke-width="1.3" />
+                <path d="M78,127 C65,158 45,168 30,165" fill="none" stroke="#fca5a5" stroke-width="1.3" />
+                <!-- Optic Nerve Head (Disc & Cup) -->
+                <circle cx="84" cy="120" r="14" fill="#fed7aa" stroke="#ea580c" stroke-width="1.4" />
+                <circle cx="84" cy="120" r="5.5" fill="#fff7ed" stroke="#f97316" stroke-width="1" />
+                <!-- Macula / Fovea Center -->
+                <circle cx="126" cy="120" r="16" fill="none" stroke="#cbd5e1" stroke-width="0.9" stroke-dasharray="2 2" />
+                <line x1="121" y1="120" x2="131" y2="120" stroke="#64748b" stroke-width="1.2" />
+                <line x1="126" y1="115" x2="126" y2="125" stroke="#64748b" stroke-width="1.2" />
+              </svg>
+              <canvas id="funOS" class="diagram-canvas"></canvas>
+            </div>
+            <span class="text-[10px] text-slate-500 mt-1">Optic Disc (Nasal) • Fovea (+) • Equator (Dashed)</span>
+            <!-- Linked Numbered Notes Container for funOS -->
+            <div id="notes-funOS" class="w-full mt-2.5 space-y-1.5"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 7: Assessment, Diagnosis & Management Plan -->
+    <section class="page-break-avoid">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-sky-900 bg-sky-50 border-l-4 border-sky-600 px-3 py-1.5 rounded-r mb-3">
+        7. Clinical Assessment & Management Plan
+      </h3>
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <label class="flex flex-col">
+            <span class="font-semibold text-slate-700 mb-1">Diagnosis / Impression — Right Eye (OD):</span>
+            <input type="text" id="dxOD" placeholder="Primary & secondary OD diagnosis (ICD-10)..." class="clinical-input font-medium" />
+          </label>
+          <label class="flex flex-col">
+            <span class="font-semibold text-slate-700 mb-1">Diagnosis / Impression — Left Eye (OS):</span>
+            <input type="text" id="dxOS" placeholder="Primary & secondary OS diagnosis (ICD-10)..." class="clinical-input font-medium" />
+          </label>
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="font-semibold text-slate-700 block mb-1.5">Diagnostic Imaging & Ancillary Orders:</span>
+          <div class="flex flex-wrap gap-x-5 gap-y-1.5">
+            <label class="flex items-center gap-1"><input type="checkbox" id="ordOctMac" /> OCT Macula</label>
+            <label class="flex items-center gap-1"><input type="checkbox" id="ordOctRnfl" /> OCT RNFL / ONH</label>
+            <label class="flex items-center gap-1"><input type="checkbox" id="ordHfa" /> Automated Visual Field (HFA)</label>
+            <label class="flex items-center gap-1"><input type="checkbox" id="ordFundus" /> Fundus Photography</label>
+            <label class="flex items-center gap-1"><input type="checkbox" id="ordBscan" /> B-Scan Ultrasonography</label>
+            <label class="flex items-center gap-1"><input type="checkbox" id="ordBiom" /> IOL Biometry / Pachymetry</label>
+          </div>
+        </div>
+
+        <label class="flex flex-col">
+          <span class="font-semibold text-slate-700 mb-1">Treatment, Medications & Optical Prescription Plan:</span>
+          <textarea id="planNotes" rows="3" placeholder="Enter ophthalmic drops, dosage/frequency, surgical counseling, spectacles Rx instructions..." class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:outline-none focus:border-sky-600"></textarea>
+        </label>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-slate-200">
+          <label class="flex flex-col">
+            <span class="font-semibold text-slate-700">Follow-Up Interval:</span>
+            <input type="text" id="followUp" placeholder="e.g. 2 weeks / 3 months / PRN" class="clinical-input" />
+          </label>
+          <label class="flex flex-col">
+            <span class="font-semibold text-slate-700">Physician Signature:</span>
+            <input type="text" id="signature" placeholder="Signed electronically / handwritten" class="clinical-input italic" />
+          </label>
+          <label class="flex flex-col">
+            <span class="font-semibold text-slate-700">Medical License / Stamp ID:</span>
+            <input type="text" id="licenseId" placeholder="Reg. No." class="clinical-input font-mono" />
+          </label>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Custom Reset Confirmation Modal (No browser confirm/alert) -->
+  <div id="resetModal" class="no-print fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200">
+      <h3 class="text-base font-bold text-slate-900">Clear Entire Examination Form?</h3>
+      <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+        This will erase all entered patient findings and clear all dots/drawings across all six anatomical diagrams. This action cannot be undone.
+      </p>
+      <div class="mt-5 flex items-center justify-end gap-2">
+        <button type="button" onclick="closeResetModal()" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">
+          Cancel
+        </button>
+        <button type="button" onclick="performFullReset()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white">
+          Yes, Clear All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Banner -->
+  <div id="toastBanner" class="no-print fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-lg border border-slate-700"></div>
+
+  <script>
+    /**
+     * Interactive Ophthalmic & Optometric Eye Examination Application
+     * Clicking any eye diagram places a sequentially numbered pin (1, 2, 3...)
+     * with automatic anatomical location detection and dynamically generates
+     * a synchronized numbered clinical note row underneath that diagram.
+     */
+    const CANVAS_IDS = ['vfOD', 'vfOS', 'antOD', 'antOS', 'funOD', 'funOS'];
+    const STORAGE_KEY = 'ophthalmic_exam_record_v2';
+
+    let currentTool = 'dot';      // 'dot' | 'pen' | 'shade' | 'eraser'
+    let currentColor = '#dc2626'; // Standard ophthalmic red default
+    let currentSize = 10;
+
+    // Structured state per diagram:
+    // markers: Array<{ id: number, x: number, y: number, color: string, radius: number, zone: string, note: string }>
+    // strokes: Array<{ type: 'pen'|'shade'|'eraser', color: string, width: number, points: Array<{x,y}> }>
+    // actionStack: Array<'marker'|'stroke'> for clean Undo
+    const diagramState = {};
+    const canvasContexts = {};
+    const highlightedMarker = {}; // { [canvasId]: markerId | null }
+
+    CANVAS_IDS.forEach(id => {
+      diagramState[id] = {
+        markers: [],
+        strokes: [],
+        actionStack: []
+      };
+      highlightedMarker[id] = null;
+    });
+
+    // Initialize today's date if empty
+    function setDefaultDate() {
+      const dateInput = document.getElementById('examDate');
+      if (dateInput && !dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+      }
+    }
+
+    // Show non-intrusive toast message
+    function showToast(message) {
+      const toast = document.getElementById('toastBanner');
+      toast.textContent = message;
+      toast.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2800);
+    }
+
+    /**
+     * Automatically detect anatomical zone, clock-hour, or quadrant from (x, y)
+     * in logical 240x240 diagram coordinates.
+     */
+    function detectAnatomicalLocation(canvasId, x, y) {
+      const cx = 120;
+      const cy = 120;
+      const dx = x - cx;
+      const dy = y - cy;
+      const dist = Math.hypot(dx, dy);
+
+      // Clock hour calculation (12 o'clock at top)
+      let angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+      if (angleDeg < 0) angleDeg += 360;
+      let clockHour = Math.round(angleDeg / 30);
+      if (clockHour === 0) clockHour = 12;
+
+      const isOD = canvasId.endsWith('OD');
+      const eyeLabel = isOD ? 'OD' : 'OS';
+      const vertical = dy < -10 ? 'Superior' : dy > 10 ? 'Inferior' : 'Horizontal';
+
+      if (canvasId.startsWith('vf')) {
+        // Visual Field Quadrants
+        let horiz = '';
+        if (isOD) {
+          horiz = dx < -10 ? 'Temporal' : dx > 10 ? 'Nasal' : '';
+        } else {
+          horiz = dx > 10 ? 'Temporal' : dx < -10 ? 'Nasal' : '';
+        }
+        const eccentricity = dist < 36 ? 'Central (10°)' : dist < 72 ? 'Mid-field (20°)' : 'Peripheral (30°+)';
+        return `${eyeLabel} VF • ${vertical}${horiz ? '-' + horiz : ''} ${eccentricity}`;
+      }
+
+      if (canvasId.startsWith('ant')) {
+        // Anterior Segment Zones + Clock Hour
+        let structure = 'Conjunctiva/Sclera';
+        if (dist <= 24) structure = 'Pupil / Central Lens';
+        else if (dist <= 46) structure = 'Pupillary Iris / Paracentral Cornea';
+        else if (dist <= 68) structure = 'Peripheral Cornea / Limbus';
+        return `${eyeLabel} Ant • ${clockHour}:00 (${structure})`;
+      }
+
+      if (canvasId.startsWith('fun')) {
+        // Posterior Fundus Zones + Quadrant
+        const discX = isOD ? 156 : 84;
+        const foveaX = isOD ? 114 : 126;
+        const distDisc = Math.hypot(x - discX, y - 120);
+        const distFovea = Math.hypot(x - foveaX, y - 120);
+
+        let horiz = '';
+        if (isOD) {
+          horiz = dx > 10 ? 'Nasal' : dx < -10 ? 'Temporal' : '';
+        } else {
+          horiz = dx < -10 ? 'Nasal' : dx > 10 ? 'Temporal' : '';
+        }
+
+        if (distDisc <= 16) return `${eyeLabel} Fundus • Optic Nerve Head (ONH)`;
+        if (distFovea <= 16) return `${eyeLabel} Fundus • Macula / Fovea`;
+        const region = dist <= 82 ? 'Posterior Pole / Arcade' : 'Periphery (Pre-equatorial)';
+        return `${eyeLabel} Fundus • ${vertical}${horiz ? '-' + horiz : ''} ${region}`;
+      }
+
+      return `${eyeLabel} • ${clockHour}:00`;
+    }
+
+    /**
+     * Render all freehand strokes and numbered clinical pins onto a diagram canvas
+     */
+    function renderCanvas(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvasContexts[canvasId];
+      if (!canvas || !ctx) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(dpr, dpr);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const state = diagramState[canvasId];
+
+      // 1. Draw all freehand strokes (pen, shade, eraser)
+      state.strokes.forEach(stroke => {
+        if (!stroke.points || stroke.points.length === 0) return;
+        ctx.save();
+        if (stroke.type === 'eraser') {
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.globalAlpha = 1.0;
+          ctx.lineWidth = stroke.width;
+        } else if (stroke.type === 'shade') {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = 0.24;
+          ctx.strokeStyle = stroke.color;
+          ctx.lineWidth = stroke.width;
+        } else {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = 1.0;
+          ctx.strokeStyle = stroke.color;
+          ctx.lineWidth = stroke.width;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+        for (let i = 1; i < stroke.points.length; i++) {
+          ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+        if (stroke.points.length === 1) {
+          ctx.lineTo(stroke.points[0].x + 0.1, stroke.points[0].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // 2. Draw sequentially numbered marker pins on top
+      const activeId = highlightedMarker[canvasId];
+      state.markers.forEach((marker, idx) => {
+        const num = idx + 1;
+        marker.id = num;
+        const isHighlighted = activeId === num;
+        const r = isHighlighted ? marker.radius + 2.5 : marker.radius;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1.0;
+
+        // Outer highlight ring when hovered or selected
+        if (isHighlighted) {
+          ctx.beginPath();
+          ctx.arc(marker.x, marker.y, r + 4, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(2, 132, 199, 0.28)';
+          ctx.fill();
+        }
+
+        // Main colored pin circle
+        ctx.beginPath();
+        ctx.arc(marker.x, marker.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = marker.color;
+        ctx.fill();
+
+        // Crisp white border for contrast
+        ctx.lineWidth = isHighlighted ? 2 : 1.4;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // Number label inside pin
+        ctx.fillStyle = marker.color === '#eab308' ? '#0f172a' : '#ffffff';
+        ctx.font = `bold ${Math.max(9, Math.round(r * 1.15))}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(num), marker.x, marker.y + 0.5);
+
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+
+    /**
+     * Render the synchronized numbered clinical note input rows beneath each diagram
+     */
+    function renderNotesList(canvasId, focusLast = false) {
+      const container = document.getElementById(`notes-${canvasId}`);
+      if (!container) return;
+
+      const markers = diagramState[canvasId].markers;
+      if (markers.length === 0) {
+        container.innerHTML = `<p class="text-[11px] text-slate-400 italic text-center py-1">Click on the diagram above to place a numbered marker & add clinical notes.</p>`;
+        return;
+      }
+
+      container.innerHTML = '';
+      markers.forEach((marker, idx) => {
+        const num = idx + 1;
+        marker.id = num;
+
+        const row = document.createElement('div');
+        row.id = `note-row-${canvasId}-${num}`;
+        row.className = 'note-row flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-2xs';
+
+        // Hover / focus highlight linkage with canvas marker
+        row.addEventListener('mouseenter', () => {
+          highlightedMarker[canvasId] = num;
+          renderCanvas(canvasId);
+        });
+        row.addEventListener('mouseleave', () => {
+          if (highlightedMarker[canvasId] === num) {
+            highlightedMarker[canvasId] = null;
+            renderCanvas(canvasId);
+          }
+        });
+
+        // Numbered colored badge matching the canvas pin
+        const badge = document.createElement('span');
+        badge.className = 'w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 shadow-2xs';
+        badge.style.backgroundColor = marker.color;
+        badge.style.color = marker.color === '#eab308' ? '#0f172a' : '#ffffff';
+        badge.textContent = String(num);
+        badge.title = marker.zone;
+
+        // Auto-detected anatomical zone pill
+        const zoneTag = document.createElement('span');
+        zoneTag.className = 'text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0';
+        zoneTag.textContent = marker.zone.split('•')[1]?.trim() || marker.zone;
+        zoneTag.title = marker.zone;
+
+        // Physician clinical observation input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = marker.note || '';
+        input.placeholder = `Finding #${num} (e.g. dot hemorrhage, infiltrate, tear)...`;
+        input.className = 'flex-1 min-w-0 text-xs bg-transparent border-b border-transparent focus:border-sky-600 focus:outline-none px-1 py-0.5 text-slate-800';
+
+        input.addEventListener('focus', () => {
+          highlightedMarker[canvasId] = num;
+          row.classList.add('highlighted');
+          renderCanvas(canvasId);
+        });
+        input.addEventListener('blur', () => {
+          highlightedMarker[canvasId] = null;
+          row.classList.remove('highlighted');
+          renderCanvas(canvasId);
+        });
+        input.addEventListener('input', (e) => {
+          marker.note = e.target.value;
+          triggerAutoSave();
+        });
+
+        // Delete individual numbered pin button (hidden on print)
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'no-print text-slate-400 hover:text-rose-600 text-xs font-bold px-1 transition';
+        delBtn.title = `Remove marker #${num} (re-numbers remaining)`;
+        delBtn.innerHTML = '&times;';
+        delBtn.addEventListener('click', () => {
+          removeMarkerAtIndex(canvasId, idx);
+        });
+
+        row.appendChild(badge);
+        row.appendChild(zoneTag);
+        row.appendChild(input);
+        row.appendChild(delBtn);
+        container.appendChild(row);
+
+        if (focusLast && idx === markers.length - 1) {
+          setTimeout(() => input.focus(), 20);
+        }
+      });
+    }
+
+    /**
+     * Remove a specific numbered marker and cleanly re-number remaining markers
+     */
+    function removeMarkerAtIndex(canvasId, index) {
+      const state = diagramState[canvasId];
+      if (index < 0 || index >= state.markers.length) return;
+      state.markers.splice(index, 1);
+      // Remove corresponding 'marker' entry from actionStack
+      const stackIdx = state.actionStack.lastIndexOf('marker');
+      if (stackIdx !== -1) state.actionStack.splice(stackIdx, 1);
+
+      highlightedMarker[canvasId] = null;
+      renderCanvas(canvasId);
+      renderNotesList(canvasId, false);
+      triggerAutoSave();
+    }
+
+    // Setup high-DPI canvas and pointer/mouse/touch drawing handlers
+    function initCanvas(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      const logicalSize = 240;
+      canvas.width = logicalSize * dpr;
+      canvas.height = logicalSize * dpr;
+
+      const ctx = canvas.getContext('2d');
+      canvasContexts[canvasId] = ctx;
+
+      let isDrawing = false;
+      let activeStroke = null;
+
+      function getCoords(evt) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+        const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+        return {
+          x: ((clientX - rect.left) / rect.width) * logicalSize,
+          y: ((clientY - rect.top) / rect.height) * logicalSize
+        };
+      }
+
+      // Find if user clicked near an existing numbered marker
+      function findMarkerNear(x, y, hitPadding = 6) {
+        const markers = diagramState[canvasId].markers;
+        for (let i = markers.length - 1; i >= 0; i--) {
+          const m = markers[i];
+          if (Math.hypot(x - m.x, y - m.y) <= m.radius + hitPadding) {
+            return i;
+          }
+        }
+        return -1;
+      }
+
+      function startAction(evt) {
+        evt.preventDefault();
+        const { x, y } = getCoords(evt);
+        const state = diagramState[canvasId];
+
+        if (currentTool === 'dot') {
+          // If clicking an existing numbered pin, focus its linked note row instead of overlapping
+          const existingIdx = findMarkerNear(x, y, 3);
+          if (existingIdx !== -1) {
+            const existingNum = existingIdx + 1;
+            const inputEl = document.querySelector(`#note-row-${canvasId}-${existingNum} input`);
+            if (inputEl) inputEl.focus();
+            return;
+          }
+
+          // Place new sequentially numbered pin & generate linked note row
+          const newNum = state.markers.length + 1;
+          const zone = detectAnatomicalLocation(canvasId, x, y);
+          state.markers.push({
+            id: newNum,
+            x,
+            y,
+            color: currentColor,
+            radius: Math.max(8, Math.min(14, currentSize)),
+            zone,
+            note: ''
+          });
+          state.actionStack.push('marker');
+
+          renderCanvas(canvasId);
+          renderNotesList(canvasId, true);
+          triggerAutoSave();
+          return;
+        }
+
+        if (currentTool === 'eraser') {
+          // Check if clicking directly on a numbered pin to delete & renumber it
+          const hitIdx = findMarkerNear(x, y, 6);
+          if (hitIdx !== -1) {
+            removeMarkerAtIndex(canvasId, hitIdx);
+            showToast(`Removed pin #${hitIdx + 1} and updated numbering`);
+            return;
+          }
+        }
+
+        // Start freehand stroke (pen, shade, or stroke-eraser)
+        isDrawing = true;
+        activeStroke = {
+          type: currentTool,
+          color: currentColor,
+          width: currentTool === 'eraser' ? Math.max(12, currentSize * 1.6)
+               : currentTool === 'shade' ? Math.max(14, currentSize * 1.8)
+               : Math.max(2, currentSize * 0.3),
+          points: [{ x, y }]
+        };
+        state.strokes.push(activeStroke);
+        state.actionStack.push('stroke');
+        renderCanvas(canvasId);
+      }
+
+      function moveAction(evt) {
+        const { x, y } = getCoords(evt);
+
+        // Hover feedback over numbered markers when not actively drawing
+        if (!isDrawing) {
+          const hoverIdx = findMarkerNear(x, y, 4);
+          const hoverNum = hoverIdx !== -1 ? hoverIdx + 1 : null;
+          if (highlightedMarker[canvasId] !== hoverNum) {
+            highlightedMarker[canvasId] = hoverNum;
+            renderCanvas(canvasId);
+            document.querySelectorAll(`#notes-${canvasId} .note-row`).forEach((r, idx) => {
+              r.classList.toggle('highlighted', idx + 1 === hoverNum);
+            });
+          }
+          return;
+        }
+
+        evt.preventDefault();
+        if (activeStroke) {
+          activeStroke.points.push({ x, y });
+          renderCanvas(canvasId);
+        }
+      }
+
+      function endAction() {
+        if (isDrawing) {
+          isDrawing = false;
+          activeStroke = null;
+          triggerAutoSave();
+        }
+      }
+
+      canvas.addEventListener('mousedown', startAction);
+      canvas.addEventListener('mousemove', moveAction);
+      canvas.addEventListener('mouseleave', () => {
+        if (!isDrawing && highlightedMarker[canvasId] !== null) {
+          highlightedMarker[canvasId] = null;
+          renderCanvas(canvasId);
+          document.querySelectorAll(`#notes-${canvasId} .note-row`).forEach(r => r.classList.remove('highlighted'));
+        }
+      });
+      window.addEventListener('mouseup', endAction);
+
+      canvas.addEventListener('touchstart', startAction, { passive: false });
+      canvas.addEventListener('touchmove', moveAction, { passive: false });
+      canvas.addEventListener('touchend', endAction);
+
+      renderNotesList(canvasId, false);
+    }
+
+    // Undo last marker or stroke on specific canvas
+    function undoCanvas(canvasId) {
+      const state = diagramState[canvasId];
+      if (!state || state.actionStack.length === 0) {
+        showToast('Nothing to undo on this diagram');
+        return;
+      }
+      const lastType = state.actionStack.pop();
+      if (lastType === 'marker' && state.markers.length > 0) {
+        state.markers.pop();
+        renderNotesList(canvasId, false);
+      } else if (lastType === 'stroke' && state.strokes.length > 0) {
+        state.strokes.pop();
+      }
+      renderCanvas(canvasId);
+      triggerAutoSave();
+    }
+
+    // Clear all markers, notes, and strokes on a specific diagram
+    function clearCanvas(canvasId) {
+      const state = diagramState[canvasId];
+      if (!state) return;
+      state.markers = [];
+      state.strokes = [];
+      state.actionStack = [];
+      highlightedMarker[canvasId] = null;
+      renderCanvas(canvasId);
+      renderNotesList(canvasId, false);
+      triggerAutoSave();
+      showToast('Diagram and linked notes cleared');
+    }
+
+    // Toolbar UI bindings
+    function bindToolbar() {
+      document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTool = btn.dataset.tool;
+          if (currentTool === 'shade') {
+            document.getElementById('brushSize').value = '18';
+            currentSize = 18;
+          } else if (currentTool === 'dot' && currentSize > 13) {
+            document.getElementById('brushSize').value = '10';
+            currentSize = 10;
+          }
+        });
+      });
+
+      document.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.addEventListener('click', () => {
+          document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+          swatch.classList.add('active');
+          currentColor = swatch.dataset.color;
+          if (currentTool === 'eraser') {
+            document.querySelector('.tool-btn[data-tool="dot"]').click();
+          }
+        });
+      });
+
+      const sizeSelect = document.getElementById('brushSize');
+      sizeSelect.addEventListener('change', (e) => {
+        currentSize = parseInt(e.target.value, 10) || 10;
+      });
+    }
+
+    // Save all inputs, numbered pins, linked notes, and strokes to localStorage
+    let saveTimeout = null;
+    function triggerAutoSave() {
+      const statusEl = document.getElementById('saveStatus');
+      if (statusEl) statusEl.textContent = 'Saving...';
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        try {
+          const payload = collectFormData();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+          if (statusEl) {
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            statusEl.textContent = `Saved at ${now}`;
+          }
+        } catch (err) {
+          console.warn('Auto-save skipped:', err);
+        }
+      }, 300);
+    }
+
+    function collectFormData() {
+      const fields = {};
+      document.querySelectorAll('input, textarea, select').forEach(el => {
+        if (!el.id || el.id === 'brushSize' || el.id === 'importJsonInput') return;
+        if (el.type === 'checkbox') {
+          fields[el.id] = el.checked;
+        } else {
+          fields[el.id] = el.value;
+        }
+      });
+
+      const diagrams = {};
+      CANVAS_IDS.forEach(id => {
+        const c = document.getElementById(id);
+        diagrams[id] = {
+          markers: diagramState[id].markers,
+          strokes: diagramState[id].strokes,
+          actionStack: diagramState[id].actionStack,
+          snapshotDataUrl: c ? c.toDataURL('image/png') : null
+        };
+      });
+
+      return {
+        version: 2,
+        timestamp: new Date().toISOString(),
+        fields,
+        diagrams
+      };
+    }
+
+    function applyLoadedData(data) {
+      if (!data) return;
+      if (data.fields) {
+        Object.entries(data.fields).forEach(([id, val]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (el.type === 'checkbox') {
+            el.checked = Boolean(val);
+          } else {
+            el.value = val;
+          }
+        });
+      }
+
+      if (data.diagrams) {
+        CANVAS_IDS.forEach(id => {
+          const savedDiag = data.diagrams[id];
+          if (!savedDiag) return;
+          diagramState[id].markers = Array.isArray(savedDiag.markers) ? savedDiag.markers : [];
+          diagramState[id].strokes = Array.isArray(savedDiag.strokes) ? savedDiag.strokes : [];
+          diagramState[id].actionStack = Array.isArray(savedDiag.actionStack) ? savedDiag.actionStack : [];
+          renderCanvas(id);
+          renderNotesList(id, false);
+        });
+      }
+    }
+
+    function restoreSavedRecord() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        applyLoadedData(JSON.parse(raw));
+      } catch (err) {
+        console.warn('Restore error:', err);
+      }
+    }
+
+    // Export complete clinical record + structured numbered markers & notes as JSON
+    function exportRecordJSON() {
+      const data = collectFormData();
+      const patient = (data.fields.patientName || 'Patient').replace(/[^a-z0-9]/gi, '_');
+      const dateStr = data.fields.examDate || new Date().toISOString().split('T')[0];
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `EyeExam_${patient}_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Clinical JSON record exported');
+    }
+
+    // Import previously saved JSON clinical record
+    function importRecordJSON(evt) {
+      const file = evt.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          applyLoadedData(parsed);
+          triggerAutoSave();
+          showToast('Clinical record imported successfully');
+        } catch (err) {
+          showToast('Invalid JSON clinical record file');
+        }
+      };
+      reader.readAsText(file);
+      evt.target.value = '';
+    }
+
+    // Reset Modal controls
+    function confirmResetModal() {
+      document.getElementById('resetModal').classList.remove('hidden');
+    }
+
+    function closeResetModal() {
+      document.getElementById('resetModal').classList.add('hidden');
+    }
+
+    function performFullReset() {
+      document.querySelectorAll('input, textarea').forEach(el => {
+        if (el.id === 'importJsonInput') return;
+        if (el.type === 'checkbox') el.checked = false;
+        else el.value = '';
+      });
+      CANVAS_IDS.forEach(id => {
+        diagramState[id] = { markers: [], strokes: [], actionStack: [] };
+        highlightedMarker[id] = null;
+        renderCanvas(id);
+        renderNotesList(id, false);
+      });
+      localStorage.removeItem(STORAGE_KEY);
+      setDefaultDate();
+      closeResetModal();
+      showToast('All fields, pins, and diagrams cleared');
+    }
+
+    // Initialize everything on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      CANVAS_IDS.forEach(initCanvas);
+      bindToolbar();
+      restoreSavedRecord();
+      setDefaultDate();
+
+      document.querySelectorAll('input, textarea, select').forEach(el => {
+        if (el.id === 'brushSize' || el.id === 'importJsonInput') return;
+        el.addEventListener('input', triggerAutoSave);
+        el.addEventListener('change', triggerAutoSave);
+      });
+    });
+  </script>
+
+  <script>
+    (function() {
+      window.addEventListener('DOMContentLoaded', function() {
+        
+          if (window.BahmniCustomFormBridge) {
+            BahmniCustomFormBridge.init({
+              formId: 'ophthalmic_eye_exam',
+              formTitle: 'Ophthalmic Eye Examination Record',
+              conceptUuid: 'e0790005-3d71-4569-b1d5-894000000006',
+              tag: 'EYE',
+              color: '#7c3aed',
+              getData: function () {
+                return (typeof collectFormData === 'function') ? collectFormData() : {};
+              },
+              setData: function (data) {
+                if (typeof applyLoadedData === 'function') {
+                  applyLoadedData(data);
+                }
+              },
+              extractSummary: function (d) {
+                var f = d.fields || {};
+                return {
+                  chiefComplaint: f['chiefComplaint'] || '',
+                  vaOD: f['vaDistanceOD'] || '',
+                  vaOS: f['vaDistanceOS'] || '',
+                  iopOD: f['iopOD'] || '',
+                  iopOS: f['iopOS'] || '',
+                  diagnosis: f['clinicalDiagnosis'] || ''
+                };
+              },
+              setLockState: function (locked) {
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+                  el.disabled = locked;
+                });
+              }
+            });
+          }
+        
+      });
+    })();
+  </script>
+</body>
+
+</html>

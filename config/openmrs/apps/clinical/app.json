@@ -177,7 +177,14 @@
             "Summary",
             "Obstetric Ultrasound Result Report Form",
             "WHO Labour Care Guide",
-            "WHO Emergency Unit Form - Trauma"
+            "WHO Emergency Unit Form - Trauma",
+            "Ethiopian OTP Follow-Up Card",
+            "FMOH Ethiopia DM and Hypertension Follow-Up Form",
+            "Ophthalmic and Optometric Eye Examination Record",
+            "National Perioperative Clinical Forms",
+            "Safe Childbirth Checklist Ethiopian",
+            "Stabilisation Centre Multi-Chart",
+            "WHO Postpartum Hemorrhage Observation Chart"
         ],
         "EMR_eAPTS_endPoint": "https://10.139.8.28:443/stockStatus",
         "enableDrugStockStatusCheck": false,

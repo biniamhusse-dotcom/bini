@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WHO Postpartum Hemorrhage (PPH) Clinical Observation Chart</title>
+  <!-- Load Google Fonts: Inter & Noto Sans Ethiopic for crisp Amharic rendering -->
+  <!-- Load Tailwind CSS -->
+  <link rel="stylesheet" href="./tailwind-offline.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Ethiopic', 'sans-serif'],
+          },
+          colors: {
+            clinicalYellow: '#fef3c7',
+            clinicalRed: '#fecaca',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+
+  /* Offline High-Fidelity System Font Stack for Amharic / English */
+  html, body, input, select, textarea, button {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Ethiopic", "Nyala", "Abyssinica SIL", sans-serif !important;
+  }
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  }
+
+    body {
+      font-family: 'Inter', 'Noto Sans Ethiopic', sans-serif;
+    }
+
+    /* Custom paper-style square checkbox radio indicators matching the WHO clinical form */
+    .who-check-input {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1.75px solid #0f172a;
+      border-radius: 3px;
+      background-color: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.12s ease;
+    }
+
+    .who-check-input:hover {
+      border-color: #000000;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+    }
+
+    .who-check-input:focus-visible {
+      outline: 2px solid #059669;
+      outline-offset: 2px;
+    }
+
+    .who-check-input:checked {
+      background-color: #0f172a;
+      border-color: #0f172a;
+    }
+
+    .who-check-input:checked::after {
+      content: '✓';
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    /* Hide number input spin buttons for clean clinical underline fields */
+    input[type="number"].clean-num::-webkit-inner-spin-button,
+    input[type="number"].clean-num::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"].clean-num {
+      -moz-appearance: textfield;
+    }
+
+    /* Print Stylesheet: Formats cleanly onto clinical paper without interactive popovers/buttons */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 8mm;
+      }
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        color: #000000 !important;
+        font-size: 11px !important;
+      }
+      .no-print,
+      #etDateTimePopover,
+      #clearModalOverlay,
+      #toastNotification {
+        display: none !important;
+      }
+      .print-container {
+        box-shadow: none !important;
+        border: 2px solid #000000 !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+      }
+      .print-table-wrapper {
+        overflow: visible !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      th, td {
+        border: 1.5px solid #000000 !important;
+        padding: 4px !important;
+      }
+      input[type="text"], input[type="number"] {
+        border: none !important;
+        border-bottom: 1px solid #000000 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        padding: 0 2px !important;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
+<script src="bahmni-custom-form-bridge.js"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900 py-4 px-2 sm:px-5 md:py-7 antialiased">
+
+  <!-- Main Clinical Document Container -->
+  <div class="print-container max-w-7xl mx-auto bg-white rounded-2xl shadow-xl border-2 border-slate-900 overflow-hidden">
+
+    <!-- ===================================================================== -->
+    <!-- 1. CLINICAL REFERENCE HEADER & THRESHOLD KEY (EXACT WHO CHART MATCH)  -->
+    <!-- ===================================================================== -->
+    <header class="border-b-2 border-slate-900">
+      <!-- Top Title Strip -->
+      <div class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <span class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-extrabold text-xs tracking-wider uppercase">
+            WHO PPH Chart
+          </span>
+          <h1 class="text-sm sm:text-base font-extrabold tracking-tight">
+            Postpartum Hemorrhage (PPH) Early Detection &amp; Clinical Observation Chart
+          </h1>
+        </div>
+        <div class="text-xs text-slate-300 font-medium">
+          Ethiopian Calendar (<span class="font-semibold text-white">ቀን መቁጠሪያ</span>) Enabled
+        </div>
+      </div>
+
+      <!-- 5-Parameter WHO Clinical Reference Key Table -->
+      <div class="divide-y divide-slate-300 text-xs sm:text-[13px] leading-snug bg-white">
+        <!-- Row 1: Pulse -->
+        <div class="grid grid-cols-1 sm:grid-cols-[210px_1fr] px-3 sm:px-4 py-1.5 items-baseline">
+          <div class="font-extrabold text-slate-900 sm:text-right sm:pr-4">Pulse</div>
+          <div class="text-slate-900">
+            Abnormal if <span class="font-bold">&gt;100 bpm</span> <span class="font-extrabold underline">OR</span> an increase of <span class="font-bold">&ge; 20 bpm</span> from baseline <span class="italic text-slate-600">(bpm = beats per minute)</span>
+          </div>
+        </div>
+
+        <!-- Row 2: BP -->
+        <div class="grid grid-cols-1 sm:grid-cols-[210px_1fr] px-3 sm:px-4 py-1.5 items-baseline">
+          <div class="font-extrabold text-slate-900 sm:text-right sm:pr-4">BP</div>
+          <div class="text-slate-900">
+            Abnormal if systolic <span class="font-bold">&lt;100 mmHg</span> <span class="font-extrabold underline">OR</span> a systolic decrease of <span class="font-bold">20 mmHg</span> from baseline
+          </div>
+        </div>
+
+        <!-- Row 3: Uterine Tone -->
+        <div class="grid grid-cols-1 sm:grid-cols-[210px_1fr] px-3 sm:px-4 py-1.5 items-baseline">
+          <div class="font-extrabold text-slate-900 sm:text-right sm:pr-4">Uterine Tone</div>
+          <div class="text-slate-900">
+            Abnormal if <span class="font-bold">Soft</span>
+          </div>
+        </div>
+
+        <!-- Row 4: Vaginal blood loss -->
+        <div class="grid grid-cols-1 sm:grid-cols-[210px_1fr] px-3 sm:px-4 py-1.5 items-baseline">
+          <div class="font-extrabold text-slate-900 sm:text-right sm:pr-4">Vaginal blood loss</div>
+          <div class="text-slate-900">
+            Abnormal if <span class="font-bold">Heavy flow</span> of PV blood loss/clinical diagnosis of PPH <span class="italic text-slate-600">(PV = Per Vaginal)</span> <span class="font-extrabold underline">OR</span> <span class="font-bold">Large blood clots</span> expelled <span class="font-extrabold underline">OR</span> <span class="font-bold">Constant trickle</span>
+          </div>
+        </div>
+
+        <!-- Row 5: Calibrated measurement line -->
+        <div class="grid grid-cols-1 sm:grid-cols-[210px_1fr] px-3 sm:px-4 py-1.5 items-baseline">
+          <div class="font-extrabold text-slate-900 sm:text-right sm:pr-4 leading-tight">
+            Calibrated<br class="hidden sm:inline" /> measurement line
+          </div>
+          <div class="text-slate-900">
+            <div>Abnormal if between <span class="font-bold">300 mL - 499 mL</span> <span class="font-extrabold underline">and</span> one abnormal observation <span class="font-extrabold underline">OR</span></div>
+            <div>Abnormal if <span class="font-bold">&ge;500 mL</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prominent WHO First Response PPH Bundle Trigger Rule Banner -->
+      <div class="border-t-2 border-b-2 border-slate-900 bg-white px-4 py-2.5 text-center">
+        <div class="text-xs sm:text-sm font-extrabold tracking-wide text-slate-900 uppercase">
+          TRIGGER <span class="underline decoration-2">WHO FIRST RESPONSE PPH BUNDLE</span> IF:
+        </div>
+        <div class="mt-1 text-xs sm:text-sm font-extrabold flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+          <span class="text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+            at least 1 red &#10003;
+          </span>
+          <span class="text-slate-900 underline font-black">OR</span>
+          <span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
+            calibrated measurement line between 300-499ml <span class="underline font-black">AND</span> at least 1 yellow &#10003;
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- 2. PATIENT HEADER & OPTIONAL BASELINE VITALS CALCULATOR               -->
+    <!-- ===================================================================== -->
+    <section class="bg-slate-50 border-b-2 border-slate-900 px-4 py-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
+        <!-- Patient Name / MRN -->
+        <div>
+          <label for="patientNameMrn" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Patient Name / MRN
+          </label>
+          <input
+            type="text"
+            id="patientNameMrn"
+            placeholder="e.g. Tigist Alemu / MRN-4092"
+            class="w-full px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 bg-white border border-slate-400 rounded-lg focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+          />
+        </div>
+
+        <!-- Delivery Date & Time (Ethiopian Calendar Picker + Quick Now) -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="deliveryEtDisplay" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
+              Delivery Date &amp; Time (EC)
+            </label>
+            <button
+              type="button"
+              id="deliveryNowBtn"
+              class="no-print px-2 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 text-[10px] font-bold transition"
+            >
+              አሁን / Now
+            </button>
+          </div>
+          <div id="deliveryEtTrigger" class="et-picker-trigger relative group cursor-pointer">
+            <input
+              type="text"
+              id="deliveryEtDisplay"
+              readonly
+              placeholder="DD/MM/YYYY HH:MM (EC)"
+              class="w-full pl-3 pr-8 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 bg-white group-hover:bg-slate-50 border border-slate-400 group-hover:border-slate-900 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+            />
+            <span class="no-print pointer-events-none absolute right-2.5 top-2 text-slate-500 group-hover:text-slate-900">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </span>
+          </div>
+          <div id="deliveryEtSub" class="text-[11px] font-medium text-emerald-800 mt-0.5 min-h-[1rem]">
+            Ethiopian Calendar (ቀን መቁጠሪያ)
+          </div>
+        </div>
+
+        <!-- Baseline Pulse Calculator -->
+        <div>
+          <label for="baselinePulse" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Baseline Pulse (bpm) <span class="font-normal text-slate-500">(Optional)</span>
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              id="baselinePulse"
+              min="30"
+              max="220"
+              placeholder="e.g. 78"
+              class="clean-num w-28 px-3 py-1.5 text-xs sm:text-sm font-bold text-slate-900 bg-white border border-slate-400 rounded-lg focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+            />
+            <span class="text-xs font-bold text-slate-600">bpm</span>
+          </div>
+          <div id="pulseThresholdHint" class="text-[11px] font-semibold text-slate-600 mt-1">
+            Alert if Pulse &gt;100 bpm
+          </div>
+        </div>
+
+        <!-- Baseline BP Calculator -->
+        <div>
+          <label for="baselineSystolic" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Baseline BP (mmHg) <span class="font-normal text-slate-500">(Optional)</span>
+          </label>
+          <div class="flex items-center gap-1.5">
+            <input
+              type="number"
+              id="baselineSystolic"
+              min="40"
+              max="260"
+              placeholder="Sys 115"
+              aria-label="Baseline Systolic BP"
+              class="clean-num w-20 px-2.5 py-1.5 text-xs sm:text-sm font-bold text-slate-900 bg-white border border-slate-400 rounded-lg focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+            />
+            <span class="font-extrabold text-slate-600">/</span>
+            <input
+              type="number"
+              id="baselineDiastolic"
+              min="20"
+              max="180"
+              placeholder="Dia 75"
+              aria-label="Baseline Diastolic BP"
+              class="clean-num w-20 px-2.5 py-1.5 text-xs sm:text-sm font-bold text-slate-900 bg-white border border-slate-400 rounded-lg focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+            />
+            <span class="text-xs font-bold text-slate-600">mmHg</span>
+          </div>
+          <div id="bpThresholdHint" class="text-[11px] font-semibold text-slate-600 mt-1">
+            Alert if Systolic BP &lt;100 mmHg
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- 3. LIVE DYNAMIC PPH BUNDLE ALERT BANNER                               -->
+    <!-- ===================================================================== -->
+    <section
+      id="pphAlertBanner"
+      role="status"
+      aria-live="polite"
+      class="border-b-2 border-slate-900 px-4 py-3 bg-emerald-50 text-emerald-950 transition-colors duration-300"
+    >
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div class="flex items-start sm:items-center gap-2.5">
+          <span id="alertStatusIcon" class="mt-0.5 sm:mt-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white font-extrabold text-xs shrink-0">
+            &#10003;
+          </span>
+          <div>
+            <div id="alertHeadline" class="text-xs sm:text-sm font-extrabold tracking-tight">
+              ACTIVE CLINICAL MONITORING — No PPH Bundle Trigger Criteria Met
+            </div>
+            <div id="alertSubtext" class="text-xs text-emerald-800 mt-0.5">
+              Recorded observations: <span id="recordedCount" class="font-bold">0</span>. Enter blood loss, tone, pulse, and BP below for real-time evaluation.
+            </div>
+          </div>
+        </div>
+        <span id="alertPillBadge" class="self-start sm:self-center px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-200/80 text-emerald-950 border border-emerald-400">
+          STATUS: NORMAL
+        </span>
+      </div>
+
+      <!-- Urgent Action Checklist (Revealed automatically when PPH Bundle is triggered) -->
+      <div id="bundleActionPanel" class="hidden mt-3 pt-2.5 border-t border-red-300 text-xs">
+        <div class="font-extrabold text-red-950 uppercase tracking-wide mb-1.5">
+          Immediate WHO First Response PPH Bundle Actions:
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1.5 text-red-950 font-semibold">
+          <div class="bg-white/80 px-2.5 py-1.5 rounded border border-red-300">1. Call for help &amp; Uterine Massage</div>
+          <div class="bg-white/80 px-2.5 py-1.5 rounded border border-red-300">2. Oxytocin / Uterotonics</div>
+          <div class="bg-white/80 px-2.5 py-1.5 rounded border border-red-300">3. Isotonic IV Crystalloids</div>
+          <div class="bg-white/80 px-2.5 py-1.5 rounded border border-red-300">4. Tranexamic Acid (TXA) 1g IV</div>
+          <div class="bg-white/80 px-2.5 py-1.5 rounded border border-red-300">5. Examine Genital Tract &amp; Placenta</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- 4. 7-COLUMN INTERACTIVE OBSERVATION TABLE                             -->
+    <!-- ===================================================================== -->
+    <div class="print-table-wrapper overflow-x-auto">
+      <table class="w-full min-w-[1120px] border-collapse text-xs sm:text-[13px]">
+        <thead>
+          <tr class="bg-white border-b-2 border-slate-900 text-slate-900 align-top">
+            <!-- Column 1: Date & Time (Ethiopian Calendar) -->
+            <th class="border-r-2 border-slate-900 p-2.5 w-[170px] text-center font-bold">
+              <div>Date</div>
+              <div>&amp;</div>
+              <div>Time</div>
+              <div class="text-[11px] font-bold text-emerald-800 mt-0.5">(Ethiopian Cal.)</div>
+              <div class="text-[10px] font-normal text-slate-700">(DD/MM/YYYY HH:MM 24hr)</div>
+            </th>
+
+            <!-- Column 2: Vaginal blood loss* measured by calibration line -->
+            <th class="border-r-2 border-slate-900 p-2.5 w-[215px] text-left font-bold">
+              <div>Vaginal blood loss* measured by calibration line in blood collection drape (mL)</div>
+              <div class="text-center font-normal italic underline mt-1.5">(&#10003; one option only)</div>
+            </th>
+
+            <!-- Column 3: Flow of vaginal blood loss observed -->
+            <th class="border-r-2 border-slate-900 p-2.5 w-[175px] text-left font-bold">
+              <div>Flow of vaginal blood loss observed</div>
+              <div class="text-center font-normal italic underline mt-1.5">(&#10003; one option only)</div>
+            </th>
+
+            <!-- Column 4: Uterine Tone -->
+            <th class="border-r-2 border-slate-900 p-2.5 w-[125px] text-center font-bold">
+              <div>Uterine Tone</div>
+              <div class="font-normal italic underline mt-1.5">(&#10003; one option only)</div>
+            </th>
+
+            <!-- Column 5: Pulse -->
+            <th class="border-r-2 border-slate-900 p-2.5 w-[145px] text-center font-bold">
+              <div>Pulse</div>
+              <div class="font-normal italic underline mt-1.5">(&#10003; one option only)</div>
+            </th>
+
+            <!-- Column 6: BP -->
+            <th class="border-r-2 border-slate-900 p-2.5 w-[155px] text-center font-bold">
+              <div>BP</div>
+              <div class="font-normal italic underline mt-1.5">(&#10003; one option only)</div>
+            </th>
+
+            <!-- Column 7: Signature -->
+            <th class="p-2.5 w-[135px] text-center font-bold">
+              <div>Signature</div>
+              <div class="text-[10px] font-normal text-slate-600 mt-1 no-print">&amp; Row Status</div>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody id="observationBody" class="divide-y-2 divide-slate-900">
+          <!-- Initial 4 observation rows rendered dynamically via JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- 6. CLINICAL ACTION TOOLBAR                                            -->
+    <!-- ===================================================================== -->
+    <footer class="no-print bg-slate-100 border-t-2 border-slate-900 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          id="addRowBtn"
+          class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5"
+        >
+          <span class="text-base leading-none">+</span>
+          <span>Add Observation Row</span>
+        </button>
+
+        <button
+          type="button"
+          id="printChartBtn"
+          class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-900 text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>Print Chart</span>
+        </button>
+
+        <button
+          type="button"
+          id="exportCsvBtn"
+          class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Export CSV</span>
+        </button>
+      </div>
+
+      <div>
+        <button
+          type="button"
+          id="clearFormBtn"
+          class="px-3.5 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 text-xs sm:text-sm font-bold transition"
+        >
+          Clear Form
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 5. CUSTOM ETHIOPIAN CALENDAR (ቀን መቁጠሪያ) & 24H TIME PICKER POPOVER      -->
+  <!-- ======================================================================= -->
+  <div
+    id="etDateTimePopover"
+    role="dialog"
+    aria-modal="false"
+    aria-label="Ethiopian Calendar Date and Time Picker"
+    class="no-print hidden fixed z-50 w-[336px] sm:w-[364px] bg-white rounded-2xl shadow-2xl border-2 border-slate-900 overflow-hidden select-none"
+  >
+    <!-- Popover Top Header -->
+    <div class="bg-slate-900 text-white px-3.5 py-2.5 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-extrabold text-[10px] tracking-wide">
+          ኢትዮ / ET
+        </span>
+        <div>
+          <div class="text-xs font-bold leading-tight">ቀን መቁጠሪያ (Ethiopian Calendar)</div>
+          <div id="etPickerGregSub" class="text-[10px] text-slate-300 leading-tight mt-0.5">Gregorian reference</div>
+        </div>
+      </div>
+      <button
+        type="button"
+        id="etPickerCloseBtn"
+        aria-label="Close Ethiopian date picker"
+        class="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Month & Year Navigation Controls -->
+    <div class="bg-slate-50 border-b border-slate-200 px-3 py-2 flex items-center justify-between gap-1.5">
+      <button
+        type="button"
+        id="etPrevMonthBtn"
+        aria-label="Previous Ethiopian month"
+        class="p-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold transition"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <div class="flex items-center gap-1.5 flex-1 justify-center">
+        <select
+          id="etMonthSelect"
+          aria-label="Ethiopian Month"
+          class="px-2 py-1 text-xs font-bold text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-slate-900 cursor-pointer"
+        ></select>
+
+        <select
+          id="etYearSelect"
+          aria-label="Ethiopian Year"
+          class="px-2 py-1 text-xs font-bold text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-slate-900 cursor-pointer"
+        ></select>
+      </div>
+
+      <button
+        type="button"
+        id="etNextMonthBtn"
+        aria-label="Next Ethiopian month"
+        class="p-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold transition"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bilingual 7-Day Week Header -->
+    <div class="grid grid-cols-7 bg-slate-100 border-b border-slate-200 text-center py-1.5 px-2">
+      <div class="text-[10px] font-bold text-rose-700 leading-tight">እሑድ<br /><span class="font-medium text-slate-500">Sun</span></div>
+      <div class="text-[10px] font-bold text-slate-800 leading-tight">ሰኞ<br /><span class="font-medium text-slate-500">Mon</span></div>
+      <div class="text-[10px] font-bold text-slate-800 leading-tight">ማክሰ<br /><span class="font-medium text-slate-500">Tue</span></div>
+      <div class="text-[10px] font-bold text-slate-800 leading-tight">ረቡዕ<br /><span class="font-medium text-slate-500">Wed</span></div>
+      <div class="text-[10px] font-bold text-slate-800 leading-tight">ሐሙስ<br /><span class="font-medium text-slate-500">Thu</span></div>
+      <div class="text-[10px] font-bold text-slate-800 leading-tight">ዓርብ<br /><span class="font-medium text-slate-500">Fri</span></div>
+      <div class="text-[10px] font-bold text-slate-800 leading-tight">ቅዳሜ<br /><span class="font-medium text-slate-500">Sat</span></div>
+    </div>
+
+    <!-- Ethiopian Calendar Days Grid -->
+    <div id="etCalendarGrid" class="grid grid-cols-7 gap-1 p-2 bg-white">
+      <!-- Day buttons injected dynamically -->
+    </div>
+
+    <!-- Integrated 24-Hour Time Selection Bar + Quick Quarter-Hour Pills -->
+    <div class="border-t border-slate-200 bg-slate-50 px-3 py-2.5 space-y-2">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-xs font-bold text-slate-800">Time (24hr):</span>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <input
+            type="number"
+            id="etHourInput"
+            min="0"
+            max="23"
+            aria-label="Hour (00 to 23)"
+            class="w-12 px-1.5 py-1 text-center text-xs font-extrabold text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-slate-900"
+          />
+          <span class="font-extrabold text-slate-800">:</span>
+          <input
+            type="number"
+            id="etMinuteInput"
+            min="0"
+            max="59"
+            aria-label="Minute (00 to 59)"
+            class="w-12 px-1.5 py-1 text-center text-xs font-extrabold text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-slate-900"
+          />
+        </div>
+      </div>
+
+      <!-- Quick Minute Presets (:00, :15, :30, :45) for rapid 15-min PPH interval charting -->
+      <div class="flex items-center justify-between gap-1">
+        <span class="text-[10px] font-semibold text-slate-500">Quick min:</span>
+        <div class="flex items-center gap-1">
+          <button type="button" data-quick-min="0" class="quick-min-btn px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-300 text-[11px] font-bold text-slate-700 transition">:00</button>
+          <button type="button" data-quick-min="15" class="quick-min-btn px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-300 text-[11px] font-bold text-slate-700 transition">:15</button>
+          <button type="button" data-quick-min="30" class="quick-min-btn px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-300 text-[11px] font-bold text-slate-700 transition">:30</button>
+          <button type="button" data-quick-min="45" class="quick-min-btn px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-300 text-[11px] font-bold text-slate-700 transition">:45</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popover Footer Action Buttons -->
+    <div class="border-t border-slate-200 bg-white px-3 py-2 flex items-center justify-between gap-2">
+      <button
+        type="button"
+        id="etPickerClearBtn"
+        class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-rose-700 hover:bg-rose-50 transition"
+      >
+        Clear
+      </button>
+
+      <div class="flex items-center gap-1.5">
+        <button
+          type="button"
+          id="etPickerNowBtn"
+          class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition"
+        >
+          አሁን / Now
+        </button>
+        <button
+          type="button"
+          id="etPickerApplyBtn"
+          class="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm transition"
+        >
+          Apply
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal for Clearing Form -->
+  <div
+    id="clearModalOverlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="clearModalTitle"
+    class="no-print hidden fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4"
+  >
+    <div class="bg-white rounded-2xl border-2 border-slate-900 shadow-2xl max-w-sm w-full p-5 space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-extrabold shrink-0">
+          !
+        </div>
+        <div>
+          <h2 id="clearModalTitle" class="text-base font-extrabold text-slate-900">Clear Clinical Chart?</h2>
+          <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+            This will reset patient info, baseline vitals, and all recorded observations back to 4 blank rows.
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button
+          type="button"
+          id="cancelClearBtn"
+          class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="confirmClearBtn"
+          class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition"
+        >
+          Yes, Clear Chart
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Non-blocking Toast Notification -->
+  <div
+    id="toastNotification"
+    class="no-print fixed bottom-5 right-5 z-50 transform translate-y-16 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 pointer-events-none"
+  >
+    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+    <span id="toastMessage">Action completed</span>
+  </div>
+
+  <script>
+    /**
+     * Exact Ethiopian Calendar (ቀን መቁጠሪያ) <-> Gregorian Conversion Engine
+     * Uses Julian Day Number (JDN) arithmetic for 100% accuracy across all years,
+     * including Ethiopian leap years (etYear % 4 === 3 -> Pagume has 6 days) and Gregorian leap years.
+     */
+    const EthiopianCalendar = (() => {
+      const MONTHS = [
+        { num: 1, am: 'መስከረም', en: 'Meskerem' },
+        { num: 2, am: 'ጥቅምት', en: 'Tikimt' },
+        { num: 3, am: 'ኅዳር', en: 'Hidar' },
+        { num: 4, am: 'ታኅሣሥ', en: 'Tahsas' },
+        { num: 5, am: 'ጥር', en: 'Tir' },
+        { num: 6, am: 'የካቲት', en: 'Yekatit' },
+        { num: 7, am: 'መጋቢት', en: 'Megabit' },
+        { num: 8, am: 'ሚያዝያ', en: 'Miyazya' },
+        { num: 9, am: 'ግንቦት', en: 'Ginbot' },
+        { num: 10, am: 'ሰኔ', en: 'Sene' },
+        { num: 11, am: 'ሐምሌ', en: 'Hamle' },
+        { num: 12, am: 'ነሐሴ', en: 'Nehase' },
+        { num: 13, am: 'ጳጉሜን', en: 'Pagume' }
+      ];
+
+      const GREG_MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      // Ethiopian Era Epoch in Julian Day Numbers: August 29, 8 CE (Julian) = JDN 1724221
+      const ETHIOPIC_EPOCH = 1724221;
+
+      function isEthiopianLeapYear(etYear) {
+        return ((etYear % 4) + 4) % 4 === 3;
+      }
+
+      function getDaysInEthiopianMonth(etYear, etMonth) {
+        if (etMonth >= 1 && etMonth <= 12) return 30;
+        if (etMonth === 13) return isEthiopianLeapYear(etYear) ? 6 : 5;
+        return 30;
+      }
+
+      function gregorianToJDN(year, month, day) {
+        const a = Math.floor((14 - month) / 12);
+        const y = year + 4800 - a;
+        const m = month + 12 * a - 3;
+        return (
+          day +
+          Math.floor((153 * m + 2) / 5) +
+          365 * y +
+          Math.floor(y / 4) -
+          Math.floor(y / 100) +
+          Math.floor(y / 400) -
+          32045
+        );
+      }
+
+      function jdnToGregorian(jdn) {
+        const a = jdn + 32044;
+        const b = Math.floor((4 * a + 3) / 146097);
+        const c = a - Math.floor((146097 * b) / 4);
+        const d = Math.floor((4 * c + 3) / 1461);
+        const e = c - Math.floor((1461 * d) / 4);
+        const m = Math.floor((5 * e + 2) / 153);
+
+        const day = e - Math.floor((153 * m + 2) / 5) + 1;
+        const month = m + 3 - 12 * Math.floor(m / 10);
+        const year = 100 * b + d - 4800 + Math.floor(m / 10);
+        const dayOfWeek = (jdn + 1) % 7; // 0 = Sun .. 6 = Sat
+
+        return { year, month, day, dayOfWeek };
+      }
+
+      function ethiopianToJDN(etYear, etMonth, etDay) {
+        return (
+          ETHIOPIC_EPOCH +
+          365 * (etYear - 1) +
+          Math.floor(etYear / 4) +
+          30 * (etMonth - 1) +
+          (etDay - 1)
+        );
+      }
+
+      function jdnToEthiopian(jdn) {
+        const r = (jdn - ETHIOPIC_EPOCH) % 1461;
+        const n = (r % 365) + 365 * Math.floor(r / 1460);
+        const year =
+          4 * Math.floor((jdn - ETHIOPIC_EPOCH) / 1461) +
+          Math.floor(r / 365) -
+          Math.floor(r / 1460);
+        const month = Math.floor(n / 30) + 1;
+        const day = (n % 30) + 1;
+        const dayOfWeek = (jdn + 1) % 7;
+
+        return { year, month, day, dayOfWeek };
+      }
+
+      function gregorianToEthiopian(gYear, gMonth, gDay) {
+        return jdnToEthiopian(gregorianToJDN(gYear, gMonth, gDay));
+      }
+
+      function ethiopianToGregorian(etYear, etMonth, etDay) {
+        return jdnToGregorian(ethiopianToJDN(etYear, etMonth, etDay));
+      }
+
+      function nowEthiopian() {
+        const now = new Date();
+        const et = gregorianToEthiopian(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        return {
+          ...et,
+          hour: now.getHours(),
+          minute: now.getMinutes()
+        };
+      }
+
+      function formatEthiopianDisplay(etYear, etMonth, etDay, hour, minute) {
+        const dd = String(etDay).padStart(2, '0');
+        const mm = String(etMonth).padStart(2, '0');
+        const hh = String(hour).padStart(2, '0');
+        const min = String(minute).padStart(2, '0');
+        const mObj = MONTHS[etMonth - 1] || MONTHS[0];
+        const greg = ethiopianToGregorian(etYear, etMonth, etDay);
+        const gIso = `${greg.year}-${String(greg.month).padStart(2, '0')}-${String(greg.day).padStart(2, '0')} ${hh}:${min}`;
+
+        return {
+          compact: `${dd}/${mm}/${etYear} ${hh}:${min}`,
+          amharicSubtitle: `${mObj.am} (${mObj.en}) ${etDay}, ${etYear} ዓ.ም.`,
+          gregorianEquivalent: `${GREG_MONTH_SHORT[greg.month - 1]} ${greg.day}, ${greg.year}`,
+          gregorianIso: gIso
+        };
+      }
+
+      return {
+        MONTHS,
+        GREG_MONTH_SHORT,
+        getDaysInEthiopianMonth,
+        ethiopianToJDN,
+        jdnToGregorian,
+        nowEthiopian,
+        formatEthiopianDisplay
+      };
+    })();
+
+    /**
+     * WHO Postpartum Hemorrhage (PPH) Clinical Observation Chart Application
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Patient & Baseline Vitals DOM Elements
+      const patientNameMrnInput = document.getElementById('patientNameMrn');
+      const deliveryEtTrigger = document.getElementById('deliveryEtTrigger');
+      const deliveryEtDisplay = document.getElementById('deliveryEtDisplay');
+      const deliveryEtSub = document.getElementById('deliveryEtSub');
+      const deliveryNowBtn = document.getElementById('deliveryNowBtn');
+
+      const baselinePulseInput = document.getElementById('baselinePulse');
+      const baselineSystolicInput = document.getElementById('baselineSystolic');
+      const baselineDiastolicInput = document.getElementById('baselineDiastolic');
+      const pulseThresholdHint = document.getElementById('pulseThresholdHint');
+      const bpThresholdHint = document.getElementById('bpThresholdHint');
+
+      // Live Alert Banner DOM Elements
+      const pphAlertBanner = document.getElementById('pphAlertBanner');
+      const alertStatusIcon = document.getElementById('alertStatusIcon');
+      const alertHeadline = document.getElementById('alertHeadline');
+      const alertSubtext = document.getElementById('alertSubtext');
+      const alertPillBadge = document.getElementById('alertPillBadge');
+      const bundleActionPanel = document.getElementById('bundleActionPanel');
+
+      // Table & Action Toolbar Elements
+      const observationBody = document.getElementById('observationBody');
+      const addRowBtn = document.getElementById('addRowBtn');
+      const printChartBtn = document.getElementById('printChartBtn');
+      const exportCsvBtn = document.getElementById('exportCsvBtn');
+      const clearFormBtn = document.getElementById('clearFormBtn');
+
+      // Clear Modal Elements
+      const clearModalOverlay = document.getElementById('clearModalOverlay');
+      const cancelClearBtn = document.getElementById('cancelClearBtn');
+      const confirmClearBtn = document.getElementById('confirmClearBtn');
+
+      // Ethiopian Calendar Popover Elements
+      const etPopover = document.getElementById('etDateTimePopover');
+      const etPickerCloseBtn = document.getElementById('etPickerCloseBtn');
+      const etPickerGregSub = document.getElementById('etPickerGregSub');
+      const etPrevMonthBtn = document.getElementById('etPrevMonthBtn');
+      const etNextMonthBtn = document.getElementById('etNextMonthBtn');
+      const etMonthSelect = document.getElementById('etMonthSelect');
+      const etYearSelect = document.getElementById('etYearSelect');
+      const etCalendarGrid = document.getElementById('etCalendarGrid');
+      const etHourInput = document.getElementById('etHourInput');
+      const etMinuteInput = document.getElementById('etMinuteInput');
+      const etPickerClearBtn = document.getElementById('etPickerClearBtn');
+      const etPickerNowBtn = document.getElementById('etPickerNowBtn');
+      const etPickerApplyBtn = document.getElementById('etPickerApplyBtn');
+
+      let rowSequence = 0;
+
+      // Popover state (target can be either an observation <tr> or the delivery header container)
+      let activeTargetEl = null;
+      let activeTriggerEl = null;
+      let viewEtYear = 2019;
+      let viewEtMonth = 3;
+      let draftEtDate = null;
+
+      /**
+       * Helper: Non-blocking toast notification
+       */
+      function showToast(message) {
+        const toast = document.getElementById('toastNotification');
+        const toastMsg = document.getElementById('toastMessage');
+        toastMsg.textContent = message;
+        toast.classList.remove('translate-y-16', 'opacity-0');
+        setTimeout(() => {
+          toast.classList.add('translate-y-16', 'opacity-0');
+        }, 2500);
+      }
+
+      /**
+       * Initialize Ethiopian Month & Year Select Dropdowns
+       */
+      function initEthiopianPickerSelects() {
+        etMonthSelect.innerHTML = EthiopianCalendar.MONTHS.map(
+          (m) => `<option value="${m.num}">${m.am} (${m.en})</option>`
+        ).join('');
+
+        const currentEt = EthiopianCalendar.nowEthiopian();
+        const startYear = currentEt.year - 10;
+        const endYear = currentEt.year + 10;
+        let optionsHtml = '';
+        for (let y = startYear; y <= endYear; y++) {
+          optionsHtml += `<option value="${y}">${y} ዓ.ም.</option>`;
+        }
+        etYearSelect.innerHTML = optionsHtml;
+      }
+
+      /**
+       * Renders the Ethiopian Calendar grid for (viewEtYear, viewEtMonth)
+       */
+      function renderEthiopianCalendarGrid() {
+        etMonthSelect.value = String(viewEtMonth);
+        etYearSelect.value = String(viewEtYear);
+
+        const todayEt = EthiopianCalendar.nowEthiopian();
+        const daysInMonth = EthiopianCalendar.getDaysInEthiopianMonth(viewEtYear, viewEtMonth);
+
+        const firstDayJdn = EthiopianCalendar.ethiopianToJDN(viewEtYear, viewEtMonth, 1);
+        const firstGreg = EthiopianCalendar.jdnToGregorian(firstDayJdn);
+        const startWeekday = firstGreg.dayOfWeek;
+
+        const lastDayJdn = EthiopianCalendar.ethiopianToJDN(viewEtYear, viewEtMonth, daysInMonth);
+        const lastGreg = EthiopianCalendar.jdnToGregorian(lastDayJdn);
+        const gStart = `${EthiopianCalendar.GREG_MONTH_SHORT[firstGreg.month - 1]} ${firstGreg.day}, ${firstGreg.year}`;
+        const gEnd = `${EthiopianCalendar.GREG_MONTH_SHORT[lastGreg.month - 1]} ${lastGreg.day}, ${lastGreg.year}`;
+        etPickerGregSub.textContent = `${gStart} – ${gEnd}`;
+
+        let cellsHtml = '';
+
+        // Leading blank cells
+        for (let i = 0; i < startWeekday; i++) {
+          cellsHtml += `<div class="h-9 rounded-lg bg-slate-50/70"></div>`;
+        }
+
+        // Day cells
+        for (let day = 1; day <= daysInMonth; day++) {
+          const cellJdn = firstDayJdn + (day - 1);
+          const cellGreg = EthiopianCalendar.jdnToGregorian(cellJdn);
+
+          const isToday =
+            todayEt.year === viewEtYear &&
+            todayEt.month === viewEtMonth &&
+            todayEt.day === day;
+
+          const isSelected =
+            draftEtDate &&
+            draftEtDate.year === viewEtYear &&
+            draftEtDate.month === viewEtMonth &&
+            draftEtDate.day === day;
+
+          let btnClass =
+            'et-day-btn relative h-9 rounded-lg border text-xs font-bold flex flex-col items-center justify-center transition cursor-pointer ';
+
+          if (isSelected) {
+            btnClass += 'bg-slate-900 text-white border-slate-900 shadow-sm';
+          } else if (isToday) {
+            btnClass += 'bg-emerald-50 text-emerald-950 border-emerald-500 ring-1 ring-emerald-500';
+          } else {
+            btnClass += 'bg-white hover:bg-slate-100 text-slate-900 border-slate-200';
+          }
+
+          const gregSubClass = isSelected ? 'text-slate-300' : 'text-slate-400';
+
+          cellsHtml += `
+            <button type="button" data-et-day="${day}" class="${btnClass}" title="EC: ${day}/${viewEtMonth}/${viewEtYear} | GC: ${cellGreg.year}-${String(cellGreg.month).padStart(2, '0')}-${String(cellGreg.day).padStart(2, '0')}">
+              <span class="leading-none">${day}</span>
+              <span class="text-[9px] font-normal leading-none mt-0.5 ${gregSubClass}">${cellGreg.day}</span>
+            </button>
+          `;
+        }
+
+        etCalendarGrid.innerHTML = cellsHtml;
+
+        etCalendarGrid.querySelectorAll('.et-day-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            draftEtDate = {
+              year: viewEtYear,
+              month: viewEtMonth,
+              day: parseInt(btn.dataset.etDay, 10)
+            };
+            renderEthiopianCalendarGrid();
+          });
+        });
+      }
+
+      /**
+       * Smart viewport positioning so the popover never clips off-screen
+       */
+      function positionPopover(triggerEl) {
+        etPopover.classList.remove('hidden');
+        const rect = triggerEl.getBoundingClientRect();
+        const popRect = etPopover.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        let left = rect.left;
+        if (left + popRect.width > vw - 12) {
+          left = Math.max(12, vw - popRect.width - 12);
+        }
+
+        let top = rect.bottom + 6;
+        if (top + popRect.height > vh - 12) {
+          top = Math.max(12, rect.top - popRect.height - 6);
+        }
+
+        etPopover.style.left = `${left}px`;
+        etPopover.style.top = `${top}px`;
+      }
+
+      /**
+       * Opens the Ethiopian Date & Time Picker for any target element (row or delivery header)
+       */
+      function openEthiopianPicker(targetEl, triggerEl) {
+        activeTargetEl = targetEl;
+        activeTriggerEl = triggerEl;
+
+        const nowEt = EthiopianCalendar.nowEthiopian();
+        const y = parseInt(targetEl.dataset.etYear, 10);
+        const m = parseInt(targetEl.dataset.etMonth, 10);
+        const d = parseInt(targetEl.dataset.etDay, 10);
+        const h = parseInt(targetEl.dataset.etHour, 10);
+        const min = parseInt(targetEl.dataset.etMinute, 10);
+
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+          viewEtYear = y;
+          viewEtMonth = m;
+          draftEtDate = { year: y, month: m, day: d };
+          etHourInput.value = String(!isNaN(h) ? h : nowEt.hour).padStart(2, '0');
+          etMinuteInput.value = String(!isNaN(min) ? min : nowEt.minute).padStart(2, '0');
+        } else {
+          viewEtYear = nowEt.year;
+          viewEtMonth = nowEt.month;
+          draftEtDate = { year: nowEt.year, month: nowEt.month, day: nowEt.day };
+          etHourInput.value = String(nowEt.hour).padStart(2, '0');
+          etMinuteInput.value = String(nowEt.minute).padStart(2, '0');
+        }
+
+        renderEthiopianCalendarGrid();
+        positionPopover(triggerEl);
+      }
+
+      function closeEthiopianPicker() {
+        etPopover.classList.add('hidden');
+        activeTargetEl = null;
+        activeTriggerEl = null;
+      }
+
+      /**
+       * Applies Ethiopian Date & 24hr Time to either the Delivery Header or an Observation Row
+       */
+      function applyEthiopianDateTime(targetEl, etYear, etMonth, etDay, hour, minute) {
+        const clampedHour = Math.max(0, Math.min(23, isNaN(hour) ? 0 : hour));
+        const clampedMin = Math.max(0, Math.min(59, isNaN(minute) ? 0 : minute));
+
+        targetEl.dataset.etYear = String(etYear);
+        targetEl.dataset.etMonth = String(etMonth);
+        targetEl.dataset.etDay = String(etDay);
+        targetEl.dataset.etHour = String(clampedHour);
+        targetEl.dataset.etMinute = String(clampedMin);
+
+        const fmt = EthiopianCalendar.formatEthiopianDisplay(
+          etYear,
+          etMonth,
+          etDay,
+          clampedHour,
+          clampedMin
+        );
+
+        if (targetEl === deliveryEtTrigger) {
+          deliveryEtDisplay.value = fmt.compact;
+          deliveryEtSub.textContent = `${fmt.amharicSubtitle} (GC: ${fmt.gregorianEquivalent})`;
+        } else {
+          targetEl.querySelector('.et-datetime-display').value = fmt.compact;
+          targetEl.querySelector('.et-amharic-sub').textContent = fmt.amharicSubtitle;
+          targetEl.querySelector('.et-greg-sub').textContent = `GC: ${fmt.gregorianEquivalent}`;
+          evaluateAllRows();
+        }
+      }
+
+      function clearEthiopianDateTime(targetEl) {
+        delete targetEl.dataset.etYear;
+        delete targetEl.dataset.etMonth;
+        delete targetEl.dataset.etDay;
+        delete targetEl.dataset.etHour;
+        delete targetEl.dataset.etMinute;
+
+        if (targetEl === deliveryEtTrigger) {
+          deliveryEtDisplay.value = '';
+          deliveryEtSub.textContent = 'Ethiopian Calendar (ቀን መቁጠሪያ)';
+        } else {
+          targetEl.querySelector('.et-datetime-display').value = '';
+          targetEl.querySelector('.et-amharic-sub').textContent = 'Select Ethiopian date';
+          targetEl.querySelector('.et-greg-sub').textContent = '';
+          evaluateAllRows();
+        }
+      }
+
+      // Popover Controls
+      etPrevMonthBtn.addEventListener('click', () => {
+        if (viewEtMonth === 1) {
+          viewEtMonth = 13;
+          viewEtYear -= 1;
+        } else {
+          viewEtMonth -= 1;
+        }
+        renderEthiopianCalendarGrid();
+      });
+
+      etNextMonthBtn.addEventListener('click', () => {
+        if (viewEtMonth === 13) {
+          viewEtMonth = 1;
+          viewEtYear += 1;
+        } else {
+          viewEtMonth += 1;
+        }
+        renderEthiopianCalendarGrid();
+      });
+
+      etMonthSelect.addEventListener('change', () => {
+        viewEtMonth = parseInt(etMonthSelect.value, 10);
+        renderEthiopianCalendarGrid();
+      });
+
+      etYearSelect.addEventListener('change', () => {
+        viewEtYear = parseInt(etYearSelect.value, 10);
+        renderEthiopianCalendarGrid();
+      });
+
+      etHourInput.addEventListener('blur', () => {
+        const val = Math.max(0, Math.min(23, parseInt(etHourInput.value, 10) || 0));
+        etHourInput.value = String(val).padStart(2, '0');
+      });
+
+      etMinuteInput.addEventListener('blur', () => {
+        const val = Math.max(0, Math.min(59, parseInt(etMinuteInput.value, 10) || 0));
+        etMinuteInput.value = String(val).padStart(2, '0');
+      });
+
+      document.querySelectorAll('.quick-min-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          etMinuteInput.value = String(parseInt(btn.dataset.quickMin, 10)).padStart(2, '0');
+        });
+      });
+
+      etPickerNowBtn.addEventListener('click', () => {
+        const nowEt = EthiopianCalendar.nowEthiopian();
+        viewEtYear = nowEt.year;
+        viewEtMonth = nowEt.month;
+        draftEtDate = { year: nowEt.year, month: nowEt.month, day: nowEt.day };
+        etHourInput.value = String(nowEt.hour).padStart(2, '0');
+        etMinuteInput.value = String(nowEt.minute).padStart(2, '0');
+        renderEthiopianCalendarGrid();
+
+        if (activeTargetEl) {
+          applyEthiopianDateTime(
+            activeTargetEl,
+            nowEt.year,
+            nowEt.month,
+            nowEt.day,
+            nowEt.hour,
+            nowEt.minute
+          );
+          closeEthiopianPicker();
+        }
+      });
+
+      etPickerApplyBtn.addEventListener('click', () => {
+        if (!activeTargetEl) return;
+        const chosen = draftEtDate || EthiopianCalendar.nowEthiopian();
+        const hr = parseInt(etHourInput.value, 10);
+        const mn = parseInt(etMinuteInput.value, 10);
+        applyEthiopianDateTime(activeTargetEl, chosen.year, chosen.month, chosen.day, hr, mn);
+        closeEthiopianPicker();
+      });
+
+      etPickerClearBtn.addEventListener('click', () => {
+        if (activeTargetEl) {
+          clearEthiopianDateTime(activeTargetEl);
+        }
+        closeEthiopianPicker();
+      });
+
+      etPickerCloseBtn.addEventListener('click', closeEthiopianPicker);
+
+      // Delivery Header Picker & Quick Now
+      deliveryEtTrigger.addEventListener('click', () => {
+        openEthiopianPicker(deliveryEtTrigger, deliveryEtTrigger);
+      });
+
+      deliveryNowBtn.addEventListener('click', () => {
+        const nowEt = EthiopianCalendar.nowEthiopian();
+        applyEthiopianDateTime(
+          deliveryEtTrigger,
+          nowEt.year,
+          nowEt.month,
+          nowEt.day,
+          nowEt.hour,
+          nowEt.minute
+        );
+      });
+
+      // Close popover on outside click, Escape, or reposition on resize
+      document.addEventListener('click', (e) => {
+        if (etPopover.classList.contains('hidden')) return;
+        if (etPopover.contains(e.target)) return;
+        if (e.target.closest('.et-picker-trigger')) return;
+        closeEthiopianPicker();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (!etPopover.classList.contains('hidden')) closeEthiopianPicker();
+          if (!clearModalOverlay.classList.contains('hidden')) clearModalOverlay.classList.add('hidden');
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        if (!etPopover.classList.contains('hidden') && activeTriggerEl) {
+          positionPopover(activeTriggerEl);
+        }
+      });
+
+      /**
+       * Baseline Vitals Calculator & Re-evaluation
+       */
+      function updateBaselineHintsAndReclassify() {
+        const basePulse = parseFloat(baselinePulseInput.value);
+        if (!isNaN(basePulse) && basePulse > 0) {
+          const riseLimit = basePulse + 20;
+          pulseThresholdHint.innerHTML = `Alert if Pulse <span class="text-amber-700 font-extrabold">&ge;${riseLimit} bpm</span> or <span class="text-amber-700 font-extrabold">&gt;100 bpm</span>`;
+        } else {
+          pulseThresholdHint.textContent = 'Alert if Pulse >100 bpm';
+        }
+
+        const baseSys = parseFloat(baselineSystolicInput.value);
+        if (!isNaN(baseSys) && baseSys > 0) {
+          const dropLimit = baseSys - 20;
+          bpThresholdHint.innerHTML = `Alert if Systolic BP <span class="text-amber-700 font-extrabold">&le;${dropLimit} mmHg</span> or <span class="text-amber-700 font-extrabold">&lt;100 mmHg</span>`;
+        } else {
+          bpThresholdHint.textContent = 'Alert if Systolic BP <100 mmHg';
+        }
+
+        // Re-classify existing rows that have numeric values entered
+        document.querySelectorAll('#observationBody tr').forEach((tr) => {
+          if (tr.querySelector('.pulse-bpm-input').value.trim() !== '') {
+            autoClassifyPulse(tr);
+          }
+          if (tr.querySelector('.bp-sys-input').value.trim() !== '') {
+            autoClassifyBP(tr);
+          }
+        });
+
+        evaluateAllRows();
+      }
+
+      baselinePulseInput.addEventListener('input', updateBaselineHintsAndReclassify);
+      baselineSystolicInput.addEventListener('input', updateBaselineHintsAndReclassify);
+
+      /**
+       * Auto-classifies Pulse input based on WHO rules (>100 bpm OR >= baseline + 20 bpm)
+       */
+      function autoClassifyPulse(tr) {
+        const bpm = parseFloat(tr.querySelector('.pulse-bpm-input').value);
+        const radios = tr.querySelectorAll('.pulse-radio');
+        const noteEl = tr.querySelector('.pulse-auto-note');
+
+        if (isNaN(bpm) || bpm <= 0) {
+          noteEl.textContent = '';
+          return;
+        }
+
+        const basePulse = parseFloat(baselinePulseInput.value);
+        const isHighAbsolute = bpm > 100;
+        const isHighDelta = !isNaN(basePulse) && basePulse > 0 && bpm >= basePulse + 20;
+        const isAbnormal = isHighAbsolute || isHighDelta;
+
+        radios.forEach((r) => {
+          r.checked = r.value === (isAbnormal ? 'Abnormal' : 'Normal');
+        });
+
+        if (isHighAbsolute && isHighDelta) {
+          noteEl.textContent = '>100 & ≥+20 bpm';
+        } else if (isHighDelta) {
+          noteEl.textContent = `≥+20 from ${basePulse}`;
+        } else if (isHighAbsolute) {
+          noteEl.textContent = '>100 bpm';
+        } else {
+          noteEl.textContent = 'Within range';
+        }
+      }
+
+      /**
+       * Auto-classifies Systolic BP input based on WHO rules (<100 mmHg OR <= baseline - 20 mmHg)
+       */
+      function autoClassifyBP(tr) {
+        const sys = parseFloat(tr.querySelector('.bp-sys-input').value);
+        const radios = tr.querySelectorAll('.bp-radio');
+        const noteEl = tr.querySelector('.bp-auto-note');
+
+        if (isNaN(sys) || sys <= 0) {
+          noteEl.textContent = '';
+          return;
+        }
+
+        const baseSys = parseFloat(baselineSystolicInput.value);
+        const isLowAbsolute = sys < 100;
+        const isLowDelta = !isNaN(baseSys) && baseSys > 0 && sys <= baseSys - 20;
+        const isAbnormal = isLowAbsolute || isLowDelta;
+
+        radios.forEach((r) => {
+          r.checked = r.value === (isAbnormal ? 'Abnormal' : 'Normal');
+        });
+
+        if (isLowAbsolute && isLowDelta) {
+          noteEl.textContent = '<100 & ≥-20 drop';
+        } else if (isLowDelta) {
+          noteEl.textContent = `≥-20 from ${baseSys}`;
+        } else if (isLowAbsolute) {
+          noteEl.textContent = '<100 mmHg';
+        } else {
+          noteEl.textContent = 'Within range';
+        }
+      }
+
+      /**
+       * Creates and appends a single interactive observation row matching the WHO chart
+       */
+      function createObservationRow(rowNumber, allowDelete = false) {
+        const tr = document.createElement('tr');
+        tr.dataset.rowNumber = String(rowNumber);
+        tr.className = 'bg-white transition-colors duration-200 align-stretch';
+
+        tr.innerHTML = `
+          <!-- Column 1: Ethiopian Date & Time (HH:MM 24hr) -->
+          <td class="border-r-2 border-slate-900 p-2 align-top">
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <span class="row-num-label text-[11px] font-extrabold text-slate-600">Obs #${rowNumber}</span>
+                <button
+                  type="button"
+                  class="now-btn no-print px-2 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 text-[10px] font-extrabold transition"
+                  title="Stamp current Ethiopian date and 24-hour time"
+                >
+                  አሁን / Now
+                </button>
+              </div>
+
+              <!-- Interactive Ethiopian Calendar Trigger -->
+              <div class="et-picker-trigger relative group cursor-pointer">
+                <input
+                  type="text"
+                  readonly
+                  placeholder="DD/MM/YYYY HH:MM"
+                  aria-label="Observation ${rowNumber} Ethiopian Date and Time"
+                  class="et-datetime-display w-full pl-2 pr-6 py-1.5 text-[11px] font-bold text-slate-900 bg-white group-hover:bg-slate-50 border border-slate-400 group-hover:border-slate-900 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/15"
+                />
+                <span class="no-print pointer-events-none absolute right-1.5 top-1.5 text-slate-500 group-hover:text-slate-900">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </span>
+              </div>
+
+              <!-- Ethiopian Amharic Month & Gregorian Cross-Reference -->
+              <div class="leading-tight px-0.5">
+                <div class="et-amharic-sub text-[10px] font-semibold text-emerald-800">Select Ethiopian date</div>
+                <div class="et-greg-sub text-[10px] text-slate-500"></div>
+              </div>
+            </div>
+          </td>
+
+          <!-- Column 2: Vaginal blood loss* measured by calibration line in blood collection drape (mL) -->
+          <td class="border-r-2 border-slate-900 p-0 align-top">
+            <div class="flex flex-col h-full justify-between">
+              <div class="px-2.5 pt-2 pb-1.5 text-center">
+                <div class="text-xs font-semibold text-slate-900">Cumulative blood loss</div>
+                <div class="mt-1 inline-flex items-baseline justify-center gap-1">
+                  <input
+                    type="number"
+                    min="0"
+                    max="5000"
+                    step="10"
+                    placeholder="____"
+                    aria-label="Cumulative blood loss in mL"
+                    class="blood-ml-input clean-num w-20 text-center font-bold text-slate-900 border-b-2 border-slate-800 focus:outline-none focus:border-emerald-700 bg-transparent text-xs sm:text-sm"
+                  />
+                  <span class="text-xs font-bold text-slate-900">mL</span>
+                </div>
+              </div>
+
+              <div class="divide-y divide-slate-200/80 text-xs font-medium">
+                <label class="flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:bg-slate-50">
+                  <span class="flex-1 text-center">Less than 299mL</span>
+                  <input type="radio" name="vol_${rowNumber}" value="lt299" class="who-check-input vol-radio" />
+                </label>
+
+                <label class="flex items-center justify-between px-2.5 py-1.5 bg-clinicalYellow cursor-pointer hover:brightness-95">
+                  <span class="flex-1 text-center font-semibold text-slate-900">between 300 mL - 499 mL</span>
+                  <input type="radio" name="vol_${rowNumber}" value="300to499" class="who-check-input vol-radio" />
+                </label>
+
+                <label class="flex items-center justify-between px-2.5 py-1.5 bg-clinicalRed cursor-pointer hover:brightness-95">
+                  <span class="flex-1 text-center font-bold text-slate-950">500 mL or more</span>
+                  <input type="radio" name="vol_${rowNumber}" value="ge500" class="who-check-input vol-radio" />
+                </label>
+              </div>
+            </div>
+          </td>
+
+          <!-- Column 3: Flow of vaginal blood loss observed -->
+          <td class="border-r-2 border-slate-900 p-0 align-top">
+            <div class="flex flex-col h-full justify-between text-xs font-medium">
+              <label class="flex items-center justify-between px-2.5 py-2 cursor-pointer hover:bg-slate-50">
+                <span class="flex-1 text-center">Normal</span>
+                <input type="radio" name="flow_${rowNumber}" value="Normal" class="who-check-input flow-radio" />
+              </label>
+
+              <div class="bg-clinicalRed divide-y divide-red-300/60">
+                <label class="flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:brightness-95">
+                  <span class="flex-1 text-center font-semibold text-slate-950">Heavy flow</span>
+                  <input type="radio" name="flow_${rowNumber}" value="Heavy flow" class="who-check-input flow-radio" />
+                </label>
+                <label class="flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:brightness-95">
+                  <span class="flex-1 text-center font-semibold text-slate-950">large clots</span>
+                  <input type="radio" name="flow_${rowNumber}" value="large clots" class="who-check-input flow-radio" />
+                </label>
+                <label class="flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:brightness-95">
+                  <span class="flex-1 text-center font-semibold text-slate-950">Constant trickle</span>
+                  <input type="radio" name="flow_${rowNumber}" value="Constant trickle" class="who-check-input flow-radio" />
+                </label>
+              </div>
+            </div>
+          </td>
+
+          <!-- Column 4: Uterine Tone -->
+          <td class="border-r-2 border-slate-900 p-0 align-top">
+            <div class="flex flex-col h-full justify-between text-xs font-medium">
+              <label class="flex items-center justify-between px-2.5 py-2.5 cursor-pointer hover:bg-slate-50">
+                <span class="flex-1 text-center">Hard</span>
+                <input type="radio" name="tone_${rowNumber}" value="Hard" class="who-check-input tone-radio" />
+              </label>
+
+              <label class="flex items-center justify-between px-2.5 py-2.5 bg-clinicalYellow cursor-pointer hover:brightness-95 mt-auto">
+                <span class="flex-1 text-center font-semibold text-slate-900">Soft</span>
+                <input type="radio" name="tone_${rowNumber}" value="Soft" class="who-check-input tone-radio" />
+              </label>
+            </div>
+          </td>
+
+          <!-- Column 5: Pulse -->
+          <td class="border-r-2 border-slate-900 p-0 align-top">
+            <div class="flex flex-col h-full justify-between">
+              <div class="px-2 pt-2.5 pb-1 text-center">
+                <div class="inline-flex items-baseline justify-center gap-1">
+                  <input
+                    type="number"
+                    min="30"
+                    max="240"
+                    placeholder="____"
+                    aria-label="Pulse in beats per minute"
+                    class="pulse-bpm-input clean-num w-14 text-center font-bold text-slate-900 border-b-2 border-slate-800 focus:outline-none focus:border-emerald-700 bg-transparent text-xs sm:text-sm"
+                  />
+                  <span class="text-xs font-bold text-slate-900">bpm</span>
+                </div>
+                <div class="pulse-auto-note text-[10px] font-semibold text-slate-500 min-h-[0.9rem] mt-0.5"></div>
+              </div>
+
+              <div class="text-xs font-medium">
+                <label class="flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:bg-slate-50">
+                  <span class="flex-1 text-center">Normal</span>
+                  <input type="radio" name="pulse_${rowNumber}" value="Normal" class="who-check-input pulse-radio" />
+                </label>
+
+                <label class="flex items-center justify-between px-2.5 py-1.5 bg-clinicalYellow cursor-pointer hover:brightness-95">
+                  <span class="flex-1 text-center font-semibold text-slate-900">Abnormal</span>
+                  <input type="radio" name="pulse_${rowNumber}" value="Abnormal" class="who-check-input pulse-radio" />
+                </label>
+              </div>
+            </div>
+          </td>
+
+          <!-- Column 6: BP -->
+          <td class="border-r-2 border-slate-900 p-0 align-top">
+            <div class="flex flex-col h-full justify-between">
+              <div class="px-2 pt-2.5 pb-1 text-center">
+                <div class="inline-flex items-baseline justify-center gap-0.5">
+                  <input
+                    type="number"
+                    min="30"
+                    max="260"
+                    placeholder="___"
+                    aria-label="Systolic blood pressure"
+                    class="bp-sys-input clean-num w-10 text-center font-bold text-slate-900 border-b-2 border-slate-800 focus:outline-none focus:border-emerald-700 bg-transparent text-xs"
+                  />
+                  <span class="font-extrabold text-slate-900">/</span>
+                  <input
+                    type="number"
+                    min="20"
+                    max="180"
+                    placeholder="___"
+                    aria-label="Diastolic blood pressure"
+                    class="bp-dia-input clean-num w-10 text-center font-bold text-slate-900 border-b-2 border-slate-800 focus:outline-none focus:border-emerald-700 bg-transparent text-xs"
+                  />
+                  <span class="text-[11px] font-bold text-slate-900 ml-0.5">mm/Hg</span>
+                </div>
+                <div class="bp-auto-note text-[10px] font-semibold text-slate-500 min-h-[0.9rem] mt-0.5"></div>
+              </div>
+
+              <div class="text-xs font-medium">
+                <label class="flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:bg-slate-50">
+                  <span class="flex-1 text-center">Normal</span>
+                  <input type="radio" name="bp_${rowNumber}" value="Normal" class="who-check-input bp-radio" />
+                </label>
+
+                <label class="flex items-center justify-between px-2.5 py-1.5 bg-clinicalYellow cursor-pointer hover:brightness-95">
+                  <span class="flex-1 text-center font-semibold text-slate-900">Abnormal</span>
+                  <input type="radio" name="bp_${rowNumber}" value="Abnormal" class="who-check-input bp-radio" />
+                </label>
+              </div>
+            </div>
+          </td>
+
+          <!-- Column 7: Signature & Live Row Status -->
+          <td class="p-2 align-top">
+            <div class="flex flex-col h-full justify-between gap-2">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Initials / Sign"
+                  aria-label="Clinician Signature for Observation ${rowNumber}"
+                  class="sig-input w-full px-2 py-1.5 text-xs font-semibold text-slate-900 border-b-2 border-slate-700 focus:outline-none focus:border-emerald-700 bg-transparent text-center"
+                />
+              </div>
+
+              <div class="row-status-badge no-print rounded-lg px-2 py-1.5 text-center text-[10px] font-extrabold bg-slate-100 text-slate-500 border border-slate-200 leading-tight">
+                Awaiting entry
+              </div>
+
+              ${
+                allowDelete
+                  ? `<button type="button" class="delete-row-btn no-print self-center text-[10px] font-bold text-rose-600 hover:text-rose-800 hover:underline">Remove row</button>`
+                  : ''
+              }
+            </div>
+          </td>
+        `;
+
+        observationBody.appendChild(tr);
+        bindRowEvents(tr);
+      }
+
+      /**
+       * Attaches interactive listeners (including radio uncheck-on-reclick toggle) to a row
+       */
+      function bindRowEvents(tr) {
+        const pickerTrigger = tr.querySelector('.et-picker-trigger');
+        const nowBtn = tr.querySelector('.now-btn');
+        const bloodMlInput = tr.querySelector('.blood-ml-input');
+        const pulseBpmInput = tr.querySelector('.pulse-bpm-input');
+        const bpSysInput = tr.querySelector('.bp-sys-input');
+        const bpDiaInput = tr.querySelector('.bp-dia-input');
+        const deleteBtn = tr.querySelector('.delete-row-btn');
+
+        // Open Ethiopian Calendar Popover
+        pickerTrigger.addEventListener('click', () => {
+          openEthiopianPicker(tr, pickerTrigger);
+        });
+
+        // Quick "አሁን / Now" Stamp
+        nowBtn.addEventListener('click', () => {
+          const nowEt = EthiopianCalendar.nowEthiopian();
+          applyEthiopianDateTime(
+            tr,
+            nowEt.year,
+            nowEt.month,
+            nowEt.day,
+            nowEt.hour,
+            nowEt.minute
+          );
+        });
+
+        // Cumulative mL auto-selection
+        bloodMlInput.addEventListener('input', () => {
+          const val = parseFloat(bloodMlInput.value);
+          const volRadios = tr.querySelectorAll('.vol-radio');
+          if (!isNaN(val) && val >= 0) {
+            let target = 'lt299';
+            if (val >= 500) target = 'ge500';
+            else if (val >= 300) target = '300to499';
+            volRadios.forEach((r) => {
+              r.checked = r.value === target;
+            });
+          }
+          evaluateAllRows();
+        });
+
+        // Pulse & BP auto-classification
+        pulseBpmInput.addEventListener('input', () => {
+          autoClassifyPulse(tr);
+          evaluateAllRows();
+        });
+
+        bpSysInput.addEventListener('input', () => {
+          autoClassifyBP(tr);
+          evaluateAllRows();
+        });
+
+        bpDiaInput.addEventListener('input', evaluateAllRows);
+
+        // Allow direct click + toggle-off on already checked radio inputs for full clinical flexibility
+        tr.querySelectorAll('.who-check-input').forEach((radio) => {
+          radio.addEventListener('pointerdown', () => {
+            radio.dataset.wasChecked = radio.checked ? 'true' : 'false';
+          });
+          radio.addEventListener('click', () => {
+            if (radio.dataset.wasChecked === 'true') {
+              radio.checked = false;
+            }
+            if (radio.classList.contains('pulse-radio')) {
+              tr.querySelector('.pulse-auto-note').textContent = radio.checked ? 'Manual selection' : '';
+            }
+            if (radio.classList.contains('bp-radio')) {
+              tr.querySelector('.bp-auto-note').textContent = radio.checked ? 'Manual selection' : '';
+            }
+            evaluateAllRows();
+          });
+        });
+
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', () => {
+            if (activeTargetEl === tr) closeEthiopianPicker();
+            tr.remove();
+            evaluateAllRows();
+          });
+        }
+      }
+
+      /**
+       * Evaluates all rows against the WHO First Response PPH Bundle trigger rule:
+       * Triggered if:
+       *   (at least 1 red ✓) OR (calibrated measurement line 300-499ml AND at least 1 yellow ✓)
+       */
+      function evaluateAllRows() {
+        const rows = Array.from(document.querySelectorAll('#observationBody tr'));
+        let recordedObsCount = 0;
+        const triggeredDetails = [];
+
+        rows.forEach((tr) => {
+          const rowNum = tr.dataset.rowNumber;
+          const etVal = tr.querySelector('.et-datetime-display').value;
+          const timeTag = etVal ? ` @ ${etVal} EC` : '';
+
+          const volVal = tr.querySelector('.vol-radio:checked')?.value || '';
+          const flowVal = tr.querySelector('.flow-radio:checked')?.value || '';
+          const toneVal = tr.querySelector('.tone-radio:checked')?.value || '';
+          const pulseVal = tr.querySelector('.pulse-radio:checked')?.value || '';
+          const bpVal = tr.querySelector('.bp-radio:checked')?.value || '';
+
+          const badge = tr.querySelector('.row-status-badge');
+          const hasEntry = !!(volVal || flowVal || toneVal || pulseVal || bpVal || etVal);
+
+          if (!hasEntry) {
+            tr.classList.remove('bg-red-50/40', 'bg-amber-50/40');
+            badge.className = 'row-status-badge no-print rounded-lg px-2 py-1.5 text-center text-[10px] font-extrabold bg-slate-100 text-slate-500 border border-slate-200 leading-tight';
+            badge.textContent = 'Awaiting entry';
+            return;
+          }
+
+          recordedObsCount++;
+
+          // Collect Red triggers
+          const redReasons = [];
+          if (volVal === 'ge500') redReasons.push('Blood loss ≥500 mL');
+          if (flowVal === 'Heavy flow') redReasons.push('Heavy flow');
+          if (flowVal === 'large clots') redReasons.push('Large clots');
+          if (flowVal === 'Constant trickle') redReasons.push('Constant trickle');
+
+          // Collect Yellow abnormal observations (excluding the 300-499 mL line itself)
+          const yellowAbnormalReasons = [];
+          if (toneVal === 'Soft') yellowAbnormalReasons.push('Soft uterine tone');
+          if (pulseVal === 'Abnormal') yellowAbnormalReasons.push('Abnormal pulse');
+          if (bpVal === 'Abnormal') yellowAbnormalReasons.push('Abnormal BP');
+
+          const is300to499 = volVal === '300to499';
+          const isBundleTriggered =
+            redReasons.length >= 1 || (is300to499 && yellowAbnormalReasons.length >= 1);
+
+          if (isBundleTriggered) {
+            tr.classList.remove('bg-amber-50/40');
+            tr.classList.add('bg-red-50/40');
+            badge.className = 'row-status-badge no-print rounded-lg px-2 py-1.5 text-center text-[10px] font-extrabold bg-red-600 text-white border border-red-800 shadow-xs leading-tight';
+            badge.textContent = 'TRIGGER PPH BUNDLE';
+
+            const reasons = [];
+            if (redReasons.length > 0) reasons.push(...redReasons);
+            if (is300to499 && yellowAbnormalReasons.length > 0) {
+              reasons.push(`300–499 mL + ${yellowAbnormalReasons.join(' & ')}`);
+            }
+            triggeredDetails.push(`Obs #${rowNum}${timeTag} (${reasons.join(', ')})`);
+          } else if (is300to499 || yellowAbnormalReasons.length > 0) {
+            tr.classList.remove('bg-red-50/40');
+            tr.classList.add('bg-amber-50/40');
+            badge.className = 'row-status-badge no-print rounded-lg px-2 py-1.5 text-center text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-400 leading-tight';
+            badge.textContent = 'Yellow Warning';
+          } else {
+            tr.classList.remove('bg-red-50/40', 'bg-amber-50/40');
+            badge.className = 'row-status-badge no-print rounded-lg px-2 py-1.5 text-center text-[10px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300 leading-tight';
+            badge.textContent = 'Normal';
+          }
+        });
+
+        // Update Top Live Alert Banner
+        if (triggeredDetails.length > 0) {
+          pphAlertBanner.className = 'border-b-2 border-slate-900 px-4 py-3 bg-red-100 text-red-950 transition-colors duration-300';
+          alertStatusIcon.className = 'mt-0.5 sm:mt-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-600 text-white font-extrabold text-xs shrink-0 animate-pulse';
+          alertStatusIcon.textContent = '!';
+          alertHeadline.textContent = 'URGENT: TRIGGER WHO FIRST RESPONSE PPH BUNDLE IMMEDIATELY';
+          alertSubtext.innerHTML = `<span class="font-bold">Triggered by:</span> ${triggeredDetails.join(' | ')}`;
+          alertPillBadge.className = 'self-start sm:self-center px-3 py-1 rounded-full text-xs font-extrabold bg-red-600 text-white border border-red-800 shadow-xs';
+          alertPillBadge.textContent = 'ACTION REQUIRED: PPH BUNDLE';
+          bundleActionPanel.classList.remove('hidden');
+        } else {
+          pphAlertBanner.className = 'border-b-2 border-slate-900 px-4 py-3 bg-emerald-50 text-emerald-950 transition-colors duration-300';
+          alertStatusIcon.className = 'mt-0.5 sm:mt-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white font-extrabold text-xs shrink-0';
+          alertStatusIcon.innerHTML = '&#10003;';
+          alertHeadline.textContent = 'ACTIVE CLINICAL MONITORING — No PPH Bundle Trigger Criteria Met';
+          alertSubtext.innerHTML = `Recorded observations: <span class="font-bold">${recordedObsCount}</span>. Enter blood loss, tone, pulse, and BP below for real-time evaluation.`;
+          alertPillBadge.className = 'self-start sm:self-center px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-200/80 text-emerald-950 border border-emerald-400';
+          alertPillBadge.textContent = 'STATUS: NORMAL';
+          bundleActionPanel.classList.add('hidden');
+        }
+      }
+
+      /**
+       * Exports UTF-8 BOM encoded CSV with Ethiopian Calendar & Gregorian ISO timestamps
+       */
+      function exportToCSV() {
+        const patient = patientNameMrnInput.value.trim() || 'Unspecified';
+        const deliveryEt = deliveryEtDisplay.value.trim() || 'N/A';
+        const basePulse = baselinePulseInput.value.trim() || 'N/A';
+        const baseSys = baselineSystolicInput.value.trim();
+        const baseDia = baselineDiastolicInput.value.trim();
+        const baseBp = baseSys || baseDia ? `${baseSys || '?'}/${baseDia || '?'}` : 'N/A';
+
+        const headers = [
+          'Observation #',
+          'Patient Name / MRN',
+          'Delivery Date & Time (EC)',
+          'Baseline Pulse (bpm)',
+          'Baseline BP (mmHg)',
+          'Obs Ethiopian Date & Time (DD/MM/YYYY HH:MM)',
+          'Obs Ethiopian Month',
+          'Obs Gregorian ISO',
+          'Cumulative Blood Loss (mL)',
+          'Calibrated Volume Category',
+          'Vaginal Blood Flow',
+          'Uterine Tone',
+          'Pulse (bpm)',
+          'Pulse Status',
+          'BP (Systolic/Diastolic)',
+          'BP Status',
+          'Signature',
+          'Bundle Trigger Status'
+        ];
+
+        const csvRows = Array.from(document.querySelectorAll('#observationBody tr')).map((tr) => {
+          const rowNum = tr.dataset.rowNumber;
+          const y = parseInt(tr.dataset.etYear, 10);
+          const m = parseInt(tr.dataset.etMonth, 10);
+          const d = parseInt(tr.dataset.etDay, 10);
+          const h = parseInt(tr.dataset.etHour, 10);
+          const min = parseInt(tr.dataset.etMinute, 10);
+
+          let etCompact = '';
+          let etMonthName = '';
+          let gregIso = '';
+
+          if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            const fmt = EthiopianCalendar.formatEthiopianDisplay(
+              y,
+              m,
+              d,
+              isNaN(h) ? 0 : h,
+              isNaN(min) ? 0 : min
+            );
+            const mObj = EthiopianCalendar.MONTHS[m - 1];
+            etCompact = fmt.compact;
+            etMonthName = mObj ? `${mObj.am} (${mObj.en})` : '';
+            gregIso = fmt.gregorianIso;
+          }
+
+          const mlVal = tr.querySelector('.blood-ml-input').value || '';
+          const volRadio = tr.querySelector('.vol-radio:checked')?.value || '';
+          const volLabel =
+            volRadio === 'lt299'
+              ? 'Less than 299mL'
+              : volRadio === '300to499'
+              ? 'between 300 mL - 499 mL'
+              : volRadio === 'ge500'
+              ? '500 mL or more'
+              : '';
+
+          const flowVal = tr.querySelector('.flow-radio:checked')?.value || '';
+          const toneVal = tr.querySelector('.tone-radio:checked')?.value || '';
+          const pulseBpm = tr.querySelector('.pulse-bpm-input').value || '';
+          const pulseStatus = tr.querySelector('.pulse-radio:checked')?.value || '';
+          const sys = tr.querySelector('.bp-sys-input').value || '';
+          const dia = tr.querySelector('.bp-dia-input').value || '';
+          const bpVal = sys || dia ? `${sys}/${dia}` : '';
+          const bpStatus = tr.querySelector('.bp-radio:checked')?.value || '';
+          const sigVal = tr.querySelector('.sig-input').value || '';
+          const statusVal = tr.querySelector('.row-status-badge').textContent.trim();
+
+          return [
+            rowNum,
+            patient,
+            deliveryEt,
+            basePulse,
+            baseBp,
+            etCompact,
+            etMonthName,
+            gregIso,
+            mlVal,
+            volLabel,
+            flowVal,
+            toneVal,
+            pulseBpm,
+            pulseStatus,
+            bpVal,
+            bpStatus,
+            sigVal,
+            statusVal
+          ]
+            .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+            .join(',');
+        });
+
+        const csvContent = [headers.join(','), ...csvRows].join('\n');
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const nowEt = EthiopianCalendar.nowEthiopian();
+        a.href = url;
+        a.download = `WHO-PPH-Chart-EC-${nowEt.year}-${String(nowEt.month).padStart(2, '0')}-${String(nowEt.day).padStart(2, '0')}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('Exported WHO PPH Chart (Ethiopian Calendar) to CSV');
+      }
+
+      /**
+       * Initializes/Resets the chart with 4 initial observation rows
+       */
+      function initializeChart() {
+        closeEthiopianPicker();
+        observationBody.innerHTML = '';
+        rowSequence = 0;
+        for (let i = 1; i <= 4; i++) {
+          rowSequence++;
+          createObservationRow(rowSequence, false);
+        }
+        evaluateAllRows();
+      }
+
+      // Action Toolbar Listeners
+      addRowBtn.addEventListener('click', () => {
+        rowSequence++;
+        createObservationRow(rowSequence, true);
+        evaluateAllRows();
+        showToast(`Added Observation Row #${rowSequence}`);
+      });
+
+      printChartBtn.addEventListener('click', () => {
+        closeEthiopianPicker();
+        window.print();
+      });
+
+      exportCsvBtn.addEventListener('click', exportToCSV);
+
+      clearFormBtn.addEventListener('click', () => {
+        closeEthiopianPicker();
+        clearModalOverlay.classList.remove('hidden');
+      });
+
+      cancelClearBtn.addEventListener('click', () => {
+        clearModalOverlay.classList.add('hidden');
+      });
+
+      confirmClearBtn.addEventListener('click', () => {
+        patientNameMrnInput.value = '';
+        clearEthiopianDateTime(deliveryEtTrigger);
+        baselinePulseInput.value = '';
+        baselineSystolicInput.value = '';
+        baselineDiastolicInput.value = '';
+        updateBaselineHintsAndReclassify();
+        initializeChart();
+        clearModalOverlay.classList.add('hidden');
+        showToast('Chart cleared and reset to 4 blank rows');
+      });
+
+      // Boot Application
+      initEthiopianPickerSelects();
+      initializeChart();
+    });
+  </script>
+
+  <script>
+    (function() {
+      window.addEventListener('DOMContentLoaded', function() {
+        
+          if (window.BahmniCustomFormBridge) {
+            BahmniCustomFormBridge.init({
+              formId: 'who_pph_chart',
+              formTitle: 'WHO Postpartum Hemorrhage (PPH) Observation Chart',
+              conceptUuid: 'e0790013-3d71-4569-b1d5-894000000014',
+              tag: 'PPH',
+              color: '#dc2626',
+              getData: function () {
+                var rows = [];
+                document.querySelectorAll('#observationBody tr').forEach(function(tr) {
+                  var r = {};
+                  tr.querySelectorAll('input, select, textarea').forEach(function(i) {
+                    if (i.name || i.className) {
+                      r[i.name || i.className.split(' ')[0]] = i.value;
+                    }
+                  });
+                  rows.push(r);
+                });
+                return {
+                  patientNameMrn: document.getElementById('patientNameMrn')?.value || '',
+                  deliveryEt: document.getElementById('deliveryEtDisplay')?.value || '',
+                  baselinePulse: document.getElementById('baselinePulse')?.value || '',
+                  baselineSystolic: document.getElementById('baselineSystolic')?.value || '',
+                  baselineDiastolic: document.getElementById('baselineDiastolic')?.value || '',
+                  rows: rows
+                };
+              },
+              setData: function (data) {
+                if (!data || typeof data !== 'object') return;
+                if (data.patientNameMrn) document.getElementById('patientNameMrn').value = data.patientNameMrn;
+                if (data.deliveryEt) document.getElementById('deliveryEtDisplay').value = data.deliveryEt;
+                if (data.baselinePulse) document.getElementById('baselinePulse').value = data.baselinePulse;
+                if (data.baselineSystolic) document.getElementById('baselineSystolic').value = data.baselineSystolic;
+                if (data.baselineDiastolic) document.getElementById('baselineDiastolic').value = data.baselineDiastolic;
+                if (Array.isArray(data.rows) && data.rows.length > 0) {
+                  var tbody = document.getElementById('observationBody');
+                  if (tbody) {
+                    tbody.innerHTML = '';
+                    rowSequence = 0;
+                    data.rows.forEach(function(r) {
+                      rowSequence++;
+                      if (typeof createObservationRow === 'function') {
+                        createObservationRow(rowSequence, false);
+                        var tr = tbody.lastElementChild;
+                        if (tr) {
+                          tr.querySelectorAll('input, select, textarea').forEach(function(i) {
+                            var k = i.name || i.className.split(' ')[0];
+                            if (r[k] !== undefined) i.value = r[k];
+                          });
+                        }
+                      }
+                    });
+                  }
+                }
+                if (typeof evaluateAllRows === 'function') evaluateAllRows();
+              },
+              extractSummary: function (d) {
+                return {
+                  patientName: d.patientNameMrn || '',
+                  deliveryEt: d.deliveryEt || '',
+                  baselineBP: (d.baselineSystolic || '-') + '/' + (d.baselineDiastolic || '-'),
+                  baselinePulse: d.baselinePulse || '-',
+                  rowsLogged: d.rows ? d.rows.length : 0
+                };
+              },
+              setLockState: function (locked) {
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+                  el.disabled = locked;
+                });
+              }
+            });
+          }
+        
+      });
+    })();
+  </script>
+</body>
+
+</html>

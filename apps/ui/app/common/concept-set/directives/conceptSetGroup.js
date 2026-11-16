@@ -11,6 +11,24 @@ angular.module('bahmni.common.conceptSet')
             var init = function () {
                 $scope.validationHandler = new Bahmni.ConceptSet.ConceptSetGroupPanelViewValidationHandler($scope.allTemplates);
                 contextChangeHandler.add($scope.validationHandler.validate);
+
+                var selectInitialTemplate = function () {
+                    if ($scope.leftPanelConceptSet) return;
+                    var templates = $scope.allTemplates || [];
+                    var active = _.find(templates, function (t) { return t.klass === 'active' || t.isOpen; }) ||
+                                 _.find(templates, function (t) { return t.isAdded || t.alwaysShow; }) ||
+                                 _.first(templates);
+                    if (active) {
+                        $scope.showLeftPanelConceptSet(active);
+                    }
+                };
+
+                selectInitialTemplate();
+                $scope.$watch('allTemplates.length', function (newLen) {
+                    if (newLen > 0 && !$scope.leftPanelConceptSet) {
+                        selectInitialTemplate();
+                    }
+                });
             };
             $scope.toggleSideBar = function () {
                 $rootScope.showLeftpanelToggle = !$rootScope.showLeftpanelToggle;
@@ -85,18 +103,8 @@ angular.module('bahmni.common.conceptSet')
             $scope.clone = function (index) {
                 var clonedObj = $scope.allTemplates[index].clone();
                 $scope.allTemplates.splice(index + 1, 0, clonedObj);
-                $scope.allTemplates = undefined;
                 $.scrollTo('#concept-set-' + (index + 1), 200, {offset: {top: -400}});
             };
-
-            $scope.removeDuplicates = function(array) {
-                let uniqueItems = {};
-                array.forEach(item => {
-                    uniqueItems[item.uuid] = item;
-                });
-                return Object.values(uniqueItems);
-            };
-            $scope.allTemplates = $scope.removeDuplicates($scope.allTemplates);
 
             $scope.clonePanelConceptSet = function (conceptSet) {
                 var index = _.findIndex($scope.allTemplates, conceptSet);
@@ -188,6 +196,21 @@ angular.module('bahmni.common.conceptSet')
                 $scope.$parent.$parent.$broadcast("event:errorsOnForm");
             };
 
+            $scope.isCustomHtmlForm = function (conceptName) {
+                var customForms = [
+                    'WHO Emergency Unit Form - Trauma',
+                    'WHO Labour Care Guide',
+                    'Ethiopian OTP Follow-Up Card',
+                    'FMOH Ethiopia DM and Hypertension Follow-Up Form',
+                    'Ophthalmic and Optometric Eye Examination Record',
+                    'National Perioperative Clinical Forms',
+                    'Safe Childbirth Checklist Ethiopian',
+                    'Stabilisation Centre Multi-Chart',
+                    'WHO Postpartum Hemorrhage Observation Chart'
+                ];
+                return customForms.indexOf(conceptName) !== -1;
+            };
+
             $scope.isFormTemplate = function (data) {
                 return data.formUuid;
             };
@@ -211,19 +234,54 @@ angular.module('bahmni.common.conceptSet')
             templateUrl: '../common/concept-set/views/conceptSetGroup.html'
         };
     })
-    .directive('whoTraumaIframe', ['$sce', function ($sce) {
+    .directive('whoTraumaIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
         return {
             restrict: 'E',
             scope: {
-                patient: '='
+                patient: '=',
+                consultation: '=?'
             },
-            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 950px; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: #fff;" frameborder="0"></iframe>',
-            link: function (scope) {
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1050px; border: 1px solid #0284c7; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
                 var updateUrl = function () {
-                    var pUuid = scope.patient ? scope.patient.uuid : '';
-                    var url = '/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=' + encodeURIComponent(pUuid) + '&consultation=true';
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
                     scope.trustedUrl = $sce.trustAsResourceUrl(url);
                 };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('whoTraumaIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
                 scope.$watch('patient.uuid', updateUrl);
                 updateUrl();
             }
@@ -283,4 +341,376 @@ angular.module('bahmni.common.conceptSet')
                 updateUrl();
             }
         };
-    }]);
+    }])
+    .directive('ethiopianOtpFollowUpCardIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1100px; border: 1px solid #16a34a; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/ethiopian_otp_follow_up_card.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('ethiopianOtpFollowUpCardIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+    .directive('fmohDmHypertensionIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1100px; border: 1px solid #0284c7; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/fmoh_ethiopia_dm_hypertension_follow_up_form.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('fmohDmHypertensionIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+    .directive('ophthalmicEyeExaminationIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1000px; border: 1px solid #7c3aed; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/interactive_ophthalmic_eye_examination_form.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('ophthalmicEyeExaminationIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+    .directive('nationalPerioperativeIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1100px; border: 1px solid #ea580c; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/National_Perioperative_Clinical_Forms.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('nationalPerioperativeIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+    .directive('safeChildbirthChecklistIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1000px; border: 1px solid #d97706; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/safe_childbirth_checklist_ethiopian.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('safeChildbirthChecklistIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+    .directive('stabilisationCentreMultiChartIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1100px; border: 1px solid #0d9488; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/stabilisation_centre_sc_multi_chart_with_ethiopian_calendar_picker.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('stabilisationCentreMultiChartIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+    .directive('whoPphObservationChartIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1000px; border: 1px solid #dc2626; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/who_postpartum_hemorrhage_pph_clinical_observation_chart.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('whoPphObservationChartIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+;

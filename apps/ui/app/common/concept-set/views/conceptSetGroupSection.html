@@ -19,6 +19,56 @@
                    style="margin-right: 8px; color: #0d9488; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
                     <i class="fa fa-external-link"></i> Full Form
                 </a>
+                <a ng-if="conceptSet.conceptName === 'Ethiopian OTP Follow-Up Card'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/ethiopian_otp_follow_up_card.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #16a34a; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
+                <a ng-if="conceptSet.conceptName === 'FMOH Ethiopia DM and Hypertension Follow-Up Form'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/fmoh_ethiopia_dm_hypertension_follow_up_form.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #0284c7; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
+                <a ng-if="conceptSet.conceptName === 'Ophthalmic and Optometric Eye Examination Record'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/interactive_ophthalmic_eye_examination_form.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #7c3aed; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
+                <a ng-if="conceptSet.conceptName === 'National Perioperative Clinical Forms'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/National_Perioperative_Clinical_Forms.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #ea580c; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
+                <a ng-if="conceptSet.conceptName === 'Safe Childbirth Checklist Ethiopian'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/safe_childbirth_checklist_ethiopian.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #d97706; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
+                <a ng-if="conceptSet.conceptName === 'Stabilisation Centre Multi-Chart'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/stabilisation_centre_sc_multi_chart_with_ethiopian_calendar_picker.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #0d9488; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
+                <a ng-if="conceptSet.conceptName === 'WHO Postpartum Hemorrhage Observation Chart'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/who_postpartum_hemorrhage_pph_clinical_observation_chart.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #dc2626; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
+
                 <button type="button"  ng-if="conceptSet.isOpen" ng-click="conceptSet.maximizeInnerSections($event)"
                         title="{{ ::'CONCEPT_SET_GROUP_EXPAND_ALL_KEY' | translate}}">
                        <i class="fa icon-bahmni-expand"></i>
@@ -40,13 +90,38 @@
             </div>
         </div>
     </div>
+
+    <!-- Custom HTML Forms Iframe Embeddings -->
     <div ng-if="conceptSet.conceptName === 'WHO Emergency Unit Form - Trauma'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
-        <who-trauma-iframe patient="patient"></who-trauma-iframe>
+        <who-trauma-iframe patient="patient" consultation="consultation"></who-trauma-iframe>
     </div>
     <div ng-if="conceptSet.conceptName === 'WHO Labour Care Guide'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
         <who-labour-care-guide-iframe patient="patient" consultation="consultation"></who-labour-care-guide-iframe>
     </div>
-    <div ng-if="conceptSet.conceptName !== 'WHO Emergency Unit Form - Trauma' && conceptSet.conceptName !== 'WHO Labour Care Guide' && !isFormTemplate(conceptSet)">
+    <div ng-if="conceptSet.conceptName === 'Ethiopian OTP Follow-Up Card'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <ethiopian-otp-follow-up-card-iframe patient="patient" consultation="consultation"></ethiopian-otp-follow-up-card-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName === 'FMOH Ethiopia DM and Hypertension Follow-Up Form'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <fmoh-dm-hypertension-iframe patient="patient" consultation="consultation"></fmoh-dm-hypertension-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName === 'Ophthalmic and Optometric Eye Examination Record'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <ophthalmic-eye-examination-iframe patient="patient" consultation="consultation"></ophthalmic-eye-examination-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName === 'National Perioperative Clinical Forms'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <national-perioperative-iframe patient="patient" consultation="consultation"></national-perioperative-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName === 'Safe Childbirth Checklist Ethiopian'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <safe-childbirth-checklist-iframe patient="patient" consultation="consultation"></safe-childbirth-checklist-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName === 'Stabilisation Centre Multi-Chart'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <stabilisation-centre-multi-chart-iframe patient="patient" consultation="consultation"></stabilisation-centre-multi-chart-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName === 'WHO Postpartum Hemorrhage Observation Chart'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <who-pph-observation-chart-iframe patient="patient" consultation="consultation"></who-pph-observation-chart-iframe>
+    </div>
+
+    <!-- Default Concept Set Forms -->
+    <div ng-if="!isCustomHtmlForm(conceptSet.conceptName) && !isFormTemplate(conceptSet)">
         <concept-set ng-if="conceptSet.isLoaded" patient="::patient" ng-show="conceptSet.isOpen"
                      collapse-inner-sections="conceptSet.collapseInnerSections"
                      concept-set-name="::conceptSet.conceptName"
@@ -58,7 +133,7 @@
                      section-id="conceptSet.id">
         </concept-set>
     </div>
-    <div ng-if="isFormTemplate(conceptSet) && conceptSet.conceptName !== 'WHO Emergency Unit Form - Trauma' && conceptSet.conceptName !== 'WHO Labour Care Guide'" id={{::conceptSet.formUuid}} class="form-controls-container">
+    <div ng-if="isFormTemplate(conceptSet) && !isCustomHtmlForm(conceptSet.conceptName)" id={{::conceptSet.formUuid}} class="form-controls-container">
         <form-controls form="conceptSet" patient="patient" validate-form="false"></form-controls>
     </div>
 </div>

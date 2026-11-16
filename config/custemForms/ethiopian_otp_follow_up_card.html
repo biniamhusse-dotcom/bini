@@ -1468,6 +1468,7 @@
       }
     }
   </style>
+<script src="bahmni-custom-form-bridge.js"></script>
 </head>
 <body>
 
@@ -1494,10 +1495,7 @@
       </div>
 
       <div class="toolbar-actions">
-        <button type="button" class="btn btn-teal" id="btnLoadSample">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
-          Load Sample Case
-        </button>
+        
 
         <button type="button" class="btn btn-dark" id="btnSaveCard">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -3981,7 +3979,7 @@
         });
 
         // Toolbar Buttons
-        document.getElementById("btnLoadSample").addEventListener("click", loadSampleClinicalCase);
+        var btnLoadSample = document.getElementById("btnLoadSample"); if (btnLoadSample) btnLoadSample.addEventListener("click", loadSampleClinicalCase);
         document.getElementById("btnSaveCard").addEventListener("click", () => saveStateToStorage(true));
         document.getElementById("btnExportJson").addEventListener("click", exportCardAsJson);
 
@@ -4061,7 +4059,7 @@
 
         // Load saved data or default sample case on first visit
         if (!loadStateFromStorage()) {
-          loadSampleClinicalCase();
+          syncEntireUI();
         } else {
           syncEntireUI();
         }
@@ -4074,5 +4072,47 @@
       }
     })();
   </script>
+
+  <script>
+    (function() {
+      window.addEventListener('DOMContentLoaded', function() {
+        
+          if (window.BahmniCustomFormBridge) {
+            BahmniCustomFormBridge.init({
+              formId: 'ethiopian_otp_card',
+              formTitle: 'Ethiopian OTP Follow-Up Card',
+              conceptUuid: 'e0790001-3d71-4569-b1d5-894000000002',
+              tag: 'OTP',
+              color: '#16a34a',
+              getData: function () { return state; },
+              setData: function (data) {
+                if (data && typeof data === 'object') {
+                  state = data;
+                  syncEntireUI();
+                }
+              },
+              extractSummary: function (d) {
+                return {
+                  patientName: d.patientName || '',
+                  regNo: d.registrationNo || '',
+                  facility: d.facilityName || '',
+                  admittedMuac: d.weeks && d.weeks[0] ? d.weeks[0].muac : '',
+                  latestMuac: (d.weeks ? d.weeks.filter(function(w){return w.muac;}).slice(-1)[0]?.muac : '') || '',
+                  latestWeight: (d.weeks ? d.weeks.filter(function(w){return w.weight;}).slice(-1)[0]?.weight : '') || '',
+                  weeksLogged: d.weeks ? d.weeks.filter(function(w){return w.weight || w.muac;}).length : 0
+                };
+              },
+              setLockState: function (locked) {
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+                  el.disabled = locked;
+                });
+              }
+            });
+          }
+        
+      });
+    })();
+  </script>
 </body>
+
 </html>

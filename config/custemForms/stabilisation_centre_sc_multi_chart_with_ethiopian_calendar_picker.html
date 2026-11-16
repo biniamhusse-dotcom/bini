@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stabilisation Centre (SC) Multi-Chart — Severe Acute Malnutrition (EC Datetime)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./tailwind-offline.css">
   <script>
     tailwind.config = {
       theme: {
@@ -21,6 +18,15 @@
     };
   </script>
   <style>
+
+  /* Offline High-Fidelity System Font Stack for Amharic / English */
+  html, body, input, select, textarea, button {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Ethiopic", "Nyala", "Abyssinica SIL", sans-serif !important;
+  }
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  }
+
     :root {
       --border-clinical: #334155;
       --border-subtle: #94a3b8;
@@ -218,6 +224,7 @@
       }
     }
   </style>
+<script src="bahmni-custom-form-bridge.js"></script>
 </head>
 <body class="min-h-screen pb-14">
 
@@ -248,12 +255,7 @@
 
       <!-- Toolbar Action Buttons -->
       <div class="flex flex-wrap items-center gap-2">
-        <button type="button" onclick="loadSampleCase()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 border border-amber-400/40 transition flex items-center gap-1.5">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Load Sample SAM Case
-        </button>
+        
 
         <button type="button" onclick="toggleAssistantDrawer()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-700 hover:bg-teal-600 text-white border border-teal-500 transition flex items-center gap-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -2140,5 +2142,48 @@
       });
     })();
   </script>
+
+  <script>
+    (function() {
+      window.addEventListener('DOMContentLoaded', function() {
+        
+          if (window.BahmniCustomFormBridge) {
+            BahmniCustomFormBridge.init({
+              formId: 'stabilisation_centre',
+              formTitle: 'Stabilisation Centre (SC) Multi-Chart',
+              conceptUuid: 'e0790011-3d71-4569-b1d5-894000000012',
+              tag: 'SAM',
+              color: '#0d9488',
+              getData: function () {
+                return typeof chartState !== 'undefined' ? chartState : {};
+              },
+              setData: function (data) {
+                if (data && typeof data === 'object') {
+                  chartState = data;
+                  if (typeof applyStateToDOM === 'function') applyStateToDOM();
+                }
+              },
+              extractSummary: function (d) {
+                var f = d.fields || {};
+                return {
+                  patientName: f['field-patient-name'] || f['name'] || '',
+                  samType: f['field-sam-type'] || f['field-oedema'] || '',
+                  admissionWeight: f['field-weight'] || '',
+                  admissionMuac: f['field-muac'] || '',
+                  currentPhase: f['field-phase'] || 'Phase 1'
+                };
+              },
+              setLockState: function (locked) {
+                document.querySelectorAll('input:not(#bahmniHoIncoming):not(#bahmniHoNotes), select, textarea:not(#bahmniHoNotes)').forEach(function(el) {
+                  el.disabled = locked;
+                });
+              }
+            });
+          }
+        
+      });
+    })();
+  </script>
 </body>
+
 </html>
