@@ -1620,7 +1620,16 @@ def load_medication_dropdown_config():
     duration_units = get_set_members(duration_uuid)
     instructions = get_set_members(inst_uuid)
 
-    freq_rows = run_omrs_query("SELECT order_frequency_id, name, frequency_per_day, uuid, retired FROM order_frequency WHERE retired=0 ORDER BY frequency_per_day, name;")
+    freq_rows = run_omrs_query("""
+        SELECT orf.order_frequency_id, cn.name, orf.frequency_per_day, orf.uuid, orf.retired
+        FROM order_frequency orf
+        JOIN concept_name cn ON orf.concept_id = cn.concept_id 
+             AND cn.concept_name_type = 'FULLY_SPECIFIED' 
+             AND (cn.locale = 'en' OR cn.locale = '')
+        WHERE orf.retired = 0
+        GROUP BY orf.order_frequency_id, cn.name, orf.frequency_per_day, orf.uuid, orf.retired
+        ORDER BY orf.frequency_per_day, cn.name;
+    """)
     frequencies = []
     for r in freq_rows:
         if len(r) >= 4:
@@ -1722,12 +1731,14 @@ def save_medication_dropdown_action(payload):
         for fname, fperday in freqs:
             val_str = f"{fperday}" if fperday is not None else "NULL"
             run_omrs_exec(f"""
-                INSERT INTO order_frequency (name, frequency_per_day, concept_id, creator, date_created, retired, uuid)
-                SELECT '{fname}', {val_str}, 
-                       (SELECT concept_id FROM concept_name WHERE name='{fname}' LIMIT 1),
-                       1, NOW(), 0, UUID()
-                FROM DUAL
-                WHERE NOT EXISTS (SELECT 1 FROM order_frequency WHERE name='{fname}' AND retired=0);
+                INSERT INTO order_frequency (concept_id, frequency_per_day, creator, date_created, retired, uuid)
+                SELECT cn.concept_id, {val_str}, 1, NOW(), 0, UUID()
+                FROM concept_name cn
+                WHERE cn.name = '{fname}' AND cn.voided = 0
+                  AND NOT EXISTS (
+                      SELECT 1 FROM order_frequency orf WHERE orf.concept_id = cn.concept_id AND orf.retired = 0
+                  )
+                LIMIT 1;
             """)
 
         run_omrs_exec("""
@@ -1807,11 +1818,30 @@ def save_medication_dropdown_action(payload):
         name = payload.get("name", "").strip()
         f_per_day = payload.get("frequencyPerDay")
         val_str = f"{float(f_per_day)}" if f_per_day is not None and str(f_per_day).strip() != "" else "NULL"
+
+        c_rows = run_omrs_query(f"SELECT concept_id FROM concept_name WHERE name = '{name}' AND voided = 0 LIMIT 1;")
+        if c_rows and len(c_rows[0]) >= 1:
+            concept_id = int(c_rows[0][0])
+        else:
+            run_omrs_exec(f"""
+                INSERT INTO concept (datatype_id, class_id, is_set, creator, date_created, uuid)
+                VALUES (
+                    (SELECT concept_datatype_id FROM concept_datatype WHERE hl7_abbrev = 'N/A' LIMIT 1),
+                    (SELECT concept_class_id FROM concept_class WHERE name = 'Frequency' LIMIT 1),
+                    0, 1, NOW(), UUID()
+                );
+                SET @new_cid = LAST_INSERT_ID();
+                INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, uuid)
+                VALUES (@new_cid, '{name}', 'en', 1, 1, NOW(), 'FULLY_SPECIFIED', UUID());
+            """)
+            c_rows2 = run_omrs_query(f"SELECT concept_id FROM concept_name WHERE name = '{name}' AND voided = 0 LIMIT 1;")
+            concept_id = int(c_rows2[0][0])
+
         run_omrs_exec(f"""
-            INSERT INTO order_frequency (name, frequency_per_day, concept_id, creator, date_created, retired, uuid)
-            SELECT '{name}', {val_str}, 
-                   (SELECT concept_id FROM concept_name WHERE name='{name}' LIMIT 1),
-                   1, NOW(), 0, UUID();
+            INSERT INTO order_frequency (concept_id, frequency_per_day, creator, date_created, retired, uuid)
+            SELECT {concept_id}, {val_str}, 1, NOW(), 0, UUID()
+            FROM DUAL
+            WHERE NOT EXISTS (SELECT 1 FROM order_frequency WHERE concept_id = {concept_id} AND retired = 0);
         """)
         return {"success": True, "message": f"Successfully added frequency '{name}'."}
 
