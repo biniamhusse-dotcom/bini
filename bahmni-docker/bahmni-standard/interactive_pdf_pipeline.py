@@ -22,7 +22,9 @@ import sys
 import re
 import json
 import glob
+import time
 import subprocess
+from multiprocessing import Pool, cpu_count
 from xml.sax.saxutils import escape
 
 from reportlab.lib.pagesizes import letter
@@ -70,22 +72,44 @@ STAGE_DB = "openmrs_legacy_stage"
 TARGET_DB = "openmrs"
 
 
+_SQL_CONNS = {}
+
+
+def _get_conn(db):
+    """Reusable pooled MySQL connection (one per database), reconnects on failure."""
+    import pymysql
+    port = 3206 if os.name == "nt" else 3306
+    key = db
+    conn = _SQL_CONNS.get(key)
+    if conn is not None:
+        try:
+            conn.ping(reconnect=True)
+            return conn
+        except Exception:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            _SQL_CONNS.pop(key, None)
+    conn = pymysql.connect(
+        host="127.0.0.1", port=port, user=MYSQL_USER, password=MYSQL_PASS,
+        database=db, charset="utf8mb4", connect_timeout=4, read_timeout=600
+    )
+    _SQL_CONNS[key] = conn
+    return conn
+
+
 def run_sql(query, db=STAGE_DB):
-    """Executes SQL with fast native pymysql if available, falling back to docker exec."""
+    """Executes SQL with fast pooled native pymysql if available, falling back to docker exec."""
     try:
-        import pymysql
-        port = 3206 if os.name == "nt" else 3306
-        conn = pymysql.connect(
-            host="127.0.0.1", port=port, user=MYSQL_USER, password=MYSQL_PASS,
-            database=db, charset="utf8mb4", connect_timeout=4
-        )
+        conn = _get_conn(db)
         with conn.cursor() as cur:
             cur.execute(query)
             rows = cur.fetchall()
-            lines = []
-            for r in rows:
-                lines.append("\t".join("" if v is None else str(v) for v in r))
-            return "\n".join(lines)
+        lines = []
+        for r in rows:
+            lines.append("\t".join("" if v is None else str(v) for v in r))
+        return "\n".join(lines)
     except Exception:
         pass
 
@@ -298,10 +322,21 @@ def parse_instruction(raw_instr):
     return raw_instr.replace('{"instructions":"', '').replace('"}', '').strip()
 
 
-def fetch_patient_data(pid, db_name):
-    """Fetches and parses clinical data for a patient into standardized clinical sections."""
-    enc_sql = f"""
-    SELECT 
+def _ids_in(ids):
+    """Renders a safe IN() list for integer ids."""
+    return ",".join(str(int(i)) for i in ids)
+
+
+def _in_batches(ids, size=500):
+    for i in range(0, len(ids), size):
+        yield ids[i:i + size]
+
+
+# ---- Bulk SQL fetchers (a handful of queries per chunk instead of ~5 per patient) ----
+
+_ENC_SELECT = """
+    SELECT
+        e.patient_id,
         e.encounter_id,
         DATE_FORMAT(MAX(e.encounter_datetime), '%Y-%m-%d') as enc_date,
         DATE_FORMAT(MAX(e.encounter_datetime), '%H:%i') as enc_time,
@@ -326,26 +361,36 @@ def fetch_patient_data(pid, db_name):
     LEFT JOIN users u ON u.user_id = e.creator
     LEFT JOIN person_name cpn ON cpn.person_id = u.person_id AND cpn.voided = 0
     LEFT JOIN location l ON e.location_id = l.location_id
-    WHERE e.patient_id = {pid} AND e.voided = 0
-    GROUP BY e.encounter_id
-    ORDER BY MAX(e.encounter_datetime) DESC;
-    """
-    enc_out = run_sql(enc_sql, db_name)
-    enc_rows = [line.split("\t") for line in enc_out.splitlines() if line.strip()]
+    WHERE e.voided = 0{where}
+    GROUP BY e.patient_id, e.encounter_id
+    ORDER BY e.patient_id ASC, MAX(e.encounter_datetime) DESC;
+"""
 
-    # Skip SQL header if present
-    if enc_rows and enc_rows[0][0] == "encounter_id":
-        enc_rows = enc_rows[1:]
 
-    date_groups = {}
+def _query_encounters(pids, db_name):
+    """Bulk encounter rows: [patient_id, encounter_id, date, time, type, provider, location]."""
+    rows = []
+    for batch in _in_batches(pids):
+        sql = _ENC_SELECT.format(where=f" AND e.patient_id IN ({_ids_in(batch)})")
+        out = run_sql(sql, db_name)
+        for line in out.splitlines():
+            if not line.strip():
+                continue
+            r = line.split("\t")
+            if r[0] == "patient_id":  # skip SQL header if present
+                continue
+            rows.append(r)
+    return rows
 
-    for row in enc_rows:
-        if len(row) < 6:
-            continue
-        eid, edate, etime, etype, eprov, eloc = row[:6]
 
-        obs_sql = f"""
-        SELECT 
+def _query_obs(eids, db_name):
+    """Bulk obs rows keyed by encounter_id (rows are the per-encounter obs format)."""
+    obs_by_eid = {}
+    last_eid = None
+    for batch in _in_batches(eids):
+        sql = f"""
+        SELECT
+            o.encounter_id,
             o.concept_id,
             COALESCE(cq.name, CONCAT('Concept ', o.concept_id)) as concept_name,
             COALESCE(ca.name, o.value_text, CAST(o.value_numeric AS CHAR), DATE_FORMAT(o.value_datetime, '%Y-%m-%d %H:%i'), '') as answer_val,
@@ -354,20 +399,128 @@ def fetch_patient_data(pid, db_name):
         FROM obs o
         JOIN encounter e ON o.encounter_id = e.encounter_id
         LEFT JOIN form f ON e.form_id = f.form_id
-        LEFT JOIN concept_name cq ON o.concept_id = cq.concept_id 
+        LEFT JOIN concept_name cq ON o.concept_id = cq.concept_id
             AND cq.locale = 'en' AND cq.concept_name_type = 'FULLY_SPECIFIED' AND cq.voided = 0
-        LEFT JOIN concept_name ca ON o.value_coded = ca.concept_id 
+        LEFT JOIN concept_name ca ON o.value_coded = ca.concept_id
             AND ca.locale = 'en' AND (ca.concept_name_type = 'FULLY_SPECIFIED' OR ca.locale_preferred = 1) AND ca.voided = 0
         LEFT JOIN obs p1 ON o.obs_group_id = p1.obs_id
-        LEFT JOIN concept_name p1_cq ON p1.concept_id = p1_cq.concept_id 
+        LEFT JOIN concept_name p1_cq ON p1.concept_id = p1_cq.concept_id
             AND p1_cq.locale = 'en' AND p1_cq.concept_name_type = 'FULLY_SPECIFIED' AND p1_cq.voided = 0
-        WHERE o.encounter_id = {eid} AND o.voided = 0
+        WHERE o.encounter_id IN ({_ids_in(batch)}) AND o.voided = 0
           AND (o.value_coded IS NOT NULL OR o.value_text IS NOT NULL OR o.value_numeric IS NOT NULL OR o.value_datetime IS NOT NULL)
-        ORDER BY o.concept_id ASC;
+        ORDER BY o.encounter_id ASC, o.concept_id ASC;
         """
-        obs_lines = [l.split("\t") for l in run_sql(obs_sql, db_name).splitlines() if l.strip()]
-        if obs_lines and obs_lines[0][0] == "concept_id":
-            obs_lines = obs_lines[1:]
+        out = run_sql(sql, db_name)
+        for line in out.splitlines():
+            if not line.strip():
+                continue
+            r = line.split("\t")
+            if not r or not r[0].isdigit():
+                # multi-line value_text fragment: belongs to the previous row's encounter
+                eid = int(last_eid) if last_eid is not None else None
+                if eid is None:
+                    continue
+                obs_by_eid.setdefault(eid, []).append(r)
+                continue
+            last_eid = r[0]
+            obs_by_eid.setdefault(int(r[0]), []).append(r[1:])
+    return obs_by_eid
+
+
+def _query_meds(eids, db_name):
+    """Bulk medication rows keyed by encounter_id."""
+    med_by_eid = {}
+    last_eid = None
+    for batch in _in_batches(eids):
+        sql = f"""
+        SELECT
+            o.encounter_id,
+            COALESCE(d.name, NULLIF(TRIM(do.drug_non_coded), ''), cn.name, 'Medication') as drug_name,
+            COALESCE(CAST(do.dose AS CHAR), '') as dose,
+            COALESCE(CAST(do.duration AS CHAR), '') as duration,
+            COALESCE(do.dosing_instructions, o.instructions, '') as instructions
+        FROM orders o
+        JOIN drug_order do ON o.order_id = do.order_id
+        LEFT JOIN drug d ON do.drug_inventory_id = d.drug_id
+        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale='en' AND cn.concept_name_type='FULLY_SPECIFIED'
+        WHERE o.encounter_id IN ({_ids_in(batch)}) AND o.voided = 0
+        ORDER BY o.encounter_id ASC, o.concept_id ASC, o.order_id ASC;
+        """
+        out = run_sql(sql, db_name)
+        for line in out.splitlines():
+            if not line.strip():
+                continue
+            r = line.split("\t")
+            if not r or not r[0].isdigit():
+                # multi-line value fragment: belongs to the previous row's encounter
+                eid = int(last_eid) if last_eid is not None else None
+                if eid is None:
+                    continue
+                med_by_eid.setdefault(eid, []).append(r)
+                continue
+            last_eid = r[0]
+            med_by_eid.setdefault(int(r[0]), []).append(r[1:])
+    return med_by_eid
+
+
+def _query_orders(eids, db_name):
+    """Bulk non-drug order rows (with lab component results) keyed by encounter_id."""
+    ord_by_eid = {}
+    last_eid = None
+    for batch in _in_batches(eids):
+        sql = f"""
+        SELECT
+            o.encounter_id,
+            COALESCE(ot.name, 'Investigation') as order_type,
+            COALESCE(cn.name, 'Order') as order_name,
+            o.concept_id as order_cid,
+            COALESCE(rn.name, '') as component_name,
+            res.concept_id as component_cid,
+            COALESCE(ra.name, res.value_text, CAST(res.value_numeric AS CHAR), '') as result_val
+        FROM orders o
+        LEFT JOIN order_type ot ON o.order_type_id = ot.order_type_id
+        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+        LEFT JOIN obs res ON o.order_id = res.order_id AND res.voided = 0
+        LEFT JOIN concept_name rn ON res.concept_id = rn.concept_id AND rn.locale = 'en' AND (rn.concept_name_type = 'FULLY_SPECIFIED' OR rn.locale_preferred = 1) AND rn.voided = 0
+        LEFT JOIN concept_name ra ON res.value_coded = ra.concept_id AND ra.locale = 'en' AND (ra.concept_name_type = 'FULLY_SPECIFIED' OR ra.locale_preferred = 1) AND ra.voided = 0
+        WHERE o.encounter_id IN ({_ids_in(batch)})
+          AND o.order_id NOT IN (SELECT order_id FROM drug_order)
+          AND o.voided = 0
+        ORDER BY o.encounter_id ASC, order_cid ASC, component_cid ASC, result_val ASC;
+        """
+        out = run_sql(sql, db_name)
+        for line in out.splitlines():
+            if not line.strip():
+                continue
+            r = line.split("\t")
+            if not r or not r[0].isdigit():
+                # multi-line value fragment: belongs to the previous row's encounter
+                eid = int(last_eid) if last_eid is not None else None
+                if eid is None:
+                    continue
+                ord_by_eid.setdefault(eid, []).append(r)
+                continue
+            last_eid = r[0]
+            ord_by_eid.setdefault(int(r[0]), []).append(r[1:])
+    return ord_by_eid
+
+
+def build_patient_date_groups(enc_rows, obs_by_eid, med_by_eid, ord_by_eid):
+    """Parses bulk-fetched rows into {patient_id: {date: [enc_summary, ...]}}.
+
+    The parsing logic is identical to the original per-encounter code so the
+    generated PDFs stay identical; only the data source is pre-fetched in bulk.
+    """
+    pat_groups = {}
+
+    for row in enc_rows:
+        if len(row) < 7:
+            continue
+        rpid, eid, edate, etime, etype, eprov, eloc = row[:7]
+        rpid = int(rpid)
+        eid_int = int(eid)
+
+        obs_lines = obs_by_eid.get(eid_int, [])
 
         chief_complaint = ""
         duration = ""
@@ -430,23 +583,8 @@ def fetch_patient_data(pid, db_name):
                 fname = p1 or form_tbl or "Additional Clinical Observations"
                 other_forms.setdefault(fname, []).append((cid, cname, ans))
 
-        # Prescribed Medications
-        med_sql = f"""
-        SELECT 
-            COALESCE(d.name, NULLIF(TRIM(do.drug_non_coded), ''), cn.name, 'Medication') as drug_name,
-            COALESCE(CAST(do.dose AS CHAR), '') as dose,
-            COALESCE(CAST(do.duration AS CHAR), '') as duration,
-            COALESCE(do.dosing_instructions, o.instructions, '') as instructions
-        FROM orders o
-        JOIN drug_order do ON o.order_id = do.order_id
-        LEFT JOIN drug d ON do.drug_inventory_id = d.drug_id
-        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale='en' AND cn.concept_name_type='FULLY_SPECIFIED'
-        WHERE o.encounter_id = {eid} AND o.voided = 0
-        ORDER BY o.concept_id ASC, o.order_id ASC;
-        """
-        med_lines = [l.split("\t") for l in run_sql(med_sql, db_name).splitlines() if l.strip()]
-        if med_lines and med_lines[0][0] == "drug_name":
-            med_lines = med_lines[1:]
+        # Prescribed Medications (pre-fetched in bulk, one line per drug order)
+        med_lines = med_by_eid.get(eid_int, [])
 
         med_items = []
         for ml in med_lines:
@@ -464,30 +602,9 @@ def fetch_patient_data(pid, db_name):
                 "instructions": instr_clean
             })
 
-        # Lab Orders & Investigations (one line per order, component results
-        # grouped under it, sorted by concept_id, metadata rows skipped)
-        ord_sql = f"""
-        SELECT
-            COALESCE(ot.name, 'Investigation') as order_type,
-            COALESCE(cn.name, 'Order') as order_name,
-            o.concept_id as order_cid,
-            COALESCE(rn.name, '') as component_name,
-            res.concept_id as component_cid,
-            COALESCE(ra.name, res.value_text, CAST(res.value_numeric AS CHAR), '') as result_val
-        FROM orders o
-        LEFT JOIN order_type ot ON o.order_type_id = ot.order_type_id
-        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
-        LEFT JOIN obs res ON o.order_id = res.order_id AND res.voided = 0
-        LEFT JOIN concept_name rn ON res.concept_id = rn.concept_id AND rn.locale = 'en' AND (rn.concept_name_type = 'FULLY_SPECIFIED' OR rn.locale_preferred = 1) AND rn.voided = 0
-        LEFT JOIN concept_name ra ON res.value_coded = ra.concept_id AND ra.locale = 'en' AND (ra.concept_name_type = 'FULLY_SPECIFIED' OR ra.locale_preferred = 1) AND ra.voided = 0
-        WHERE o.encounter_id = {eid}
-          AND o.order_id NOT IN (SELECT order_id FROM drug_order)
-          AND o.voided = 0
-        ORDER BY order_cid ASC, component_cid ASC, result_val ASC;
-        """
-        ord_lines = [l.split("\t") for l in run_sql(ord_sql, db_name).splitlines() if l.strip()]
-        if ord_lines and ord_lines[0][0] == "order_type":
-            ord_lines = ord_lines[1:]
+        # Lab Orders & Investigations (pre-fetched in bulk; one line per order,
+        # component results grouped under it, sorted by concept_id, metadata rows skipped)
+        ord_lines = ord_by_eid.get(eid_int, [])
 
         # Internal obs concepts used for reference ranges, not clinical results
         skip_components = {"LAB_MINNORMAL", "LAB_MAXNORMAL", "LAB_ABNORMAL"}
@@ -533,13 +650,46 @@ def fetch_patient_data(pid, db_name):
             "orders": ord_items,
             "other_forms": other_forms
         }
-        date_groups.setdefault(edate, []).append(enc_summary)
+        pat_groups.setdefault(rpid, {})
+        pat_groups[rpid].setdefault(edate, []).append(enc_summary)
 
-    return date_groups
+    return pat_groups
+
+
+def fetch_patient_data(pid, db_name):
+    """Fetches and parses clinical data for a single patient (compatibility API)."""
+    enc_rows = _query_encounters([pid], db_name)
+    eids = [int(r[1]) for r in enc_rows if len(r) >= 7]
+    obs_by_eid = _query_obs(eids, db_name)
+    med_by_eid = _query_meds(eids, db_name)
+    ord_by_eid = _query_orders(eids, db_name)
+    groups = build_patient_date_groups(enc_rows, obs_by_eid, med_by_eid, ord_by_eid)
+    return groups.get(int(pid), {})
+
+
+def bulk_fetch_patient_data(pid_list, db_name):
+    """Fetches + parses clinical data for many patients with O(chunk) queries.
+
+    Returns {patient_id: {date: [enc_summary, ...]}} — the same structure
+    fetch_patient_data() returns per patient.
+    """
+    enc_rows = _query_encounters(pid_list, db_name)
+    eids = [int(r[1]) for r in enc_rows if len(r) >= 7]
+    obs_by_eid = _query_obs(eids, db_name)
+    med_by_eid = _query_meds(eids, db_name)
+    ord_by_eid = _query_orders(eids, db_name)
+    return build_patient_date_groups(enc_rows, obs_by_eid, med_by_eid, ord_by_eid)
 
 
 def generate_pdf(patient, date_groups, filepath):
     """Compiles patient encounters into an elegant, standardized clinical summary PDF."""
+    # Replace existing root-owned PDFs (created by service runs): unlinking
+    # only needs write permission on the directory, not the file itself.
+    if os.path.exists(filepath) and not os.access(filepath, os.W_OK):
+        try:
+            os.remove(filepath)
+        except OSError:
+            pass
     doc = SimpleDocTemplate(filepath, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=32, bottomMargin=32)
     styles = getSampleStyleSheet()
 
@@ -668,10 +818,85 @@ def generate_pdf(patient, date_groups, filepath):
     doc.build(story)
 
 
+def _render_task(task):
+    """Pool worker: renders one patient PDF from pre-fetched clinical data."""
+    pat, d_groups = task
+    mrn_clean = pat['mrn'].replace("/", "_")
+    pdf_path = os.path.join(PDF_OUTPUT_DIR, f"patient_{mrn_clean}.pdf")
+    try:
+        generate_pdf(pat, d_groups, pdf_path)
+        return pat['mrn'], True, None
+    except Exception as e:
+        return pat['mrn'], False, str(e)
+
+
+def _select_patients_interactively(patients):
+    """Interactive menu: choose which patients to process."""
+    total = len(patients)
+    print("\n================ INTERACTIVE PDF PIPELINE ================")
+    print(f"  Active patients with clinical encounters: {total}")
+    print("-----------------------------------------------------------")
+    print("  1) ALL patients")
+    print("  2) Specific patients (comma-separated MRNs or patient ids)")
+    print("  3) First N patients (test run)")
+    print("  4) Random N patients (test run)")
+    print("-----------------------------------------------------------")
+    choice = input("Select option [1]: ").strip() or "1"
+
+    if choice == "2":
+        raw = input("Enter MRNs / patient-ids (comma separated): ").strip()
+        wanted = [w.strip().lstrip('*?') for w in raw.split(",") if w.strip()]
+        # Map both MRNs and patient ids; MRNs may carry trailing marks in DB,
+        # so match on the stripped prefix too.
+        by_id = {p["person_id"]: p for p in patients}
+        selected = []
+        for w in wanted:
+            if w.isdigit() and w in by_id:
+                selected.append(by_id[w])
+                continue
+            for p in patients:
+                pmrn = p["mrn"].replace("*", "").replace("?", "")
+                if w == pmrn or pmrn.startswith(w):
+                    selected.append(p)
+                    break
+            else:
+                print(f"  [!] '{w}' not found among active patients, skipping.")
+        # de-duplicate, keep order
+        seen = set()
+        selected = [p for p in selected if not (p["person_id"] in seen or seen.add(p["person_id"]))]
+        print(f"[✔] Selected {len(selected)} patient(s).")
+        return selected
+    elif choice == "3":
+        n = input(f"How many patients [50]: ").strip()
+        n = int(n) if n.isdigit() else 50
+        return patients[:n]
+    elif choice == "4":
+        import random
+        n = input(f"How many patients [50]: ").strip()
+        n = int(n) if n.isdigit() else 50
+        n = min(n, total)
+        return random.sample(patients, n)
+    return list(patients)
+
+
+def _ask_run_options(workers_default):
+    """Interactive prompts for skip-existing and worker count."""
+    ans = input("Skip patients that already have a PDF? [Y/n]: ").strip().lower()
+    skip_existing = ans not in ("n", "no")
+    ans = input(f"Parallel workers [{workers_default}]: ").strip()
+    workers = int(ans) if ans.isdigit() and int(ans) > 0 else workers_default
+    return skip_existing, workers
+
+
 def main():
     verify_and_stage()
     db_name = get_working_db()
     os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
+
+    # implementation_service.py spawns this script with argv[1]=backup path,
+    # argv[2]=PDF output dir -> run in automatic (non-interactive) mode.
+    # Interactive menu only when launched directly without arguments.
+    interactive = not (len(sys.argv) > 2 and sys.argv[2].strip())
 
     print(f"\n[*] Querying active patients with clinical encounters from `{db_name}`...", flush=True)
     # Full name (given + middle + family) and exact MRN:
@@ -720,28 +945,69 @@ def main():
                 "birthdate": parts[6].strip()
             })
 
-    total = len(patients)
-    print(f"[✔] Total active patients to process: {total}", flush=True)
+    total_all = len(patients)
+    print(f"[✔] Total active patients to process: {total_all}", flush=True)
 
+    workers_default = max(1, min(8, cpu_count() or 4))
+    if interactive:
+        selected = _select_patients_interactively(patients)
+        if not selected:
+            print("[!] No patients selected — nothing to do.")
+            return
+        skip_existing, workers = _ask_run_options(workers_default)
+    else:
+        selected = patients
+        skip_existing = False
+        workers = workers_default
+
+    if skip_existing:
+        before = len(selected)
+        selected = [p for p in selected
+                    if not os.path.exists(os.path.join(PDF_OUTPUT_DIR, f"patient_{p['mrn'].replace('/', '_')}.pdf"))]
+        print(f"[*] Skipping existing PDFs: {before - len(selected)} already generated", flush=True)
+
+    total = len(selected)
+    if total == 0:
+        print("[✔] Nothing to generate — all done!")
+        return
+
+    print(f"[*] Generating {total} PDFs with {workers} parallel workers "
+          f"(bulk DB fetch in chunks)...", flush=True)
+
+    CHUNK = 350  # patients per bulk-fetch chunk
+    t_start = time.time()
     processed_count = 0
-    skipped_count = 0
+    failed_count = 0
 
-    for idx, pat in enumerate(patients, 1):
-        mrn_clean = pat['mrn'].replace("/", "_")
-        pdf_path = os.path.join(PDF_OUTPUT_DIR, f"patient_{mrn_clean}.pdf")
+    with Pool(workers) as pool:
+        done = 0
+        for chunk in _in_batches(selected, CHUNK):
+            pids = [int(p["person_id"]) for p in chunk]
+            t_fetch = time.time()
+            groups = bulk_fetch_patient_data(pids, db_name)
+            tasks = [(p, groups.get(int(p["person_id"]), {})) for p in chunk]
+            fetch_s = time.time() - t_fetch
 
-        try:
-            d_groups = fetch_patient_data(pat["person_id"], db_name)
-            generate_pdf(pat, d_groups, pdf_path)
-            processed_count += 1
-        except Exception as e:
-            print(f"[!] Warning on MRN {pat['mrn']}: {e}", file=sys.stderr, flush=True)
-            continue
+            for mrn, ok, err in pool.imap_unordered(_render_task, tasks):
+                done += 1
+                if ok:
+                    processed_count += 1
+                else:
+                    failed_count += 1
+                    print(f"[!] Warning on MRN {mrn}: {err}", file=sys.stderr, flush=True)
 
-        if idx % 25 == 0 or idx == total:
-            print(f"  [{idx}/{total}] Processed MRN {pat['mrn']} ({processed_count} generated)...", flush=True)
+                if done % 50 == 0 or done == total:
+                    elapsed = time.time() - t_start
+                    rate = done / (elapsed / 60.0) if elapsed > 0 else 0
+                    eta_min = (total - done) / rate if rate > 0 else 0
+                    print(f"  [{done}/{total}] {100.0*done/total:.0f}% | "
+                          f"{rate:.1f} PDFs/min | ETA {eta_min:.1f} min "
+                          f"(last chunk fetch: {fetch_s:.1f}s)", flush=True)
 
-    print(f"\n[✔] PDF generation complete! Total processed: {total} (Newly generated: {processed_count})", flush=True)
+    elapsed = time.time() - t_start
+    rate = processed_count / (elapsed / 60.0) if elapsed > 0 else 0
+    print(f"\n[✔] PDF generation complete in {elapsed/60.0:.1f} min ({rate:.1f} PDFs/min). "
+          f"Generated: {processed_count}, Failed: {failed_count}, Selected: {total}", flush=True)
     print(f"[*] PDFs saved in: {PDF_OUTPUT_DIR}", flush=True)
 
     # Attach generated PDFs to Bahmni Patient Documents
