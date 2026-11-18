@@ -139,6 +139,14 @@
                     "title": "Stabilisation Centre (SC) Multi-Chart",
                     "template": "<stabilisation-centre-multi-chart section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></stabilisation-centre-multi-chart>"
                 }
+            },
+            "mentalHealthHx": {
+                "type": "custom",
+                "displayOrder": 24,
+                "config": {
+                    "title": "Psychiatric Intake & Mental Health History",
+                    "template": "<mental-health-hx section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></mental-health-hx>"
+                }
             }
         },
         "encounterContext": {

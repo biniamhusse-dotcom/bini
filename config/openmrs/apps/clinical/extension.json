@@ -837,5 +837,17 @@
     },
     "order": 35,
     "requiredPrivilege": "app:clinical"
+  },
+  "bahmniClinicalConceptSetGroupObservationsMentalHealthHx": {
+    "id": "bahmni.clinical.conceptSetGroup.observations.mentalHealthHx",
+    "extensionPointId": "org.bahmni.clinical.conceptSetGroup.observations",
+    "type": "config",
+    "extensionParams": {
+      "conceptName": "Psychiatric Intake and Mental Health History",
+      "default": false,
+      "defaultLocation": "All"
+    },
+    "order": 36,
+    "requiredPrivilege": "app:clinical"
   }
 }

@@ -68,6 +68,13 @@
                    style="margin-right: 8px; color: #dc2626; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
                     <i class="fa fa-external-link"></i> Full Form
                 </a>
+                <a ng-if="conceptSet.conceptName === 'Psychiatric Intake and Mental Health History'" 
+                   ng-href="{{'/bahmni_config/openmrs/apps/custemForms/mental_health_hx.html?patientUuid=' + patient.uuid}}" 
+                   target="_blank" 
+                   title="Open in new window"
+                   style="margin-right: 8px; color: #0F4C81; font-size: 13px; text-decoration: none; vertical-align: middle; font-weight: bold;">
+                    <i class="fa fa-external-link"></i> Full Form
+                </a>
 
                 <button type="button"  ng-if="conceptSet.isOpen" ng-click="conceptSet.maximizeInnerSections($event)"
                         title="{{ ::'CONCEPT_SET_GROUP_EXPAND_ALL_KEY' | translate}}">
@@ -118,6 +125,9 @@
     </div>
     <div ng-if="conceptSet.conceptName === 'WHO Postpartum Hemorrhage Observation Chart'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
         <who-pph-observation-chart-iframe patient="patient" consultation="consultation"></who-pph-observation-chart-iframe>
+    </div>
+    <div ng-if="conceptSet.conceptName === 'Psychiatric Intake and Mental Health History'" ng-show="conceptSet.isOpen" style="margin-top: 10px;">
+        <mental-health-hx-iframe patient="patient" consultation="consultation"></mental-health-hx-iframe>
     </div>
 
     <!-- Default Concept Set Forms -->

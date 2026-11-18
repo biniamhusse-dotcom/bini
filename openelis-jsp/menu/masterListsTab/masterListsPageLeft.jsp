@@ -101,6 +101,11 @@
   </html:link>
 </li>
 <li>
+  <html:link action="/TestCostAdmin">
+    Test &amp; Panel Cost Management
+  </html:link>
+</li>
+<li>
   <html:link action="/PaymentGateAdmin">
     Payment Validation Gate (Odoo Billing)
   </html:link>

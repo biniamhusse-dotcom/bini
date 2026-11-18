@@ -83,6 +83,9 @@ services:
       - "../../openelis-jsp/dashboard/getStockOutSelections.jsp:/run/bahmni-lab/bahmni-lab/pages/dashboard/getStockOutSelections.jsp"
       - "../../openelis-jsp/dashboard/orders.js:/run/bahmni-lab/bahmni-lab/scripts/dashBoard/orders.js"
       - "../../openelis-jsp/dashboard/sendToBilling.jsp:/run/bahmni-lab/bahmni-lab/pages/dashboard/sendToBilling.jsp"
+      - "../../openelis-jsp/dashboard/getPatientTestsAndCosts.jsp:/run/bahmni-lab/bahmni-lab/pages/dashboard/getPatientTestsAndCosts.jsp"
+      - "../../openelis-jsp/cost/costSyncApi.jsp:/run/bahmni-lab/bahmni-lab/pages/cost/costSyncApi.jsp"
+      - "../../openelis-jsp/cost/testCostAdmin.jsp:/run/bahmni-lab/bahmni-lab/pages/cost/testCostAdmin.jsp"
     environment:
       TZ: ${TZ}
       OPENMRS_HOST: ${OPENMRS_HOST}

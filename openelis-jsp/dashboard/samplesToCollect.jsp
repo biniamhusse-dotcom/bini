@@ -336,6 +336,61 @@ form[name="menuForm"]{position:sticky!important;top:0!important;z-index:50!impor
 .od-patient-field:nth-child(4n){border-right:1px solid #f1f5f9}
 .od-patient-field:nth-child(2n){border-right:none}
 }
+
+/* ==================== TESTS & COSTS MODAL ==================== */
+.tc-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.65);backdrop-filter:blur(2px);z-index:10000;justify-content:center;align-items:center}
+.tc-modal-overlay.show{display:flex}
+.tc-modal-dialog{background:#ffffff;border-radius:10px;width:92%;max-width:820px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 25px -5px rgba(0,0,0,0.2),0 10px 10px -5px rgba(0,0,0,0.08);border:1px solid #e2e8f0;overflow:hidden;animation:tcFadeIn .2s ease-out}
+@keyframes tcFadeIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
+.tc-modal-header{background:#0f766e;color:#fff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #0d9488}
+.tc-modal-header h3{margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:#fff}
+.tc-modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:2px 6px;opacity:.85;transition:opacity .15s}
+.tc-modal-close:hover{opacity:1}
+.tc-patient-banner{background:#f0fdfa;border-bottom:1px solid #ccfbf1;padding:10px 20px;display:flex;flex-wrap:wrap;gap:18px;font-size:12px}
+.tc-patient-banner-item{display:flex;flex-direction:column}
+.tc-patient-banner-item label{font-size:10px;color:#0d9488;text-transform:uppercase;font-weight:700}
+.tc-patient-banner-item span{font-weight:600;color:#134e4a}
+.tc-modal-body{flex:1;overflow-y:auto;padding:16px 20px;background:#f8fafc}
+.tc-dept-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.tc-dept-header{background:#f1f5f9;padding:8px 14px;font-weight:700;font-size:11px;color:#334155;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px}
+.tc-panel-box{background:#f0fdfa;border-left:3px solid #0d9488;margin:8px 12px;border-radius:0 6px 6px 0;border-top:1px solid #e2e8f0;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:8px 12px}
+.tc-panel-header{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:#0f766e;margin-bottom:6px}
+.tc-panel-name{display:flex;align-items:center;gap:8px}
+.tc-panel-badge{background:#ccfbf1;color:#0f766e;border:1px solid #99f6e4;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
+.tc-child-tests-list{margin-left:18px;border-left:2px dashed #99f6e4;padding-left:12px;margin-top:4px}
+.tc-test-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;border-bottom:1px solid #f1f5f9}
+.tc-test-row:last-child{border-bottom:none}
+.tc-test-name{display:flex;align-items:center;gap:8px;color:#1e293b;font-weight:500}
+.tc-test-price{font-weight:600;color:#047857;white-space:nowrap}
+.tc-included-tag{font-size:10px;background:#e2e8f0;color:#475569;padding:1px 6px;border-radius:3px;margin-left:6px;font-weight:600}
+.tc-removal-pending{background:#fef3c7;color:#b45309;border:1px solid #fde68a;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700}
+.tc-removal-approved{background:#fee2e2;color:#dc2626;border:1px solid #fecaca;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700}
+.tc-removal-rejected{background:#f1f5f9;color:#64748b;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600}
+
+.tc-removal-drawer{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-top:14px}
+.tc-removal-drawer h4{margin:0 0 8px 0;font-size:12px;color:#b45309;font-weight:700;display:flex;align-items:center;gap:6px}
+.tc-reason-quick-btn{background:#fef3c7;border:1px solid #fde68a;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;color:#92400e;transition:background .15s}
+.tc-reason-quick-btn:hover{background:#fde68a}
+.tc-modal-footer{background:#ffffff;border-top:1px solid #e2e8f0;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.tc-total-box{display:flex;align-items:baseline;gap:8px}
+.tc-total-label{font-size:13px;font-weight:600;color:#475569}
+.tc-total-amount{font-size:20px;font-weight:800;color:#0f766e}
+
+/* ==================== PHYSICIAN CHAT MODAL ==================== */
+.chat-modal-dialog{background:#ffffff;border-radius:10px;width:92%;max-width:650px;height:82vh;display:flex;flex-direction:column;box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);border:1px solid #e2e8f0;overflow:hidden;animation:tcFadeIn .2s ease-out}
+.chat-modal-header{background:#1e3a8a;color:#ffffff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center}
+.chat-modal-header h3{margin:0;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;color:#fff}
+.chat-thread-container{flex:1;overflow-y:auto;padding:16px;background:#f8fafc;display:flex;flex-direction:column;gap:12px}
+.chat-msg-row{display:flex;flex-direction:column;max-width:80%}
+.chat-msg-row.lab{align-self:flex-end;align-items:flex-end}
+.chat-msg-row.physician{align-self:flex-start;align-items:flex-start}
+.chat-bubble{padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.4;word-break:break-word}
+.chat-msg-row.lab .chat-bubble{background:#2563eb;color:#ffffff;border-bottom-right-radius:2px}
+.chat-msg-row.physician .chat-bubble{background:#059669;color:#ffffff;border-bottom-left-radius:2px}
+.chat-msg-meta{font-size:10px;color:#94a3b8;margin-top:3px;display:flex;gap:6px}
+.chat-removal-card{align-self:center;width:95%;background:#ffffff;border:1px solid #f59e0b;border-left:4px solid #f59e0b;border-radius:8px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.chat-input-bar{background:#ffffff;border-top:1px solid #e2e8f0;padding:10px 14px;display:flex;gap:8px;align-items:center}
+
 </style>
 
 <div class="od-body">
@@ -447,7 +502,25 @@ form[name="menuForm"]{position:sticky!important;top:0!important;z-index:50!impor
             <div class="od-patient-field"><label>Village</label><span id="village"></span></div>
             <div class="od-patient-field"><label>Gender</label><span id="gender"></span></div>
             <div class="od-patient-field"><label>Age</label><span id="age"></span></div>
-            <div class="od-patient-field" style="grid-column:1/-1;background:#f0fdfa"><label>Tests</label><span id="patientTests" style="font-size:12px;line-height:1.5"></span></div>
+            <div class="od-patient-field" style="grid-column:1/-1;background:#f0fdfa">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <div style="flex:1;min-width:180px;">
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0d9488;letter-spacing:0.5px;">Tests</label>
+                        <span id="patientTests" style="font-size:13px;line-height:1.5;font-weight:600;color:#0f766e;display:block;"></span>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+                        <button type="button" id="btnViewTestsCosts" onclick="openTestsAndCostsModal()" style="display:inline-flex;align-items:center;gap:6px;background:#0d9488;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:all .15s;" onmouseover="this.style.background='#0f766e'" onmouseout="this.style.background='#0d9488'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                            View Tests &amp; Costs
+                        </button>
+                        <button type="button" id="btnChatPhysician" onclick="openPhysicianChatModal()" style="display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:all .15s;position:relative;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            Physician Chat
+                            <span id="chatBadgeCount" style="display:none;position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:bold;border:2px solid #fff;">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     </div>
@@ -485,6 +558,96 @@ form[name="menuForm"]{position:sticky!important;top:0!important;z-index:50!impor
             <p style="font-size:12px;color:#64748b">The stock-out notice has been sent to print. The billing team has been notified via Odoo sync.</p>
             <div class="btn-row">
                 <button type="button" class="btn btn-secondary" onclick="StockOut.closeNoticeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TESTS & COSTS MODAL ==================== -->
+    <div id="testsCostsModal" class="tc-modal-overlay">
+        <div class="tc-modal-dialog">
+            <div class="tc-modal-header">
+                <h3>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    Patient Laboratory Tests &amp; Cost Breakdown
+                </h3>
+                <button type="button" class="tc-modal-close" onclick="closeTestsAndCostsModal()">&times;</button>
+            </div>
+            <div class="tc-patient-banner" id="tcPatientBanner">
+                <div class="tc-patient-banner-item"><label>Patient ID</label><span id="tcModalPatId">-</span></div>
+                <div class="tc-patient-banner-item"><label>Name</label><span id="tcModalPatName">-</span></div>
+                <div class="tc-patient-banner-item"><label>Gender / Age</label><span id="tcModalPatGenderAge">-</span></div>
+                <div class="tc-patient-banner-item"><label>Ordering Clinician</label><span id="tcModalDoctor">-</span></div>
+                <div class="tc-patient-banner-item" style="margin-left:auto;"><label>Currency</label><span>ETB (Ethiopian Birr)</span></div>
+            </div>
+            <div class="tc-modal-body" id="tcModalBody">
+                <div style="text-align:center;padding:30px;color:#64748b;font-size:13px;">
+                    <p style="margin-top:10px;">Loading tests and pricing details...</p>
+                </div>
+            </div>
+            <div class="tc-modal-footer">
+                <div class="tc-total-box">
+                    <span class="tc-total-label">Total Payable:</span>
+                    <span class="tc-total-amount" id="tcModalTotalAmount">0.00 ETB</span>
+                    <span style="font-size:11px;color:#64748b;margin-left:8px;">(Package pricing applied; no duplicate charges)</span>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <button type="button" onclick="openPhysicianChatModal()" style="display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Chat with Physician
+                    </button>
+                    <button type="button" onclick="closeTestsAndCostsModal()" style="background:#e2e8f0;color:#334155;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== PHYSICIAN CHAT MODAL ==================== -->
+    <div id="physicianChatModal" class="tc-modal-overlay">
+        <div class="chat-modal-dialog">
+            <div class="chat-modal-header">
+                <div>
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Physician - Laboratory Communication
+                    </h3>
+                    <div style="font-size:11px;color:#bfdbfe;margin-top:2px;">
+                        Patient: <span id="chatPatName" style="font-weight:700;color:#fff;">-</span> | 
+                        Ordering Physician: <span id="chatDoctorName" style="font-weight:700;color:#fff;">-</span>
+                    </div>
+                </div>
+                <button type="button" class="tc-modal-close" onclick="closePhysicianChatModal()">&times;</button>
+            </div>
+            
+            <div style="background:#f1f5f9;border-bottom:1px solid #e2e8f0;padding:6px 16px;display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-weight:600;color:#475569;">Sending message as:</span>
+                    <button type="button" id="roleBtnLab" onclick="setChatRole('LAB_STAFF')" style="background:#2563eb;color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;">LAB STAFF</button>
+                    <button type="button" id="roleBtnDoc" onclick="setChatRole('PHYSICIAN')" style="background:#e2e8f0;color:#475569;border:none;border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;">PHYSICIAN</button>
+                </div>
+                <div style="color:#64748b;display:flex;align-items:center;gap:4px;">
+                    <span style="display:inline-block;width:7px;height:7px;background:#10b981;border-radius:50%;"></span>
+                    Live Connected
+                </div>
+            </div>
+
+            <div class="chat-thread-container" id="chatMessagesContainer">
+                <div style="text-align:center;padding:40px;color:#94a3b8;font-size:12px;">Loading discussion thread...</div>
+            </div>
+
+            <div style="background:#f8fafc;padding:6px 14px;border-top:1px solid #e2e8f0;display:flex;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:10px;color:#64748b;font-weight:600;align-self:center;">Quick notes:</span>
+                <button type="button" class="tc-reason-quick-btn" onclick="insertQuickChat('Patient has insufficient funds for this test order. Requesting approval to remove unaffordable items.')">Insufficient funds</button>
+                <button type="button" class="tc-reason-quick-btn" onclick="insertQuickChat('Can we proceed with alternative routine tests instead?')">Alternative tests?</button>
+                <button type="button" class="tc-reason-quick-btn" onclick="insertQuickChat('Removal approved. Please proceed with sample collection for active tests.')">Removal approved</button>
+            </div>
+
+            <div class="chat-input-bar">
+                <input type="text" id="chatInputText" placeholder="Type message or reply to physician regarding this order..." style="flex:1;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;outline:none;" onkeypress="if(event.keyCode===13)sendChatMessage();">
+                <button type="button" id="btnSendChat" onclick="sendChatMessage()" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                    Send
+                </button>
             </div>
         </div>
     </div>
@@ -869,6 +1032,15 @@ function labelSelected(st,an,cd,j){
 var showPatientDetails=function(s,f,m,l,p,v,g,a){var el=document.getElementById('patientDetails');el.classList.add('show');document.getElementById('patientId').textContent=s||'N/A';document.getElementById('name').textContent=f+" "+(m?m+" ":"")+l;document.getElementById('primaryRelative').textContent=p||'N/A';document.getElementById('village').textContent=v||'N/A';document.getElementById('gender').textContent=g;document.getElementById('age').textContent=a}
 
 function onRowSelection(r){
+    window.currentSelectedOrder = r;
+    window.currentSelectedSampleId = r.sampleId || r.orderId;
+    window.currentSelectedPatientId = r.stNumber;
+    window.currentSelectedPatientName = r.name || (r.firstName ? (r.firstName + " " + (r.lastName || "")) : "");
+
+    if (window.currentSelectedSampleId) {
+        checkOrderNotifications(window.currentSelectedSampleId);
+    }
+
     if(r.stNumber)new Ajax.Request('ajaxQueryXML',{method:'get',parameters:"provider=PatientSearchPopulateProvider&stNumber="+r.stNumber,onSuccess:onRowSelectionSuccess,onFailure:function(){}});
     if(r.accessionNumber){
         new Ajax.Request('ajaxQueryXML',{method:'get',parameters:"provider=OrderedTestsPopulateProvider&accessionNumber="+r.accessionNumber,onSuccess:function(xhr){jQuery("#patientTests").text(OpenElis.Utils.getXMLValue(xhr.responseXML,'tests')||"N/A")},onFailure:function(){}});
@@ -878,7 +1050,14 @@ function onRowSelection(r){
 }
 function onRowSelectionSuccess(xhr){
     var dp='<%=SystemConfiguration.getInstance().getPatternForDateLocale()%>';
-    showPatientDetails(OpenElis.Utils.getXMLValue(xhr.responseXML,'ST_ID'),OpenElis.Utils.getXMLValue(xhr.responseXML,'firstName'),OpenElis.Utils.getXMLValue(xhr.responseXML,'middleName'),OpenElis.Utils.getXMLValue(xhr.responseXML,'lastName'),OpenElis.Utils.getXMLValue(xhr.responseXML,'primaryRelative'),getAddressValue(xhr.responseXML,1),OpenElis.Utils.getXMLValue(xhr.responseXML,'gender'),OpenElis.Utils.calculateAge(OpenElis.Utils.getXMLValue(xhr.responseXML,'dob'),dp));
+    var fn = OpenElis.Utils.getXMLValue(xhr.responseXML,'firstName');
+    var mn = OpenElis.Utils.getXMLValue(xhr.responseXML,'middleName');
+    var ln = OpenElis.Utils.getXMLValue(xhr.responseXML,'lastName');
+    var fullPatName = fn + (mn ? " " + mn : "") + (ln ? " " + ln : "");
+    if (fullPatName.trim()) {
+        window.currentSelectedPatientName = fullPatName.trim();
+    }
+    showPatientDetails(OpenElis.Utils.getXMLValue(xhr.responseXML,'ST_ID'),fn,mn,ln,OpenElis.Utils.getXMLValue(xhr.responseXML,'primaryRelative'),getAddressValue(xhr.responseXML,1),OpenElis.Utils.getXMLValue(xhr.responseXML,'gender'),OpenElis.Utils.calculateAge(OpenElis.Utils.getXMLValue(xhr.responseXML,'dob'),dp));
 }
 function getAddressValue(r,i){var f=r.getElementsByTagName('addressline').item(i),v=f&&f.getElementsByTagName('value').item(0);return v!=null&&v.firstChild!=null?v.firstChild.nodeValue:""}
 
@@ -1442,4 +1621,593 @@ var StockOut={
     var cbs=d.querySelectorAll('input[type="checkbox"]');cbs.forEach(function(cb){cb.addEventListener('change',function(){var k=this.getAttribute('data-card'),card=document.querySelector('.od-stat-card[data-card="'+k+'"]');if(!card)return;if(this.checked)card.classList.remove('od-card-hidden');else card.classList.add('od-card-hidden');var p={};cbs.forEach(function(c){p[c.getAttribute('data-card')]=c.checked});sp(p)})});
     ap();
 })();
+
+/* ========================================================================= */
+/* TESTS & COSTS AND PHYSICIAN CHAT WORKFLOW SCRIPT                         */
+/* ========================================================================= */
+window.currentSelectedSampleId = null;
+window.currentSelectedPatientId = null;
+window.currentSelectedPatientName = null;
+window.currentDoctorName = "Ordering Physician";
+window.chatPollTimer = null;
+window.currentChatRole = 'LAB_STAFF';
+window.currentTestsData = null;
+
+function openTestsAndCostsModal(sampleId, patientId) {
+    var sid = sampleId || window.currentSelectedSampleId;
+    var pid = patientId || window.currentSelectedPatientId;
+
+    if (!sid) {
+        alert("Please select a patient row from the Samples to Collect list first.");
+        return;
+    }
+
+    var modal = document.getElementById('testsCostsModal');
+    if (modal) modal.classList.add('show');
+
+    var bannerPatId = document.getElementById('tcModalPatId');
+    var bannerPatName = document.getElementById('tcModalPatName');
+    var bannerGenderAge = document.getElementById('tcModalPatGenderAge');
+    var bannerDoctor = document.getElementById('tcModalDoctor');
+    var totalAmountEl = document.getElementById('tcModalTotalAmount');
+    var bodyEl = document.getElementById('tcModalBody');
+
+    if (bannerPatId) bannerPatId.textContent = pid || "N/A";
+    if (bannerPatName) bannerPatName.textContent = window.currentSelectedPatientName || document.getElementById('name').textContent || "Patient";
+    if (bannerGenderAge) {
+        var g = document.getElementById('gender') ? document.getElementById('gender').textContent : "";
+        var a = document.getElementById('age') ? document.getElementById('age').textContent : "";
+        bannerGenderAge.textContent = (g ? g : "") + (a ? (" / " + a) : "");
+    }
+
+    if (bodyEl) {
+        bodyEl.innerHTML = '<div style="text-align:center;padding:35px;color:#64748b;font-size:13px;">' +
+            '<div style="display:inline-block;width:24px;height:24px;border:3px solid #0d9488;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>' +
+            '<p style="margin-top:10px;">Loading tests and pricing details...</p>' +
+            '</div>';
+    }
+
+    new Ajax.Request('<%=basePath%>pages/dashboard/getPatientTestsAndCosts.jsp', {
+        method: 'get',
+        parameters: 'action=getTestsAndCosts&sampleId=' + encodeURIComponent(sid) + '&patientId=' + encodeURIComponent(pid || ''),
+        onSuccess: function(xhr) {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (!res.success) {
+                    if (bodyEl) bodyEl.innerHTML = '<div style="padding:20px;color:#dc2626;background:#fef2f2;border-radius:6px;">Error loading tests: ' + (res.error || 'Unknown error') + '</div>';
+                    return;
+                }
+                window.currentTestsData = res;
+                if (res.patientName && bannerPatName) bannerPatName.textContent = res.patientName;
+                if (res.patientId && bannerPatId) bannerPatId.textContent = res.patientId;
+                if (res.physicianName) {
+                    window.currentDoctorName = res.physicianName;
+                    if (bannerDoctor) bannerDoctor.textContent = res.physicianName;
+                    var chatDocEl = document.getElementById('chatDoctorName');
+                    if (chatDocEl) chatDocEl.textContent = res.physicianName;
+                }
+                renderTestsAndCosts(res);
+            } catch (err) {
+                if (bodyEl) bodyEl.innerHTML = '<div style="padding:20px;color:#dc2626;background:#fef2f2;border-radius:6px;">Failed to parse response: ' + err.message + '</div>';
+            }
+        },
+        onFailure: function() {
+            if (bodyEl) bodyEl.innerHTML = '<div style="padding:20px;color:#dc2626;background:#fef2f2;border-radius:6px;">Network error connecting to pricing service.</div>';
+        }
+    });
+}
+
+function closeTestsAndCostsModal() {
+    var modal = document.getElementById('testsCostsModal');
+    if (modal) modal.classList.remove('show');
+}
+
+function renderTestsAndCosts(data) {
+    var bodyEl = document.getElementById('tcModalBody');
+    var totalAmountEl = document.getElementById('tcModalTotalAmount');
+    if (!bodyEl) return;
+
+    if (totalAmountEl) {
+        totalAmountEl.textContent = Number(data.totalPayableAmount || 0).toFixed(2) + " " + (data.currency || "ETB");
+    }
+
+    var depts = data.departments || [];
+    if (depts.length === 0) {
+        bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;font-size:13px;">No tests found for this sample order.</div>';
+        return;
+    }
+
+    var html = '';
+
+    for (var i = 0; i < depts.length; i++) {
+        var d = depts[i];
+        html += '<div class="tc-dept-card">';
+        html += '  <div class="tc-dept-header">';
+        html += '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>';
+        html += '    ' + escapeHtml(d.name);
+        html += '  </div>';
+        html += '  <div style="padding:8px 12px;">';
+
+        // 1. Panels
+        var panels = d.panels || [];
+        for (var p = 0; p < panels.length; p++) {
+            var panel = panels[p];
+            var pRemStatus = panel.removalStatus || 'NONE';
+            var isPApproved = (pRemStatus === 'APPROVED');
+            var isPPending = (pRemStatus === 'PENDING');
+
+            html += '<div class="tc-panel-box">';
+            html += '  <div class="tc-panel-header">';
+            html += '    <div class="tc-panel-name">';
+            if (!isPApproved && !isPPending && panel.isPanelPriced) {
+                html += '      <input type="checkbox" class="tc-item-chk" data-type="PANEL" data-id="' + panel.panelId + '" data-name="' + escapeHtml(panel.panelName) + '" data-cost="' + panel.panelCost + '" onchange="onRemovalCheckboxChanged()">';
+            }
+            html += '      <span style="' + (isPApproved ? 'text-decoration:line-through;color:#94a3b8;' : '') + '">[' + escapeHtml(panel.panelName) + ']</span>';
+            if (panel.isPanelPriced) {
+                html += '      <span class="tc-panel-badge">PACKAGE PRICE</span>';
+            }
+            if (isPPending) {
+                html += '      <span class="tc-removal-pending">REMOVAL PENDING</span>';
+            } else if (isPApproved) {
+                html += '      <span class="tc-removal-approved">REMOVED (APPROVED)</span>';
+            }
+            html += '    </div>';
+            html += '    <div class="tc-test-price">';
+            if (panel.isPanelPriced) {
+                html += isPApproved ? '<span style="text-decoration:line-through;color:#94a3b8;">' + Number(panel.panelCost).toFixed(2) + ' ETB</span>' : Number(panel.panelCost).toFixed(2) + ' ETB';
+            } else {
+                html += '<span style="font-size:11px;color:#64748b;font-weight:normal;">Sum of Tests</span>';
+            }
+            html += '    </div>';
+            html += '  </div>';
+
+            // Child tests
+            var cTests = panel.tests || [];
+            if (cTests.length > 0) {
+                html += '  <div class="tc-child-tests-list">';
+                for (var t = 0; t < cTests.length; t++) {
+                    var ct = cTests[t];
+                    var tRemStatus = ct.removalStatus || 'NONE';
+                    var isTApproved = (tRemStatus === 'APPROVED') || isPApproved;
+                    var isTPending = (tRemStatus === 'PENDING') || isPPending;
+
+                    html += '    <div class="tc-test-row">';
+                    html += '      <div class="tc-test-name">';
+                    if (!isTApproved && !isTPending && !panel.isPanelPriced) {
+                        html += '        <input type="checkbox" class="tc-item-chk" data-type="TEST" data-id="' + ct.testId + '" data-name="' + escapeHtml(ct.testName) + '" data-cost="' + ct.cost + '" onchange="onRemovalCheckboxChanged()">';
+                    }
+                    html += '        <span style="' + (isTApproved ? 'text-decoration:line-through;color:#94a3b8;' : '') + '">• ' + escapeHtml(ct.testName) + '</span>';
+                    if (ct.isIncludedInPanel) {
+                        html += '        <span class="tc-included-tag">Included in [' + escapeHtml(panel.panelName) + ']</span>';
+                    }
+                    if (isTPending && !isPPending) {
+                        html += '        <span class="tc-removal-pending">REMOVAL PENDING</span>';
+                    } else if (isTApproved && !isPApproved) {
+                        html += '        <span class="tc-removal-approved">REMOVED</span>';
+                    }
+                    html += '      </div>';
+                    html += '      <div class="tc-test-price" style="font-size:11px;' + (ct.isIncludedInPanel ? 'color:#64748b;font-weight:normal;' : '') + '">';
+                    if (ct.isIncludedInPanel) {
+                        html += '0.00 ETB';
+                    } else {
+                        html += isTApproved ? '<span style="text-decoration:line-through;color:#94a3b8;">' + Number(ct.cost).toFixed(2) + ' ETB</span>' : Number(ct.cost).toFixed(2) + ' ETB';
+                    }
+                    html += '      </div>';
+                    html += '    </div>';
+                }
+                html += '  </div>';
+            }
+            html += '</div>';
+        }
+
+        // 2. Standalone tests
+        var sTests = d.standaloneTests || [];
+        if (sTests.length > 0) {
+            html += '<div style="margin:6px 12px;">';
+            for (var s = 0; s < sTests.length; s++) {
+                var st = sTests[s];
+                var sRemStatus = st.removalStatus || 'NONE';
+                var isSApproved = (sRemStatus === 'APPROVED');
+                var isSPending = (sRemStatus === 'PENDING');
+
+                html += '<div class="tc-test-row" style="padding:6px 0;">';
+                html += '  <div class="tc-test-name">';
+                if (!isSApproved && !isSPending) {
+                    html += '    <input type="checkbox" class="tc-item-chk" data-type="TEST" data-id="' + st.testId + '" data-name="' + escapeHtml(st.testName) + '" data-cost="' + st.cost + '" onchange="onRemovalCheckboxChanged()">';
+                }
+                html += '    <span style="' + (isSApproved ? 'text-decoration:line-through;color:#94a3b8;' : '') + '">' + escapeHtml(st.testName) + '</span>';
+                if (isSPending) {
+                    html += '    <span class="tc-removal-pending">REMOVAL PENDING</span>';
+                } else if (isSApproved) {
+                    html += '    <span class="tc-removal-approved">REMOVED (APPROVED)</span>';
+                }
+                html += '  </div>';
+                html += '  <div class="tc-test-price">';
+                html += isSApproved ? '<span style="text-decoration:line-through;color:#94a3b8;">' + Number(st.cost).toFixed(2) + ' ETB</span>' : Number(st.cost).toFixed(2) + ' ETB';
+                html += '  </div>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        html += '  </div>';
+        html += '</div>';
+    }
+
+    // Removal Request Section Drawer
+    html += '<div class="tc-removal-drawer" id="tcRemovalDrawer" style="display:none;">';
+    html += '  <h4>';
+    html += '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    html += '    Request Test Removal (<span id="tcSelectedItemsCount">0</span> item(s) selected)';
+    html += '  </h4>';
+    html += '  <p style="font-size:11px;color:#78350f;margin-bottom:8px;">Tests will remain active until the ordering physician approves the removal via chat. Total payable will automatically recalculate upon approval.</p>';
+    html += '  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">';
+    html += '    <span style="font-size:10px;color:#92400e;font-weight:700;align-self:center;">Reason:</span>';
+    html += '    <button type="button" class="tc-reason-quick-btn" onclick="setQuickReason(\'Patient has insufficient funds to afford tests\')">Cannot Afford</button>';
+    html += '    <button type="button" class="tc-reason-quick-btn" onclick="setQuickReason(\'Duplicate laboratory test ordered\')">Duplicate Order</button>';
+    html += '    <button type="button" class="tc-reason-quick-btn" onclick="setQuickReason(\'Alternative routine investigation ordered by physician\')">Alternative Ordered</button>';
+    html += '    <button type="button" class="tc-reason-quick-btn" onclick="setQuickReason(\'Patient refused specific test\')">Patient Refused</button>';
+    html += '  </div>';
+    html += '  <div style="display:flex;gap:8px;">';
+    html += '    <input type="text" id="tcRemovalReason" placeholder="Enter mandatory reason for physician review..." style="flex:1;padding:7px 10px;border:1px solid #f59e0b;border-radius:5px;font-size:12px;outline:none;">';
+    html += '    <button type="button" id="btnSubmitRemoval" onclick="submitRemovalRequest()" style="background:#b45309;color:#fff;border:none;border-radius:5px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;">Send to Physician</button>';
+    html += '  </div>';
+    html += '</div>';
+
+    bodyEl.innerHTML = html;
+}
+
+function onRemovalCheckboxChanged() {
+    var checked = document.querySelectorAll('.tc-item-chk:checked');
+    var drawer = document.getElementById('tcRemovalDrawer');
+    var countEl = document.getElementById('tcSelectedItemsCount');
+    if (countEl) countEl.textContent = checked.length;
+    if (drawer) {
+        if (checked.length > 0) {
+            drawer.style.display = 'block';
+        } else {
+            drawer.style.display = 'none';
+        }
+    }
+}
+
+function setQuickReason(text) {
+    var reasonInput = document.getElementById('tcRemovalReason');
+    if (reasonInput) reasonInput.value = text;
+}
+
+function submitRemovalRequest() {
+    var checked = document.querySelectorAll('.tc-item-chk:checked');
+    if (checked.length === 0) {
+        alert("Please select at least one test or panel to request removal.");
+        return;
+    }
+
+    var reasonInput = document.getElementById('tcRemovalReason');
+    var reason = reasonInput ? reasonInput.value.trim() : "";
+    if (!reason) {
+        alert("A reason is mandatory for the ordering physician to review test removal.");
+        if (reasonInput) reasonInput.focus();
+        return;
+    }
+
+    var items = [];
+    checked.forEach(function(chk) {
+        var itype = chk.getAttribute('data-type');
+        var id = chk.getAttribute('data-id');
+        var name = chk.getAttribute('data-name');
+        var cost = parseFloat(chk.getAttribute('data-cost') || "0");
+        items.push({
+            itemType: itype,
+            testId: (itype === 'TEST' ? id : null),
+            panelId: (itype === 'PANEL' ? id : null),
+            itemName: name,
+            cost: cost
+        });
+    });
+
+    var submitBtn = document.getElementById('btnSubmitRemoval');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending...";
+    }
+
+    var sid = window.currentSelectedSampleId;
+    var pid = window.currentSelectedPatientId;
+    var pName = window.currentSelectedPatientName || "Patient";
+
+    new Ajax.Request('<%=basePath%>pages/dashboard/getPatientTestsAndCosts.jsp', {
+        method: 'post',
+        parameters: {
+            action: 'requestRemoval',
+            sampleId: sid,
+            patientId: pid || '',
+            patientName: pName,
+            reason: reason,
+            requestedBy: 'Lab Staff',
+            items: JSON.stringify(items)
+        },
+        onSuccess: function(xhr) {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Send to Physician";
+            }
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (res.success) {
+                    alert("Test removal request sent successfully! A discussion message with interactive approval buttons has been posted to Physician Chat.");
+                    openTestsAndCostsModal(sid, pid);
+                    checkOrderNotifications(sid);
+                } else {
+                    alert("Error submitting removal request: " + (res.error || "Unknown"));
+                }
+            } catch (e) {
+                alert("Error processing server response.");
+            }
+        },
+        onFailure: function() {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Send to Physician";
+            }
+            alert("Network error sending removal request.");
+        }
+    });
+}
+
+function openPhysicianChatModal(sampleId) {
+    var sid = sampleId || window.currentSelectedSampleId;
+    if (!sid) {
+        alert("Please select a patient order from the table first.");
+        return;
+    }
+
+    var modal = document.getElementById('physicianChatModal');
+    if (modal) modal.classList.add('show');
+
+    var pNameEl = document.getElementById('chatPatName');
+    var docNameEl = document.getElementById('chatDoctorName');
+    if (pNameEl) pNameEl.textContent = window.currentSelectedPatientName || document.getElementById('name').textContent || ("Order #" + sid);
+    if (docNameEl) docNameEl.textContent = window.currentDoctorName || "Ordering Physician";
+
+    loadChatMessages(true);
+
+    if (window.chatPollTimer) clearInterval(window.chatPollTimer);
+    window.chatPollTimer = setInterval(function() {
+        loadChatMessages(false);
+    }, 3000);
+}
+
+function closePhysicianChatModal() {
+    if (window.chatPollTimer) {
+        clearInterval(window.chatPollTimer);
+        window.chatPollTimer = null;
+    }
+    var modal = document.getElementById('physicianChatModal');
+    if (modal) modal.classList.remove('show');
+}
+
+function setChatRole(role) {
+    window.currentChatRole = role;
+    var btnLab = document.getElementById('roleBtnLab');
+    var btnDoc = document.getElementById('roleBtnDoc');
+    if (role === 'LAB_STAFF') {
+        if (btnLab) { btnLab.style.background = '#2563eb'; btnLab.style.color = '#fff'; }
+        if (btnDoc) { btnDoc.style.background = '#e2e8f0'; btnDoc.style.color = '#475569'; }
+    } else {
+        if (btnDoc) { btnDoc.style.background = '#059669'; btnDoc.style.color = '#fff'; }
+        if (btnLab) { btnLab.style.background = '#e2e8f0'; btnLab.style.color = '#475569'; }
+    }
+}
+
+function insertQuickChat(text) {
+    var inp = document.getElementById('chatInputText');
+    if (inp) {
+        inp.value = text;
+        inp.focus();
+    }
+}
+
+function loadChatMessages(scrollToBottom) {
+    var sid = window.currentSelectedSampleId;
+    if (!sid) return;
+
+    var container = document.getElementById('chatMessagesContainer');
+
+    new Ajax.Request('<%=basePath%>pages/dashboard/getPatientTestsAndCosts.jsp', {
+        method: 'get',
+        parameters: 'action=getChatMessages&sampleId=' + encodeURIComponent(sid),
+        onSuccess: function(xhr) {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (!res.success) return;
+                var msgs = res.messages || [];
+
+                if (msgs.length === 0) {
+                    if (container) {
+                        container.innerHTML = '<div style="text-align:center;padding:50px 20px;color:#94a3b8;font-size:13px;">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="36" height="36" style="margin-bottom:8px;color:#cbd5e1;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+                            '<div>No messages yet for this laboratory order.</div>' +
+                            '<div style="font-size:11px;color:#64748b;margin-top:4px;">Discuss test affordability, alternatives, or send removal requests here.</div>' +
+                            '</div>';
+                    }
+                    return;
+                }
+
+                var html = '';
+                for (var i = 0; i < msgs.length; i++) {
+                    var m = msgs[i];
+                    var isLab = (m.role === 'LAB_STAFF');
+                    var roleLabel = isLab ? 'LAB STAFF' : 'PHYSICIAN';
+                    var timeStr = m.createdAt ? m.createdAt.substring(11, 16) : '';
+
+                    if (m.type === 'REMOVAL_REQUEST' && m.removalRequestId) {
+                        // Interactive Test Removal Card in chat
+                        var reqStatus = m.requestStatus || 'PENDING';
+                        var isPending = (reqStatus === 'PENDING');
+                        var isApproved = (reqStatus === 'APPROVED');
+                        var isRejected = (reqStatus === 'REJECTED');
+
+                        html += '<div class="chat-removal-card">';
+                        html += '  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+                        html += '    <span style="font-size:11px;font-weight:700;color:#92400e;display:flex;align-items:center;gap:4px;">';
+                        html += '      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+                        html += '      TEST REMOVAL REQUEST';
+                        html += '    </span>';
+                        if (isPending) html += '<span class="tc-removal-pending">PENDING PHYSICIAN APPROVAL</span>';
+                        else if (isApproved) html += '<span class="tc-removal-approved" style="background:#dcfce7;color:#16a34a;border-color:#bbf7d0;">APPROVED BY PHYSICIAN</span>';
+                        else if (isRejected) html += '<span class="tc-removal-rejected" style="background:#fee2e2;color:#dc2626;border-color:#fecaca;">REJECTED</span>';
+                        html += '  </div>';
+
+                        html += '  <div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:4px;">' + escapeHtml(m.text) + '</div>';
+                        html += '  <div style="font-size:11px;color:#64748b;margin-bottom:8px;">Requested by: ' + escapeHtml(m.sender) + ' • ' + escapeHtml(timeStr) + '</div>';
+
+                        if (isPending) {
+                            html += '  <div style="display:flex;gap:8px;margin-top:6px;border-top:1px dashed #fcd34d;padding-top:8px;">';
+                            html += '    <button type="button" onclick="approveRemoval(' + m.removalRequestId + ')" style="background:#16a34a;color:#fff;border:none;border-radius:4px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">✔ Approve Removal</button>';
+                            html += '    <button type="button" onclick="rejectRemoval(' + m.removalRequestId + ')" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">✖ Reject Removal</button>';
+                            html += '  </div>';
+                        }
+                        html += '</div>';
+                    } else if (m.type === 'APPROVAL' || m.type === 'REJECTION') {
+                        // System approval notification
+                        var isApp = (m.type === 'APPROVAL');
+                        html += '<div style="align-self:center;background:' + (isApp ? '#dcfce7' : '#fee2e2') + ';color:' + (isApp ? '#15803d' : '#b91c1c') + ';border:1px solid ' + (isApp ? '#86efac' : '#fca5a5') + ';border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;margin:4px 0;">';
+                        html += escapeHtml(m.text);
+                        html += '</div>';
+                    } else {
+                        // Standard chat message bubble
+                        html += '<div class="chat-msg-row ' + (isLab ? 'lab' : 'physician') + '">';
+                        html += '  <div class="chat-bubble">' + escapeHtml(m.text) + '</div>';
+                        html += '  <div class="chat-msg-meta">';
+                        html += '    <span>' + escapeHtml(m.sender) + ' (' + roleLabel + ')</span>';
+                        html += '    <span>' + escapeHtml(timeStr) + '</span>';
+                        html += '  </div>';
+                        html += '</div>';
+                    }
+                }
+
+                if (container) {
+                    container.innerHTML = html;
+                    if (scrollToBottom) {
+                        container.scrollTop = container.scrollHeight;
+                    }
+                }
+            } catch (err) {}
+        }
+    });
+}
+
+function sendChatMessage() {
+    var inp = document.getElementById('chatInputText');
+    if (!inp) return;
+    var txt = inp.value.trim();
+    if (!txt) return;
+
+    var sid = window.currentSelectedSampleId;
+    if (!sid) return;
+
+    var role = window.currentChatRole || 'LAB_STAFF';
+    var senderName = (role === 'PHYSICIAN') ? (window.currentDoctorName || 'Dr. Physician') : 'Lab Staff';
+
+    inp.value = '';
+
+    new Ajax.Request('<%=basePath%>pages/dashboard/getPatientTestsAndCosts.jsp', {
+        method: 'post',
+        parameters: {
+            action: 'sendChatMessage',
+            sampleId: sid,
+            sender: senderName,
+            role: role,
+            text: txt
+        },
+        onSuccess: function() {
+            loadChatMessages(true);
+        }
+    });
+}
+
+function approveRemoval(reqId) {
+    if (!confirm("Are you sure you want to approve removal of this test? It will be cancelled in OpenELIS and deducted from payable total.")) return;
+
+    var doctorName = window.currentDoctorName || "Dr. Ordering Physician";
+    new Ajax.Request('<%=basePath%>pages/dashboard/getPatientTestsAndCosts.jsp', {
+        method: 'post',
+        parameters: {
+            action: 'approveRemoval',
+            requestId: reqId,
+            physicianName: doctorName,
+            notes: 'Approved via chat'
+        },
+        onSuccess: function(xhr) {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (res.success) {
+                    alert("Test removal approved! The test has been cancelled and total recalculated.");
+                    loadChatMessages(true);
+                    if (document.getElementById('testsCostsModal') && document.getElementById('testsCostsModal').classList.contains('show')) {
+                        openTestsAndCostsModal(window.currentSelectedSampleId, window.currentSelectedPatientId);
+                    }
+                } else {
+                    alert("Error: " + (res.error || "Could not approve"));
+                }
+            } catch (e) {}
+        }
+    });
+}
+
+function rejectRemoval(reqId) {
+    var notes = prompt("Enter optional reason for rejecting test removal:", "Test is clinically necessary");
+    if (notes === null) return;
+
+    var doctorName = window.currentDoctorName || "Dr. Ordering Physician";
+    new Ajax.Request('<%=basePath%>pages/dashboard/getPatientTestsAndCosts.jsp', {
+        method: 'post',
+        parameters: {
+            action: 'rejectRemoval',
+            requestId: reqId,
+            physicianName: doctorName,
+            notes: notes
+        },
+        onSuccess: function(xhr) {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (res.success) {
+                    alert("Test removal rejected. The test will remain active in the order.");
+                    loadChatMessages(true);
+                } else {
+                    alert("Error: " + (res.error || "Could not reject"));
+                }
+            } catch (e) {}
+        }
+    });
+}
+
+function checkOrderNotifications(sampleId) {
+    if (!sampleId) return;
+    new Ajax.Request('<%=basePath%>pages/dashboard/getPatientTestsAndCosts.jsp', {
+        method: 'get',
+        parameters: 'action=checkNotifications&sampleId=' + encodeURIComponent(sampleId),
+        onSuccess: function(xhr) {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                var badge = document.getElementById('chatBadgeCount');
+                if (badge) {
+                    var totalAlerts = (res.unreadCount || 0) + (res.pendingRemovalCount || 0);
+                    if (totalAlerts > 0) {
+                        badge.textContent = totalAlerts;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch (e) {}
+        }
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 </script>

@@ -206,7 +206,8 @@ angular.module('bahmni.common.conceptSet')
                     'National Perioperative Clinical Forms',
                     'Safe Childbirth Checklist Ethiopian',
                     'Stabilisation Centre Multi-Chart',
-                    'WHO Postpartum Hemorrhage Observation Chart'
+                    'WHO Postpartum Hemorrhage Observation Chart',
+                    'Psychiatric Intake and Mental Health History'
                 ];
                 return customForms.indexOf(conceptName) !== -1;
             };
@@ -694,6 +695,59 @@ angular.module('bahmni.common.conceptSet')
                 if (scope.consultation && scope.consultation.preSaveHandler) {
                     if (typeof scope.consultation.preSaveHandler.register === 'function') {
                         scope.consultation.preSaveHandler.register('whoPphObservationChartIframe', triggerSaveIframe);
+                    } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
+                        scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
+                    }
+                }
+
+                var onSaveClick = function () {
+                    triggerSaveIframe();
+                };
+                angular.element($window.document).on('click', '.save-consultation', onSaveClick);
+
+                scope.$on('$destroy', function () {
+                    angular.element($window.document).off('click', '.save-consultation', onSaveClick);
+                });
+
+                scope.$watch('patient.uuid', updateUrl);
+                updateUrl();
+            }
+        };
+    }])
+    .directive('mentalHealthHxIframe', ['$sce', '$window', '$stateParams', '$rootScope', function ($sce, $window, $stateParams, $rootScope) {
+        return {
+            restrict: 'E',
+            scope: {
+                patient: '=',
+                consultation: '=?'
+            },
+            template: '<iframe ng-src="{{trustedUrl}}" style="width: 100%; height: 1100px; border: 1px solid #0F4C81; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); background: #fff;" frameborder="0"></iframe>',
+            link: function (scope, element) {
+                var getPatientUuid = function () {
+                    return (scope.patient && scope.patient.uuid) ||
+                           ($stateParams && $stateParams.patientUuid) ||
+                           ($rootScope.patient && $rootScope.patient.uuid) || '';
+                };
+
+                var updateUrl = function () {
+                    var pUuid = getPatientUuid();
+                    var pName = (scope.patient && scope.patient.name) || ($rootScope.patient && $rootScope.patient.name) || '';
+                    var encUuid = (scope.consultation && scope.consultation.encounterUuid) || '';
+                    var url = '/bahmni_config/openmrs/apps/custemForms/mental_health_hx.html?patientUuid=' + encodeURIComponent(pUuid) + '&patientName=' + encodeURIComponent(pName) + '&encounterUuid=' + encodeURIComponent(encUuid) + '&consultation=true';
+                    scope.trustedUrl = $sce.trustAsResourceUrl(url);
+                };
+
+                var triggerSaveIframe = function () {
+                    var iframe = element.find('iframe')[0];
+                    if (iframe && iframe.contentWindow) {
+                        var pUuid = getPatientUuid();
+                        iframe.contentWindow.postMessage({ action: 'saveToOpenMRS', patientUuid: pUuid }, '*');
+                    }
+                };
+
+                if (scope.consultation && scope.consultation.preSaveHandler) {
+                    if (typeof scope.consultation.preSaveHandler.register === 'function') {
+                        scope.consultation.preSaveHandler.register('mentalHealthHxIframe', triggerSaveIframe);
                     } else if (typeof scope.consultation.preSaveHandler.subscribe === 'function') {
                         scope.consultation.preSaveHandler.subscribe(triggerSaveIframe);
                     }

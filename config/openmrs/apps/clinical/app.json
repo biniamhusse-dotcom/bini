@@ -184,7 +184,8 @@
             "National Perioperative Clinical Forms",
             "Safe Childbirth Checklist Ethiopian",
             "Stabilisation Centre Multi-Chart",
-            "WHO Postpartum Hemorrhage Observation Chart"
+            "WHO Postpartum Hemorrhage Observation Chart",
+            "Psychiatric Intake and Mental Health History"
         ],
         "EMR_eAPTS_endPoint": "https://10.139.8.28:443/stockStatus",
         "enableDrugStockStatusCheck": false,

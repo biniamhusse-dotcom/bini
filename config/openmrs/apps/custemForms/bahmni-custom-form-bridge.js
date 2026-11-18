@@ -556,6 +556,13 @@
               self.currentUserFullName = data.user.username;
             }
           }
+          if (document.getElementById('clinicianName') && !document.getElementById('clinicianName').value) {
+            document.getElementById('clinicianName').value = self.currentUserFullName;
+            try {
+              document.getElementById('clinicianName').dispatchEvent(new Event('input', { bubbles: true }));
+              document.getElementById('clinicianName').dispatchEvent(new Event('change', { bubbles: true }));
+            } catch (e) {}
+          }
           self.renderAuditTrail();
         })
         .catch(function () {});
@@ -676,6 +683,24 @@
       };
 
       // 1. Specific Form Mappings
+      // Psychiatric Intake & Mental Health History
+      setVal(document.getElementById('fullName'), pt.fullName);
+      setVal(document.getElementById('mrnInput'), pt.identifier);
+      setVal(document.getElementById('dob'), pt.birthdate);
+      setVal(document.getElementById('ageDisplay'), pt.age);
+      if (document.getElementById('gender')) {
+        var gSel = document.getElementById('gender');
+        if (!gSel.value && pt.gender) {
+          gSel.value = pt.gender === 'M' ? 'Male' : (pt.gender === 'F' ? 'Female' : 'Other');
+          try { gSel.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+        }
+      }
+      setVal(document.getElementById('phone'), pt.phone);
+      setVal(document.getElementById('addrRegion'), pt.region);
+      setVal(document.getElementById('addrZone'), pt.zone);
+      setVal(document.getElementById('addrWoreda'), pt.woreda);
+      setVal(document.getElementById('addrKebele'), pt.kebele);
+
       // Ethiopian OTP Follow-up Card
       setVal(document.getElementById('inputPatientName'), pt.fullName);
       setVal(document.getElementById('inputRegNo'), pt.identifier);

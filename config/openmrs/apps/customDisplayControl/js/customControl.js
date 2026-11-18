@@ -3096,6 +3096,272 @@ var getPatientUuid = function () {
         },
         template: '<ng-include src="contentUrl"/>'
     };
+}]).directive('mentalHealthHx', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
+    var link = function ($scope, element) {
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/mentalHealthHxDashboard.html?v=20261118_v1";
+        $scope.hasRecord = false;
+        $scope.loading = true;
+        $scope.allCharts = [];
+        $scope.showAllEncounters = false;
+        $scope.hasActiveForm = false;
+        $scope.activeChart = null;
+
+        var etMonthsAm = ['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜን'];
+        var gregorianToEthiopian = function (gy, gm, gd) {
+            var a = Math.floor((14 - gm) / 12);
+            var y = gy + 4800 - a;
+            var m = gm + 12 * a - 3;
+            var jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            var r = (jdn - 1724221) % 1461;
+            var n = (r % 365) + 365 * Math.floor(r / 1460);
+            var etYear = 4 * Math.floor((jdn - 1724221) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460) + 1;
+            var etMonth = Math.floor(n / 30) + 1;
+            var etDay = (n % 30) + 1;
+            return { year: etYear, month: etMonth, day: etDay };
+        };
+
+        var formatDateTime = function (isoStr) {
+            if (!isoStr) return '';
+            var d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var day = d.getDate();
+            var month = months[d.getMonth()];
+            var year = d.getFullYear();
+            var hours = d.getHours();
+            var minutes = d.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            var gregStr = day + ' ' + month + ' ' + year + ' ' + hours + ':' + strMinutes + ' ' + ampm;
+            var et = gregorianToEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            var etStr = etMonthsAm[et.month - 1] + ' ' + et.day + ', ' + et.year + ' ዓ.ም';
+            return gregStr + ' (' + etStr + ')';
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) ||
+                   ($stateParams && $stateParams.patientUuid) ||
+                   ($scope.section && $scope.section.patientUuid) ||
+                   ($scope.patientUuid);
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        $scope.$watch('hasRecord', function (hasRec) {
+            if ($scope.section) {
+                $scope.section.isDataAvailable = !!hasRec;
+            }
+            var sec = element.closest('.dashboard-section, section');
+            if (sec && sec.length) {
+                if (hasRec) {
+                    sec.show();
+                } else {
+                    sec.hide();
+                }
+            }
+        });
+
+        $scope.refreshObs = function () {
+            $scope.loading = true;
+            spinner.forPromise(fetchObs());
+        };
+
+        $scope.toggleShowAll = function () {
+            $scope.showAllEncounters = !$scope.showAllEncounters;
+        };
+
+        $scope.getVisibleCharts = function () {
+            if (!$scope.allCharts || $scope.allCharts.length === 0) return [];
+            return $scope.showAllEncounters ? $scope.allCharts : $scope.allCharts.slice(0, 1);
+        };
+
+        $scope.openChart = function (chart) {
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/mental_health_hx.html?patientUuid=" + encodeURIComponent(patientUuid || '');
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            if (chart && chart.encounterUuid) {
+                url += "&encounterUuid=" + encodeURIComponent(chart.encounterUuid);
+            }
+            if (chart && chart.obsUuid) {
+                url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        $scope.openNewForm = function () {
+            if ($scope.hasActiveForm && $scope.activeChart) {
+                $scope.openChart($scope.activeChart);
+                return;
+            }
+            var patientUuid = getPatientUuid();
+            var url = "/bahmni_config/openmrs/apps/custemForms/mental_health_hx.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
+            if ($scope.patient && $scope.patient.name) {
+                url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var fetchObs = function () {
+            var patientUuid = getPatientUuid();
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+                return $q.when();
+            }
+
+            return $http.get('/openmrs/ws/rest/v1/obs', {
+                params: {
+                    patient: patientUuid,
+                    concept: '9e2a5670-3d71-4569-b1d5-894000000010',
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
+                },
+                withCredentials: true
+            }).then(function (res) {
+                $scope.loading = false;
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sorted = rawList.slice().sort(function (a, b) {
+                        return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
+                    });
+
+                    var activeChart = null;
+                    var completedCharts = [];
+
+                    sorted.forEach(function (obs) {
+                        try {
+                            var parsed = null;
+                            if (typeof obs.value === 'object' && obs.value !== null) {
+                                parsed = obs.value;
+                            } else if (typeof obs.value === 'string') {
+                                var trimmed = obs.value.trim();
+                                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                    try { parsed = JSON.parse(trimmed); } catch (e) { return; }
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
+                            if (!parsed) return;
+
+                            var userName = null;
+                            if (parsed.acceptance && parsed.acceptance.clinicianName && parsed.acceptance.clinicianName.trim() !== '' && !parsed.acceptance.clinicianName.startsWith('_')) {
+                                userName = parsed.acceptance.clinicianName;
+                            } else if (obs.encounter && obs.encounter.encounterProviders && obs.encounter.encounterProviders.length > 0) {
+                                var ep = obs.encounter.encounterProviders[0];
+                                userName = (ep.provider && ep.provider.person && ep.provider.person.display) ||
+                                           (ep.provider && ep.provider.display) ||
+                                           ep.display;
+                            } else if (obs.creator) {
+                                userName = (obs.creator.person && obs.creator.person.display) || obs.creator.display;
+                            }
+
+                            var isLocked = !!parsed.isLocked;
+                            var lastHandover = (parsed.handovers && parsed.handovers.length > 0) ? parsed.handovers[parsed.handovers.length - 1] : null;
+
+                            var hx = parsed.mentalHealthHx || {};
+                            var acc = parsed.acceptance || {};
+                            var diagStr = (hx.diagnoses || []).map(function(x){ return x.name; }).filter(Boolean).join(', ');
+
+                            var chartObj = {
+                                obsUuid: obs.uuid,
+                                encounterUuid: (obs.encounter && obs.encounter.uuid) || null,
+                                visitUuid: (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid) || null,
+                                obsDatetime: obs.obsDatetime,
+                                savedDate: formatDateTime(obs.obsDatetime),
+                                isLocked: isLocked,
+                                userName: userName || "Attending Clinician",
+                                lastHandover: lastHandover,
+                                metrics: {
+                                    chiefComplaint: hx.chiefComplaint || '',
+                                    diagnoses: diagStr || 'None reported',
+                                    riskLevel: (hx.risk && hx.risk.level) || 'Low',
+                                    acceptanceStatus: acc.acceptanceStatus || 'Accepted'
+                                }
+                            };
+
+                            if (!isLocked && !activeChart) {
+                                activeChart = chartObj;
+                            }
+                            completedCharts.push(chartObj);
+                        } catch (e) {}
+                    });
+
+                    $scope.allCharts = completedCharts;
+                    $scope.hasActiveForm = !!activeChart;
+                    $scope.activeChart = activeChart;
+                    $scope.hasRecord = completedCharts.length > 0;
+                } else {
+                    $scope.allCharts = [];
+                    $scope.hasActiveForm = false;
+                    $scope.activeChart = null;
+                    $scope.hasRecord = false;
+                }
+            }).catch(function () {
+                $scope.loading = false;
+                $scope.hasRecord = false;
+            });
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshObs();
+            }
+        });
+
+        $scope.refreshObs();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
 }]).directive('receivedPacsImages', ['orderService', 'orderTypeService', 'pacsService', 'spinner', '$window', '$q', 'appService', function (orderService, orderTypeService, pacsService, spinner, $window, $q, appService) {
     var link = function ($scope, element) {
         $scope.orders = [];

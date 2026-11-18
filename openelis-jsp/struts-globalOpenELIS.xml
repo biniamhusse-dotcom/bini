@@ -1528,6 +1528,8 @@
         </action>
         <action path="/PaymentGateAdmin" forward="/pages/payment/paymentGateAdmin.jsp">
         </action>
+        <action path="/TestCostAdmin" forward="/pages/cost/testCostAdmin.jsp">
+        </action>
 
         <action path="/LocationSelect" forward="/pages/location/locationSelect.jsp">
         </action>

@@ -745,6 +745,14 @@
                     "title": "WHO Postpartum Hemorrhage (PPH) Observation Chart",
                     "template": "<who-pph-observation-chart section='config' patient='patient'></who-pph-observation-chart>"
                 }
+            },
+            "mentalHealthHx": {
+                "type": "custom",
+                "displayOrder": 33,
+                "config": {
+                    "title": "Psychiatric Intake & Mental Health History",
+                    "template": "<mental-health-hx section='config' patient='patient'></mental-health-hx>"
+                }
             }
         }
     },

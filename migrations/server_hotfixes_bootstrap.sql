@@ -177,3 +177,54 @@ WHERE @diag_set_id IS NOT NULL
   AND c.class_id IN (SELECT concept_class_id FROM concept_class WHERE name IN ('Diagnosis', 'Finding', 'Symptom', 'Symptom/Finding'))
   AND c.retired = 0
   AND c.concept_id NOT IN (SELECT concept_id FROM concept_set WHERE concept_set=@diag_set_id);
+
+-- =========================================================================
+-- Ensure Psychiatric Intake and Mental Health History concepts exist
+-- =========================================================================
+INSERT INTO concept (retired, datatype_id, class_id, is_set, creator, date_created, uuid)
+SELECT 0, 4, 10, 1, 1, NOW(), '9e2a5670-3d71-4569-b1d5-894000000009'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM concept WHERE uuid = '9e2a5670-3d71-4569-b1d5-894000000009');
+
+SET @psych_id := (SELECT concept_id FROM concept WHERE uuid = '9e2a5670-3d71-4569-b1d5-894000000009' LIMIT 1);
+
+INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid)
+SELECT @psych_id, 'Psychiatric Intake and Mental Health History', 'en', 1, 1, NOW(), 'FULLY_SPECIFIED', 0, UUID()
+FROM DUAL
+WHERE @psych_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM concept_name WHERE concept_id = @psych_id AND name = 'Psychiatric Intake and Mental Health History');
+
+INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid)
+SELECT @psych_id, 'Mental Health Hx', 'en', 0, 1, NOW(), 'SHORT', 0, UUID()
+FROM DUAL
+WHERE @psych_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM concept_name WHERE concept_id = @psych_id AND name = 'Mental Health Hx');
+
+INSERT INTO concept (retired, datatype_id, class_id, is_set, creator, date_created, uuid)
+SELECT 0, 3, 11, 0, 1, NOW(), '9e2a5670-3d71-4569-b1d5-894000000010'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM concept WHERE uuid = '9e2a5670-3d71-4569-b1d5-894000000010');
+
+SET @psych_json_id := (SELECT concept_id FROM concept WHERE uuid = '9e2a5670-3d71-4569-b1d5-894000000010' LIMIT 1);
+
+INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid)
+SELECT @psych_json_id, 'Psychiatric Intake Complete Chart JSON', 'en', 1, 1, NOW(), 'FULLY_SPECIFIED', 0, UUID()
+FROM DUAL
+WHERE @psych_json_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM concept_name WHERE concept_id = @psych_json_id AND name = 'Psychiatric Intake Complete Chart JSON');
+
+INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, voided, uuid)
+SELECT @psych_json_id, 'Mental Health JSON', 'en', 0, 1, NOW(), 'SHORT', 0, UUID()
+FROM DUAL
+WHERE @psych_json_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM concept_name WHERE concept_id = @psych_json_id AND name = 'Mental Health JSON');
+
+INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+SELECT @psych_json_id, @psych_id, 1.0, 1, NOW(), UUID()
+FROM DUAL
+WHERE @psych_json_id IS NOT NULL AND @psych_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM concept_set WHERE concept_id = @psych_json_id AND concept_set = @psych_id
+);
+
+INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+SELECT @psych_id, @all_obs_id, 64.0, 1, NOW(), UUID()
+FROM DUAL
+WHERE @psych_id IS NOT NULL AND @all_obs_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM concept_set WHERE concept_id = @psych_id AND concept_set = @all_obs_id
+);
