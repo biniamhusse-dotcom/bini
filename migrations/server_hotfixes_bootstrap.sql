@@ -156,3 +156,24 @@ FROM DUAL
 WHERE @lcg_id IS NOT NULL AND @all_obs_id IS NOT NULL AND NOT EXISTS (
     SELECT 1 FROM concept_set WHERE concept_id = @lcg_id AND concept_set = @all_obs_id
 );
+
+-- =========================================================================
+-- Ensure all diagnosis and finding concepts are linked to diagnosis concept set
+-- Resolves the child diagnosis set dynamically from emr.concept.diagnosisSetOfSets
+-- =========================================================================
+SET @diag_set_id := (
+    SELECT cs.concept_id 
+    FROM concept_set cs 
+    JOIN global_property gp ON gp.property='emr.concept.diagnosisSetOfSets'
+    JOIN concept c ON c.uuid=gp.property_value
+    WHERE cs.concept_set=c.concept_id
+    LIMIT 1
+);
+
+INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+SELECT c.concept_id, @diag_set_id, 1, 1, NOW(), UUID()
+FROM concept c
+WHERE @diag_set_id IS NOT NULL
+  AND c.class_id IN (SELECT concept_class_id FROM concept_class WHERE name IN ('Diagnosis', 'Finding', 'Symptom', 'Symptom/Finding'))
+  AND c.retired = 0
+  AND c.concept_id NOT IN (SELECT concept_id FROM concept_set WHERE concept_set=@diag_set_id);

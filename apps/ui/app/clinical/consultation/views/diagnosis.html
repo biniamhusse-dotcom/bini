@@ -26,6 +26,17 @@
                                 <option value="Repeat">Repeat</option>
                             </select>
                         </div>
+                        <button type="button" ng-click="acceptMainDiagnosisAsNonCoded()"
+                            ng-show="consultation.mainDiagnosis.name && !consultation.mainDiagnosis.uuid && !allowOnlyCodedDiagnosis"
+                            class="small-btn accept-btn"
+                            ng-class="{illegalValue: !consultation.mainDiagnosis.isNonCoded}"
+                            style="padding:6px 12px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid #ccc;background:#fdfdfd;">
+                            <span ng-show="!consultation.mainDiagnosis.isNonCoded"><i class="fa fa-check"></i> Accept Non-Coded</span>
+                            <span ng-show="consultation.mainDiagnosis.isNonCoded" style="color:#2c7d2c;font-weight:600;"><i class="fa fa-check-circle"></i> Accepted</span>
+                        </button>
+                        <span ng-if="consultation.mainDiagnosis.uuid" style="display:inline-flex;align-items:center;gap:4px;background:#28a745;color:white;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;">
+                            <i class="fa fa-check"></i> Coded
+                        </span>
                         <div ng-if="consultation.mainDiagnosis.icd11Code" style="display:inline-flex;align-items:center;gap:4px;background:#f5a623;color:white;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600;">
                             <i class="fa fa-star" style="font-size:12px;"></i>
                             ICD-11: {{consultation.mainDiagnosis.icd11Code}}

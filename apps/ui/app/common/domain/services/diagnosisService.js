@@ -5,12 +5,61 @@ angular.module('bahmni.common.domain')
         var self = this;
         this.getAllFor = function (searchTerm, locale) {
             var url = Bahmni.Common.Constants.bahmniapiConceptUrl;
-            var parameters = { term: searchTerm, limit: Bahmni.Common.Constants.emrapiDiagnosisLimit };
+            var parameters = { term: searchTerm, limit: Bahmni.Common.Constants.emrapiDiagnosisLimit || 20 };
             if (locale) {
                 parameters.locale = locale;
             }
             return $http.get(url, {
                 params: parameters
+            }).then(function (response) {
+                if (response.data && response.data.length > 0) {
+                    return response;
+                }
+                // Fallback to standard OpenMRS concept search if diagnosis set search returns empty
+                var fallbackUrl = (Bahmni.Common.Constants.conceptUrl || "/openmrs/ws/rest/v1/concept");
+                return $http.get(fallbackUrl, {
+                    params: {
+                        q: searchTerm,
+                        v: 'custom:(uuid,name:(name),conceptClass:(name))',
+                        limit: Bahmni.Common.Constants.emrapiDiagnosisLimit || 20
+                    }
+                }).then(function (fallbackRes) {
+                    var items = (fallbackRes.data && fallbackRes.data.results) || [];
+                    var mapped = items.map(function (c) {
+                        var cName = (c.name && c.name.name) ? c.name.name : (c.name || '');
+                        return {
+                            conceptName: cName,
+                            conceptUuid: c.uuid,
+                            matchedName: cName,
+                            conceptClass: c.conceptClass ? c.conceptClass.name : ''
+                        };
+                    });
+                    return { data: mapped };
+                }).catch(function () {
+                    return response;
+                });
+            }).catch(function () {
+                // In case of error on terminologies endpoint, query standard concept search
+                var fallbackUrl = (Bahmni.Common.Constants.conceptUrl || "/openmrs/ws/rest/v1/concept");
+                return $http.get(fallbackUrl, {
+                    params: {
+                        q: searchTerm,
+                        v: 'custom:(uuid,name:(name),conceptClass:(name))',
+                        limit: Bahmni.Common.Constants.emrapiDiagnosisLimit || 20
+                    }
+                }).then(function (fallbackRes) {
+                    var items = (fallbackRes.data && fallbackRes.data.results) || [];
+                    var mapped = items.map(function (c) {
+                        var cName = (c.name && c.name.name) ? c.name.name : (c.name || '');
+                        return {
+                            conceptName: cName,
+                            conceptUuid: c.uuid,
+                            matchedName: cName,
+                            conceptClass: c.conceptClass ? c.conceptClass.name : ''
+                        };
+                    });
+                    return { data: mapped };
+                });
             });
         };
 
@@ -68,14 +117,16 @@ angular.module('bahmni.common.domain')
                 if (!consultation.mainDiagnosis && consultation.savedDiagnosesFromCurrentEncounter.length > 0) {
                     var primaryDiag = null;
                     consultation.savedDiagnosesFromCurrentEncounter.forEach(function (d) {
-                        if (d.order === "PRIMARY" && d.icd11Code && !d.voided) {
+                        if (d.order === "PRIMARY" && !d.voided) {
                             primaryDiag = d;
                         }
                     });
                     if (primaryDiag) {
+                        var hasCoded = primaryDiag.codedAnswer && primaryDiag.codedAnswer.uuid;
                         consultation.mainDiagnosis = {
-                            name: primaryDiag.codedAnswer ? primaryDiag.codedAnswer.name : '',
-                            uuid: primaryDiag.codedAnswer ? primaryDiag.codedAnswer.uuid : '',
+                            name: primaryDiag.codedAnswer ? primaryDiag.codedAnswer.name : (primaryDiag.freeTextAnswer || ''),
+                            uuid: hasCoded ? primaryDiag.codedAnswer.uuid : '',
+                            isNonCoded: !hasCoded,
                             icd11Code: primaryDiag.icd11Code || '',
                             icd11Name: primaryDiag.icd11Name || '',
                             occurrence: primaryDiag.diagnosisOccurrence || '',
