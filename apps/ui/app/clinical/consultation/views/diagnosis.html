@@ -19,15 +19,21 @@
                                 placeholder="Search and select coded diagnosis..."
                                 style="width:100%;height:38px !important;line-height:24px !important;padding:6px 12px !important;font-size:13px !important;border:1px solid #ccc !important;border-radius:4px !important;box-sizing:border-box !important;margin:0 !important;float:none !important;">
                         </div>
-                        <div style="flex:0 0 auto;min-width:140px;max-width:180px;">
+                        <div style="flex:0 0 auto;min-width:150px;max-width:190px;">
                             <select ng-model="consultation.mainDiagnosis.occurrence"
                                 id="mainDiagnosisOccurrence"
-                                style="width:100%;height:38px !important;min-height:38px !important;max-height:38px !important;line-height:24px !important;padding:6px 28px 6px 10px !important;font-size:13px !important;border:1px solid #ccc !important;border-radius:4px !important;background:#fff !important;color:#333 !important;cursor:pointer !important;box-sizing:border-box !important;float:none !important;margin:0 !important;display:block !important;appearance:auto !important;-webkit-appearance:auto !important;">
-                                <option value="">Occurrence</option>
+                                required
+                                style="width:100%;height:38px !important;min-height:38px !important;max-height:38px !important;line-height:24px !important;padding:6px 28px 6px 10px !important;font-size:13px !important;border:1px solid #ccc !important;border-radius:4px !important;background:#fff !important;color:#333 !important;cursor:pointer !important;box-sizing:border-box !important;float:none !important;margin:0 !important;display:block !important;appearance:auto !important;-webkit-appearance:auto !important;"
+                                ng-style="consultation.mainDiagnosis.uuid && !consultation.mainDiagnosis.occurrence ? {'border-color': '#d9534f !important', 'background-color': '#fff5f5 !important'} : {}">
+                                <option value="">Occurrence *</option>
                                 <option value="New">New</option>
                                 <option value="Repeat">Repeat</option>
                             </select>
                         </div>
+                        <span ng-if="consultation.mainDiagnosis.uuid && !consultation.mainDiagnosis.occurrence"
+                            style="display:inline-flex;align-items:center;gap:4px;background:#fff0f0;color:#c9302c;border:1px solid #ebccd1;padding:6px 10px;border-radius:4px;font-size:12px;font-weight:600;height:38px;box-sizing:border-box;margin:0;">
+                            <i class="fa fa-exclamation-circle"></i> Occurrence required (New / Repeat)
+                        </span>
                         <span ng-if="consultation.mainDiagnosis.name && !consultation.mainDiagnosis.uuid"
                             style="display:inline-flex;align-items:center;gap:4px;background:#fff0f0;color:#c9302c;border:1px solid #ebccd1;padding:6px 10px;border-radius:4px;font-size:12px;font-weight:600;height:38px;box-sizing:border-box;margin:0;">
                             <i class="fa fa-exclamation-triangle"></i> Coded diagnosis required (select from list)

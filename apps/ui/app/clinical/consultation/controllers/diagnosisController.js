@@ -418,6 +418,10 @@ angular.module('bahmni.clinical')
                     $scope.errorMessage = "Main Diagnosis must be a coded value. Please select a diagnosis from the search list.";
                     return { allow: false, errorMessage: $scope.errorMessage };
                 }
+                if (hasCodedMainDiagnosis && (!md.occurrence || md.occurrence === '')) {
+                    $scope.errorMessage = "Main Diagnosis Occurrence (New or Repeat) is mandatory. Please select Occurrence.";
+                    return { allow: false, errorMessage: $scope.errorMessage };
+                }
                 var invalidnewlyAddedDiagnoses = $scope.consultation.newlyAddedDiagnoses.filter(function (diagnosis) {
                     return isDuplicateWithNewlyAddedDiagnosis(diagnosis) || !$scope.isValid(diagnosis) || isDuplicateWithSavedDiagnosis(diagnosis) || $scope.isDiagnosisStatusValid === false;
                 });
