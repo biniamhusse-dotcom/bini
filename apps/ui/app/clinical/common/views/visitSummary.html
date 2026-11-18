@@ -13,14 +13,14 @@
             <i class="fa fa-search" style="position: absolute; left: 14px; color: #00796b; font-size: 14px; pointer-events: none;"></i>
             <input type="text"
                    class="visit-search-input"
-                   ng-model="visitSearchQuery"
+                   ng-model="searchFilter.query"
                    ng-change="applyVisitSearch()"
                    placeholder="Search visit by form name, section, clinician/user..."
                    style="width: 100%; padding: 8px 34px 8px 36px; font-size: 13px; border: 1px solid #80cbc4; border-radius: 20px; outline: none; transition: all 0.2s; background: #fafafa;"
                    onfocus="this.style.borderColor='#00796b'; this.style.boxShadow='0 0 6px rgba(0,121,107,0.3)'; this.style.background='#fff';"
                    onblur="this.style.borderColor='#80cbc4'; this.style.boxShadow='none'; this.style.background='#fafafa';"/>
             <i class="fa fa-times-circle"
-               ng-show="visitSearchQuery"
+               ng-show="searchFilter.query"
                ng-click="clearSearchText()"
                title="Clear text search"
                style="position: absolute; right: 12px; color: #888; font-size: 16px; cursor: pointer;"></i>
@@ -32,14 +32,14 @@
                 <i class="fa fa-calendar"></i> ቀን (የኢትዮጵያ):
             </span>
             <div style="width: 150px; display: inline-block;">
-                <ethiopian-date-selector date="visitFilterDate"
+                <ethiopian-date-selector date="searchFilter.date"
                                         change="applyVisitSearch()"
                                         allow-future-dates="true"
                                         placeholder="'ቀን (dd/mm/yyyy)'">
                 </ethiopian-date-selector>
             </div>
             <i class="fa fa-times-circle"
-               ng-show="visitFilterDate"
+               ng-show="searchFilter.date"
                ng-click="clearFilterDate()"
                title="Clear date filter"
                style="color: #888; font-size: 16px; cursor: pointer; margin-left: -4px;"></i>
@@ -51,12 +51,12 @@
                 <i class="fa fa-clock-o"></i> ሰዓት:
             </span>
             <input type="time"
-                   ng-model="visitFilterTime"
+                   ng-model="searchFilter.time"
                    ng-change="applyVisitSearch()"
                    style="padding: 5px 8px; border: 1px solid #80cbc4; border-radius: 4px; font-size: 12px; outline: none; background: #fafafa; color: #333;"
                    title="Filter documentation by time"/>
             <i class="fa fa-times-circle"
-               ng-show="visitFilterTime"
+               ng-show="searchFilter.time"
                ng-click="clearFilterTime()"
                title="Clear time filter"
                style="color: #888; font-size: 16px; cursor: pointer;"></i>
@@ -83,13 +83,13 @@
     <!-- Active Filter Summary Pills -->
     <div ng-if="isFilterActive()" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #b2dfdb; font-size: 12px; color: #555; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
         <span style="font-weight: 600; color: #00796b;">Active Filter:</span>
-        <span ng-if="visitSearchQuery" style="background: #e0f2f1; color: #004d40; padding: 2px 8px; border-radius: 10px; border: 1px solid #80cbc4;">
-            Text: "{{visitSearchQuery}}"
+        <span ng-if="searchFilter.query" style="background: #e0f2f1; color: #004d40; padding: 2px 8px; border-radius: 10px; border: 1px solid #80cbc4;">
+            Text: "{{searchFilter.query}}"
         </span>
-        <span ng-if="visitFilterDate" style="background: #e0f2f1; color: #004d40; padding: 2px 8px; border-radius: 10px; border: 1px solid #80cbc4;">
+        <span ng-if="searchFilter.date" style="background: #e0f2f1; color: #004d40; padding: 2px 8px; border-radius: 10px; border: 1px solid #80cbc4;">
             Ethiopian Date: {{formattedEthDateDisplay}} (GC: {{formattedGregDateDisplay}})
         </span>
-        <span ng-if="visitFilterTime" style="background: #e0f2f1; color: #004d40; padding: 2px 8px; border-radius: 10px; border: 1px solid #80cbc4;">
+        <span ng-if="searchFilter.time" style="background: #e0f2f1; color: #004d40; padding: 2px 8px; border-radius: 10px; border: 1px solid #80cbc4;">
             Time: {{formattedTimeDisplay}}
         </span>
     </div>
@@ -100,7 +100,11 @@
 </section>
 
 <div ng-if="::(!clearBoard)">
-    <div ng-repeat="section in visitTabConfig.currentTab.sections" ng-hide="section._hiddenBySearch" class="visit-section-wrapper" data-section-title="{{section.title || section.config.title || (section | titleTranslate)}}">
+    <div ng-repeat="section in visitTabConfig.currentTab.sections"
+         id="visit-section-wrapper-{{$index}}"
+         ng-show="isSectionVisible(section, $index)"
+         class="visit-section-wrapper"
+         data-section-title="{{section.title || section.config.title || (section | titleTranslate)}}">
         <div ng-switch="section.type">
             <div ng-switch-when="patientInformation" class="section">
                 <section class="block dashboard-section" >

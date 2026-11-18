@@ -219,53 +219,52 @@ angular.module('bahmni.clinical')
                 return $scope.visitTabConfig.getFirstTab();
             };
 
-            $scope.visitSearchQuery = "";
-            $scope.visitFilterDate = null;
-            $scope.visitFilterTime = null;
+            $scope.searchFilter = {
+                query: "",
+                date: null,
+                time: null
+            };
             $scope.visibleSectionsCount = 0;
             $scope.formattedEthDateDisplay = "";
             $scope.formattedGregDateDisplay = "";
             $scope.formattedTimeDisplay = "";
 
             $scope.isFilterActive = function () {
-                return !!($scope.visitSearchQuery && $scope.visitSearchQuery.trim()) ||
-                       !!$scope.visitFilterDate ||
-                       !!$scope.visitFilterTime;
+                var sf = $scope.searchFilter;
+                return !!(sf && sf.query && sf.query.trim()) ||
+                       !!(sf && sf.date) ||
+                       !!(sf && sf.time);
             };
 
-            var computeVisibleCount = function () {
-                if (!$scope.visitTabConfig || !$scope.visitTabConfig.currentTab || !$scope.visitTabConfig.currentTab.sections) {
-                    return 0;
+            $scope.isSectionVisible = function (section, index) {
+                if (!$scope.isFilterActive()) {
+                    return true;
                 }
-                var count = 0;
-                $scope.visitTabConfig.currentTab.sections.forEach(function (s) {
-                    if (!s._hiddenBySearch) count++;
-                });
-                return count;
+                return section._visible !== false;
             };
 
             $scope.clearSearchText = function () {
-                $scope.visitSearchQuery = "";
+                $scope.searchFilter.query = "";
                 $scope.applyVisitSearch();
             };
 
             $scope.clearFilterDate = function () {
-                $scope.visitFilterDate = null;
+                $scope.searchFilter.date = null;
                 $scope.formattedEthDateDisplay = "";
                 $scope.formattedGregDateDisplay = "";
                 $scope.applyVisitSearch();
             };
 
             $scope.clearFilterTime = function () {
-                $scope.visitFilterTime = null;
+                $scope.searchFilter.time = null;
                 $scope.formattedTimeDisplay = "";
                 $scope.applyVisitSearch();
             };
 
             $scope.resetAllFilters = function () {
-                $scope.visitSearchQuery = "";
-                $scope.visitFilterDate = null;
-                $scope.visitFilterTime = null;
+                $scope.searchFilter.query = "";
+                $scope.searchFilter.date = null;
+                $scope.searchFilter.time = null;
                 $scope.formattedEthDateDisplay = "";
                 $scope.formattedGregDateDisplay = "";
                 $scope.formattedTimeDisplay = "";
@@ -284,18 +283,18 @@ angular.module('bahmni.clinical')
 
                 if (!$scope.isFilterActive()) {
                     sections.forEach(function (s) {
-                        s._hiddenBySearch = false;
+                        s._visible = true;
                     });
                     $scope.visibleSectionsCount = sections.length;
                     return;
                 }
 
-                var textQuery = ($scope.visitSearchQuery || "").trim().toLowerCase();
+                var textQuery = ($scope.searchFilter.query || "").trim().toLowerCase();
 
                 // Prepare Gregorian & Ethiopian date strings for matching
                 var dateVariants = [];
-                if ($scope.visitFilterDate) {
-                    var d = new Date($scope.visitFilterDate);
+                if ($scope.searchFilter.date) {
+                    var d = new Date($scope.searchFilter.date);
                     if (!isNaN(d.getTime())) {
                         var day = d.getDate();
                         var monthNum = d.getMonth() + 1;
@@ -316,19 +315,23 @@ angular.module('bahmni.clinical')
 
                         // Ethiopian variants
                         if (ethiopianGregorianService) {
-                            if (typeof ethiopianGregorianService.gregToEth === 'function') {
-                                var ethDmy = ethiopianGregorianService.gregToEth(d);
-                                if (ethDmy) {
-                                    dateVariants.push(ethDmy);
-                                    $scope.formattedEthDateDisplay = ethDmy;
+                            try {
+                                if (typeof ethiopianGregorianService.gregToEth === 'function') {
+                                    var ethDmy = ethiopianGregorianService.gregToEth(d);
+                                    if (ethDmy) {
+                                        dateVariants.push(ethDmy);
+                                        $scope.formattedEthDateDisplay = ethDmy;
+                                    }
                                 }
-                            }
-                            if (typeof ethiopianGregorianService.gregToEthMonthName === 'function') {
-                                var ethText = ethiopianGregorianService.gregToEthMonthName(d);
-                                if (ethText) {
-                                    dateVariants.push(ethText);
-                                    $scope.formattedEthDateDisplay = ethText;
+                                if (typeof ethiopianGregorianService.gregToEthMonthName === 'function') {
+                                    var ethText = ethiopianGregorianService.gregToEthMonthName(d);
+                                    if (ethText) {
+                                        dateVariants.push(ethText);
+                                        $scope.formattedEthDateDisplay = ethText;
+                                    }
                                 }
+                            } catch (e) {
+                                console.warn("Error converting date to Ethiopian format:", e);
                             }
                         }
                     }
@@ -336,27 +339,25 @@ angular.module('bahmni.clinical')
 
                 // Prepare time query for matching
                 var timeQuery = "";
-                if ($scope.visitFilterTime) {
-                    if ($scope.visitFilterTime instanceof Date) {
+                if ($scope.searchFilter.time) {
+                    if ($scope.searchFilter.time instanceof Date) {
                         var padTime = function (n) { return n < 10 ? '0' + n : '' + n; };
-                        timeQuery = padTime($scope.visitFilterTime.getHours()) + ":" + padTime($scope.visitFilterTime.getMinutes());
-                    } else if (typeof $scope.visitFilterTime === 'string') {
-                        timeQuery = $scope.visitFilterTime.trim();
+                        timeQuery = padTime($scope.searchFilter.time.getHours()) + ":" + padTime($scope.searchFilter.time.getMinutes());
+                    } else if (typeof $scope.searchFilter.time === 'string') {
+                        timeQuery = $scope.searchFilter.time.trim();
                     }
                     $scope.formattedTimeDisplay = timeQuery;
                 }
 
-                var domWrappers = document.querySelectorAll('.visit-section-wrapper');
+                var visibleCount = 0;
 
                 sections.forEach(function (section, index) {
                     var matchesText = true;
                     var matchesDate = true;
                     var matchesTime = true;
 
-                    var domText = "";
-                    if (domWrappers && domWrappers[index]) {
-                        domText = (domWrappers[index].innerText || domWrappers[index].textContent || "").toLowerCase();
-                    }
+                    var wrapperEl = document.getElementById('visit-section-wrapper-' + index);
+                    var domText = wrapperEl ? (wrapperEl.innerText || wrapperEl.textContent || "").toLowerCase() : "";
 
                     // 1. Text filter evaluation
                     if (textQuery) {
@@ -391,12 +392,19 @@ angular.module('bahmni.clinical')
                         matchesTime = (domText.indexOf(timeQuery.toLowerCase()) !== -1);
                     }
 
-                    var matches = matchesText && matchesDate && matchesTime;
-                    section._hiddenBySearch = !matches;
+                    var isMatched = matchesText && matchesDate && matchesTime;
+                    section._visible = isMatched;
+                    if (isMatched) {
+                        visibleCount++;
+                    }
                 });
 
-                $scope.visibleSectionsCount = computeVisibleCount();
+                $scope.visibleSectionsCount = visibleCount;
             };
+
+            $scope.$watch('searchFilter', function () {
+                $scope.applyVisitSearch();
+            }, true);
 
             var init = function () {
                 $scope.visitTabConfig.setVisitUuidsAndPatientUuidToTheSections([$scope.visitUuid], $scope.patientUuid);
