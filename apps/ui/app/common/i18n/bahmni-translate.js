@@ -19,20 +19,23 @@ angular.module('bahmni.common.i18n', ['pascalprecht.translate'])
             if (!input) {
                 return input;
             }
-            if (input.translationKey) {
-                return $translate.instant(input.translationKey);
-            }
-            if (input.dashboardName) {
-                return input.dashboardName;
-            }
-            if (input.title) {
-                return input.title;
-            }
-            if (input.label) {
-                return input.label;
-            }
-            if (input.display) {
-                return input.display;
+            if (typeof input === 'object') {
+                if (input.translationKey) {
+                    return $translate.instant(input.translationKey);
+                }
+                if (input.dashboardName) {
+                    return input.dashboardName;
+                }
+                if (input.title) {
+                    return input.title;
+                }
+                if (input.label) {
+                    return input.label;
+                }
+                if (input.display) {
+                    return input.display;
+                }
+                return '';
             }
             return $translate.instant(input);
         };

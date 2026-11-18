@@ -1,0 +1,529 @@
+<div class="payment-address-manager-page" style="padding: 24px; max-width: 1400px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #2c3e50;">
+
+    <!-- Top Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 style="margin: 0; font-size: 24px; color: #1a365d; display: flex; align-items: center; gap: 10px;">
+                <i class="fa fa-list-alt" style="color: #2b6cb0;"></i> Payment Methods &amp; Patient Address Manager
+            </h2>
+            <p style="margin: 6px 0 0 0; color: #718096; font-size: 14px;">
+                የመክፈያ ዘዴዎች እና የታካሚ አድራሻዎች ማኔጀር &mdash; Manage payment options, credit types, CBHI agreements, and complete Ethiopian patient address hierarchies (Regions, Zones, Woredas, Kebeles).
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="#/dashboard" class="btn" style="background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-arrow-left"></i> Admin Dashboard
+            </a>
+            <button type="button" ng-click="init()" ng-disabled="loading || saving" style="background: #fff; color: #2d3748; border: 1px solid #cbd5e0; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i> Refresh
+            </button>
+            <button type="button" ng-if="activeTab === 'payment'" ng-click="syncWithOdoo()" ng-disabled="syncingOdoo" style="background: #2b6cb0; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <i class="fa fa-exchange" ng-class="{'fa-spin': syncingOdoo}"></i> {{ syncingOdoo ? 'Syncing to Odoo...' : 'Sync All with Odoo' }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Banner -->
+    <div ng-if="bannerMsg" style="background: #f0fff4; border-left: 4px solid #38a169; border-radius: 6px; padding: 12px 18px; margin-bottom: 20px; color: #22543d; font-size: 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <i class="fa fa-check-circle fa-lg" style="color: #38a169;"></i>
+        <span>{{ bannerMsg }}</span>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div ng-if="!loading" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px;">
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+            <div style="font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase;">Payment Categories</div>
+            <div style="font-size: 24px; font-weight: 700; color: #1a365d; margin-top: 2px;">{{ paymentCategories.length }} Categories</div>
+            <div style="font-size: 12px; color: #4a5568; margin-top: 2px;">{{ stats.totalPaymentOptions }} Total Options</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+            <div style="font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase;">Regions (ክልሎች)</div>
+            <div style="font-size: 24px; font-weight: 700; color: #2b6cb0; margin-top: 2px;">{{ stats.totalRegions }} Regions</div>
+            <div style="font-size: 12px; color: #4a5568; margin-top: 2px;">Ethiopian Regional States</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+            <div style="font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase;">Zones &amp; Sub-cities</div>
+            <div style="font-size: 24px; font-weight: 700; color: #2f855a; margin-top: 2px;">{{ stats.totalZones }} Zones</div>
+            <div style="font-size: 12px; color: #4a5568; margin-top: 2px;">Administrative Zones</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+            <div style="font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase;">Woredas (ወረዳዎች)</div>
+            <div style="font-size: 24px; font-weight: 700; color: #d69e2e; margin-top: 2px;">{{ stats.totalWoredas }} Woredas</div>
+            <div style="font-size: 12px; color: #4a5568; margin-top: 2px;">Districts &amp; City Admins</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+            <div style="font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase;">Kebeles (ቀበሌዎች)</div>
+            <div style="font-size: 24px; font-weight: 700; color: #805ad5; margin-top: 2px;">{{ stats.totalKebeles }} in View</div>
+            <div style="font-size: 12px; color: #4a5568; margin-top: 2px;">Local communities</div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div style="display: flex; gap: 8px; border-bottom: 2px solid #cbd5e0; margin-bottom: 22px;">
+        <button type="button" ng-click="setTab('payment')"
+                style="padding: 11px 22px; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; background: {{ activeTab === 'payment' ? '#2b6cb0' : '#edf2f7' }}; color: {{ activeTab === 'payment' ? '#fff' : '#4a5568' }};">
+            <i class="fa fa-credit-card"></i> 1. Payment Method Lists (የመክፈያ ዘዴዎች)
+        </button>
+        <button type="button" ng-click="setTab('address')"
+                style="padding: 11px 22px; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; background: {{ activeTab === 'address' ? '#2b6cb0' : '#edf2f7' }}; color: {{ activeTab === 'address' ? '#fff' : '#4a5568' }};">
+            <i class="fa fa-map-marker"></i> 2. Patient Address Lists (የታካሚ አድራሻዎች)
+        </button>
+        <button type="button" ng-click="setTab('odooRules')"
+                style="padding: 11px 22px; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; background: {{ activeTab === 'odooRules' ? '#2b6cb0' : '#edf2f7' }}; color: {{ activeTab === 'odooRules' ? '#fff' : '#4a5568' }};">
+            <i class="fa fa-sliders"></i> 3. Odoo Billing &amp; Emergency Rules
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div ng-if="loading" style="text-align: center; padding: 70px 0; color: #718096;">
+        <i class="fa fa-spinner fa-spin fa-3x" style="color: #3182ce; margin-bottom: 14px;"></i>
+        <div style="font-size: 16px; font-weight: 500;">Loading payment methods and address hierarchy...</div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 1: PAYMENT METHOD LISTS -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <div ng-if="!loading && activeTab === 'payment'">
+        
+        <!-- Category Buttons / Selector -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+            <div ng-repeat="cat in paymentCategories"
+                 ng-click="selectCategory(cat)"
+                 style="flex: 1; min-width: 210px; background: {{ selectedCategory.key === cat.key ? '#ebf8ff' : '#fff' }}; border: 2px solid {{ selectedCategory.key === cat.key ? '#3182ce' : '#e2e8f0' }}; border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.2s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 700; font-size: 14px; color: {{ selectedCategory.key === cat.key ? '#2b6cb0' : '#2d3748' }};">
+                        <i class="fa {{ cat.icon }}" style="margin-right: 6px;"></i> {{ cat.name }}
+                    </span>
+                    <span style="background: {{ selectedCategory.key === cat.key ? '#3182ce' : '#edf2f7' }}; color: {{ selectedCategory.key === cat.key ? '#fff' : '#4a5568' }}; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">
+                        {{ cat.answers.length }}
+                    </span>
+                </div>
+                <div style="font-size: 12px; color: #718096; margin-top: 4px; font-weight: 500;">
+                    {{ cat.amharic }}
+                </div>
+                <div ng-if="cat.odoo_table" style="margin-top: 6px; font-size: 11px; color: #2f855a; display: flex; align-items: center; gap: 4px;">
+                    <i class="fa fa-check-circle"></i> Odoo <code>{{ cat.odoo_table }}</code> ({{ cat.odoo_count }} items)
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected Category Panel -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 18px; color: #1a365d; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa {{ selectedCategory.icon }}" style="color: #3182ce;"></i> {{ selectedCategory.name }} ({{ selectedCategory.amharic }})
+                    </h3>
+                    <p style="margin: 4px 0 0 0; color: #718096; font-size: 13px;">
+                        {{ selectedCategory.description }} &bull; OpenMRS Concept ID: <code>{{ selectedCategory.concept_id }}</code>
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" ng-model="paymentSearch" placeholder="Search option in this category..."
+                           style="padding: 7px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; min-width: 240px;">
+                    <button type="button" ng-click="openAddPaymentModal()"
+                            style="background: #2b6cb0; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-plus-circle"></i> Add New Option
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table of Answers -->
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                    <thead>
+                        <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0; color: #4a5568;">
+                            <th style="padding: 10px 14px; width: 50px;">#</th>
+                            <th style="padding: 10px 14px;">Option Display Name</th>
+                            <th style="padding: 10px 14px; width: 120px;">Sort Order</th>
+                            <th style="padding: 10px 14px; width: 140px;">Answer Concept</th>
+                            <th style="padding: 10px 14px; width: 180px;">Status / Target</th>
+                            <th style="padding: 10px 14px; width: 140px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in selectedCategory.answers | filter:paymentSearch"
+                            style="border-bottom: 1px solid #edf2f7; transition: background 0.15s ease;"
+                            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 12px 14px; color: #a0aec0; font-weight: 500;">{{ $index + 1 }}</td>
+                            <td style="padding: 12px 14px; font-weight: 600; color: #2d3748;">
+                                {{ item.name }}
+                            </td>
+                            <td style="padding: 12px 14px; color: #718096;">
+                                <span style="background: #edf2f7; padding: 2px 8px; border-radius: 4px; font-family: monospace;">{{ item.sort_weight }}</span>
+                            </td>
+                            <td style="padding: 12px 14px; color: #718096;">
+                                <code style="font-size: 12px; color: #4a5568;">#{{ item.answer_concept_id }}</code>
+                            </td>
+                            <td style="padding: 12px 14px;">
+                                <span ng-if="selectedCategory.odoo_table" style="background: #e6fffa; color: #234e52; border: 1px solid #b2f5ea; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    <i class="fa fa-refresh"></i> Odoo Synced
+                                </span>
+                                <span ng-if="!selectedCategory.odoo_table" style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    Registration Concept
+                                </span>
+                            </td>
+                            <td style="padding: 12px 14px; text-align: right;">
+                                <div style="display: inline-flex; gap: 6px;">
+                                    <button type="button" ng-click="openEditPaymentModal(item)"
+                                            style="background: #edf2f7; color: #2b6cb0; border: 1px solid #cbd5e0; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;" title="Edit name">
+                                        <i class="fa fa-pencil"></i> Edit
+                                    </button>
+                                    <button type="button" ng-click="deletePaymentOption(item)"
+                                            style="background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;" title="Remove option">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr ng-if="(selectedCategory.answers | filter:paymentSearch).length === 0">
+                            <td colspan="6" style="padding: 30px; text-align: center; color: #a0aec0;">
+                                <i class="fa fa-info-circle fa-2x" style="margin-bottom: 8px;"></i>
+                                <div>No options found in this category. Click <b>"Add New Option"</b> to add one.</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 2: PATIENT ADDRESS HIERARCHY -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <div ng-if="!loading && activeTab === 'address'">
+
+        <!-- Cascading Scope Controls (Region > Zone > Woreda) -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="font-size: 14px; font-weight: 700; color: #2d3748; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="fa fa-sitemap" style="color: #2b6cb0;"></i> Cascading Administrative Scope &amp; Hierarchy Filter:
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+                
+                <!-- Region Select -->
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">
+                        1. Region / ክልል:
+                    </label>
+                    <select ng-model="selectedRegionId" ng-change="onRegionChange()"
+                            style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                        <option value="">-- All Regions --</option>
+                        <option ng-repeat="reg in regionsList" ng-value="reg.entry_id">{{ reg.name }}</option>
+                    </select>
+                </div>
+
+                <!-- Zone Select -->
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">
+                        2. Zone / ዞን (or Sub-city):
+                    </label>
+                    <select ng-model="selectedZoneId" ng-change="onZoneChange()" ng-disabled="!selectedRegionId"
+                            style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                        <option value="">-- All Zones in Region --</option>
+                        <option ng-repeat="zone in zonesList" ng-value="zone.entry_id">{{ zone.name }}</option>
+                    </select>
+                </div>
+
+                <!-- Woreda Select -->
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">
+                        3. Woreda / ወረዳ (District):
+                    </label>
+                    <select ng-model="selectedWoredaId" ng-change="onWoredaChange()" ng-disabled="!selectedZoneId"
+                            style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; background: #fff;">
+                        <option value="">-- All Woredas in Zone --</option>
+                        <option ng-repeat="wor in woredasList" ng-value="wor.entry_id">{{ wor.name }}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Selector Tabs & Action Bar -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                
+                <!-- Level Switcher Buttons -->
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" ng-click="setAddressLevel(9)"
+                            style="padding: 7px 14px; border-radius: 6px; border: 1px solid {{ currentAddressLevel === 9 ? '#2b6cb0' : '#cbd5e0' }}; background: {{ currentAddressLevel === 9 ? '#2b6cb0' : '#fff' }}; color: {{ currentAddressLevel === 9 ? '#fff' : '#4a5568' }}; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        Regions (ክልል)
+                    </button>
+                    <button type="button" ng-click="setAddressLevel(10)"
+                            style="padding: 7px 14px; border-radius: 6px; border: 1px solid {{ currentAddressLevel === 10 ? '#2b6cb0' : '#cbd5e0' }}; background: {{ currentAddressLevel === 10 ? '#2b6cb0' : '#fff' }}; color: {{ currentAddressLevel === 10 ? '#fff' : '#4a5568' }}; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        Zones (ዞን)
+                    </button>
+                    <button type="button" ng-click="setAddressLevel(11)"
+                            style="padding: 7px 14px; border-radius: 6px; border: 1px solid {{ currentAddressLevel === 11 ? '#2b6cb0' : '#cbd5e0' }}; background: {{ currentAddressLevel === 11 ? '#2b6cb0' : '#fff' }}; color: {{ currentAddressLevel === 11 ? '#fff' : '#4a5568' }}; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        Woredas (ወረዳ)
+                    </button>
+                    <button type="button" ng-click="setAddressLevel(12)"
+                            style="padding: 7px 14px; border-radius: 6px; border: 1px solid {{ currentAddressLevel === 12 ? '#2b6cb0' : '#cbd5e0' }}; background: {{ currentAddressLevel === 12 ? '#2b6cb0' : '#fff' }}; color: {{ currentAddressLevel === 12 ? '#fff' : '#4a5568' }}; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        Kebeles (ቀበሌ)
+                    </button>
+                    <button type="button" ng-click="setAddressLevel(13)"
+                            style="padding: 7px 14px; border-radius: 6px; border: 1px solid {{ currentAddressLevel === 13 ? '#2b6cb0' : '#cbd5e0' }}; background: {{ currentAddressLevel === 13 ? '#2b6cb0' : '#fff' }}; color: {{ currentAddressLevel === 13 ? '#fff' : '#4a5568' }}; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        House Numbers (የቤት ቁጥር)
+                    </button>
+                </div>
+
+                <!-- Actions -->
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" ng-model="addressSearch" ng-change="loadAddressEntries()" placeholder="Search name..."
+                           style="padding: 7px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; min-width: 180px;">
+                    
+                    <button type="button" ng-click="openAddAddressModal()"
+                            style="background: #2b6cb0; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-plus-circle"></i> Add Entry
+                    </button>
+
+                    <button type="button" ng-if="currentAddressLevel === 12 || selectedWoredaId" ng-click="openBulkModal()"
+                            style="background: #805ad5; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <i class="fa fa-bolt"></i> Bulk Add Kebeles
+                    </button>
+                </div>
+            </div>
+
+            <!-- Address Entries Table -->
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                    <thead>
+                        <tr style="background: #f7fafc; border-bottom: 2px solid #e2e8f0; color: #4a5568;">
+                            <th style="padding: 10px 14px; width: 50px;">#</th>
+                            <th style="padding: 10px 14px;">Entry Name</th>
+                            <th style="padding: 10px 14px; width: 140px;">Level</th>
+                            <th style="padding: 10px 14px; width: 220px;">Parent Location</th>
+                            <th style="padding: 10px 14px; width: 140px;">Sub-entries</th>
+                            <th style="padding: 10px 14px; width: 140px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in addressEntries"
+                            style="border-bottom: 1px solid #edf2f7; transition: background 0.15s ease;"
+                            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 12px 14px; color: #a0aec0; font-weight: 500;">{{ $index + 1 }}</td>
+                            <td style="padding: 12px 14px; font-weight: 600; color: #2d3748;">
+                                <i class="fa fa-map-marker" style="color: #3182ce; margin-right: 6px;"></i> {{ item.name }}
+                            </td>
+                            <td style="padding: 12px 14px; color: #4a5568;">
+                                <span style="background: #edf2f7; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                                    Level {{ item.level_id }}
+                                </span>
+                            </td>
+                            <td style="padding: 12px 14px; color: #718096;">
+                                <span ng-if="item.parent_name">{{ item.parent_name }}</span>
+                                <span ng-if="!item.parent_name" style="color: #cbd5e0;">&mdash; (Top level)</span>
+                            </td>
+                            <td style="padding: 12px 14px;">
+                                <span ng-if="item.child_count > 0" style="background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    {{ item.child_count }} child entries
+                                </span>
+                                <span ng-if="item.child_count === 0" style="color: #a0aec0; font-size: 12px;">
+                                    0 sub-entries
+                                </span>
+                            </td>
+                            <td style="padding: 12px 14px; text-align: right;">
+                                <div style="display: inline-flex; gap: 6px;">
+                                    <button type="button" ng-click="openEditAddressModal(item)"
+                                            style="background: #edf2f7; color: #2b6cb0; border: 1px solid #cbd5e0; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;" title="Edit name">
+                                        <i class="fa fa-pencil"></i> Edit
+                                    </button>
+                                    <button type="button" ng-click="deleteAddressEntry(item)"
+                                            style="background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;" title="Delete entry">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr ng-if="addressEntries.length === 0">
+                            <td colspan="6" style="padding: 36px; text-align: center; color: #a0aec0;">
+                                <i class="fa fa-map-o fa-2x" style="margin-bottom: 8px;"></i>
+                                <div>No address entries found under the current selection.</div>
+                                <div style="margin-top: 8px;">
+                                    <button type="button" ng-click="openBulkModal()" ng-if="currentAddressLevel === 12" style="background: #805ad5; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                        <i class="fa fa-bolt"></i> Bulk Add Kebeles Now
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 3: ODOO BILLING & EMERGENCY RULES -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <div ng-if="!loading && activeTab === 'odooRules'">
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 18px; color: #1a365d; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa fa-sliders" style="color: #2b6cb0;"></i> Odoo Connectivity &amp; Emergency Bypass Settings
+                    </h3>
+                    <p style="margin: 4px 0 0 0; color: #718096; font-size: 13px;">
+                        Configure whether Bahmni registration and order fulfilment stops for unbilled patients or passes smoothly during emergencies.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" ng-click="setModeEmergencyBypass()" style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        <i class="fa fa-ambulance"></i> Emergency Bypass (Pass All)
+                    </button>
+                    <button type="button" ng-click="setModeNormal()" style="background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        <i class="fa fa-shield"></i> Enforce Odoo Billing (Normal)
+                    </button>
+                    <button type="button" ng-click="saveBillingConfig()" ng-disabled="saving" style="background: #2b6cb0; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                        <i class="fa fa-check"></i> {{ saving ? 'Saving...' : 'Save Rule Settings' }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Odoo Status -->
+            <div style="background: {{ odooStatus.online ? '#f0fff4' : '#fff5f5' }}; border: 1px solid {{ odooStatus.online ? '#9ae6b4' : '#feb2b2' }}; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px;">
+                <i class="fa fa-2x {{ odooStatus.online ? 'fa-check-circle' : 'fa-exclamation-triangle' }}" style="color: {{ odooStatus.online ? '#38a169' : '#e53e3e' }};"></i>
+                <div>
+                    <div style="font-weight: 700; color: #2d3748; font-size: 14px;">
+                        Odoo ERP Status: {{ odooStatus.online ? 'ONLINE &amp; RESPONDING' : 'OFFLINE / UNREACHABLE' }}
+                    </div>
+                    <div style="font-size: 12px; color: #718096; margin-top: 2px;">
+                        {{ odooStatus.message }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toggles -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+                    <div style="font-weight: 700; color: #2d3748; margin-bottom: 6px;">Registration Billing Rule</div>
+                    <p style="font-size: 12px; color: #718096; margin: 0 0 12px 0;">Disable registration billing requirement if Odoo is down or payment should not block registration.</p>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        <input type="checkbox" ng-model="billingConfig.registration.disable_billing">
+                        <span>Bypass Billing on Patient Registration</span>
+                    </label>
+                </div>
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+                    <div style="font-weight: 700; color: #2d3748; margin-bottom: 6px;">Orders &amp; Lab Fulfillment Rule</div>
+                    <p style="font-size: 12px; color: #718096; margin: 0 0 12px 0;">Allow lab orders to be fulfilled without verifying Odoo payment receipt during emergencies.</p>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        <input type="checkbox" ng-model="billingConfig.orders.disable_checking">
+                        <span>Bypass Payment Check on Orders</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL 1: ADD / EDIT PAYMENT OPTION -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <div ng-if="paymentModal.show" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <div style="background: #fff; border-radius: 10px; width: 480px; max-width: 90%; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h4 style="margin: 0; font-size: 18px; color: #1a365d;">
+                    {{ paymentModal.isEdit ? 'Edit Payment Option' : 'Add New Payment Option' }}
+                </h4>
+                <button type="button" ng-click="closePaymentModal()" style="border: none; background: none; font-size: 20px; color: #a0aec0; cursor: pointer;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">Category:</label>
+                <input type="text" ng-value="paymentModal.categoryName" disabled style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background: #edf2f7; color: #718096; font-size: 13px;">
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">Option Display Name *</label>
+                <input type="text" ng-model="paymentModal.name" placeholder="e.g. Telebirr, CBE Birr, Woreda Name, NGO..."
+                       style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 20px;" ng-if="!paymentModal.isEdit">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">Sort Weight / Order</label>
+                <input type="number" ng-model="paymentModal.sortWeight" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" ng-click="closePaymentModal()" style="background: #edf2f7; color: #4a5568; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="savePaymentModal()" ng-disabled="saving" style="background: #2b6cb0; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                    {{ saving ? 'Saving...' : (paymentModal.isEdit ? 'Update Option' : 'Add Option') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL 2: ADD / EDIT ADDRESS ENTRY -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <div ng-if="addressModal.show" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <div style="background: #fff; border-radius: 10px; width: 480px; max-width: 90%; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h4 style="margin: 0; font-size: 18px; color: #1a365d;">
+                    {{ addressModal.isEdit ? 'Edit Address Entry' : 'Add Address Entry' }}
+                </h4>
+                <button type="button" ng-click="closeAddressModal()" style="border: none; background: none; font-size: 20px; color: #a0aec0; cursor: pointer;">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 14px;" ng-if="addressModal.parentName">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">Parent Location:</label>
+                <input type="text" ng-value="addressModal.parentName" disabled style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background: #edf2f7; color: #718096; font-size: 13px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">
+                    Name (e.g. Kebele 01, Kalu, Amhara Region) *
+                </label>
+                <input type="text" ng-model="addressModal.name" placeholder="Enter administrative name..."
+                       style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" ng-click="closeAddressModal()" style="background: #edf2f7; color: #4a5568; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="saveAddressModal()" ng-disabled="saving" style="background: #2b6cb0; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                    {{ saving ? 'Saving...' : (addressModal.isEdit ? 'Update Entry' : 'Create Entry') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL 3: BULK ADD KEBELES -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <div ng-if="bulkModal.show" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <div style="background: #fff; border-radius: 10px; width: 560px; max-width: 90%; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h4 style="margin: 0; font-size: 18px; color: #1a365d; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa fa-bolt" style="color: #805ad5;"></i> ⚡ Quick Bulk Add Kebeles (ቀበሌዎችን በጅምላ መመዝገቢያ)
+                </h4>
+                <button type="button" ng-click="closeBulkModal()" style="border: none; background: none; font-size: 20px; color: #a0aec0; cursor: pointer;">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">Target Woreda (ወረዳ):</label>
+                <input type="text" ng-value="bulkModal.woredaName" disabled style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background: #edf2f7; color: #2d3748; font-weight: 600; font-size: 13px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">
+                    Kebele Names (separate by comma, newline, or paste from list) *
+                </label>
+                <textarea ng-model="bulkModal.rawText" ng-change="updateBulkPreview()" rows="6" placeholder="Kebele 01&#10;Kebele 02&#10;Kebele 03&#10;Kebele 04&#10;Kebele 05&#10;..."
+                          style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; font-family: monospace; box-sizing: border-box;"></textarea>
+                <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: #718096;">
+                    <span>Paste multiple names separated by comma or new lines.</span>
+                    <span style="font-weight: 700; color: #805ad5;">{{ bulkModal.previewCount }} kebeles recognized</span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" ng-click="closeBulkModal()" style="background: #edf2f7; color: #4a5568; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button type="button" ng-click="submitBulkKebeles()" ng-disabled="saving || bulkModal.previewCount === 0"
+                        style="background: #805ad5; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                    <i class="fa fa-spin fa-spinner" ng-if="saving"></i>
+                    {{ saving ? 'Adding...' : 'Add ' + bulkModal.previewCount + ' Kebeles' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>

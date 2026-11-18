@@ -76,7 +76,14 @@ angular.module('admin')
                 data: {
                     backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
                 }
-            }).state('admin.paymentConfig', {
+                        }).state('admin.paymentAddressManager', {
+                url: '/paymentAddressManager',
+                templateUrl: 'views/paymentAddressManager.html?v=1.0',
+                controller: 'PaymentAddressManagerController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
+}).state('admin.paymentConfig', {
                 url: '/paymentConfig',
                 templateUrl: 'views/paymentConfig.html',
                 controller: 'PaymentConfigController',

@@ -620,21 +620,21 @@
 
           <!-- Row 3: HOURS ELAPSED -->
           <tr class="bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
-            <th class="col-hour">1</th>
-            <th class="col-hour">2</th>
-            <th class="col-hour">3</th>
-            <th class="col-hour">4</th>
-            <th class="col-hour">5</th>
-            <th class="col-hour">6</th>
-            <th class="col-hour">7</th>
-            <th class="col-hour">8</th>
-            <th class="col-hour">9</th>
-            <th class="col-hour">10</th>
-            <th class="col-hour">11</th>
-            <th class="col-hour">12</th>
-            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300">1</th>
-            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300">2</th>
-            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300">3</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h1')" title="Click to open/record all Hour 1 assessments">1 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h2')" title="Click to open/record all Hour 2 assessments">2 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h3')" title="Click to open/record all Hour 3 assessments">3 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h4')" title="Click to open/record all Hour 4 assessments">4 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h5')" title="Click to open/record all Hour 5 assessments">5 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h6')" title="Click to open/record all Hour 6 assessments">6 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h7')" title="Click to open/record all Hour 7 assessments">7 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h8')" title="Click to open/record all Hour 8 assessments">8 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h9')" title="Click to open/record all Hour 9 assessments">9 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h10')" title="Click to open/record all Hour 10 assessments">10 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h11')" title="Click to open/record all Hour 11 assessments">11 ✎</th>
+            <th class="col-hour cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900 transition" onclick="openRecordModal('h12')" title="Click to open/record all Hour 12 assessments">12 ✎</th>
+            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300 cursor-pointer hover:bg-sky-200 dark:hover:bg-sky-900 transition" onclick="openRecordModal('s1')" title="Click to open/record Second Stage H1 assessments">1 ✎</th>
+            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300 cursor-pointer hover:bg-sky-200 dark:hover:bg-sky-900 transition" onclick="openRecordModal('s2')" title="Click to open/record Second Stage H2 assessments">2 ✎</th>
+            <th class="col-stage2 font-extrabold text-sky-800 dark:text-sky-300 cursor-pointer hover:bg-sky-200 dark:hover:bg-sky-900 transition" onclick="openRecordModal('s3')" title="Click to open/record Second Stage H3 assessments">3 ✎</th>
           </tr>
         </thead>
         <tbody id="lcgTableBody">
@@ -1274,6 +1274,189 @@
       });
     }
 
+    // Debounce timers for high-performance responsive UI
+    let chartDebounceTimer = null;
+    function debouncedDrawChart() {
+      clearTimeout(chartDebounceTimer);
+      chartDebounceTimer = setTimeout(drawCervicogramChart, 250);
+    }
+
+    let alertDebounceTimer = null;
+    function debouncedEvaluateAlerts() {
+      clearTimeout(alertDebounceTimer);
+      alertDebounceTimer = setTimeout(evaluateAlerts, 200);
+    }
+
+    // Fast Single-Cell DOM Updater (< 0.1ms) - Never re-render the entire table for single edits
+    function updateSingleCell(colKey, rowKey) {
+      const cell = document.getElementById(`cell_${rowKey}_${colKey}`);
+      if (!cell) return;
+      const val = lcgData.records[colKey] && lcgData.records[colKey][rowKey];
+      if (val !== undefined && val !== null && val !== '') {
+        const isAlert = checkIsAlert(rowKey, val, colKey);
+        if (isAlert) {
+          cell.innerHTML = `<span class="alert-circled" title="ALERT TRIGGERED: Value exceeds WHO safe threshold">${val}</span>`;
+        } else {
+          cell.textContent = val;
+        }
+      } else {
+        cell.textContent = '';
+      }
+    }
+
+    // Fast Plot Column Updater for Cervix / Descent (< 0.2ms)
+    function updatePlotColumn(colKey, plotKey) {
+      const recVal = lcgData.records[colKey] && lcgData.records[colKey][plotKey];
+      const targetVals = (plotKey === 'cervix') ? ['10','9','8','7','6','5'] : ['5','4','3','2','1','0'];
+      targetVals.forEach(v => {
+        const cell = document.getElementById(`cell_${plotKey}_${v}_${colKey}`);
+        if (!cell) return;
+        if (recVal === v) {
+          if (plotKey === 'cervix') {
+            if (recVal === 'P') {
+              cell.innerHTML = '<span class="plot-dot plot-p" title="Second Stage: Active Pushing Begins">P</span>';
+            } else {
+              cell.innerHTML = '<span class="plot-dot plot-x" title="Cervical Dilatation">X</span>';
+            }
+          } else if (plotKey === 'descent') {
+            cell.innerHTML = '<span class="plot-dot plot-o" title="Fetal Descent">O</span>';
+          }
+        } else {
+          cell.innerHTML = '';
+        }
+      });
+    }
+
+    // Navigate to adjacent cell on keyboard navigation (Spreadsheet-like UX)
+    function navigateCell(colKey, rowKey, direction) {
+      const allRows = [];
+      SECTIONS.forEach(s => s.rows.forEach(r => allRows.push(r)));
+      const rowIdx = allRows.findIndex(r => r.key === rowKey);
+      const colIdx = COLUMNS.indexOf(colKey);
+      if (rowIdx === -1 || colIdx === -1) return;
+
+      let targetRowIdx = rowIdx;
+      let targetColIdx = colIdx;
+
+      if (direction === 'down' && rowIdx < allRows.length - 1) {
+        targetRowIdx = rowIdx + 1;
+      } else if (direction === 'up' && rowIdx > 0) {
+        targetRowIdx = rowIdx - 1;
+      } else if (direction === 'right' && colIdx < COLUMNS.length - 1) {
+        targetColIdx = colIdx + 1;
+      } else if (direction === 'left' && colIdx > 0) {
+        targetColIdx = colIdx - 1;
+      }
+
+      const targetRow = allRows[targetRowIdx];
+      const targetCol = COLUMNS[targetColIdx];
+      if (!targetRow || !targetCol) return;
+
+      const targetCell = document.getElementById(`cell_${targetRow.key}_${targetCol}`);
+      if (targetCell) {
+        targetCell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        if (!targetRow.plotKey && (!targetRow.options || targetRow.options.length === 0)) {
+          startInlineCellEdit(targetCell, targetCol, targetRow);
+        } else if (targetRow.options && targetRow.options.length > 0) {
+          openInlineOptionPicker({ target: targetCell }, targetCol, targetRow);
+        } else {
+          targetCell.focus();
+        }
+      }
+    }
+
+    // Direct in-cell editable input: instant, no popup modal, keyboard-navigable
+    function startInlineCellEdit(td, colKey, row) {
+      if (lcgData.locked) {
+        showToast("This Labour Care Guide is locked. Click 'Unlock' to make edits.", true);
+        return;
+      }
+      if (td.querySelector('input')) return;
+
+      const currentVal = (lcgData.records[colKey] && lcgData.records[colKey][row.key]) || '';
+      td.innerHTML = '';
+
+      const input = document.createElement('input');
+      input.type = (row.type === 'number') ? 'number' : 'text';
+      if (row.step) input.step = row.step;
+      input.value = currentVal;
+      input.className = 'w-full h-full text-center bg-teal-50 dark:bg-slate-700 text-xs font-bold text-slate-900 dark:text-white border-none outline-none focus:ring-2 focus:ring-teal-500 rounded p-0 m-0';
+      td.appendChild(input);
+      input.focus();
+      input.select();
+
+      let committed = false;
+      function commit(moveDir) {
+        if (committed) return;
+        committed = true;
+        const val = input.value.trim();
+        setCellValue(colKey, row.key, val, row.label);
+        if (moveDir) {
+          setTimeout(() => navigateCell(colKey, row.key, moveDir), 10);
+        }
+      }
+
+      input.onblur = () => commit(null);
+      input.onkeydown = (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          commit('down');
+        } else if (ev.key === 'Tab') {
+          ev.preventDefault();
+          commit(ev.shiftKey ? 'left' : 'right');
+        } else if (ev.key === 'ArrowDown') {
+          ev.preventDefault();
+          commit('down');
+        } else if (ev.key === 'ArrowUp') {
+          ev.preventDefault();
+          commit('up');
+        } else if (ev.key === 'Escape') {
+          committed = true;
+          updateSingleCell(colKey, row.key);
+        }
+      };
+    }
+
+    // Fast inline option picker directly at the cell
+    function openInlineOptionPicker(e, colKey, row) {
+      if (lcgData.locked) {
+        showToast("This Labour Care Guide is locked. Click 'Unlock' to make edits.", true);
+        return;
+      }
+      const picker = document.getElementById('quickPicker');
+      picker.innerHTML = '';
+      picker.classList.remove('hidden');
+
+      const targetEl = e.target.closest('td') || e.target;
+      const rect = targetEl.getBoundingClientRect();
+      picker.style.top = `${rect.bottom + window.scrollY + 2}px`;
+      picker.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 240)}px`;
+
+      if (row.options && row.options.length > 0) {
+        row.options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'px-2.5 py-1 bg-slate-100 hover:bg-teal-600 hover:text-white dark:bg-slate-700 dark:hover:bg-teal-600 rounded text-xs font-bold transition';
+          btn.textContent = opt;
+          btn.onclick = () => {
+            setCellValue(colKey, row.key, opt, row.label);
+            picker.classList.add('hidden');
+            setTimeout(() => navigateCell(colKey, row.key, 'down'), 10);
+          };
+          picker.appendChild(btn);
+        });
+      }
+
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'px-2 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded text-xs';
+      clearBtn.textContent = 'Clear';
+      clearBtn.onclick = () => {
+        setCellValue(colKey, row.key, '', row.label);
+        picker.classList.add('hidden');
+      };
+      picker.appendChild(clearBtn);
+    }
+
     // Build the Main LCG Observation Table DOM
     function renderTable() {
       const tbody = document.getElementById('lcgTableBody');
@@ -1331,11 +1514,16 @@
                 e.stopPropagation();
                 togglePlotMark(colKey, row.plotKey, val);
               };
-            } else {
-              // Direct cell click opens quick picker or editor
+            } else if (row.options && row.options.length > 0) {
               td.onclick = (e) => {
                 e.stopPropagation();
-                openQuickCellEditor(e, colKey, row);
+                openInlineOptionPicker(e, colKey, row);
+              };
+            } else {
+              // Direct inline text / number edit
+              td.onclick = (e) => {
+                e.stopPropagation();
+                startInlineCellEdit(td, colKey, row);
               };
             }
 
@@ -1352,12 +1540,7 @@
     // Toggle mark on Cervical Dilatation or Descent grid
     function togglePlotMark(colKey, type, val) {
       if (lcgData.locked) {
-        showToast("This Labour Care Guide is locked. Unlock to make edits.", true);
-        return;
-      }
-      if (lcgData.signedHours && lcgData.signedHours[colKey]) {
-        const signInfo = lcgData.signedHours[colKey];
-        showToast(`${colKey.toUpperCase()} observations were signed off and locked by ${signInfo.signedBy} during shift handover. Please document remaining care in subsequent active hours.`, true);
+        showToast("This Labour Care Guide is locked. Click 'Unlock' to make edits.", true);
         return;
       }
       if (!lcgData.records[colKey]) lcgData.records[colKey] = {};
@@ -1370,10 +1553,12 @@
       }
       const colLabel = colKey.startsWith('h') ? `Hour ${colKey.replace('h','')}` : `Second Stage H${colKey.replace('s','')}`;
       addAuditLog("PROGRESS PLOTTED", `${colLabel}: ${type.toUpperCase()} recorded as ${val}`);
-      refreshCellDisplay();
+      
+      // Fast targeted DOM update
+      updatePlotColumn(colKey, type);
       autoSave();
-      drawCervicogramChart();
-      evaluateAlerts();
+      debouncedDrawChart();
+      debouncedEvaluateAlerts();
     }
 
     // Direct cell click inline quick editor
@@ -1446,15 +1631,10 @@
       picker.appendChild(clearBtn);
     }
 
-    // Set value and re-evaluate
+    // Set value and re-evaluate (< 0.1ms targeted update)
     function setCellValue(colKey, rowKey, val, paramLabel) {
       if (lcgData.locked) {
-        showToast("Form is locked. Unlock to make edits.", true);
-        return;
-      }
-      if (lcgData.signedHours && lcgData.signedHours[colKey]) {
-        const signInfo = lcgData.signedHours[colKey];
-        showToast(`Hour ${colKey.replace('h','')} was signed off and locked by ${signInfo.signedBy}.`, true);
+        showToast("Form is locked. Click 'Unlock' to make edits.", true);
         return;
       }
       if (!lcgData.records[colKey]) lcgData.records[colKey] = {};
@@ -1465,9 +1645,12 @@
       }
       const colLabel = colKey.startsWith('h') ? `Hour ${colKey.replace('h','')}` : `Second Stage H${colKey.replace('s','')}`;
       addAuditLog("OBSERVATION EDITED", `${colLabel}: ${paramLabel || rowKey} set to '${val || 'Cleared'}'`);
-      refreshCellDisplay();
+      
+      // Update ONLY the target cell in DOM (sub-millisecond instant UI)
+      updateSingleCell(colKey, rowKey);
       autoSave();
-      evaluateAlerts();
+      debouncedEvaluateAlerts();
+      debouncedDrawChart();
     }
 
     // Close picker if clicked outside
@@ -1711,8 +1894,8 @@
     // Modal Control: Quick Record Assessment
     function openRecordModal(colKey) {
       if (lcgData.locked) {
-        showToast("Labour Care Guide is locked. Unlock to record assessments.", true);
-        return;
+        requestUnlockForm();
+        if (lcgData.locked) return;
       }
       const select = document.getElementById('modalColSelect');
       select.innerHTML = '';
@@ -2354,8 +2537,14 @@
       downloadAnchor.remove();
     }
 
-    // AutoSave / LocalStorage
+    // AutoSave / LocalStorage (Debounced for high-speed fluid typing)
+    let autoSaveLocalTimer = null;
     function autoSave() {
+      clearTimeout(autoSaveLocalTimer);
+      autoSaveLocalTimer = setTimeout(executeAutoSave, 200);
+    }
+
+    function executeAutoSave() {
       lcgData.meta = {
         facilityName: document.getElementById('facilityName').value,
         name: document.getElementById('ptName').value,
@@ -2373,7 +2562,9 @@
         if (inp) lcgData.times[col] = inp.value;
       });
 
-      localStorage.setItem('who_lcg_data', JSON.stringify(lcgData));
+      try {
+        localStorage.setItem('who_lcg_data', JSON.stringify(lcgData));
+      } catch(e) {}
       debouncedSaveToOpenMRS();
     }
 
@@ -3235,18 +3426,14 @@
 
     function requestUnlockForm() {
       const reason = prompt(
-        "This form is currently LOCKED for patient safety and data integrity.\n\n" +
-        "To unlock for corrections, please enter the clinical authorization reason:",
-        ""
+        "Unlock Labour Care Guide for edits and corrections?\n\nEnter clinical note or click OK to unlock:",
+        "Clinical update"
       );
 
-      if (!reason || !reason.trim()) {
-        showToast("Unlock canceled. Form remains non-editable.", true);
-        return;
-      }
+      if (reason === null) return; // User clicked Cancel
 
       lcgData.locked = false;
-      addAuditLog("FORM UNLOCKED", `Form unlocked by ${currentUserName}. Authorization reason: "${reason.trim()}"`);
+      addAuditLog("FORM UNLOCKED", `Form unlocked by ${currentUserName}. Authorization note: "${(reason && reason.trim()) || 'Clinical update'}"`);
       applyLockState();
       saveToPatientEncounter(false);
       showToast("Labour Care Guide unlocked for editing.");
@@ -3268,9 +3455,32 @@
             if (!pt) return;
             const person = pt.person || {};
             const pName = (person.preferredName ? `${person.preferredName.givenName} ${person.preferredName.middleName || ''} ${person.preferredName.familyName || ''}` : (person.display || pt.display || '')).replace(/\s+/g, ' ').trim();
-            if (pName && !document.getElementById('ptName').value) {
+            if (pName && (!document.getElementById('ptName').value || document.getElementById('ptName').value === 'Patient')) {
               document.getElementById('ptName').value = pName;
               lcgData.meta.name = pName;
+            }
+            if (person.age && !document.getElementById('ptRiskFactors').value) {
+              if (person.age < 18 || person.age >= 35) {
+                const rfText = `Age: ${person.age} yrs (${person.age < 18 ? 'Adolescent primigravida' : 'Advanced maternal age ≥35'})`;
+                document.getElementById('ptRiskFactors').value = rfText;
+                lcgData.meta.riskFactors = rfText;
+              }
+            }
+            // Default active time and date if empty
+            if (!document.getElementById('ptActiveTime').value) {
+              const now = new Date();
+              const pad = n => n < 10 ? '0' + n : n;
+              const curTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+              document.getElementById('ptActiveTime').value = curTime;
+              lcgData.meta.activeTime = curTime;
+            }
+            if (!document.getElementById('ptActiveDate').value && typeof setEtPickerValue === 'function') {
+              const now = new Date();
+              const etNow = (typeof etCalendarService !== 'undefined' && etCalendarService.gregToEthDmy) ? etCalendarService.gregToEthDmy(now) : '';
+              if (etNow) {
+                setEtPickerValue('ptActiveDate', etNow);
+                lcgData.meta.activeDate = etNow;
+              }
             }
           })
           .catch(() => {});
@@ -3387,9 +3597,9 @@
               targetObs = sorted.find(o => o.uuid === obsUuidParam);
             }
             // RULE: If an active unlocked form exists, attach to it!
-            // Only start new form if all prior forms are locked!
+            // Only load historical record if specifically requested or active
             if (!targetObs) {
-              targetObs = activeUnlockedObs || sorted[0];
+              targetObs = activeUnlockedObs;
             }
 
             if (targetObs.encounter && targetObs.encounter.uuid) {

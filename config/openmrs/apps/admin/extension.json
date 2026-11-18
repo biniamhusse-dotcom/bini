@@ -1,178 +1,163 @@
 {
-    "csvUpload":{
+    "csvUpload": {
         "id": "bahmni.admin.csv",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "CSV Upload",
         "url": "#/csv",
         "icon": "fa-upload",
         "order": 1,
         "requiredPrivilege": "app:admin"
     },
-    "csvExport":{
+    "csvExport": {
         "id": "bahmni.admin.csvExport",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "CSV Export",
         "url": "#/csvExport",
         "icon": "fa-download",
         "order": 1,
         "requiredPrivilege": "app:admin"
     },
-    "auditLog":{
+    "auditLog": {
         "id": "bahmni.admin.auditLog",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Audit Log",
         "url": "#/auditLog",
         "icon": "fa-eye",
         "order": 1,
         "requiredPrivilege": "app:admin"
     },
-    "orderSet":{
+    "orderSet": {
         "id": "bahmni.admin.orderSet",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Order Set",
         "url": "#/ordersetdashboard",
         "icon": "fa-upload",
         "order": 1,
         "requiredPrivilege": "app:admin"
     },
-    "beds":{
+    "beds": {
         "id": "bahmni.admin.adt",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Beds",
         "url": "/openmrs/owa/bedmanagement/admissionLocations.html",
         "icon": "icon-bahmni-inpatient",
         "order": 5,
         "requiredPrivilege": "app:admin"
     },
-    "backupRestore":{
+    "backupRestore": {
         "id": "bahmni.admin.backupRestore",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Backup & Restore",
         "url": "#/backupRestore",
         "icon": "fa-database",
         "order": 6,
         "requiredPrivilege": "app:admin"
     },
-    "branding":{
+    "branding": {
         "id": "bahmni.admin.branding",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Branding",
         "url": "#/branding",
         "icon": "fa-paint-brush",
         "order": 7,
         "requiredPrivilege": "app:admin"
     },
-    "paymentConfig":{
+    "paymentConfig": {
         "id": "bahmni.admin.paymentConfig",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
-        "label": "Payment Config",
-        "url": "#/paymentConfig",
+        "extensionParams": {},
+        "label": "Payment & Address Lists",
+        "url": "#/paymentAddressManager",
         "icon": "fa-credit-card",
         "order": 8,
         "requiredPrivilege": "app:admin"
     },
-    "erTriageConfig":{
+    "erTriageConfig": {
         "id": "bahmni.admin.erTriageConfig",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "ER Triage Config",
         "url": "#/erTriageConfig",
         "icon": "fa-ambulance",
         "order": 9,
         "requiredPrivilege": "app:admin"
     },
-    "locationVisitMapping":{
+    "locationVisitMapping": {
         "id": "bahmni.admin.locationVisitMapping",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Location & Visit Mapping",
         "url": "#/locationVisitMapping",
         "icon": "fa-map-marker",
         "order": 10,
         "requiredPrivilege": "app:admin"
     },
-    "dashboardConfig":{
+    "dashboardConfig": {
         "id": "bahmni.admin.dashboardConfig",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Dashboard & Forms",
         "url": "#/dashboardConfig",
         "icon": "fa-th-large",
         "order": 11,
         "requiredPrivilege": "app:admin"
     },
-    "obsFormManager":{
+    "obsFormManager": {
         "id": "bahmni.admin.obsFormManager",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Observation Form Builder",
         "url": "#/obsFormManager",
         "icon": "fa-list-alt",
         "order": 12,
         "requiredPrivilege": "app:admin"
     },
-    "drugManagement":{
+    "drugManagement": {
         "id": "bahmni.admin.drugManagement",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Drug & Supply Management",
         "url": "#/drugManagement",
         "icon": "fa-medkit",
         "order": 13,
         "requiredPrivilege": "app:admin"
     },
-    "diagnosisManagement":{
+    "diagnosisManagement": {
         "id": "bahmni.admin.diagnosisManagement",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Diagnosis & ICD-11 Management",
         "url": "#/diagnosisManagement",
         "icon": "fa-stethoscope",
         "order": 14,
         "requiredPrivilege": "app:admin"
     },
-    "medicationConfig":{
+    "medicationConfig": {
         "id": "bahmni.admin.medicationConfig",
         "extensionPointId": "org.bahmni.admin.dashboard",
         "type": "link",
-        "extensionParams": {
-        },
+        "extensionParams": {},
         "label": "Medication Dropdown Management",
         "url": "#/medicationConfig",
         "icon": "fa-pills",

@@ -357,11 +357,16 @@ angular.module('bahmni.clinical')
                     var matchesTime = true;
 
                     var wrapperEl = document.getElementById('visit-section-wrapper-' + index);
-                    var domText = wrapperEl ? (wrapperEl.innerText || wrapperEl.textContent || "").toLowerCase() : "";
+                    var rawText = wrapperEl ? (wrapperEl.textContent || "") : "";
+                    if (rawText.trim()) {
+                        section._cachedText = rawText.toLowerCase();
+                    }
+                    var domText = section._cachedText || (rawText || "").toLowerCase();
 
                     // 1. Text filter evaluation
                     if (textQuery) {
                         var title = (section.title || (section.config && section.config.title) || "").toLowerCase();
+                        var transTitle = ($filter('titleTranslate')(section) || "").toLowerCase();
                         var transKey = (section.translationKey || "").toLowerCase();
                         var type = (section.type || "").toLowerCase();
                         var cnsMatch = false;
@@ -373,6 +378,7 @@ angular.module('bahmni.clinical')
                         var domMatch = domText.indexOf(textQuery) !== -1;
 
                         matchesText = (title.indexOf(textQuery) !== -1) ||
+                                      (transTitle.indexOf(textQuery) !== -1) ||
                                       (transKey.indexOf(textQuery) !== -1) ||
                                       (type.indexOf(textQuery) !== -1) ||
                                       cnsMatch ||
@@ -382,9 +388,18 @@ angular.module('bahmni.clinical')
 
                     // 2. Date filter evaluation
                     if (dateVariants.length > 0) {
-                        matchesDate = dateVariants.some(function (dv) {
+                        var matchesDomDate = dateVariants.some(function (dv) {
                             return domText.indexOf(dv.toLowerCase()) !== -1;
                         });
+                        var visitDateMatches = false;
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime && $scope.searchFilter.date) {
+                            var vDate = new Date($scope.visitSummary.startDateTime);
+                            var sDate = new Date($scope.searchFilter.date);
+                            visitDateMatches = (vDate.getFullYear() === sDate.getFullYear() &&
+                                                vDate.getMonth() === sDate.getMonth() &&
+                                                vDate.getDate() === sDate.getDate());
+                        }
+                        matchesDate = matchesDomDate || visitDateMatches;
                     }
 
                     // 3. Time filter evaluation

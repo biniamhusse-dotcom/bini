@@ -5,34 +5,24 @@
                 <legend class="registraion_legend first-registraion_legend">
                     <span class="mylegend"><strong>{{::'EMERGENCY_TRIAGE_NEW_PATIENT' | translate}}</strong></span>
                 </legend>
-                <section>
+                                <section>
                     <article class="form-field existing-patient">
                         <div class="field-attribute">
                             <label class="control-label" for="patientID">{{:: patient.primaryIdentifier.identifierType.name}}
                                 <span class="asterick">*</span>
                             </label>
                         </div>
-                        <div ng-show="::(patient.primaryIdentifier.hasIdentifierSources() && !patient.primaryIdentifier.hasIdentifierSourceWithEmptyPrefix())" class="field-value" id="patientID">
-                            <select id="identifierPrefix" ng-model="patient.primaryIdentifier.selectedIdentifierSource"
-                                    ng-options="identifierSource.prefix for identifierSource in ::patient.primaryIdentifier.identifierType.identifierSources" ng-change="isAaBET(); patient.primaryIdentifier.generate()"
-                                    >
-                            </select>
-                        </div>
 
-                        <div class="field-value field-value-has-identifier">
+                        <div class="field-value field-value-has-identifier" ng-show="patient.primaryIdentifier.hasOldIdentifier">
                             <input type="text" id="registrationNumber" ng-model="patient.primaryIdentifier.registrationNumber"
                                    placeholder="{{:: patient.primaryIdentifier.identifierType.description}}" non-blank="patient.primaryIdentifier.isIdentifierRequired()" pattern-validate
                                    ng-change="patient.primaryIdentifier.generate()" focus-on="patient.primaryIdentifier.hasOldIdentifier"
-                                   ng-show="patient.primaryIdentifier.hasOldIdentifier || !patient.primaryIdentifier.hasIdentifierSources()"  ng-disabled="isDisabled">
-                            <div ng-show="::patient.primaryIdentifier.hasIdentifierSources() && showEnterID" class="fl">
-                                <div class="field-attribute hasOldIdentifier-field-attribute">
-                                    <label for="hasOldIdentifier" class="control-label">{{::'REGISTRATION_LABEL_ENTER_ID' | translate}}</label>
-                                </div>
-                                <div class="field-value">
-                                    <input class="input-label-inline" ng-show="::showEnterID" type="checkbox" id="hasOldIdentifier" ng-model="patient.primaryIdentifier.hasOldIdentifier"
-                                           ng-change="patient.primaryIdentifier.clearRegistrationNumber()">
-                                </div>
-                            </div>
+                                   ng-disabled="readOnly || !patient.primaryIdentifier.hasOldIdentifier">
+                        </div>
+                        <div class="field-value" ng-show="showEnterID">
+                            <input type="checkbox" id="enterID" ng-model="patient.primaryIdentifier.hasOldIdentifier"
+                                   ng-change="patient.primaryIdentifier.clearRegistrationNumber()"/>
+                            <label for="enterID">{{::'REGISTRATION_LABEL_ENTER_ID' | translate}}</label>
                         </div>
                     </article>
                 </section>

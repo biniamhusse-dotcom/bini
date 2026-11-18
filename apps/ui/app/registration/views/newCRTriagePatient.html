@@ -12,12 +12,7 @@
                                 <span class="asterick">*</span>
                             </label>
                         </div>
-                        <div ng-show="::(patient.primaryIdentifier.hasIdentifierSources() && !patient.primaryIdentifier.hasIdentifierSourceWithEmptyPrefix())" class="field-value" id="patientID">
-                            <select id="identifierPrefix" ng-model="patient.primaryIdentifier.selectedIdentifierSource"
-                                    ng-options="identifierSource.prefix for identifierSource in ::patient.primaryIdentifier.identifierType.identifierSources" ng-change="isAaBET(); patient.primaryIdentifier.generate()"
-                                    >
-                            </select>
-                        </div>
+
 
                         <div class="field-value field-value-has-identifier">
                             <input type="text" id="registrationNumber" ng-model="patient.primaryIdentifier.registrationNumber"

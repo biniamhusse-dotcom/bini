@@ -2,9 +2,9 @@
 
 angular.module('bahmni.registration')
     .controller('CreateCRTriagePatientController', ['$scope', '$rootScope', '$state', 'patientService', 'patient',
-        'spinner', 'appService', 'messagingService', 'ngDialog', '$q', '$bahmniCookieStore', 'encounterService', '$translate',
+        'spinner', 'appService', 'messagingService', 'ngDialog', '$http', '$q', '$bahmniCookieStore', 'encounterService', '$translate',
         'visitService', 'auditLogService', '$location', 'commonNameDictionaryService', 'patientAttributeService',
-        function ($scope, $rootScope, $state, patientService, patient, spinner, appService, messagingService, ngDialog, $q,
+        function ($scope, $rootScope, $state, patientService, patient, spinner, appService, messagingService, ngDialog, $http, $q,
                   $bahmniCookieStore, encounterService, $translate, visitService, auditLogService, $location, commonNameDictionaryService, patientAttributeService) {
             var dateUtil = Bahmni.Common.Util.DateUtil;
             $scope.actions = {};
@@ -153,7 +153,35 @@ angular.module('bahmni.registration')
                 $rootScope.newCRPat = true;
             };
 
-            var createPatient = function (jumpAccepted) {
+            
+            var promptOccupiedMRNJump = function (mrnData, onSuccess) {
+                var ngDialogLocalScope = $scope.$new();
+                ngDialogLocalScope.dialogData = mrnData;
+                ngDialogLocalScope.yes = function () {
+                    ngDialog.close();
+                    spinner.forPromise($http.post('/backup-api/api/mrn/jump-sequence', {
+                        target_sequence: mrnData.next_sequence_value
+                    })).then(function () {
+                        if (onSuccess) {
+                            onSuccess();
+                        } else {
+                            executePatientCreation();
+                        }
+                    }, function (err) {
+                        messagingService.showMessage('error', 'Failed to jump MRN sequence: ' + (err.data && err.data.error || 'Server error'));
+                    });
+                };
+                ngDialogLocalScope.no = function () {
+                    ngDialog.close();
+                };
+                ngDialog.open({
+                    template: 'views/occupiedMRNJumpConfirmation.html',
+                    data: mrnData,
+                    scope: ngDialogLocalScope
+                });
+            };
+
+var createPatient = function (jumpAccepted) {
                 return patientService.create($scope.patient, jumpAccepted).then(function (response) {
                     copyPatientProfileDataToScope(response);
                 }, function (response) {
@@ -173,7 +201,18 @@ angular.module('bahmni.registration')
                             }
                         });
                     }
-                    if (response.isIdentifierDuplicate) {
+                    if (response.isIdentifierDuplicate || (response.data && response.data.error && /already in use|duplicate/i.test(response.data.error.message || ''))) {
+                        $http.get('/backup-api/api/mrn/check-status').then(function (res) {
+                            if (res.data && res.data.occupied) {
+                                promptOccupiedMRNJump(res.data, function () {
+                                    createPatient(true);
+                                });
+                            } else {
+                                errorMessage = response.message || (response.data && response.data.error && response.data.error.message) || "Identifier is already in use.";
+                                messagingService.showMessage("error", errorMessage);
+                            }
+                        });
+                    } else if (response.isIdentifierDuplicate) {
                         errorMessage = response.message;
                     }
                 });
@@ -214,12 +253,32 @@ angular.module('bahmni.registration')
                     });
                     return $q.when({});
                 }
-                return spinner.forPromise(createPromise()).then(function (response) {
-                    if (errorMessage) {
-                        messagingService.showMessage("error", errorMessage);
-                        errorMessage = undefined;
-                    }
-                });
+                var executePatientCreation = function () {
+                    return spinner.forPromise(createPromise()).then(function (response) {
+                        if (errorMessage) {
+                            messagingService.showMessage("error", errorMessage);
+                            errorMessage = undefined;
+                        }
+                    });
+                };
+
+                var isAutoMRN = !$scope.patient.primaryIdentifier.hasOldIdentifier && !$scope.patient.primaryIdentifier.registrationNumber;
+                if (isAutoMRN) {
+                    return spinner.forPromise($http.get('/backup-api/api/mrn/check-status')).then(function (res) {
+                        if (res.data && res.data.occupied) {
+                            promptOccupiedMRNJump(res.data, function () {
+                                executePatientCreation();
+                            });
+                            return $q.when({});
+                        } else {
+                            return executePatientCreation();
+                        }
+                    }, function () {
+                        return executePatientCreation();
+                    });
+                } else {
+                    return executePatientCreation();
+                }
             };
 
             var loginLocationUuid = $bahmniCookieStore.get(Bahmni.Common.Constants.locationCookieName).uuid;

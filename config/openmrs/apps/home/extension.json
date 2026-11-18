@@ -49,8 +49,7 @@
     "order": 4,
     "requiredPrivilege": "app:adt"
   },
-
-    "bahmniIpd": {
+  "bahmniIpd": {
     "id": "bahmni.ipd",
     "extensionPointId": "org.bahmni.home.dashboard",
     "type": "link",
@@ -72,7 +71,6 @@
     "order": 5,
     "requiredPrivilege": "app:register"
   },
-
   "radiologyDocumentUpload": {
     "id": "bahmni.radiology.document.upload",
     "extensionPointId": "org.bahmni.home.dashboard",
@@ -113,7 +111,7 @@
     "order": 10,
     "requiredPrivilege": "app:orders"
   },
-    "prescription": {
+  "prescription": {
     "id": "bahmni.prescription",
     "extensionPointId": "org.bahmni.home.dashboard",
     "type": "link",
@@ -173,7 +171,7 @@
     "icon": "fa-hospital-o",
     "order": 9,
     "requiredPrivilege": "app:ot"
-  }, 
+  },
   "implementerInterface": {
     "id": "bahmni.implementer.interface",
     "extensionPointId": "org.bahmni.home.dashboard",
@@ -244,5 +242,4 @@
     "order": 11,
     "requiredPrivilege": "app:admin"
   }
-
 }

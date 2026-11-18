@@ -399,7 +399,7 @@ angular.module('consultation')
                         controller: 'VisitHeaderController'
                     },
                     'dashboard-content': {
-                        templateUrl: 'common/views/visit.html',
+                        templateUrl: 'common/views/visit.html?v=20261118_v6',
                         controller: 'VisitController'
                     }
                 },
@@ -417,7 +417,7 @@ angular.module('consultation')
                         controller: 'VisitController'
                     },
                     'print-content': {
-                        templateUrl: 'common/views/visit.html'
+                        templateUrl: 'common/views/visit.html?v=20261118_v6'
                     }
                 },
                 resolve: {
@@ -464,7 +464,7 @@ angular.module('consultation')
                         controller: 'VisitHeaderController'
                     },
                     'content': {
-                        templateUrl: 'common/views/visit.html',
+                        templateUrl: 'common/views/visit.html?v=20261118_v6',
                         controller: 'VisitController'
                     }
                 },

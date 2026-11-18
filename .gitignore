@@ -82,3 +82,5 @@ inspect_enc.py
 scan_admin_apis.py
 
 /MessageResources.properties
+
+scratch_*.py

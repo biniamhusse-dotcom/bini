@@ -1778,7 +1778,7 @@ def save_medication_dropdown_action(payload):
             run_omrs_exec(f"""
                 INSERT INTO concept (datatype_id, class_id, is_set, creator, date_created, uuid)
                 VALUES (
-                    (SELECT concept_datatype_id FROM concept_datatype WHERE hl7_abbrev = 'N/A' LIMIT 1),
+                    (SELECT concept_datatype_id FROM concept_datatype WHERE name = 'N/A' LIMIT 1),
                     (SELECT concept_class_id FROM concept_class WHERE name = 'Misc' LIMIT 1),
                     0, 1, NOW(), UUID()
                 );
@@ -1829,7 +1829,7 @@ def save_medication_dropdown_action(payload):
             run_omrs_exec(f"""
                 INSERT INTO concept (datatype_id, class_id, is_set, creator, date_created, uuid)
                 VALUES (
-                    (SELECT concept_datatype_id FROM concept_datatype WHERE hl7_abbrev = 'N/A' LIMIT 1),
+                    (SELECT concept_datatype_id FROM concept_datatype WHERE name = 'N/A' LIMIT 1),
                     (SELECT concept_class_id FROM concept_class WHERE name = 'Frequency' LIMIT 1),
                     0, 1, NOW(), UUID()
                 );
@@ -3099,6 +3099,42 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 log(f"Error getting harmonization comparison: {e}")
                 self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/master/payment-methods", "/master/payment-methods"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.get_payment_method_categories())
+            except Exception as e:
+                log(f"Error getting payment method categories: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/master/address-hierarchy/levels", "/master/address-hierarchy/levels"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.get_address_hierarchy_levels())
+            except Exception as e:
+                log(f"Error getting address hierarchy levels: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/mrn/check-status", "/mrn/check-status"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.check_mrn_status())
+            except Exception as e:
+                log(f"Error checking MRN status: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/master/address-hierarchy/entries", "/master/address-hierarchy/entries"):
+            try:
+                import bahmni_master_data as md
+                lvl = query_params.get("level_id", [None])[0]
+                pid = query_params.get("parent_id", [None])[0]
+                q = query_params.get("search", [None])[0]
+                lim = query_params.get("limit", [200])[0]
+                self._send_json(200, md.get_address_hierarchy_entries(level_id=lvl, parent_id=pid, search=q, limit=lim))
+            except Exception as e:
+                log(f"Error getting address hierarchy entries: {e}")
+                self._send_json(500, {"error": str(e)})
         else:
             self._send_json(404, {"error": "Endpoint not found", "path": path})
 
@@ -3471,6 +3507,94 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, result)
             except Exception as e:
                 log(f"Error batch deleting lab items: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/master/payment-methods/item", "/master/payment-methods/item"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.add_payment_method_item(payload))
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error adding payment method item: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/master/payment-methods/update", "/master/payment-methods/update"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.update_payment_method_item(payload))
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error updating payment method item: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/master/payment-methods/delete", "/master/payment-methods/delete"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.delete_payment_method_item(payload))
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error deleting payment method item: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/master/payment-methods/sync-odoo", "/master/payment-methods/sync-odoo"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.sync_payment_methods_to_odoo())
+            except Exception as e:
+                log(f"Error syncing payment methods to odoo: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/master/address-hierarchy/entry", "/master/address-hierarchy/entry"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.add_address_hierarchy_entry(payload))
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error adding address hierarchy entry: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/master/address-hierarchy/bulk", "/master/address-hierarchy/bulk"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.bulk_add_address_hierarchy_entries(payload))
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error bulk adding address hierarchy entries: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/master/address-hierarchy/update", "/master/address-hierarchy/update"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.update_address_hierarchy_entry(payload))
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error updating address hierarchy entry: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/mrn/jump-sequence", "/mrn/jump-sequence"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.jump_mrn_sequence(payload))
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error jumping MRN sequence: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/master/address-hierarchy/delete", "/master/address-hierarchy/delete"):
+            try:
+                import bahmni_master_data as md
+                self._send_json(200, md.delete_address_hierarchy_entry(payload))
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error deleting address hierarchy entry: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         else:
