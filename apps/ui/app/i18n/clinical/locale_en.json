@@ -3,6 +3,8 @@
     "CONSULTATION_SHORTCUT_KEY": "c",
     "NO_ACTIVE_PASSIVE_PROGRAMS_MESSAGE": "No active/inactive programs for this patient.",
     "NO_TREATMENTS_MESSAGE": "No treatments for this patient.",
+    "DASHBOARD_TITLE_PATIENT_FILES_KEY": "Patient Files",
+    "DASHBOARD_TITLE_RECEIVED_PACS_IMAGES_KEY": "Received PACS Images",
     "NO_ADMISSION_DETAILS_MESSAGE": "No Admission Details for this patient.",
     "NO_DOCUMENTS_MESSAGE": "No documents for this patient.",
     "NO_DISPOSTIONS_AVAILABLE_MESSAGE_KEY": "No dispositions available.",

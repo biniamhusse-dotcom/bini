@@ -3096,5 +3096,153 @@ var getPatientUuid = function () {
         },
         template: '<ng-include src="contentUrl"/>'
     };
-}])
-;
+}]).directive('receivedPacsImages', ['orderService', 'orderTypeService', 'pacsService', 'spinner', '$window', '$q', 'appService', function (orderService, orderTypeService, pacsService, spinner, $window, $q, appService) {
+    var link = function ($scope, element) {
+        $scope.orders = [];
+        $scope.loading = true;
+        $scope.hasStudies = false;
+        $scope.pacsStudies = [];
+        $scope.sectionTitle = ($scope.config && $scope.config.title) || "Received PACS Images";
+
+        var baseUrl = appService && appService.configBaseUrl ? appService.configBaseUrl() : "/bahmni_config/openmrs/apps";
+        $scope.contentUrl = baseUrl + "/customDisplayControl/views/receivedPacsImages.html?v=20261118_v2";
+
+        var getPatientId = function () {
+            return ($scope.patient && ($scope.patient.identifier || $scope.patient.primaryIdentifier)) || "";
+        };
+
+        var getPatientUuid = function () {
+            return ($scope.patient && $scope.patient.uuid) || "";
+        };
+
+        $scope.openOviyamAll = function () {
+            var pid = getPatientId();
+            if (pid) {
+                $window.open('/oviyam2/viewer.html?patientID=' + encodeURIComponent(pid), '_blank');
+            } else {
+                $window.open('/oviyam2/', '_blank');
+            }
+        };
+
+        $scope.openInOviyam = function (order) {
+            var pid = getPatientId();
+            var url = '/oviyam2/viewer.html?patientID=' + encodeURIComponent(pid);
+            if (order && order.orderNumber) {
+                url += '&accessionNumber=' + encodeURIComponent(order.orderNumber);
+            }
+            if (order && order.studyInstanceUID) {
+                url += '&studyUID=' + encodeURIComponent(order.studyInstanceUID);
+            }
+            $window.open(url, '_blank');
+        };
+
+        var loadData = function () {
+            $scope.loading = true;
+            var patientUuid = getPatientUuid();
+            var patientId = getPatientId();
+
+            if (!patientUuid) {
+                $scope.loading = false;
+                $scope.orders = [];
+                return $q.when([]);
+            }
+
+            var orderTypeUuid = null;
+            try {
+                if (orderTypeService && typeof orderTypeService.getOrderTypeUuid === 'function') {
+                    orderTypeUuid = orderTypeService.getOrderTypeUuid('Radiology Order');
+                }
+            } catch (e) {
+                console.warn("Could not get Radiology Order type uuid from service", e);
+            }
+
+            var orderParams = {
+                patientUuid: patientUuid,
+                includeObs: true,
+                numberOfVisits: 50
+            };
+            if (orderTypeUuid) {
+                orderParams.orderTypeUuid = orderTypeUuid;
+            }
+
+            var ordersPromise = orderService.getOrders(orderParams).catch(function (err) {
+                console.warn("Error fetching radiology orders", err);
+                return { data: [] };
+            });
+
+            var pacsPromise = (pacsService && typeof pacsService.search === 'function' && patientId) ?
+                pacsService.search(patientId).catch(function () { return { data: [] }; }) :
+                $q.when({ data: [] });
+
+            return $q.all([ordersPromise, pacsPromise]).then(function (results) {
+                var rawOrders = (results[0] && results[0].data) || [];
+                var pacsStudies = (results[1] && results[1].data) || [];
+                $scope.pacsStudies = pacsStudies;
+                $scope.hasStudies = pacsStudies && pacsStudies.length > 0;
+
+                var orderList = Array.isArray(rawOrders) ? rawOrders : [];
+
+                if (!orderTypeUuid) {
+                    orderList = orderList.filter(function (o) {
+                        return (o.orderType && o.orderType.name === 'Radiology Order') ||
+                               (o.concept && o.concept.conceptClass && o.concept.conceptClass.name === 'Radiology');
+                    });
+                }
+
+                orderList.forEach(function (order) {
+                    order.hasImage = false;
+                    order.displayName = (order.concept && (order.concept.shortName || order.concept.name)) || order.orderNumber || "Radiology Order";
+                    if (order.provider && order.provider.display) {
+                        order.providerName = order.provider.display;
+                    }
+                    if (pacsStudies && pacsStudies.length > 0) {
+                        var matchingStudy = pacsStudies.find(function (rs) {
+                            if (!rs.identifier) return false;
+                            var matches = rs.identifier.filter(function (rsi) {
+                                return pacsService.getAccessionNumber(rsi) === order.orderNumber;
+                            });
+                            return matches && matches.length > 0;
+                        });
+                        if (matchingStudy) {
+                            order.hasImage = true;
+                            order.studyInstanceUID = matchingStudy.id;
+                        }
+                    }
+                });
+
+                orderList.sort(function (a, b) {
+                    var da = new Date(a.dateActivated || a.orderDate || 0);
+                    var db = new Date(b.dateActivated || b.orderDate || 0);
+                    return db - da;
+                });
+
+                $scope.orders = orderList;
+                $scope.loading = false;
+            }).catch(function () {
+                $scope.loading = false;
+            });
+        };
+
+        $scope.refreshData = function () {
+            spinner.forPromise(loadData(), element);
+        };
+
+        $scope.$watch('patient.uuid', function (newVal) {
+            if (newVal) {
+                $scope.refreshData();
+            }
+        });
+
+        $scope.refreshData();
+    };
+
+    return {
+        restrict: 'E',
+        link: link,
+        scope: {
+            patient: "=",
+            config: "=?"
+        },
+        template: '<ng-include src="contentUrl"/>'
+    };
+}]);

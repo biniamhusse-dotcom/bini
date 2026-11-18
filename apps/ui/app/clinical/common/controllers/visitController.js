@@ -219,12 +219,88 @@ angular.module('bahmni.clinical')
                 return $scope.visitTabConfig.getFirstTab();
             };
 
+            $scope.visitSearchQuery = "";
+            $scope.visibleSectionsCount = 0;
+
+            var computeVisibleCount = function () {
+                if (!$scope.visitTabConfig || !$scope.visitTabConfig.currentTab || !$scope.visitTabConfig.currentTab.sections) {
+                    return 0;
+                }
+                var count = 0;
+                $scope.visitTabConfig.currentTab.sections.forEach(function (s) {
+                    if (!s._hiddenBySearch) count++;
+                });
+                return count;
+            };
+
+            $scope.applyVisitSearch = function (query) {
+                if (!$scope.visitTabConfig || !$scope.visitTabConfig.currentTab || !$scope.visitTabConfig.currentTab.sections) {
+                    return;
+                }
+                var sections = $scope.visitTabConfig.currentTab.sections;
+                if (!query || query.trim() === "") {
+                    sections.forEach(function (s) {
+                        s._hiddenBySearch = false;
+                    });
+                    $scope.visibleSectionsCount = sections.length;
+                    return;
+                }
+
+                var q = query.trim().toLowerCase();
+                var domWrappers = document.querySelectorAll('.visit-section-wrapper');
+
+                sections.forEach(function (section, index) {
+                    var matches = false;
+
+                    // 1. Match section title / config title
+                    var title = (section.title || (section.config && section.config.title) || "").toLowerCase();
+                    if (title.indexOf(q) !== -1) matches = true;
+
+                    // 2. Match section translationKey
+                    if (section.translationKey && section.translationKey.toLowerCase().indexOf(q) !== -1) matches = true;
+
+                    // 3. Match section type
+                    if (section.type && section.type.toLowerCase().indexOf(q) !== -1) matches = true;
+
+                    // 4. Match conceptNames (forms, observation groups)
+                    if (section.config && section.config.conceptNames) {
+                        var cns = Array.isArray(section.config.conceptNames) ? section.config.conceptNames : [section.config.conceptNames];
+                        if (cns.some(function (c) { return String(c).toLowerCase().indexOf(q) !== -1; })) {
+                            matches = true;
+                        }
+                    }
+
+                    // 5. Match provider names from visit header or encounter
+                    if ($scope.providerNames && $scope.providerNames.toLowerCase().indexOf(q) !== -1) {
+                        matches = true;
+                    }
+
+                    // 6. Match DOM inner text: saved dates, times, entered clinician user names, form values
+                    if (!matches && domWrappers && domWrappers[index]) {
+                        var text = (domWrappers[index].innerText || domWrappers[index].textContent || "").toLowerCase();
+                        if (text.indexOf(q) !== -1) {
+                            matches = true;
+                        }
+                    }
+
+                    section._hiddenBySearch = !matches;
+                });
+
+                $scope.visibleSectionsCount = computeVisibleCount();
+            };
+
+            $scope.clearVisitSearch = function () {
+                $scope.visitSearchQuery = "";
+                $scope.applyVisitSearch("");
+            };
+
             var init = function () {
                 $scope.visitTabConfig.setVisitUuidsAndPatientUuidToTheSections([$scope.visitUuid], $scope.patientUuid);
                 var tabToOpen = getTab();
                 $scope.visitTabConfig.switchTab(tabToOpen);
                 printOnPrint();
                 $scope.showProviderInfo ? getCertificateHeader() : null;
+                $scope.clearVisitSearch();
             };
             init();
         }]);

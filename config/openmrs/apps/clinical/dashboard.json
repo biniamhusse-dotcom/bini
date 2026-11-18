@@ -170,11 +170,31 @@
                     "showDetailsButton": true
                 }
             },
+            "patientFiles": {
+                "translationKey": "DASHBOARD_TITLE_PATIENT_FILES_KEY",
+                "title": "Patient Files",
+                "type": "custom",
+                "displayOrder": 6,
+                "config": {
+                    "title": "Patient Files",
+                    "template": "<bm-documents patient='patient' config='config' encounter-type=\"'Patient Document'\"></bm-documents>"
+                }
+            },
+            "receivedPacsImages": {
+                "translationKey": "DASHBOARD_TITLE_RECEIVED_PACS_IMAGES_KEY",
+                "title": "Received PACS Images",
+                "type": "custom",
+                "displayOrder": 7,
+                "config": {
+                    "title": "Received PACS Images",
+                    "template": "<received-pacs-images patient='patient' config='config'></received-pacs-images>"
+                }
+            },
             "radiology": {
                 "orderType": "Radiology Order",
                 "type": "ordersControl",
                 "translationKey": "DASHBOARD_TITLE_RADIOLOGY_KEY",
-                "displayOrder": 6,
+                "displayOrder": 8,
                 "dashboardConfig": {
                     "showDetailsButton": true,
                     "conceptNames": [

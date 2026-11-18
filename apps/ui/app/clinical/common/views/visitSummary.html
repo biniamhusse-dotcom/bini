@@ -5,12 +5,49 @@
     </div>
 </section>
 
+<!-- Visit Search & Filter Bar -->
+<section class="visit-search-container" ng-if="!isBeingPrinted" style="margin: 10px 15px 15px 15px; background: #ffffff; border: 1px solid #b2dfdb; border-radius: 8px; padding: 10px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-left: 4px solid #00796b;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+        <div style="position: relative; flex: 1; min-width: 320px; display: flex; align-items: center;">
+            <i class="fa fa-search" style="position: absolute; left: 14px; color: #00796b; font-size: 15px; pointer-events: none;"></i>
+            <input type="text"
+                   class="visit-search-input"
+                   ng-model="visitSearchQuery"
+                   ng-change="applyVisitSearch(visitSearchQuery)"
+                   placeholder="Search visit by form name, section name, saved date/time, or user/clinician..."
+                   style="width: 100%; padding: 8px 36px 8px 38px; font-size: 13.5px; border: 1px solid #80cbc4; border-radius: 20px; outline: none; transition: all 0.2s; background: #fafafa;"
+                   onfocus="this.style.borderColor='#00796b'; this.style.boxShadow='0 0 6px rgba(0,121,107,0.3)'; this.style.background='#fff';"
+                   onblur="this.style.borderColor='#80cbc4'; this.style.boxShadow='none'; this.style.background='#fafafa';"/>
+            <i class="fa fa-times-circle"
+               ng-show="visitSearchQuery"
+               ng-click="clearVisitSearch()"
+               title="Clear search"
+               style="position: absolute; right: 14px; color: #888; font-size: 16px; cursor: pointer;"></i>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+            <span ng-if="visitSearchQuery" class="badge" style="background-color: #00796b; color: #ffffff; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 14px;">
+                {{visibleSectionsCount}} matching section(s)
+            </span>
+            <span ng-if="visitSearchQuery && visibleSectionsCount === 0" style="color: #c62828; font-size: 13px; font-weight: bold;">
+                <i class="fa fa-exclamation-triangle"></i> No matching records found
+            </span>
+            <button type="button"
+                    class="btn btn-sm"
+                    ng-if="visitSearchQuery"
+                    ng-click="clearVisitSearch()"
+                    style="background: #e0f2f1; color: #00796b; border: 1px solid #80cbc4; border-radius: 14px; padding: 4px 12px; font-size: 12px; cursor: pointer; font-weight: 600;">
+                <i class="fa fa-refresh"></i> Reset Filter
+            </button>
+        </div>
+    </div>
+</section>
+
 <section ng-if="!isBeingPrinted">
     <ng-include src="'common/views/providerInfo.html'"></ng-include>
 </section>
 
 <div ng-if="::(!clearBoard)">
-    <div ng-repeat="section in visitTabConfig.currentTab.sections">
+    <div ng-repeat="section in visitTabConfig.currentTab.sections" ng-hide="section._hiddenBySearch" class="visit-section-wrapper" data-section-title="{{section.title || section.config.title || (section | titleTranslate)}}">
         <div ng-switch="section.type">
             <div ng-switch-when="patientInformation" class="section">
                 <section class="block dashboard-section" >

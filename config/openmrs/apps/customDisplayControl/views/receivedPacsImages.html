@@ -1,0 +1,93 @@
+<div class="dashboard-section pacs-orders-dashboard-control" style="background: #ffffff; border: 1px solid #c7d2d4; border-radius: 4px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+    <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #557A7B; color: #ffffff; border-radius: 3px 3px 0 0;">
+        <span style="font-size: 14px; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fa fa-film" style="color: #ffffff;"></i>
+            {{sectionTitle || 'Received PACS Images & Radiology Studies'}}
+        </span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button"
+                    class="btn btn-sm"
+                    ng-click="openOviyamAll()"
+                    title="Open all DICOM studies for this patient in Oviyam Viewer"
+                    style="background: #ffffff; color: #557A7B; border: none; font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 3px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                <i class="fa fa-external-link"></i> View All in Oviyam
+            </button>
+            <button type="button"
+                    class="btn btn-sm"
+                    ng-click="refreshData()"
+                    title="Refresh orders and studies"
+                    style="background: rgba(255,255,255,0.2); color: #ffffff; border: 1px solid rgba(255,255,255,0.4); font-size: 11px; padding: 4px 8px; border-radius: 3px; cursor: pointer;">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i>
+            </button>
+        </div>
+    </div>
+
+    <div style="padding: 12px 14px;">
+        <div ng-if="loading" style="text-align: center; padding: 20px; color: #666; font-size: 13px;">
+            <i class="fa fa-spinner fa-spin fa-2x" style="color: #557A7B; margin-bottom: 8px;"></i>
+            <p>Loading received radiology orders and PACS images...</p>
+        </div>
+
+        <div ng-if="!loading && orders.length > 0">
+            <table class="table" style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 0;">
+                <thead>
+                    <tr style="background: #f1f5f6; border-bottom: 2px solid #557A7B; text-align: left; color: #333;">
+                        <th style="padding: 8px 10px; font-weight: 600;">Radiology Order / Study</th>
+                        <th style="padding: 8px 10px; font-weight: 600;">Accession #</th>
+                        <th style="padding: 8px 10px; font-weight: 600;">Date & Time</th>
+                        <th style="padding: 8px 10px; font-weight: 600;">Provider</th>
+                        <th style="padding: 8px 10px; font-weight: 600;">PACS Status</th>
+                        <th style="padding: 8px 10px; font-weight: 600; text-align: center;">Oviyam Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="order in orders" style="border-bottom: 1px solid #e0e0e0; transition: background 0.15s;" onmouseover="this.style.background='#f9fbfb'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 9px 10px; font-weight: bold; color: #1565c0;">
+                            <i class="fa fa-file-image-o" style="color: #557A7B; margin-right: 6px;"></i>
+                            {{order.displayName}}
+                        </td>
+                        <td style="padding: 9px 10px; font-family: monospace; color: #555;">
+                            {{order.orderNumber || '-'}}
+                        </td>
+                        <td style="padding: 9px 10px; color: #444; white-space: nowrap;">
+                            {{(order.dateActivated || order.orderDate) | date:'dd-MMM-yyyy HH:mm'}}
+                        </td>
+                        <td style="padding: 9px 10px; color: #555;">
+                            {{order.providerName || (order.provider && order.provider.display) || '-'}}
+                        </td>
+                        <td style="padding: 9px 10px;">
+                            <span ng-if="order.hasImage" class="label label-success" style="background: #2e7d32; color: #fff; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa fa-check-circle"></i> In PACS
+                            </span>
+                            <span ng-if="!order.hasImage" class="label label-info" style="background: #0277bd; color: #fff; padding: 3px 8px; border-radius: 10px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa fa-clock-o"></i> Order Placed
+                            </span>
+                        </td>
+                        <td style="padding: 9px 10px; text-align: center; white-space: nowrap;">
+                            <button type="button"
+                                    class="btn btn-sm btn-primary"
+                                    ng-click="openInOviyam(order)"
+                                    title="Open {{order.displayName}} in Oviyam 2 DICOM viewer"
+                                    style="background: #00796b; color: #ffffff; border: 1px solid #004d40; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+                                <i class="fa fa-eye"></i> Open in Oviyam
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div ng-if="!loading && orders.length === 0" style="padding: 18px; text-align: center; color: #666;">
+            <p style="font-size: 13px; margin-bottom: 12px;">
+                <i class="fa fa-info-circle" style="color: #557A7B;"></i>
+                No received PACS images or radiology orders recorded for this patient.
+            </p>
+            <button type="button"
+                    class="btn btn-sm"
+                    ng-click="openOviyamAll()"
+                    style="background: #e0f2f1; color: #00796b; border: 1px solid #80cbc4; border-radius: 4px; padding: 5px 14px; font-size: 12px; cursor: pointer; font-weight: 600;">
+                <i class="fa fa-external-link"></i> Check Oviyam for Patient (ID: {{patient.identifier}})
+            </button>
+        </div>
+    </div>
+</div>
