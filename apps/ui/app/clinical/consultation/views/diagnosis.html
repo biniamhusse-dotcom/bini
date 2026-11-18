@@ -10,35 +10,39 @@
                         <span style="font-weight:normal;font-size:12px;color:#888;margin-left:8px;">(Only ONE per encounter)</span>
                     </h3>
                     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                        <div style="flex:1;min-width:250px;">
+                        <div style="flex:2;min-width:280px;">
                             <input ng-model="consultation.mainDiagnosis.name" type="text" name="mainDiagnosisName"
                                 id="mainDiagnosisInput" bahmni-autocomplete source="getDiagnosis"
                                 response-map="cleanOutDiagnosisList"
                                 on-select="onMainDiagnosisSelect()"
                                 ng-change="onMainDiagnosisChange()"
-                                placeholder="Search diagnosis concept...">
+                                placeholder="Search and select coded diagnosis..."
+                                style="width:100%;height:38px !important;line-height:24px !important;padding:6px 12px !important;font-size:13px !important;border:1px solid #ccc !important;border-radius:4px !important;box-sizing:border-box !important;margin:0 !important;float:none !important;">
                         </div>
-                        <div>
+                        <div style="flex:0 0 auto;min-width:140px;max-width:180px;">
                             <select ng-model="consultation.mainDiagnosis.occurrence"
-                                style="padding:6px 10px;font-size:13px;border:1px solid #ccc;border-radius:4px;background:white;color:#333;cursor:pointer;min-width:110px;">
+                                id="mainDiagnosisOccurrence"
+                                style="width:100%;height:38px !important;min-height:38px !important;max-height:38px !important;line-height:24px !important;padding:6px 28px 6px 10px !important;font-size:13px !important;border:1px solid #ccc !important;border-radius:4px !important;background:#fff !important;color:#333 !important;cursor:pointer !important;box-sizing:border-box !important;float:none !important;margin:0 !important;display:block !important;appearance:auto !important;-webkit-appearance:auto !important;">
                                 <option value="">Occurrence</option>
                                 <option value="New">New</option>
                                 <option value="Repeat">Repeat</option>
                             </select>
                         </div>
                         <span ng-if="consultation.mainDiagnosis.name && !consultation.mainDiagnosis.uuid"
-                            style="display:inline-flex;align-items:center;gap:4px;background:#fff0f0;color:#c9302c;border:1px solid #ebccd1;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;">
+                            style="display:inline-flex;align-items:center;gap:4px;background:#fff0f0;color:#c9302c;border:1px solid #ebccd1;padding:6px 10px;border-radius:4px;font-size:12px;font-weight:600;height:38px;box-sizing:border-box;margin:0;">
                             <i class="fa fa-exclamation-triangle"></i> Coded diagnosis required (select from list)
                         </span>
-                        <span ng-if="consultation.mainDiagnosis.uuid" style="display:inline-flex;align-items:center;gap:4px;background:#28a745;color:white;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;">
+                        <span ng-if="consultation.mainDiagnosis.uuid"
+                            style="display:inline-flex;align-items:center;gap:4px;background:#28a745;color:white;padding:6px 12px;border-radius:4px;font-size:12px;font-weight:600;height:38px;box-sizing:border-box;margin:0;">
                             <i class="fa fa-check"></i> Coded
                         </span>
-                        <div ng-if="consultation.mainDiagnosis.icd11Code" style="display:inline-flex;align-items:center;gap:4px;background:#f5a623;color:white;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600;">
-                            <i class="fa fa-star" style="font-size:12px;"></i>
-                            ICD-11: {{consultation.mainDiagnosis.icd11Code}}
+                        <div ng-if="consultation.mainDiagnosis.icd11Code"
+                            style="display:inline-flex;align-items:center;gap:4px;background:#f5a623;color:white;padding:6px 12px;border-radius:4px;font-size:12px;font-weight:600;height:38px;box-sizing:border-box;margin:0;">
+                            <i class="fa fa-star" style="font-size:12px;"></i> ICD-11: {{consultation.mainDiagnosis.icd11Code}}
                         </div>
                         <button type="button" ng-if="consultation.mainDiagnosis.name" ng-click="clearMainDiagnosis()"
-                            style="padding:6px 10px;font-size:12px;border:1px solid #ccc;border-radius:4px;background:#f5f5f5;color:#666;cursor:pointer;">
+                            style="padding:6px 12px;font-size:12px;border:1px solid #ccc;border-radius:4px;background:#f5f5f5;color:#666;cursor:pointer;height:38px;box-sizing:border-box;margin:0;float:none;"
+                            title="Clear Main Diagnosis">
                             <i class="fa fa-remove"></i> Clear
                         </button>
                     </div>
