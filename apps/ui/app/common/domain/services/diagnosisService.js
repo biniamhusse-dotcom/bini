@@ -121,16 +121,14 @@ angular.module('bahmni.common.domain')
                             primaryDiag = d;
                         }
                     });
-                    if (primaryDiag) {
-                        var hasCoded = primaryDiag.codedAnswer && primaryDiag.codedAnswer.uuid;
+                    if (primaryDiag && primaryDiag.codedAnswer && primaryDiag.codedAnswer.uuid) {
                         consultation.mainDiagnosis = {
-                            name: primaryDiag.codedAnswer ? primaryDiag.codedAnswer.name : (primaryDiag.freeTextAnswer || ''),
-                            uuid: hasCoded ? primaryDiag.codedAnswer.uuid : '',
-                            isNonCoded: !hasCoded,
+                            name: primaryDiag.codedAnswer.name,
+                            uuid: primaryDiag.codedAnswer.uuid,
                             icd11Code: primaryDiag.icd11Code || '',
                             icd11Name: primaryDiag.icd11Name || '',
                             occurrence: primaryDiag.diagnosisOccurrence || '',
-                            conceptSystem: (primaryDiag.codedAnswer && primaryDiag.codedAnswer.conceptSystem) ? primaryDiag.codedAnswer.conceptSystem : ''
+                            conceptSystem: primaryDiag.codedAnswer.conceptSystem || ''
                         };
                     }
                 }

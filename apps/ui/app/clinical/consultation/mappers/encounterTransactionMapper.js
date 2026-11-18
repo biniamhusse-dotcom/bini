@@ -69,10 +69,9 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
             encounterData.bahmniDiagnoses = [];
         }
 
-        if (consultation.mainDiagnosis && (consultation.mainDiagnosis.uuid || consultation.mainDiagnosis.name)) {
-            var isNonCoded = !consultation.mainDiagnosis.uuid || consultation.mainDiagnosis.isNonCoded;
-            var mainConceptSystem = (!isNonCoded && consultation.mainDiagnosis.conceptSystem) ? consultation.mainDiagnosis.conceptSystem + "/" : "";
-            var mainUuid = !isNonCoded ? (mainConceptSystem + consultation.mainDiagnosis.uuid) : undefined;
+        if (consultation.mainDiagnosis && consultation.mainDiagnosis.uuid) {
+            var mainConceptSystem = consultation.mainDiagnosis.conceptSystem ? consultation.mainDiagnosis.conceptSystem + "/" : "";
+            var mainUuid = mainConceptSystem + consultation.mainDiagnosis.uuid;
             var mainComments = "";
             if (consultation.mainDiagnosis.icd11Code || consultation.mainDiagnosis.occurrence) {
                 var parts = [];
@@ -81,8 +80,8 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
                 mainComments = parts.join("");
             }
             var mainDiag = {
-                codedAnswer: isNonCoded ? undefined : { uuid: mainUuid },
-                freeTextAnswer: isNonCoded ? consultation.mainDiagnosis.name : undefined,
+                codedAnswer: { uuid: mainUuid },
+                freeTextAnswer: undefined,
                 order: "PRIMARY",
                 certainty: "CONFIRMED",
                 existingObs: null,
@@ -92,9 +91,6 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
                 comments: mainComments
             };
             var isDuplicate = encounterData.bahmniDiagnoses.some(function (d) {
-                if (isNonCoded) {
-                    return d.freeTextAnswer && d.freeTextAnswer.toLowerCase() === (mainDiag.freeTextAnswer || '').toLowerCase();
-                }
                 return d.codedAnswer && d.codedAnswer.uuid && d.codedAnswer.uuid === mainDiag.codedAnswer.uuid;
             });
             if (!isDuplicate) {

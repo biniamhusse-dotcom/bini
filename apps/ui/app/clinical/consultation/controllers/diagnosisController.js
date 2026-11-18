@@ -125,18 +125,6 @@ angular.module('bahmni.clinical')
                 return selectHandler;
             };
 
-            $scope.acceptMainDiagnosisAsNonCoded = function () {
-                if ($scope.consultation.mainDiagnosis && $scope.consultation.mainDiagnosis.name) {
-                    $scope.consultation.mainDiagnosis.isNonCoded = true;
-                    $scope.consultation.mainDiagnosis.uuid = '';
-                    var icd11Match = lookupIcd11ByName($scope.consultation.mainDiagnosis.name);
-                    if (icd11Match) {
-                        $scope.consultation.mainDiagnosis.icd11Code = icd11Match.code;
-                        $scope.consultation.mainDiagnosis.icd11Name = icd11Match.name;
-                    }
-                }
-            };
-
             $scope.onMainDiagnosisChange = function () {
                 if (!$scope.consultation.mainDiagnosis || !$scope.consultation.mainDiagnosis.name) {
                     $scope.consultation.mainDiagnosis = $scope.consultation.mainDiagnosis || {};
@@ -144,10 +132,10 @@ angular.module('bahmni.clinical')
                     $scope.consultation.mainDiagnosis.uuid = '';
                     $scope.consultation.mainDiagnosis.icd11Code = '';
                     $scope.consultation.mainDiagnosis.icd11Name = '';
-                    $scope.consultation.mainDiagnosis.isNonCoded = false;
                 } else if ($scope.consultation.mainDiagnosis.uuid && $scope.consultation.mainDiagnosis.selectedName && $scope.consultation.mainDiagnosis.selectedName !== $scope.consultation.mainDiagnosis.name) {
                     $scope.consultation.mainDiagnosis.uuid = '';
-                    $scope.consultation.mainDiagnosis.isNonCoded = false;
+                    $scope.consultation.mainDiagnosis.icd11Code = '';
+                    $scope.consultation.mainDiagnosis.icd11Name = '';
                 }
             };
 
@@ -423,15 +411,12 @@ angular.module('bahmni.clinical')
 
             var contextChange = function () {
                 var md = $scope.consultation.mainDiagnosis;
-                var hasMainDiagnosis = md && (md.uuid || (md.name && md.isNonCoded) || (md.name && !$scope.allowOnlyCodedDiagnosis));
+                var hasCodedMainDiagnosis = md && md.uuid;
                 var hasNewDiagnoses = $scope.consultation.newlyAddedDiagnoses.some(function (d) { return !d.isEmpty(); });
                 var hasSavedDiagnoses = $scope.consultation.savedDiagnosesFromCurrentEncounter.length > 0;
-                if (!hasMainDiagnosis && (hasNewDiagnoses || hasSavedDiagnoses)) {
-                    $scope.errorMessage = "Main Diagnosis is required. Please select or accept a Main Diagnosis before saving.";
+                if (!hasCodedMainDiagnosis && (hasNewDiagnoses || hasSavedDiagnoses || (md && md.name))) {
+                    $scope.errorMessage = "Main Diagnosis must be a coded value. Please select a diagnosis from the search list.";
                     return { allow: false, errorMessage: $scope.errorMessage };
-                }
-                if (md && md.name && !md.uuid && !md.isNonCoded && !$scope.allowOnlyCodedDiagnosis) {
-                    md.isNonCoded = true;
                 }
                 var invalidnewlyAddedDiagnoses = $scope.consultation.newlyAddedDiagnoses.filter(function (diagnosis) {
                     return isDuplicateWithNewlyAddedDiagnosis(diagnosis) || !$scope.isValid(diagnosis) || isDuplicateWithSavedDiagnosis(diagnosis) || $scope.isDiagnosisStatusValid === false;
