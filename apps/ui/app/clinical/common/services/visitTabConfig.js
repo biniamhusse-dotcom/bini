@@ -30,16 +30,37 @@ angular.module('bahmni.clinical')
                 var tabs = _.values(results[1]);
                 var firstTabWithDefaultSection = _.find(tabs, function (tab) { return tab.defaultSections; });
 
-                // TODO: Patch for #1461 lokbiradari-config: It's bad. But to err is Human, to forgive is Divine!
-                if (_.find(mandatoryConfig.sections, {title: "Treatments"}) && _.find(firstTabWithDefaultSection.sections, {title: "Treatments"})) {
-                    mandatoryConfig.sections = _.filter(mandatoryConfig.sections, function (section) {
-                        return section.title !== "Treatments";
+                if (firstTabWithDefaultSection) {
+                    var mandatorySectionsList = _.values(mandatoryConfig.sections);
+                    var customSectionsList = _.values(firstTabWithDefaultSection.sections);
+
+                    // Filter out mandatory sections if a section of the same type or translationKey/title already exists in custom sections
+                    mandatorySectionsList = _.filter(mandatorySectionsList, function (mandatorySec) {
+                        return !_.some(customSectionsList, function (customSec) {
+                            return (customSec.type && customSec.type === mandatorySec.type) ||
+                                (customSec.title && mandatorySec.title && customSec.title.toLowerCase() === mandatorySec.title.toLowerCase()) ||
+                                (customSec.translationKey && mandatorySec.translationKey && customSec.translationKey === mandatorySec.translationKey);
+                        });
                     });
+
+                    var combinedSections = mandatorySectionsList.concat(customSectionsList);
+
+                    // Deduplicate combined sections by type (allowing multiple distinct sections only for 'custom' display controls)
+                    var uniqueSections = [];
+                    var seenKeys = {};
+                    combinedSections.forEach(function (sec) {
+                        var key = sec.type;
+                        if (sec.type === 'custom') {
+                            key = 'custom_' + (sec.title || (sec.config && sec.config.title) || (sec.config && sec.config.conceptNames) || '');
+                        }
+                        if (!seenKeys[key]) {
+                            seenKeys[key] = true;
+                            uniqueSections.push(sec);
+                        }
+                    });
+
+                    firstTabWithDefaultSection.sections = uniqueSections;
                 }
-                var mandatorySections = _.map(_.values(mandatoryConfig.sections), function (item) {
-                    return _.assign(item, _.find(_.values(firstTabWithDefaultSection.sections), ['type', item.type]));
-                });
-                firstTabWithDefaultSection.sections = _.unionWith(_.values(mandatorySections), _.values(firstTabWithDefaultSection.sections), _.isEqual);
 
                 var tabWithDefaultSectionsExcludes = _.find(tabs, function (tab) { return tab.defaultSectionsExcludes; });
                 var excludedDefaultSections = tabWithDefaultSectionsExcludes ? tabWithDefaultSectionsExcludes.defaultSectionsExcludes : [];

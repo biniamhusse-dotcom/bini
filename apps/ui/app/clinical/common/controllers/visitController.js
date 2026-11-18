@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('bahmni.clinical')
-    .controller('VisitController', ['$scope', '$state', '$rootScope', '$q', 'encounterService', '$window', 'clinicalAppConfigService', 'configurations', 'visitSummary', '$timeout', 'printer', 'visitConfig', 'visitHistory', '$stateParams', 'locationService', 'visitService', 'appService', 'diagnosisService', 'observationsService', 'allergyService', 'auditLogService', 'sessionService', '$location',
-        function ($scope, $state, $rootScope, $q, encounterService, $window, clinicalAppConfigService, configurations, visitSummary, $timeout, printer, visitConfig, visitHistory, $stateParams, locationService, visitService, appService, diagnosisService, observationsService, allergyService, auditLogService, sessionService, $location) {
+    .controller('VisitController', ['$scope', '$state', '$rootScope', '$q', 'encounterService', '$window', 'clinicalAppConfigService', 'configurations', 'visitSummary', '$timeout', 'printer', 'visitConfig', 'visitHistory', '$stateParams', 'locationService', 'visitService', 'appService', 'diagnosisService', 'observationsService', 'allergyService', 'auditLogService', 'sessionService', '$location', 'ethiopianGregorianService',
+        function ($scope, $state, $rootScope, $q, encounterService, $window, clinicalAppConfigService, configurations, visitSummary, $timeout, printer, visitConfig, visitHistory, $stateParams, locationService, visitService, appService, diagnosisService, observationsService, allergyService, auditLogService, sessionService, $location, ethiopianGregorianService) {
             function handleLogoutShortcut (event) {
                 if ((event.metaKey || event.ctrlKey) && event.key === $rootScope.quickLogoutComboKey) {
                     $scope.ipdDashboard.hostApi.onLogOut();
@@ -220,7 +220,18 @@ angular.module('bahmni.clinical')
             };
 
             $scope.visitSearchQuery = "";
+            $scope.visitFilterDate = null;
+            $scope.visitFilterTime = null;
             $scope.visibleSectionsCount = 0;
+            $scope.formattedEthDateDisplay = "";
+            $scope.formattedGregDateDisplay = "";
+            $scope.formattedTimeDisplay = "";
+
+            $scope.isFilterActive = function () {
+                return !!($scope.visitSearchQuery && $scope.visitSearchQuery.trim()) ||
+                       !!$scope.visitFilterDate ||
+                       !!$scope.visitFilterTime;
+            };
 
             var computeVisibleCount = function () {
                 if (!$scope.visitTabConfig || !$scope.visitTabConfig.currentTab || !$scope.visitTabConfig.currentTab.sections) {
@@ -233,12 +244,45 @@ angular.module('bahmni.clinical')
                 return count;
             };
 
-            $scope.applyVisitSearch = function (query) {
+            $scope.clearSearchText = function () {
+                $scope.visitSearchQuery = "";
+                $scope.applyVisitSearch();
+            };
+
+            $scope.clearFilterDate = function () {
+                $scope.visitFilterDate = null;
+                $scope.formattedEthDateDisplay = "";
+                $scope.formattedGregDateDisplay = "";
+                $scope.applyVisitSearch();
+            };
+
+            $scope.clearFilterTime = function () {
+                $scope.visitFilterTime = null;
+                $scope.formattedTimeDisplay = "";
+                $scope.applyVisitSearch();
+            };
+
+            $scope.resetAllFilters = function () {
+                $scope.visitSearchQuery = "";
+                $scope.visitFilterDate = null;
+                $scope.visitFilterTime = null;
+                $scope.formattedEthDateDisplay = "";
+                $scope.formattedGregDateDisplay = "";
+                $scope.formattedTimeDisplay = "";
+                $scope.applyVisitSearch();
+            };
+
+            $scope.clearVisitSearch = function () {
+                $scope.resetAllFilters();
+            };
+
+            $scope.applyVisitSearch = function () {
                 if (!$scope.visitTabConfig || !$scope.visitTabConfig.currentTab || !$scope.visitTabConfig.currentTab.sections) {
                     return;
                 }
                 var sections = $scope.visitTabConfig.currentTab.sections;
-                if (!query || query.trim() === "") {
+
+                if (!$scope.isFilterActive()) {
                     sections.forEach(function (s) {
                         s._hiddenBySearch = false;
                     });
@@ -246,52 +290,112 @@ angular.module('bahmni.clinical')
                     return;
                 }
 
-                var q = query.trim().toLowerCase();
+                var textQuery = ($scope.visitSearchQuery || "").trim().toLowerCase();
+
+                // Prepare Gregorian & Ethiopian date strings for matching
+                var dateVariants = [];
+                if ($scope.visitFilterDate) {
+                    var d = new Date($scope.visitFilterDate);
+                    if (!isNaN(d.getTime())) {
+                        var day = d.getDate();
+                        var monthNum = d.getMonth() + 1;
+                        var year = d.getFullYear();
+                        var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                        var monthName = monthNames[d.getMonth()];
+                        var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+
+                        // Gregorian variants
+                        dateVariants.push(day + " " + monthName + " " + year);
+                        dateVariants.push(pad(day) + " " + monthName + " " + year);
+                        dateVariants.push(pad(day) + "-" + monthName + "-" + year);
+                        dateVariants.push(year + "-" + pad(monthNum) + "-" + pad(day));
+                        dateVariants.push(pad(day) + "/" + pad(monthNum) + "/" + year);
+                        dateVariants.push(monthNum + "/" + day + "/" + year);
+
+                        $scope.formattedGregDateDisplay = pad(day) + "-" + monthName + "-" + year;
+
+                        // Ethiopian variants
+                        if (ethiopianGregorianService) {
+                            if (typeof ethiopianGregorianService.gregToEth === 'function') {
+                                var ethDmy = ethiopianGregorianService.gregToEth(d);
+                                if (ethDmy) {
+                                    dateVariants.push(ethDmy);
+                                    $scope.formattedEthDateDisplay = ethDmy;
+                                }
+                            }
+                            if (typeof ethiopianGregorianService.gregToEthMonthName === 'function') {
+                                var ethText = ethiopianGregorianService.gregToEthMonthName(d);
+                                if (ethText) {
+                                    dateVariants.push(ethText);
+                                    $scope.formattedEthDateDisplay = ethText;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Prepare time query for matching
+                var timeQuery = "";
+                if ($scope.visitFilterTime) {
+                    if ($scope.visitFilterTime instanceof Date) {
+                        var padTime = function (n) { return n < 10 ? '0' + n : '' + n; };
+                        timeQuery = padTime($scope.visitFilterTime.getHours()) + ":" + padTime($scope.visitFilterTime.getMinutes());
+                    } else if (typeof $scope.visitFilterTime === 'string') {
+                        timeQuery = $scope.visitFilterTime.trim();
+                    }
+                    $scope.formattedTimeDisplay = timeQuery;
+                }
+
                 var domWrappers = document.querySelectorAll('.visit-section-wrapper');
 
                 sections.forEach(function (section, index) {
-                    var matches = false;
+                    var matchesText = true;
+                    var matchesDate = true;
+                    var matchesTime = true;
 
-                    // 1. Match section title / config title
-                    var title = (section.title || (section.config && section.config.title) || "").toLowerCase();
-                    if (title.indexOf(q) !== -1) matches = true;
+                    var domText = "";
+                    if (domWrappers && domWrappers[index]) {
+                        domText = (domWrappers[index].innerText || domWrappers[index].textContent || "").toLowerCase();
+                    }
 
-                    // 2. Match section translationKey
-                    if (section.translationKey && section.translationKey.toLowerCase().indexOf(q) !== -1) matches = true;
-
-                    // 3. Match section type
-                    if (section.type && section.type.toLowerCase().indexOf(q) !== -1) matches = true;
-
-                    // 4. Match conceptNames (forms, observation groups)
-                    if (section.config && section.config.conceptNames) {
-                        var cns = Array.isArray(section.config.conceptNames) ? section.config.conceptNames : [section.config.conceptNames];
-                        if (cns.some(function (c) { return String(c).toLowerCase().indexOf(q) !== -1; })) {
-                            matches = true;
+                    // 1. Text filter evaluation
+                    if (textQuery) {
+                        var title = (section.title || (section.config && section.config.title) || "").toLowerCase();
+                        var transKey = (section.translationKey || "").toLowerCase();
+                        var type = (section.type || "").toLowerCase();
+                        var cnsMatch = false;
+                        if (section.config && section.config.conceptNames) {
+                            var cns = Array.isArray(section.config.conceptNames) ? section.config.conceptNames : [section.config.conceptNames];
+                            cnsMatch = cns.some(function (c) { return String(c).toLowerCase().indexOf(textQuery) !== -1; });
                         }
+                        var providerMatch = ($scope.providerNames && $scope.providerNames.toLowerCase().indexOf(textQuery) !== -1);
+                        var domMatch = domText.indexOf(textQuery) !== -1;
+
+                        matchesText = (title.indexOf(textQuery) !== -1) ||
+                                      (transKey.indexOf(textQuery) !== -1) ||
+                                      (type.indexOf(textQuery) !== -1) ||
+                                      cnsMatch ||
+                                      providerMatch ||
+                                      domMatch;
                     }
 
-                    // 5. Match provider names from visit header or encounter
-                    if ($scope.providerNames && $scope.providerNames.toLowerCase().indexOf(q) !== -1) {
-                        matches = true;
+                    // 2. Date filter evaluation
+                    if (dateVariants.length > 0) {
+                        matchesDate = dateVariants.some(function (dv) {
+                            return domText.indexOf(dv.toLowerCase()) !== -1;
+                        });
                     }
 
-                    // 6. Match DOM inner text: saved dates, times, entered clinician user names, form values
-                    if (!matches && domWrappers && domWrappers[index]) {
-                        var text = (domWrappers[index].innerText || domWrappers[index].textContent || "").toLowerCase();
-                        if (text.indexOf(q) !== -1) {
-                            matches = true;
-                        }
+                    // 3. Time filter evaluation
+                    if (timeQuery) {
+                        matchesTime = (domText.indexOf(timeQuery.toLowerCase()) !== -1);
                     }
 
+                    var matches = matchesText && matchesDate && matchesTime;
                     section._hiddenBySearch = !matches;
                 });
 
                 $scope.visibleSectionsCount = computeVisibleCount();
-            };
-
-            $scope.clearVisitSearch = function () {
-                $scope.visitSearchQuery = "";
-                $scope.applyVisitSearch("");
             };
 
             var init = function () {
