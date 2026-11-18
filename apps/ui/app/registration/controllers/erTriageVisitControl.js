@@ -81,55 +81,128 @@ angular.module('bahmni.registration')
                     method: "GET",
                     params: params,
                     withCredentials: true
+                }).catch(function () {
+                    return { data: { results: [] } };
+                });
+            };
+
+            var getEffectiveVisitTypeUuid = function () {
+                if ($scope.visitTypeUuid) return $scope.visitTypeUuid;
+                if (vm.visitTypeUuid) return vm.visitTypeUuid;
+                var allVisitTypes = ($rootScope.regEncounterConfiguration && typeof $rootScope.regEncounterConfiguration.getVisitTypesAsArray === 'function')
+                    ? $rootScope.regEncounterConfiguration.getVisitTypesAsArray()
+                    : [];
+                var loginLocationCookie = $bahmniCookieStore.get(Bahmni.Common.Constants.locationCookieName);
+                var curLocationUuid = (loginLocationCookie && loginLocationCookie.uuid) || locationUuid;
+                var defaultVisitType = ($rootScope.regEncounterConfiguration && curLocationUuid)
+                    ? $rootScope.regEncounterConfiguration.getDefaultVisitType(curLocationUuid)
+                    : appService.getAppDescriptor().getConfigValue('defaultVisitType');
+                var matched = erTriageConfigService.resolveVisitTypeForTriage(triageType, allVisitTypes, defaultVisitType);
+                if (matched && matched.uuid) {
+                    return matched.uuid;
+                }
+                if (defaultVisitType) {
+                    return (typeof defaultVisitType === 'object') ? defaultVisitType.uuid : defaultVisitType;
+                }
+                return null;
+            };
+
+            var getEffectiveVisitLocationUuid = function () {
+                var loginLocationCookie = $bahmniCookieStore.get(Bahmni.Common.Constants.locationCookieName);
+                var fallbackLoc = (loginLocationCookie && loginLocationCookie.uuid) || visitLocationUuid || locationUuid;
+                return erTriageConfigService.resolveVisitLocationForTriage(triageType, fallbackLoc) || fallbackLoc;
+            };
+
+            var ensureActiveVisit = function () {
+                if (vm.visitUuid) {
+                    return $q.when(vm.visitUuid);
+                }
+                var targetLocation = getEffectiveVisitLocationUuid();
+                var targetVisitTypeUuid = getEffectiveVisitTypeUuid();
+                if (!targetVisitTypeUuid) {
+                    return $q.when(null);
+                }
+                var visitDetails = {
+                    patient: patientUuid,
+                    visitType: targetVisitTypeUuid,
+                    location: targetLocation
+                };
+                return visitService.createVisit(visitDetails).then(function (response) {
+                    if (response && response.data && response.data.uuid) {
+                        vm.visitUuid = response.data.uuid;
+                        vm.visitTypeUuid = (response.data.visitType && response.data.visitType.uuid) || targetVisitTypeUuid;
+                        $scope.canCloseVisit = isUserPrivilegedToCloseVisit();
+                        return vm.visitUuid;
+                    }
+                    return null;
+                }, function () {
+                    return null;
                 });
             };
 
             var save = function () {
-                return getFee("Emergency Registration Fee").then(function (r) {
-                    $scope.encounter = {
-                        patientUuid: $scope.patient.uuid,
-                        locationUuid: locationUuid,
-                        encounterTypeUuid: regEncounterTypeUuid,
-                        orders: [],
-                        drugOrders: [],
-                        extensions: {}
-                    };
+                return ensureActiveVisit().then(function (activeVisitUuid) {
+                    return getFee("Emergency Registration Fee").then(function (r) {
+                        var effectiveVisitUuid = activeVisitUuid || vm.visitUuid || $scope.visitUuid;
+                        var effectiveVisitTypeUuid = vm.visitTypeUuid || getEffectiveVisitTypeUuid();
+                        var effectiveVisitLocationUuid = getEffectiveVisitLocationUuid();
 
-                    if (r.data.results && r.data.results[0]) {
-                        $scope.encounter.orders.push({
-                            concept: {
-                                name: r.data.results[0].display,
-                                uuid: r.data.results[0].uuid
-                            },
-                            commentToFulfiller: "",
-                            urgency: "ROUTINE"
-                        });
-                    }
+                        $scope.encounter = {
+                            patientUuid: $scope.patient.uuid,
+                            locationUuid: locationUuid,
+                            encounterTypeUuid: regEncounterTypeUuid,
+                            orders: [],
+                            drugOrders: [],
+                            extensions: {}
+                        };
 
-                    $bahmniCookieStore.put(Bahmni.Common.Constants.grantProviderAccessDataCookieName, selectedProvider, {
-                        path: '/',
-                        expires: 1
-                    });
+                        if (effectiveVisitUuid) {
+                            $scope.encounter.visitUuid = effectiveVisitUuid;
+                        }
+                        if (effectiveVisitTypeUuid) {
+                            $scope.encounter.visitTypeUuid = effectiveVisitTypeUuid;
+                        }
+                        if (effectiveVisitLocationUuid) {
+                            $scope.encounter.visitLocationUuid = effectiveVisitLocationUuid;
+                        }
 
-                    $scope.encounter.observations = $scope.observations;
-                    $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
-
-            
-                    addFormObservations($scope.encounter.observations);
-
-                    var createPromise = encounterService.create($scope.encounter);
-                    spinner.forPromise(createPromise);
-                    return createPromise.then(function (response) {
-                        var messageParams = {encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType};
-                        auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
-                        var visitType, visitTypeUuid;
-                        visitTypeUuid = response.data.visitTypeUuid;
-                        visitService.getVisitType().then(function (response) {
-                            visitType = _.find(response.data.results, function (type) {
-                                if (type.uuid === visitTypeUuid) {
-                                    return type;
-                                }
+                        if (r && r.data && r.data.results && r.data.results[0]) {
+                            $scope.encounter.orders.push({
+                                concept: {
+                                    name: r.data.results[0].display,
+                                    uuid: r.data.results[0].uuid
+                                },
+                                commentToFulfiller: "",
+                                urgency: "ROUTINE"
                             });
+                        }
+
+                        $bahmniCookieStore.put(Bahmni.Common.Constants.grantProviderAccessDataCookieName, selectedProvider, {
+                            path: '/',
+                            expires: 1
+                        });
+
+                        $scope.encounter.observations = $scope.observations;
+                        $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
+
+                        addFormObservations($scope.encounter.observations);
+
+                        var createPromise = encounterService.create($scope.encounter);
+                        spinner.forPromise(createPromise);
+                        return createPromise.then(function (response) {
+                            var messageParams = {encounterUuid: response.data.encounterUuid, encounterType: response.data.encounterType};
+                            auditLogService.log(patientUuid, 'EDIT_ENCOUNTER', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
+                            var visitType, visitTypeUuid;
+                            visitTypeUuid = (response.data && response.data.visitTypeUuid) || effectiveVisitTypeUuid;
+                            if (visitTypeUuid) {
+                                visitService.getVisitType().then(function (vtResponse) {
+                                    visitType = _.find(vtResponse.data.results, function (type) {
+                                        if (type.uuid === visitTypeUuid) {
+                                            return type;
+                                        }
+                                    });
+                                });
+                            }
                         });
                     });
                 });
@@ -147,21 +220,36 @@ angular.module('bahmni.registration')
 
             var searchActiveVisitsPromise = function () {
                 return visitService.search({
-                    patient: patientUuid, includeInactive: false, v: "custom:(uuid,location:(uuid))"
+                    patient: patientUuid,
+                    includeInactive: false,
+                    v: "custom:(uuid,location:(uuid),visitType:(uuid,name))"
                 }).then(function (response) {
                     var results = (response.data && response.data.results) ? response.data.results : [];
+                    var targetLocation = getEffectiveVisitLocationUuid();
+                    var targetVisitTypeUuid = getEffectiveVisitTypeUuid();
                     var matchedVisit = null;
                     if (results.length > 0) {
-                        if (visitLocationUuid) {
+                        if (targetLocation) {
+                            matchedVisit = _.find(results, function (result) {
+                                return result.location && result.location.uuid === targetLocation;
+                            });
+                        }
+                        if (!matchedVisit && targetVisitTypeUuid) {
+                            matchedVisit = _.find(results, function (result) {
+                                return result.visitType && result.visitType.uuid === targetVisitTypeUuid;
+                            });
+                        }
+                        if (!matchedVisit && visitLocationUuid) {
                             matchedVisit = _.find(results, function (result) {
                                 return result.location && result.location.uuid === visitLocationUuid;
                             });
                         }
-                        matchedVisit = matchedVisit || results[0];
+                        matchedVisit = matchedVisit || results[results.length - 1];
                     }
 
                     var hasActiveVisit = !!matchedVisit;
                     vm.visitUuid = hasActiveVisit ? matchedVisit.uuid : "";
+                    vm.visitTypeUuid = (matchedVisit && matchedVisit.visitType && matchedVisit.visitType.uuid) || targetVisitTypeUuid;
                     $scope.canCloseVisit = isUserPrivilegedToCloseVisit() && hasActiveVisit;
                 });
             };
@@ -318,7 +406,9 @@ angular.module('bahmni.registration')
             };
 
             var getConceptSet = function () {
-                var visitType = $scope.encounterConfig.getVisitTypeByUuid($scope.visitTypeUuid);
+                var encConfig = $scope.encounterConfig || $rootScope.encounterConfig;
+                var effectiveVisitTypeUuid = getEffectiveVisitTypeUuid();
+                var visitType = (encConfig && encConfig.getVisitTypeByUuid && effectiveVisitTypeUuid) ? encConfig.getVisitTypeByUuid(effectiveVisitTypeUuid) : null;
                 $scope.context = {visitType: visitType, patient: $scope.patient};
             };
 
@@ -374,15 +464,27 @@ angular.module('bahmni.registration')
                   });
                 };
 
-                $scope.GotoDispositionPage =  async function () {
-                var results = await fetchLatestObsFor(['Triage Color Result', 'Triage Score Result']);
-                var url = '';
-                    if(results.length > 0){
-                     url = '../clinical/index.html#/default/patient/'+patientUuid+'/dashboard/disposition?TriageScoreResult=' + results[1].value + ' &TriageColorResult=' + results[0].value ;
-                      } else {
-                     url = '../clinical/index.html#/default/patient/'+patientUuid+'/dashboard/disposition' ;
-                      }
-                    $window.location.href = url;
+                $scope.GotoDispositionPage = async function () {
+                    try {
+                        var results = await fetchLatestObsFor(['Triage Color Result', 'Triage Score Result']);
+                        var scoreObs = _.find(results, function (obs) {
+                            return obs.concept && (obs.concept.name === 'Triage Score Result' || obs.concept.name === 'Triage Score');
+                        }) || (results && results[1]);
+                        var colorObs = _.find(results, function (obs) {
+                            return obs.concept && (obs.concept.name === 'Triage Color Result' || obs.concept.name === 'Triage Color');
+                        }) || (results && results[0]);
+
+                        var scoreVal = scoreObs ? (scoreObs.value || '') : '';
+                        var colorVal = colorObs ? (colorObs.value || '') : '';
+
+                        var url = '../clinical/index.html#/default/patient/' + patientUuid + '/dashboard/disposition';
+                        if (scoreVal || colorVal) {
+                            url += '?TriageScoreResult=' + encodeURIComponent(scoreVal) + '&TriageColorResult=' + encodeURIComponent(colorVal);
+                        }
+                        $window.location.href = url;
+                    } catch (e) {
+                        $window.location.href = '../clinical/index.html#/default/patient/' + patientUuid + '/dashboard/disposition';
+                    }
                 };
             
         }]);
