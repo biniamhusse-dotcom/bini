@@ -59,14 +59,23 @@
       this.patientName = params.get('patientName') || null;
       this.encounterUuid = params.get('encounterUuid') || null;
       this.currentObsUuid = params.get('obsUuid') || null;
+      this.visitUuid = params.get('visitUuid') || null;
       this.isNewParam = params.get('new') === 'true';
 
-      // Fallback: extract patientUuid from parent window URL hash if embedded
+      // Fallback: extract patientUuid & visitUuid from parent window URL hash if embedded
       if (!this.patientUuid) {
         try {
           var hash = (window.parent && window.parent.location.hash) || window.location.hash || '';
           var m = hash.match(/patient\/([a-f0-9\-]+)/i);
           if (m) this.patientUuid = m[1];
+        } catch (e) {}
+      }
+
+      if (!this.visitUuid) {
+        try {
+          var hash = (window.parent && window.parent.location.hash) || window.location.hash || '';
+          var vm = hash.match(/visit\/([a-f0-9\-]+)/i);
+          if (vm) this.visitUuid = vm[1];
         } catch (e) {}
       }
 
@@ -1094,6 +1103,9 @@
           }
         ]
       };
+      if (this.visitUuid) {
+        encounterPayload.visit = this.visitUuid;
+      }
 
       try {
         var encUrl = this.encounterUuid ? `/openmrs/ws/rest/v1/encounter/${this.encounterUuid}` : '/openmrs/ws/rest/v1/encounter';

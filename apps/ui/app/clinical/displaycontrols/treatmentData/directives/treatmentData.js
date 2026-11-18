@@ -29,8 +29,20 @@ angular.module('bahmni.clinical')
                     getEffectiveOrdersOnly = true;
                 }
 
-                return $q.all([treatmentConfig(), treatmentService.getPrescribedAndActiveDrugOrders($scope.params.patientUuid, $scope.params.numberOfVisits,
-                    $scope.params.showOtherActive, $scope.params.visitUuids || [], startDate, endDate, getEffectiveOrdersOnly)])
+                var resolvedPatientUuid = ($scope.patient && $scope.patient.uuid) ||
+                    ($scope.params && $scope.params.patientUuid) ||
+                    ($scope.visitSummary && $scope.visitSummary.patientUuid) ||
+                    $stateParams.patientUuid ||
+                    ($scope.$parent && $scope.$parent.patient && $scope.$parent.patient.uuid);
+                var currentVisitUuid = $stateParams.visitUuid || ($scope.visitSummary && $scope.visitSummary.uuid);
+                var resolvedVisitUuids = ($scope.params && $scope.params.visitUuids) || (currentVisitUuid ? [currentVisitUuid] : []);
+                if ($scope.params) {
+                    $scope.params.patientUuid = resolvedPatientUuid;
+                    $scope.params.visitUuids = resolvedVisitUuids;
+                }
+
+                return $q.all([treatmentConfig(), treatmentService.getPrescribedAndActiveDrugOrders(resolvedPatientUuid, $scope.params.numberOfVisits,
+                    $scope.params.showOtherActive, resolvedVisitUuids, startDate, endDate, getEffectiveOrdersOnly)])
                     .then(function (results) {
                         var config = results[0];
                         var drugOrderResponse = results[1].data;
@@ -76,7 +88,8 @@ angular.module('bahmni.clinical')
             link: link,
             scope: {
                 params: "=",
-                visitSummary: "=?"
+                visitSummary: "=?",
+                patient: "=?"
             },
             templateUrl: "displaycontrols/treatmentData/views/treatmentData.html"
         };

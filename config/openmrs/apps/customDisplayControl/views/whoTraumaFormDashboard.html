@@ -220,7 +220,7 @@
   </div>
 
   <!-- Empty State (No record for patient) -->
-  <div ng-if="!loading && !hasRecord" style="text-align: center; padding: 24px 12px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
+  <div ng-if="!loading && !hasRecord && !isVisitView" style="text-align: center; padding: 24px 12px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
     <p style="margin: 0 0 10px; font-size: 13px; color: #475569;">No active WHO Emergency Unit Trauma record for this patient encounter yet.</p>
     <button type="button" ng-click="openNewForm()" style="background: #0b5cab; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
       <i class="fa fa-plus-circle"></i>
@@ -228,4 +228,15 @@
     </button>
   </div>
 
+
+<div ng-if="!loading && !hasRecord && isVisitView" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 12px; color: #64748b; margin-bottom: 8px;">
+  <div style="display: flex; align-items: center; gap: 6px;">
+    <i class="fa fa-info-circle" style="color: #94a3b8;"></i>
+    <span>No <strong>WHO Emergency Unit Form - Trauma</strong> record documented for this visit.</span>
+  </div>
+  <button type="button" ng-click="openNewForm()" style="background: #0b5cab; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+    <i class="fa fa-plus"></i>
+    <span>Document for this Visit</span>
+  </button>
+</div>
 </div>

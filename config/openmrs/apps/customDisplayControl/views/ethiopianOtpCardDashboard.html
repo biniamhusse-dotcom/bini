@@ -79,3 +79,14 @@
     </div>
   </div>
 </div>
+<div ng-if="!loading && !hasRecord && isVisitView" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 12px; color: #64748b; margin-bottom: 8px;">
+  <div style="display: flex; align-items: center; gap: 6px;">
+    <i class="fa fa-info-circle" style="color: #94a3b8;"></i>
+    <span>No <strong>Ethiopian OTP Follow-Up Card</strong> record documented for this visit.</span>
+  </div>
+  <button type="button" ng-click="openNewForm()" style="background: #0284c7; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+    <i class="fa fa-plus"></i>
+    <span>Document for this Visit</span>
+  </button>
+</div>
+

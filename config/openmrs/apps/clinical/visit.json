@@ -29,17 +29,15 @@
                     "labConcepts": ""
                 }
             },
-            "pacsOrders": {
-                "type": "pacsOrders",
-                "displayOrder": 1,
-                "translationKey": "PACS_ORDERS_VISIT_PAGE_KEY",
-                "config": {
-                    "orderType": "Radiology Order"
-                }
+            "conditions": {
+                "title": "Conditions",
+                "type": "conditionsList",
+                "displayOrder": 2,
+                "config": {}
             },
             "labInvestigations": {
                 "type": "labOrders",
-                "displayOrder": 2,
+                "displayOrder": 3,
                 "config": {
                     "translationKey": "LAB_INVESTIGATION",
                     "showChart": true,
@@ -55,11 +53,92 @@
                     }
                 }
             },
-            "conditions": {
-                "title": "Conditions",
-                "type": "conditionsList",
-                "displayOrder": 2,
-                "config": {}
+            "treatments": {
+                "translationKey": "VISIT_TITLE_TREATMENTS_KEY",
+                "type": "treatment",
+                "displayOrder": 4,
+                "config": {
+                    "translationKey": "VISIT_TITLE_TREATMENTS_KEY",
+                    "showFlowSheet": true,
+                    "showListView": true,
+                    "showOtherActive": false,
+                    "showDetailsButton": true,
+                    "showRoute": true,
+                    "showDrugForm": true,
+                    "showProvider": true
+                }
+            },
+            "whoLabourCareGuide": {
+                "type": "custom",
+                "displayOrder": 15,
+                "config": {
+                    "title": "WHO Labour Care Guide",
+                    "template": "<who-labour-care-guide section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></who-labour-care-guide>"
+                }
+            },
+            "whoTraumaForm": {
+                "type": "custom",
+                "displayOrder": 16,
+                "config": {
+                    "title": "WHO Emergency Unit Form - Trauma",
+                    "template": "<who-trauma-form section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></who-trauma-form>"
+                }
+            },
+            "whoPphObservationChart": {
+                "type": "custom",
+                "displayOrder": 17,
+                "config": {
+                    "title": "WHO Postpartum Hemorrhage (PPH) Observation Chart",
+                    "template": "<who-pph-observation-chart section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></who-pph-observation-chart>"
+                }
+            },
+            "ethiopianOtpCard": {
+                "type": "custom",
+                "displayOrder": 18,
+                "config": {
+                    "title": "Ethiopian OTP Follow-Up Card",
+                    "template": "<ethiopian-otp-card section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></ethiopian-otp-card>"
+                }
+            },
+            "fmohDmHypertensionFollowUp": {
+                "type": "custom",
+                "displayOrder": 19,
+                "config": {
+                    "title": "FMOH Ethiopia DM & Hypertension Follow-Up",
+                    "template": "<fmoh-dm-hypertension-follow-up section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></fmoh-dm-hypertension-follow-up>"
+                }
+            },
+            "ophthalmicEyeExam": {
+                "type": "custom",
+                "displayOrder": 20,
+                "config": {
+                    "title": "Ophthalmic Eye Examination Record",
+                    "template": "<ophthalmic-eye-exam section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></ophthalmic-eye-exam>"
+                }
+            },
+            "nationalPerioperativeForms": {
+                "type": "custom",
+                "displayOrder": 21,
+                "config": {
+                    "title": "National Perioperative Clinical Forms",
+                    "template": "<national-perioperative-forms section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></national-perioperative-forms>"
+                }
+            },
+            "safeChildbirthChecklist": {
+                "type": "custom",
+                "displayOrder": 22,
+                "config": {
+                    "title": "Safe Childbirth Checklist (Ethiopian)",
+                    "template": "<safe-childbirth-checklist section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></safe-childbirth-checklist>"
+                }
+            },
+            "stabilisationCentreMultiChart": {
+                "type": "custom",
+                "displayOrder": 23,
+                "config": {
+                    "title": "Stabilisation Centre (SC) Multi-Chart",
+                    "template": "<stabilisation-centre-multi-chart section='config' patient='patient' visit-uuid='visitUuid' visit-summary='visitSummary'></stabilisation-centre-multi-chart>"
+                }
             }
         },
         "encounterContext": {

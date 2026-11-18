@@ -47,6 +47,11 @@
   "DASHBOARD_TAB_ORDERS_KEY": "Orders",
 
   "LAB_INVESTIGATIONS_KEY":"Lab Investigations",
+  "LAB_ORDERS_KEY": "Lab Orders",
+  "VISIT_TITLE_LAB_ORDERS_KEY": "Lab Orders",
+  "VISIT_TITLE_RADIOLOGY_DOCUMENTS_KEY": "Radiology Documents",
+  "VISIT_TITLE_TREATMENTS_KEY": "Treatments",
+  "NO_TREATMENTS_MESSAGE": "No treatments for this patient.",
   "PACS_ORDERS_VISIT_PAGE_KEY": "Pacs Orders Visit Page",
 
   "DISCHARGE_SUMMARY_DIAGNOSIS_KEY" :"Diagnosis",

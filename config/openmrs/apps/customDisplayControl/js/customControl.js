@@ -151,7 +151,7 @@ angular.module('bahmni.common.displaycontrol.custom')
     }
 }]).directive('patientAppointmentsDashboard', ['$http', '$q', '$window','appService', 'virtualConsultService', function ($http, $q, $window, appService, virtualConsultService) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/patientAppointmentsDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/patientAppointmentsDashboard.html?v=20261118_v1";
         var getUpcomingAppointments = function () {
             var params = {
                 q: "bahmni.sqlGet.upComingAppointments",
@@ -243,13 +243,15 @@ angular.module('bahmni.common.displaycontrol.custom')
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
 }]).directive('whoLabourCareGuide', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoLabourCareGuideDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -318,6 +320,14 @@ var getPatientUuid = function () {
                    ($scope.patientUuid);
         };
 
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
         $scope.refreshObs = function () {
             $scope.loading = true;
             spinner.forPromise(fetchLabourCareGuideObs());
@@ -352,6 +362,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -368,6 +382,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/WHO%20Labour%20Care%20Guide.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -442,13 +460,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: conceptUuid,
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sortedResults = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sortedResults = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -589,13 +629,15 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
 }]).directive('whoTraumaForm', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoTraumaFormDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -679,6 +721,30 @@ var getPatientUuid = function () {
                    ($scope.patientUuid);
         };
 
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
         $scope.refreshObs = function () {
             $scope.loading = true;
             spinner.forPromise(fetchTraumaObs());
@@ -713,6 +779,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -729,6 +799,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/WHO%20Emergency%20Unit%20Form_%20Trauma.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -785,13 +859,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: conceptUuid,
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sortedResults = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sortedResults = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -917,14 +1013,16 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
 }])
 .directive('ethiopianOtpCard', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ethiopianOtpCardDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ethiopianOtpCardDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -971,6 +1069,30 @@ var getPatientUuid = function () {
                    ($stateParams && $stateParams.patientUuid) ||
                    ($scope.section && $scope.section.patientUuid) ||
                    ($scope.patientUuid);
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
         };
 
         $scope.$watch('hasRecord', function (hasRec) {
@@ -1013,6 +1135,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -1025,6 +1151,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/ethiopian_otp_follow_up_card.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -1041,13 +1171,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: 'e0790001-3d71-4569-b1d5-894000000002',
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sorted = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sorted = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -1156,7 +1308,9 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
@@ -1165,7 +1319,7 @@ var getPatientUuid = function () {
 
 .directive('fmohDmHypertensionFollowUp', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/fmohDmHypertensionDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/fmohDmHypertensionDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1212,6 +1366,30 @@ var getPatientUuid = function () {
                    ($stateParams && $stateParams.patientUuid) ||
                    ($scope.section && $scope.section.patientUuid) ||
                    ($scope.patientUuid);
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
         };
 
         $scope.$watch('hasRecord', function (hasRec) {
@@ -1254,6 +1432,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -1266,6 +1448,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/fmoh_ethiopia_dm_hypertension_follow_up_form.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -1282,13 +1468,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: 'e0790003-3d71-4569-b1d5-894000000004',
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sorted = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sorted = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -1397,7 +1605,9 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
@@ -1406,7 +1616,7 @@ var getPatientUuid = function () {
 
 .directive('ophthalmicEyeExam', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ophthalmicEyeExamDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/ophthalmicEyeExamDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1453,6 +1663,30 @@ var getPatientUuid = function () {
                    ($stateParams && $stateParams.patientUuid) ||
                    ($scope.section && $scope.section.patientUuid) ||
                    ($scope.patientUuid);
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
         };
 
         $scope.$watch('hasRecord', function (hasRec) {
@@ -1495,6 +1729,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -1507,6 +1745,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/interactive_ophthalmic_eye_examination_form.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -1523,13 +1765,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: 'e0790005-3d71-4569-b1d5-894000000006',
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sorted = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sorted = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -1638,7 +1902,9 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
@@ -1647,7 +1913,7 @@ var getPatientUuid = function () {
 
 .directive('nationalPerioperativeForms', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/nationalPerioperativeDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/nationalPerioperativeDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1694,6 +1960,30 @@ var getPatientUuid = function () {
                    ($stateParams && $stateParams.patientUuid) ||
                    ($scope.section && $scope.section.patientUuid) ||
                    ($scope.patientUuid);
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
         };
 
         $scope.$watch('hasRecord', function (hasRec) {
@@ -1736,6 +2026,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -1748,6 +2042,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/National_Perioperative_Clinical_Forms.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -1764,13 +2062,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: 'e0790007-3d71-4569-b1d5-894000000008',
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sorted = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sorted = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -1879,7 +2199,9 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
@@ -1888,7 +2210,7 @@ var getPatientUuid = function () {
 
 .directive('safeChildbirthChecklist', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/safeChildbirthChecklistDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/safeChildbirthChecklistDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -1935,6 +2257,30 @@ var getPatientUuid = function () {
                    ($stateParams && $stateParams.patientUuid) ||
                    ($scope.section && $scope.section.patientUuid) ||
                    ($scope.patientUuid);
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
         };
 
         $scope.$watch('hasRecord', function (hasRec) {
@@ -1977,6 +2323,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -1989,6 +2339,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/safe_childbirth_checklist_ethiopian.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -2005,13 +2359,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: 'e0790009-3d71-4569-b1d5-894000000010',
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sorted = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sorted = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -2120,7 +2496,9 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
@@ -2129,7 +2507,7 @@ var getPatientUuid = function () {
 
 .directive('stabilisationCentreMultiChart', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/stabilisationCentreDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/stabilisationCentreDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -2176,6 +2554,30 @@ var getPatientUuid = function () {
                    ($stateParams && $stateParams.patientUuid) ||
                    ($scope.section && $scope.section.patientUuid) ||
                    ($scope.patientUuid);
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
         };
 
         $scope.$watch('hasRecord', function (hasRec) {
@@ -2218,6 +2620,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -2230,6 +2636,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/stabilisation_centre_sc_multi_chart_with_ethiopian_calendar_picker.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -2246,13 +2656,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: 'e0790011-3d71-4569-b1d5-894000000012',
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sorted = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sorted = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -2361,7 +2793,9 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };
@@ -2370,7 +2804,7 @@ var getPatientUuid = function () {
 
 .directive('whoPphObservationChart', ['$http', '$q', '$window', '$stateParams', 'appService', 'spinner', function ($http, $q, $window, $stateParams, appService, spinner) {
     var link = function ($scope, element) {
-        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoPphDashboard.html?v=20261116_v7";
+        $scope.contentUrl = appService.configBaseUrl() + "/customDisplayControl/views/whoPphDashboard.html?v=20261118_v1";
         $scope.hasRecord = false;
         $scope.loading = true;
         $scope.allCharts = [];
@@ -2419,6 +2853,30 @@ var getPatientUuid = function () {
                    ($scope.patientUuid);
         };
 
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
+        var getVisitUuid = function () {
+            return ($scope.visitUuid) ||
+                   ($stateParams && $stateParams.visitUuid) ||
+                   ($scope.section && $scope.section.visitUuid) ||
+                   ($scope.visitSummary && $scope.visitSummary.uuid) ||
+                   null;
+        };
+
         $scope.$watch('hasRecord', function (hasRec) {
             if ($scope.section) {
                 $scope.section.isDataAvailable = !!hasRec;
@@ -2459,6 +2917,10 @@ var getPatientUuid = function () {
             if (chart && chart.obsUuid) {
                 url += "&obsUuid=" + encodeURIComponent(chart.obsUuid);
             }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
+            }
             $window.open(url, '_blank');
         };
 
@@ -2471,6 +2933,10 @@ var getPatientUuid = function () {
             var url = "/bahmni_config/openmrs/apps/custemForms/who_postpartum_hemorrhage_pph_clinical_observation_chart.html?patientUuid=" + encodeURIComponent(patientUuid || '') + "&new=true";
             if ($scope.patient && $scope.patient.name) {
                 url += "&patientName=" + encodeURIComponent($scope.patient.name);
+            }
+            var _vUuid = (typeof getVisitUuid === 'function') ? getVisitUuid() : null;
+            if (_vUuid && url.indexOf('visitUuid=') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'visitUuid=' + encodeURIComponent(_vUuid);
             }
             $window.open(url, '_blank');
         };
@@ -2487,13 +2953,35 @@ var getPatientUuid = function () {
                 params: {
                     patient: patientUuid,
                     concept: 'e0790013-3d71-4569-b1d5-894000000014',
-                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,encounterProviders:(display,provider:(display,person:(display)))))'
+                    v: 'custom:(uuid,obsDatetime,value,creator:(uuid,display,person:(uuid,display)),encounter:(uuid,encounterDatetime,visit:(uuid,startDatetime,stopDatetime),encounterProviders:(display,provider:(display,person:(display)))))'
                 },
                 withCredentials: true
             }).then(function (res) {
                 $scope.loading = false;
-                if (res.data && res.data.results && res.data.results.length > 0) {
-                    var sorted = res.data.results.slice().sort(function (a, b) {
+                var currentVisitUuid = getVisitUuid();
+                $scope.isVisitView = !!currentVisitUuid;
+                var rawList = (res.data && res.data.results) ? res.data.results : [];
+                if ($scope.isVisitView && currentVisitUuid) {
+                    rawList = rawList.filter(function (obs) {
+                        if (obs.encounter && obs.encounter.visit && obs.encounter.visit.uuid === currentVisitUuid) {
+                            return true;
+                        }
+                        if ($scope.visitSummary && $scope.visitSummary.startDateTime) {
+                            var vStart = new Date($scope.visitSummary.startDateTime).getTime();
+                            var vStop = $scope.visitSummary.stopDateTime ? new Date($scope.visitSummary.stopDateTime).getTime() : Date.now();
+                            var obsTime = new Date(obs.obsDatetime).getTime();
+                            if (obsTime >= (vStart - 60000) && obsTime <= (vStop + 60000)) {
+                                return true;
+                            }
+                            if (obs.obsDatetime && obs.obsDatetime.substring(0, 10) === $scope.visitSummary.startDateTime.substring(0, 10)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (rawList.length > 0) {
+                    var sorted = rawList.slice().sort(function (a, b) {
                         return new Date(b.obsDatetime).getTime() - new Date(a.obsDatetime).getTime();
                     });
 
@@ -2602,7 +3090,9 @@ var getPatientUuid = function () {
         link: link,
         scope: {
             patient: "=",
-            section: "="
+            section: "=",
+            visitUuid: "=?",
+            visitSummary: "=?"
         },
         template: '<ng-include src="contentUrl"/>'
     };

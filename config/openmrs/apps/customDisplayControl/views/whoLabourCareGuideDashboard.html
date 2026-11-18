@@ -188,7 +188,7 @@
   </div>
 
   <!-- Empty State (No record for patient) -->
-  <div ng-if="!loading && !hasRecord" style="text-align: center; padding: 28px 16px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+  <div ng-if="!loading && !hasRecord && !isVisitView" style="text-align: center; padding: 28px 16px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
     <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
     <h4 style="margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #1e293b;">No Labour Care Guide recorded yet</h4>
     <p style="margin: 0 0 14px; font-size: 12.5px; color: #64748b; max-width: 480px; margin-left: auto; margin-right: auto;">
@@ -199,4 +199,15 @@
     </button>
   </div>
 
+
+<div ng-if="!loading && !hasRecord && isVisitView" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 12px; color: #64748b; margin-bottom: 8px;">
+  <div style="display: flex; align-items: center; gap: 6px;">
+    <i class="fa fa-info-circle" style="color: #94a3b8;"></i>
+    <span>No <strong>WHO Labour Care Guide</strong> record documented for this visit.</span>
+  </div>
+  <button type="button" ng-click="openNewForm()" style="background: #0f766e; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+    <i class="fa fa-plus"></i>
+    <span>Document for this Visit</span>
+  </button>
+</div>
 </div>
