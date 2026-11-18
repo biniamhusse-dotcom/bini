@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenELIS AtomFeed Auto-Healer and Sync Watchdog
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /usr/local/bin/openelis_feed_healer.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=3s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -68,8 +68,8 @@ function start {
 
 
 function stop {
-    echo "Executing command: 'docker compose down' with all profiles"
-    docker compose --env-file "$file" --profile emr --profile bahmni-lite --profile bahmni-standard --profile bahmni-mart down
+    echo "Executing command: 'docker compose down' with all profiles (fast stop 3s)"
+    docker compose --env-file "$file" --profile emr --profile bahmni-lite --profile bahmni-standard --profile bahmni-mart down -t 3
 }
 
 function sshIntoService {
@@ -142,13 +142,13 @@ function resetAndEraseALLVolumes {
   if confirm "WARNING: Are you sure you want to DELETE all Bahmni Data and Volumes??"; then
     echo "Proceeding with a DELETE.... "
     
-    echo "1. Stopping all services, using all profiles.."
-    docker compose --env-file "$file" --profile emr --profile bahmni-lite --profile bahmni-standard --profile bahmni-mart down
+    echo "1. Stopping all services, using all profiles (fast stop 3s).."
+    docker compose --env-file "$file" --profile emr --profile bahmni-lite --profile bahmni-standard --profile bahmni-mart down -t 3
     
     docker compose --env-file "$file" ps
     
     echo "2. Deleting all volumes (-v) .."
-    docker compose --env-file "$file" --profile emr --profile bahmni-lite --profile bahmni-standard --profile bahmni-mart down -v
+    docker compose --env-file "$file" --profile emr --profile bahmni-lite --profile bahmni-standard --profile bahmni-mart down -t 3 -v
     RESULT=$?
     if [ $RESULT -eq 0 ]; then
         echo "Volumes deleted successfully."
