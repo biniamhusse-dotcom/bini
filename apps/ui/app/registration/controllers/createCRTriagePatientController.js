@@ -240,10 +240,13 @@ var createPatient = function (jumpAccepted) {
                     }
                 }
 
-                var selectedVisitType = $scope.visitControl.visitTypes.filter(function (visitType) {
-                    return visitType.name === "Central Triage";
-                })[0];
-                $scope.visitControl.startVisit(selectedVisitType);
+                var allVisitTypes = ($scope.visitControl && $scope.visitControl.visitTypes) || [];
+                var selectedVisitType = _.find(allVisitTypes, function (visitType) {
+                    return visitType && visitType.name && visitType.name.toLowerCase() === "central triage";
+                }) || allVisitTypes[0];
+                if (selectedVisitType && $scope.visitControl && typeof $scope.visitControl.startVisit === 'function') {
+                    $scope.visitControl.startVisit(selectedVisitType);
+                }
 
                 addNewRelationships();
                 var errorMessages = Bahmni.Common.Util.ValidationUtil.validate($scope.patient, $scope.patientConfiguration.attributeTypes);

@@ -41,7 +41,7 @@
                 params.add(statusFilter.toUpperCase());
             }
 
-            sql.append("ORDER BY department ASC, item_type DESC, item_name ASC LIMIT 500");
+            sql.append("ORDER BY department ASC, item_type DESC, item_name ASC LIMIT 2000");
 
             ps = conn.prepareStatement(sql.toString());
             for (int i = 0; i < params.size(); i++) {

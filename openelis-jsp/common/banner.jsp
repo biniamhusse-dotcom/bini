@@ -93,6 +93,17 @@ function displayHelp(){
 			delay: 400,
 			speed: 0
 		}).supposition();
+
+		// Keep-alive heartbeat every 4 minutes to prevent unexpected session timeout while working
+		if (!window._oeKeepAliveInterval) {
+			window._oeKeepAliveInterval = setInterval(function() {
+				try {
+					var xhr = new XMLHttpRequest();
+					xhr.open('GET', '<%=basePath%>pages/common/sessionKeepAlive.jsp?_=' + Date.now(), true);
+					xhr.send();
+				} catch (e) {}
+			}, 240000);
+		}
 	});
 </script>
 <!--[if ie]>

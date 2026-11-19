@@ -585,21 +585,29 @@ angular.module('bahmni.registration')
             //This method open visits for CR patients and redirect them to  ER triage form 
             $scope.startVisitForExistedPatientCR = function () {
                 $rootScope.newCRPat = true;
-                var selectedVisitType = $scope.visitControl.visitTypes.filter(function (visitType) {
-                    return visitType.name === "Central Triage";
-                })[0];
-                $scope.visitControl.startVisit(selectedVisitType);
-                if ($scope.selectedPatient.activeVisitUuid != null) {
+                var allVisitTypes = ($scope.visitControl && $scope.visitControl.visitTypes) || [];
+                var selectedVisitType = _.find(allVisitTypes, function (visitType) {
+                    return visitType && visitType.name && visitType.name.toLowerCase() === "central triage";
+                }) || allVisitTypes[0];
+
+                if (selectedVisitType && $scope.visitControl && typeof $scope.visitControl.startVisit === 'function') {
+                    $scope.visitControl.startVisit(selectedVisitType);
+                }
+                if ($scope.selectedPatient && $scope.selectedPatient.activeVisitUuid != null) {
                     visitService.getVisitSummary($scope.selectedPatient.activeVisitUuid).then(function (response) {
-                        closeVisit(response.data)
-                    })
+                        closeVisit(response.data);
+                    });
                 }
                 var cleanUuid = ($scope.selectedPatient && $scope.selectedPatient.uuid ? String($scope.selectedPatient.uuid).replace(/^\/+/, '') : '');
-                spinner.forPromise($scope.visitControl.createVisitOnly(cleanUuid, $rootScope.visitLocation).then(function (response) {
-                    auditLogService.log(cleanUuid, "OPEN_VISIT", { visitUuid: response.data.uuid, visitType: response.data.visitType.display }, 'MODULE_LABEL_REGISTRATION_KEY');
-                }));
+                if (cleanUuid && $scope.visitControl && typeof $scope.visitControl.createVisitOnly === 'function') {
+                    spinner.forPromise($scope.visitControl.createVisitOnly(cleanUuid, $rootScope.visitLocation).then(function (response) {
+                        if (response && response.data && response.data.uuid) {
+                            var vtDisplay = (response.data.visitType && response.data.visitType.display) ? response.data.visitType.display : '';
+                            auditLogService.log(cleanUuid, "OPEN_VISIT", { visitUuid: response.data.uuid, visitType: vtDisplay }, 'MODULE_LABEL_REGISTRATION_KEY');
+                        }
+                    }));
+                }
                 $location.url("/patient/" + cleanUuid + "/crTriageVisit");
-
             };
             $scope.prescriptionForExistedPatient = function () {
                 var cleanUuid = ($scope.selectedPatient && $scope.selectedPatient.uuid ? String($scope.selectedPatient.uuid).replace(/^\/+/, '') : '');

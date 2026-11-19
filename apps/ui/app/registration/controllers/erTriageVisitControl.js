@@ -156,6 +156,9 @@ angular.module('bahmni.registration')
                             extensions: {}
                         };
 
+                        if ($scope.encounterUuid) {
+                            $scope.encounter.encounterUuid = $scope.encounterUuid;
+                        }
                         if (effectiveVisitUuid) {
                             $scope.encounter.visitUuid = effectiveVisitUuid;
                         }
@@ -166,11 +169,12 @@ angular.module('bahmni.registration')
                             $scope.encounter.visitLocationUuid = effectiveVisitLocationUuid;
                         }
 
-                        if (r && r.data && r.data.results && r.data.results[0]) {
+                        var feeConcept = (r && r.data && r.data.results && r.data.results[0]) ? r.data.results[0] : null;
+                        if (feeConcept && !$scope.encounterUuid) {
                             $scope.encounter.orders.push({
                                 concept: {
-                                    name: r.data.results[0].display,
-                                    uuid: r.data.results[0].uuid
+                                    name: feeConcept.display,
+                                    uuid: feeConcept.uuid
                                 },
                                 commentToFulfiller: "",
                                 urgency: "ROUTINE"

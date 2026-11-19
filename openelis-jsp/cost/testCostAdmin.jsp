@@ -275,7 +275,7 @@
 
     <div class="cost-toolbar">
         <div class="cost-filter-group">
-            <input type="text" id="costSearchInput" class="cost-input" placeholder="Search test name, department, code..." style="width:260px" onkeyup="if(event.key==='Enter')loadCostList()">
+            <input type="text" id="costSearchInput" class="cost-input" placeholder="Search test name, department, code..." style="width:260px" oninput="onSearchKey()" onkeyup="if(event.key==='Enter')loadCostList()">
             <select id="costTypeFilter" class="cost-input" onchange="loadCostList()">
                 <option value="ALL">All Types</option>
                 <option value="TEST">Tests Only</option>
@@ -342,24 +342,50 @@
 </div>
 
 <script type="text/javascript">
+function getApiUrl(actionAndQuery) {
+    return '<%=basePath%>pages/cost/costSyncApi.jsp?' + actionAndQuery;
+}
+
+function fetchApi(actionAndQuery) {
+    var primaryUrl = '<%=basePath%>pages/cost/costSyncApi.jsp?' + actionAndQuery;
+    var fallbackUrl = '<%=basePath%>cost/costSyncApi.jsp?' + actionAndQuery;
+    return fetch(primaryUrl).then(function(res) {
+        if (!res.ok) {
+            return fetch(fallbackUrl).then(function(r2) { return r2.json(); });
+        }
+        return res.json();
+    }).catch(function() {
+        return fetch(fallbackUrl).then(function(r2) { return r2.json(); });
+    });
+}
+
+var searchDebounceTimer = null;
+function onSearchKey() {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(loadCostList, 300);
+}
+
 function loadCostList() {
     var search = document.getElementById('costSearchInput').value;
     var type = document.getElementById('costTypeFilter').value;
     var status = document.getElementById('costStatusFilter').value;
 
-    var url = '<%=basePath%>cost/costSyncApi.jsp?action=listCosts&search=' + encodeURIComponent(search) + '&type=' + encodeURIComponent(type) + '&status=' + encodeURIComponent(status);
+    document.getElementById('costShowingCount').textContent = 'Loading...';
+    var query = 'action=listCosts&search=' + encodeURIComponent(search) + '&type=' + encodeURIComponent(type) + '&status=' + encodeURIComponent(status);
     
-    fetch(url)
-        .then(function(res) { return res.json(); })
+    fetchApi(query)
         .then(function(data) {
             if (!data.success) {
-                alert('Error loading costs: ' + (data.error || 'Unknown error'));
+                document.getElementById('costTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#dc2626">Error: ' + escapeHtml(data.error || 'Failed to load costs') + '</td></tr>';
+                document.getElementById('costShowingCount').textContent = 'Error loading items';
                 return;
             }
             renderCostTable(data.items);
         })
         .catch(function(err) {
             console.error(err);
+            document.getElementById('costTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#dc2626">Network error loading costs: ' + escapeHtml(err.message || err) + '</td></tr>';
+            document.getElementById('costShowingCount').textContent = 'Connection error';
         });
 }
 
@@ -416,9 +442,7 @@ function saveSinglePrice(id) {
         return;
     }
 
-    var url = '<%=basePath%>cost/costSyncApi.jsp?action=updateSingleCost&id=' + id + '&cost=' + newCost;
-    fetch(url)
-        .then(function(r) { return r.json(); })
+    fetchApi('action=updateSingleCost&id=' + id + '&cost=' + newCost)
         .then(function(data) {
             if (data.success) {
                 inp.style.borderColor = '#16a34a';
@@ -434,8 +458,7 @@ function syncOdooToOpenELIS() {
     btn.disabled = true;
     btn.textContent = 'Syncing...';
 
-    fetch('<%=basePath%>cost/costSyncApi.jsp?action=syncOdooToOpenELIS')
-        .then(function(r) { return r.json(); })
+    fetchApi('action=syncOdooToOpenELIS')
         .then(function(data) {
             btn.disabled = false;
             btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Sync Odoo → OpenELIS';
@@ -454,8 +477,7 @@ function syncOpenELISToOdoo() {
     btn.disabled = true;
     btn.textContent = 'Pushing...';
 
-    fetch('<%=basePath%>cost/costSyncApi.jsp?action=syncOpenELISToOdoo')
-        .then(function(r) { return r.json(); })
+    fetchApi('action=syncOpenELISToOdoo')
         .then(function(data) {
             btn.disabled = false;
             btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg> Sync OpenELIS → Odoo';
@@ -471,8 +493,7 @@ function syncOpenELISToOdoo() {
 
 function openHistoryModal() {
     document.getElementById('costHistoryModal').classList.add('show');
-    fetch('<%=basePath%>cost/costSyncApi.jsp?action=getSyncHistory')
-        .then(function(r) { return r.json(); })
+    fetchApi('action=getSyncHistory')
         .then(function(data) {
             var tbody = document.getElementById('historyTableBody');
             if (!data.logs || data.logs.length === 0) {

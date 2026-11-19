@@ -264,6 +264,77 @@
             if (rs != null) rs.close();
             if (ps != null) ps.close();
 
+            // Build panels and independentTests for Requirement 2
+            // Global panels map: panelId -> { panelId, panelName, panelCost, isPanelPriced, removalStatus, removalRequestId, groups: Map<deptName, List<Test>> }
+            Map<Long, JSONObject> globalPanelsMap = new LinkedHashMap<Long, JSONObject>();
+            Map<Long, Map<String, List<JSONObject>>> panelGroupsMap = new LinkedHashMap<Long, Map<String, List<JSONObject>>>();
+            Map<String, List<JSONObject>> globalIndependentMap = new LinkedHashMap<String, List<JSONObject>>();
+
+            for (Map.Entry<String, Map<String, Object>> entry : deptMap.entrySet()) {
+                String dName = entry.getKey();
+                Map<String, JSONObject> pMap = (Map<String, JSONObject>) entry.getValue().get("panels");
+                for (JSONObject pItem : pMap.values()) {
+                    long pId = pItem.getLong("panelId");
+                    if (!globalPanelsMap.containsKey(pId)) {
+                        globalPanelsMap.put(pId, pItem);
+                        panelGroupsMap.put(pId, new LinkedHashMap<String, List<JSONObject>>());
+                    }
+                    JSONArray tArr = pItem.optJSONArray("tests");
+                    if (tArr != null) {
+                        List<JSONObject> tList = panelGroupsMap.get(pId).get(dName);
+                        if (tList == null) {
+                            tList = new ArrayList<JSONObject>();
+                            panelGroupsMap.get(pId).put(dName, tList);
+                        }
+                        for (int k = 0; k < tArr.length(); k++) {
+                            tList.add(tArr.getJSONObject(k));
+                        }
+                    }
+                }
+
+                List<JSONObject> sList = (List<JSONObject>) entry.getValue().get("standalone");
+                if (sList != null && !sList.isEmpty()) {
+                    if (!globalIndependentMap.containsKey(dName)) {
+                        globalIndependentMap.put(dName, new ArrayList<JSONObject>());
+                    }
+                    globalIndependentMap.get(dName).addAll(sList);
+                }
+            }
+
+            JSONArray structuredPanels = new JSONArray();
+            for (Map.Entry<Long, JSONObject> pEntry : globalPanelsMap.entrySet()) {
+                long pId = pEntry.getKey();
+                JSONObject pObj = pEntry.getValue();
+                JSONArray labGroupsArr = new JSONArray();
+                Map<String, List<JSONObject>> grps = panelGroupsMap.get(pId);
+                if (grps != null) {
+                    for (Map.Entry<String, List<JSONObject>> gEntry : grps.entrySet()) {
+                        JSONObject gObj = new JSONObject();
+                        gObj.put("groupName", gEntry.getKey());
+                        JSONArray gTests = new JSONArray();
+                        for (JSONObject tObj : gEntry.getValue()) {
+                            gTests.put(tObj);
+                        }
+                        gObj.put("tests", gTests);
+                        labGroupsArr.put(gObj);
+                    }
+                }
+                pObj.put("labGroups", labGroupsArr);
+                structuredPanels.put(pObj);
+            }
+
+            JSONArray structuredIndependents = new JSONArray();
+            for (Map.Entry<String, List<JSONObject>> indEntry : globalIndependentMap.entrySet()) {
+                JSONObject indGrp = new JSONObject();
+                indGrp.put("groupName", indEntry.getKey());
+                JSONArray indTests = new JSONArray();
+                for (JSONObject tObj : indEntry.getValue()) {
+                    indTests.put(tObj);
+                }
+                indGrp.put("tests", indTests);
+                structuredIndependents.put(indGrp);
+            }
+
             // Build departments array
             JSONArray deptsArray = new JSONArray();
             for (Map.Entry<String, Map<String, Object>> entry : deptMap.entrySet()) {
@@ -295,6 +366,8 @@
             resp.put("patientGender", patGender);
             resp.put("physicianName", providerName);
             resp.put("departments", deptsArray);
+            resp.put("panels", structuredPanels);
+            resp.put("independentTests", structuredIndependents);
             resp.put("totalPayableAmount", Math.round(totalPayable * 100.0) / 100.0);
             resp.put("currency", "ETB");
 
@@ -678,6 +751,117 @@
             resp.put("success", true);
             resp.put("counts", counts);
             out.print(resp.toString());
+            return;
+        }
+
+        // =========================================================================
+        // 7. ACTION: GET PHYSICIAN INBOX & NOTIFICATIONS
+        // =========================================================================
+        if ("getPhysicianInbox".equals(action)) {
+            String patIdentifier = request.getParameter("patientId");
+            String doctorName = request.getParameter("physicianName");
+
+            JSONArray pendingRequests = new JSONArray();
+            JSONArray recentMessages = new JSONArray();
+            int unreadCount = 0;
+
+            // 1. Pending removal requests
+            String sqlPending = 
+                "SELECT r.id, r.sample_id, r.patient_identifier, r.patient_name, r.test_id, r.panel_id, " +
+                "       r.item_name, r.item_type, r.original_cost, r.requested_by, r.request_reason, r.status, r.created_at " +
+                "FROM clinlims.lab_order_removal_request r " +
+                "WHERE r.status = 'PENDING' ";
+            if (patIdentifier != null && !patIdentifier.trim().isEmpty()) {
+                sqlPending += "AND r.patient_identifier = ? ";
+            }
+            sqlPending += "ORDER BY r.created_at DESC LIMIT 50";
+
+            ps = conn.prepareStatement(sqlPending);
+            if (patIdentifier != null && !patIdentifier.trim().isEmpty()) {
+                ps.setString(1, patIdentifier.trim());
+            }
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                JSONObject pr = new JSONObject();
+                pr.put("requestId", rs.getInt("id"));
+                pr.put("sampleId", rs.getLong("sample_id"));
+                pr.put("patientId", rs.getString("patient_identifier"));
+                pr.put("patientName", rs.getString("patient_name"));
+                pr.put("itemName", rs.getString("item_name"));
+                pr.put("itemType", rs.getString("item_type"));
+                pr.put("cost", rs.getDouble("original_cost"));
+                pr.put("requestedBy", rs.getString("requested_by"));
+                pr.put("reason", rs.getString("request_reason"));
+                pr.put("status", rs.getString("status"));
+                pr.put("createdAt", rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toString() : "");
+                pendingRequests.put(pr);
+            }
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+
+            // 2. Chat messages
+            String sqlChat = 
+                "SELECT c.id, c.sample_id, c.patient_identifier, c.patient_name, c.sender_username, " +
+                "       c.sender_role, c.message_text, c.message_type, c.removal_request_id, c.is_read_by_physician, c.created_at " +
+                "FROM clinlims.lab_physician_chat c ";
+            if (patIdentifier != null && !patIdentifier.trim().isEmpty()) {
+                sqlChat += "WHERE c.patient_identifier = ? ";
+            }
+            sqlChat += "ORDER BY c.created_at DESC LIMIT 50";
+
+            ps = conn.prepareStatement(sqlChat);
+            if (patIdentifier != null && !patIdentifier.trim().isEmpty()) {
+                ps.setString(1, patIdentifier.trim());
+            }
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                JSONObject msg = new JSONObject();
+                msg.put("id", rs.getInt("id"));
+                msg.put("sampleId", rs.getLong("sample_id"));
+                msg.put("patientId", rs.getString("patient_identifier"));
+                msg.put("patientName", rs.getString("patient_name"));
+                msg.put("sender", rs.getString("sender_username"));
+                msg.put("role", rs.getString("sender_role"));
+                msg.put("text", rs.getString("message_text"));
+                msg.put("type", rs.getString("message_type"));
+                msg.put("isRead", rs.getBoolean("is_read_by_physician"));
+                msg.put("createdAt", rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toString() : "");
+                if (!rs.getBoolean("is_read_by_physician") && "LAB_STAFF".equalsIgnoreCase(rs.getString("sender_role"))) {
+                    unreadCount++;
+                }
+                recentMessages.put(msg);
+            }
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+
+            JSONObject resp = new JSONObject();
+            resp.put("success", true);
+            resp.put("unreadCount", unreadCount + pendingRequests.length());
+            resp.put("pendingRequestsCount", pendingRequests.length());
+            resp.put("pendingRequests", pendingRequests);
+            resp.put("messages", recentMessages);
+            out.print(resp.toString());
+            return;
+        }
+
+        // =========================================================================
+        // 8. ACTION: MARK MESSAGES AS READ BY PHYSICIAN
+        // =========================================================================
+        if ("markPhysicianRead".equals(action)) {
+            String sampleIdStr = request.getParameter("sampleId");
+            String patIdentifier = request.getParameter("patientId");
+            if (sampleIdStr != null && !sampleIdStr.trim().isEmpty()) {
+                ps = conn.prepareStatement("UPDATE clinlims.lab_physician_chat SET is_read_by_physician = TRUE WHERE sample_id = ?");
+                ps.setLong(1, Long.parseLong(sampleIdStr.trim()));
+                ps.executeUpdate();
+                if (ps != null) ps.close();
+            } else if (patIdentifier != null && !patIdentifier.trim().isEmpty()) {
+                ps = conn.prepareStatement("UPDATE clinlims.lab_physician_chat SET is_read_by_physician = TRUE WHERE patient_identifier = ?");
+                ps.setString(1, patIdentifier.trim());
+                ps.executeUpdate();
+                if (ps != null) ps.close();
+            }
+            out.print("{\"success\":true}");
             return;
         }
 
