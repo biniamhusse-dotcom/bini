@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinical Intake, Mental Health Hx & Clinician Acceptance</title>
+    <title>Psychiatric Intake & Mental Health Clinical Assessment</title>
     <link rel="stylesheet" href="./tailwind-offline.css">
     <link rel="stylesheet" href="/bahmni/components/font-awesome/css/font-awesome.min.css">
     <script src="bahmni-custom-form-bridge.js"></script>
@@ -17,54 +17,58 @@
             color: #0f172a;
             margin: 0;
             padding: 0;
+            line-height: 1.5;
         }
 
-        /* Explicit theme color classes (Offline & High-Contrast Guaranteed) */
-        .bg-psych-primary, .bg-\[\#0F4C81\] {
-            background-color: #0F4C81 !important;
-            color: #ffffff !important;
+        /* Explicit theme color definitions */
+        .theme-primary { color: #0F4C81 !important; }
+        .theme-teal { color: #1E7E74 !important; }
+        .bg-primary { background-color: #0F4C81 !important; color: #ffffff !important; }
+        .bg-teal { background-color: #1E7E74 !important; color: #ffffff !important; }
+
+        /* Card & Section Styling */
+        .clinical-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
         }
-        .text-psych-primary, .text-\[\#0F4C81\] {
-            color: #0F4C81 !important;
+        .clinical-card-header {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #0F4C81;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
-        .border-psych-primary, .border-\[\#0F4C81\] {
-            border-color: #0F4C81 !important;
+        .clinical-card-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0F4C81;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .bg-psych-teal, .bg-\[\#1E7E74\] {
-            background-color: #1E7E74 !important;
-            color: #ffffff !important;
-        }
-        .text-psych-teal, .text-\[\#1E7E74\] {
-            color: #1E7E74 !important;
-        }
-        .border-psych-teal, .border-\[\#1E7E74\] {
-            border-color: #1E7E74 !important;
-        }
-        .hover\:bg-\[\#0b3a63\]:hover {
-            background-color: #0b3a63 !important;
-        }
-        .hover\:bg-\[\#16635b\]:hover {
-            background-color: #16635b !important;
-        }
-        .text-\[11px\] {
-            font-size: 11px !important;
-        }
-        .text-\[10px\] {
-            font-size: 10px !important;
-        }
-        .text-\[\#6ee7b7\] {
-            color: #6ee7b7 !important;
+        .clinical-card-body {
+            padding: 18px;
         }
 
         /* Form Controls Styling */
-        input[type="text"], input[type="date"], input[type="number"], select, textarea {
+        input[type="text"], input[type="date"], input[type="number"], input[type="datetime-local"], select, textarea {
+            width: 100%;
             border: 1px solid #cbd5e1 !important;
             background-color: #ffffff !important;
             color: #0f172a !important;
             border-radius: 8px !important;
+            padding: 8px 12px !important;
             font-size: 13.5px !important;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+            line-height: 1.4 !important;
             box-sizing: border-box !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
         }
         input:focus, select:focus, textarea:focus {
             border-color: #0F4C81 !important;
@@ -77,8 +81,18 @@
             cursor: not-allowed !important;
         }
         label {
-            color: #334155 !important;
-            font-weight: 600 !important;
+            display: block;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+        .required-star {
+            color: #dc2626;
+            font-weight: 800;
+            margin-left: 2px;
         }
 
         /* FontAwesome 4 fallback compatibility */
@@ -109,7 +123,7 @@
         .fa-plus:before { content: "\f067"; }
         .fa-eraser:before { content: "\f12d"; }
 
-        /* Custom Range Slider */
+        /* Range Slider */
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -138,25 +152,39 @@
         #signature-pad {
             touch-action: none;
             cursor: crosshair;
+            width: 100%;
+            height: 100px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
         }
 
-        /* Responsive tables */
+        /* Table Responsive */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
-
-        /* Completely hide any search drawer or remnants */
-        #records-drawer, #records-drawer-backdrop {
-            display: none !important;
-            visibility: hidden !important;
-            width: 0 !important;
-            height: 0 !important;
-            pointer-events: none !important;
+        .clinical-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .clinical-table th {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            text-align: left;
+        }
+        .clinical-table td {
+            padding: 6px 8px;
+            border: 1px solid #cbd5e1;
+            vertical-align: middle;
         }
 
-        /* Hospital-grade A4 Print Styles */
+        /* A4 Print Styles */
         @media print {
             @page {
                 size: A4;
@@ -195,827 +223,638 @@
         }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col">
+<body>
 
-    <!-- In-Form Header & Actions (No duplicate search section) -->
-    <header class="no-print bg-white border-b border-slate-200 shadow-2xs px-4 sm:px-6 py-3">
-        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-[#0F4C81] text-white flex items-center justify-center text-lg font-bold shadow-xs">
-                    <i class="fa fa-hospital-o"></i>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none;" class="no-print"></div>
+
+    <!-- Main Clinical Form Container -->
+    <main style="max-width: 1100px; margin: 0 auto; padding: 16px 20px;" class="no-print">
+
+        <!-- In-Form Title Bar with Quick Actions -->
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 12px 18px; margin-bottom: 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background-color: #0F4C81; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700;">
+                    <i class="fa fa-stethoscope"></i>
                 </div>
                 <div>
-                    <h1 class="text-base sm:text-lg font-bold text-slate-800 leading-tight">Psychiatric Intake &amp; Mental Health Assessment</h1>
-                    <p class="text-xs text-slate-500">Comprehensive Psychiatric Examination • MSE • Diagnostic Impression • Attestation</p>
+                    <h1 style="font-size: 17px; font-weight: 800; color: #0F4C81; margin: 0; line-height: 1.2;">Psychiatric Intake &amp; Mental Health Assessment</h1>
+                    <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">Comprehensive Psychiatric Evaluation • MSE • Diagnostic Impression • Attestation</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="resetForm()" class="px-3.5 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-300 transition flex items-center gap-1.5" title="Clear current inputs for a new examination">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" onclick="resetForm()" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Reset all form fields">
                     <i class="fa fa-eraser"></i> Clear Form
                 </button>
-                <button type="button" onclick="printCurrentForm()" class="px-3.5 py-2 text-xs font-semibold text-white bg-[#1E7E74] hover:bg-[#16635b] rounded-xl transition flex items-center gap-1.5 shadow-xs" title="Print this complete intake chart">
+                <button type="button" onclick="printCurrentForm()" style="background: #1E7E74; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Preview and print complete clinical record">
                     <i class="fa fa-print"></i> Print Chart
                 </button>
             </div>
         </div>
-    </header>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none no-print"></div>
+        <form id="clinical-intake-form" novalidate>
 
-    <!-- Main Clinical Workspace -->
-    <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 no-print">
-
-        <!-- Multi-Step Navigation & Tab Switcher -->
-        <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-3 mb-5 no-print">
-            <div class="flex flex-wrap items-center justify-between text-xs font-semibold text-slate-500 px-1 mb-2.5 gap-2">
-                <span class="text-slate-700 font-bold uppercase tracking-wide"><i class="fa fa-list-alt text-[#0F4C81] mr-1"></i> Form Sections:</span>
-                <span id="progress-label" class="text-[#0F4C81] font-bold">Step 1: Patient Demographics</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button id="tab-btn-1" type="button" onclick="switchTab(1)" class="py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all bg-[#0F4C81] text-white shadow-xs cursor-pointer">
-                    <span class="w-5 h-5 rounded-full bg-white/25 text-xs flex items-center justify-center font-bold">1</span>
-                    <span>1. Patient Demographics</span>
-                </button>
-                <button id="tab-btn-2" type="button" onclick="switchTab(2)" class="py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 cursor-pointer">
-                    <span class="w-5 h-5 rounded-full bg-slate-300 text-slate-700 text-xs flex items-center justify-center font-bold">2</span>
-                    <span>2. Mental Health Assessment</span>
-                </button>
-                <button id="tab-btn-3" type="button" onclick="switchTab(3)" class="py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 cursor-pointer">
-                    <i class="fa fa-expand"></i>
-                    <span>All Sections (Full View)</span>
-                </button>
-            </div>
-        </div>
-
-        <form id="clinical-intake-form"  novalidate>
+            <!-- Hidden Demographics Inputs for OpenMRS Snapshot & EMR Compatibility -->
+            <input type="hidden" id="mrnInput" value="">
+            <input type="hidden" id="fullName" value="">
+            <input type="hidden" id="dob" value="">
+            <input type="hidden" id="ageDisplay" value="">
+            <input type="hidden" id="gender" value="">
+            <input type="hidden" id="maritalStatus" value="Single">
+            <input type="hidden" id="phone" value="">
+            <input type="hidden" id="referralSource" value="Self-Referral / Walk-In">
+            <input type="hidden" id="addrRegion" value="">
+            <input type="hidden" id="addrZone" value="">
+            <input type="hidden" id="addrWoreda" value="">
+            <input type="hidden" id="addrKebele" value="">
+            <input type="hidden" id="emergencyName" value="">
+            <input type="hidden" id="emergencyRelation" value="">
+            <input type="hidden" id="emergencyPhone" value="">
+            <input type="hidden" id="paymentType" value="Community-Based Health Insurance (CBHI)">
+            <input type="hidden" id="policyNumber" value="">
+            <input type="hidden" id="insuranceProvider" value="">
 
             <!-- =========================================================
-                 STEP 1: PATIENT REGISTRATION FORM
+                 SECTION 1: CHIEF COMPLAINT & HISTORY OF PRESENT ILLNESS (HPI)
             ========================================================== -->
-            <section id="tab-panel-1" class="space-y-6">
-
-                <!-- Card 1: Identification & Demographics -->
-                <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                    <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center gap-2.5">
-                            <i class="fa-solid fa-id-card text-[#0F4C81] text-lg"></i>
-                            <h2 class="font-bold text-slate-800 text-base">1. Patient Identification & Demographics</h2>
-                        </div>
-                        <span class="text-xs text-slate-500">Fields marked <span class="text-rose-500 font-bold">*</span> are required</span>
-                    </div>
-
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <!-- Full Name -->
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Full Legal Name <span class="text-rose-500">*</span></label>
-                            <input type="text" id="fullName" required placeholder="First, Father's & Grandfather's Name" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm">
-                            <p class="text-xs text-rose-600 mt-1 hidden" id="err-fullName">Patient full legal name is required.</p>
-                        </div>
-
-                        <!-- Auto-generated or Editable MRN -->
-                        <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600">MRN / Patient ID <span class="text-rose-500">*</span></label>
-                                <button type="button" onclick="generateNewMRN()" class="text-[11px] text-[#1E7E74] hover:underline font-semibold"><i class="fa-solid fa-rotate"></i> Auto-ID</button>
-                            </div>
-                            <input type="text" id="mrnInput" required oninput="updatePatientContextBanner()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono font-semibold text-[#0F4C81] bg-blue-50/30 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm">
-                            <p class="text-xs text-rose-600 mt-1 hidden" id="err-mrnInput">MRN / Patient ID is required.</p>
-                        </div>
-
-                        <!-- Date of Birth -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Date of Birth <span class="text-rose-500">*</span></label>
-                            <input type="date" id="dob" required onchange="calculateAge()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm">
-                            <p class="text-xs text-rose-600 mt-1 hidden" id="err-dob">Date of birth is required.</p>
-                        </div>
-
-                        <!-- Automatic Age Calculation -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Age (Auto-calculated)</label>
-                            <div class="relative">
-                                <input type="text" id="ageDisplay" readonly placeholder="--" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-bold text-sm outline-none">
-                                <span class="absolute right-3.5 top-2.5 text-xs text-slate-400 font-medium">Years</span>
-                            </div>
-                        </div>
-
-                        <!-- Gender -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Gender <span class="text-rose-500">*</span></label>
-                            <select id="gender" required onchange="updatePatientContextBanner()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm bg-white">
-                                <option value="">Select gender...</option>
-                                <option value="Female">Female</option>
-                                <option value="Male">Male</option>
-                                <option value="Other / Non-binary">Other / Non-binary</option>
-                            </select>
-                            <p class="text-xs text-rose-600 mt-1 hidden" id="err-gender">Please select gender.</p>
-                        </div>
-
-                        <!-- Marital Status -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Marital Status</label>
-                            <select id="maritalStatus" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm bg-white">
-                                <option value="Single">Single</option>
-                                <option value="Married">Married</option>
-                                <option value="Divorced">Divorced</option>
-                                <option value="Widowed">Widowed</option>
-                                <option value="Separated">Separated</option>
-                            </select>
-                        </div>
-
-                        <!-- Phone Number -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Phone Number <span class="text-rose-500">*</span></label>
-                            <input type="tel" id="phone" required placeholder="+251 911 000 000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm">
-                            <p class="text-xs text-rose-600 mt-1 hidden" id="err-phone">Primary phone number is required.</p>
-                        </div>
-
-                        <!-- Referral Source -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Referral Source</label>
-                            <select id="referralSource" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm bg-white">
-                                <option value="Self / Walk-in">Self / Walk-in</option>
-                                <option value="Family / Relative">Family / Relative</option>
-                                <option value="Primary Health Center / Hospital">Primary Health Center / Hospital</option>
-                                <option value="Emergency Department">Emergency Department</option>
-                                <option value="Police / Court / Legal">Police / Court / Legal</option>
-                                <option value="School / Workplace">School / Workplace</option>
-                            </select>
-                        </div>
-                    </div>
+            <div class="clinical-card">
+                <div class="clinical-card-header">
+                    <h2><i class="fa fa-comment-o"></i> 1. Chief Complaint &amp; History of Present Illness (HPI)</h2>
+                    <span style="font-size: 11px; color: #64748b; font-weight: 600;">Fields with <span class="required-star">*</span> are mandatory</span>
                 </div>
 
-                <!-- Card 2: Address (Region / Woreda / Kebele) -->
-                <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                    <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex items-center gap-2.5">
-                        <i class="fa-solid fa-location-dot text-[#1E7E74] text-lg"></i>
-                        <h2 class="font-bold text-slate-800 text-base">2. Residential Address</h2>
+                <div class="clinical-card-body">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label for="chiefComplaint">Chief Complaint / Presenting Problem <span class="required-star">*</span></label>
+                            <textarea id="chiefComplaint" rows="3" required placeholder="Document the patient's presenting psychiatric complaint in patient's or informant's own words..." style="resize: vertical;"></textarea>
+                        </div>
+                        <div>
+                            <label for="informant">Informant(s)</label>
+                            <select id="informant" style="margin-bottom: 8px;">
+                                <option value="Self (Patient)">Self (Patient)</option>
+                                <option value="Family / Caregiver">Family / Caregiver</option>
+                                <option value="Self &amp; Family">Self &amp; Family</option>
+                                <option value="Police / Escort">Police / Escort</option>
+                                <option value="Referral Note / Chart">Referral Note / Chart</option>
+                            </select>
+
+                            <label for="informantReliability">Informant Reliability</label>
+                            <select id="informantReliability">
+                                <option value="Good Reliability">Good Reliability</option>
+                                <option value="Fair / Partial Reliability">Fair / Partial Reliability</option>
+                                <option value="Poor / Guarded Reliability">Poor / Guarded Reliability</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Region / City Admin <span class="text-rose-500">*</span></label>
-                            <input type="text" id="addrRegion" required placeholder="e.g., Addis Ababa / Oromia" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                            <p class="text-xs text-rose-600 mt-1 hidden" id="err-addrRegion">Region/City is required.</p>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Zone / Sub-City</label>
-                            <input type="text" id="addrZone" placeholder="e.g., Bole / Arada" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Woreda <span class="text-rose-500">*</span></label>
-                            <input type="text" id="addrWoreda" required placeholder="e.g., Woreda 03" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                            <p class="text-xs text-rose-600 mt-1 hidden" id="err-addrWoreda">Woreda is required.</p>
+                            <label for="hpiOnset">Onset of Episode</label>
+                            <select id="hpiOnset">
+                                <option value="Gradual / Insidious">Gradual / Insidious</option>
+                                <option value="Acute / Sudden (< 1 week)">Acute / Sudden (&lt; 1 week)</option>
+                                <option value="Subacute (1–4 weeks)">Subacute (1–4 weeks)</option>
+                                <option value="Chronic / Longstanding">Chronic / Longstanding</option>
+                                <option value="Recurrent Episodic">Recurrent Episodic</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Kebele / House No.</label>
-                            <input type="text" id="addrKebele" placeholder="e.g., Kebele 08 / H.No 412" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
+                            <label for="hpiDuration">Duration of Current Symptoms</label>
+                            <input type="text" id="hpiDuration" placeholder="e.g., 3 weeks, 6 months">
                         </div>
-                    </div>
-                </div>
-
-                <!-- Card 3: Emergency Contact & Payment/CBHI -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Emergency Contact -->
-                    <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                        <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex items-center gap-2.5">
-                            <i class="fa-solid fa-phone-volume text-amber-600 text-lg"></i>
-                            <h2 class="font-bold text-slate-800 text-base">3. Emergency Contact / Next of Kin</h2>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Contact Full Name <span class="text-rose-500">*</span></label>
-                                <input type="text" id="emergencyName" required placeholder="Full Name" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                                <p class="text-xs text-rose-600 mt-1 hidden" id="err-emergencyName">Emergency contact name is required.</p>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label for="hpiSeverity" style="margin: 0;">Symptom Severity (1–10)</label>
+                                <span id="severityBadge" style="padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e;">5 / 10 (Moderate)</span>
                             </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="range" id="hpiSeverity" min="1" max="10" value="5" oninput="updateSeverityDisplay(this.value)" style="margin-top: 4px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: #94a3b8; font-weight: 600; margin-top: 4px;">
+                                <span>1 Mild</span>
+                                <span>5 Moderate</span>
+                                <span>10 Severe</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <label for="hpiTriggers">Precipitating Factors &amp; Stressors</label>
+                            <textarea id="hpiTriggers" rows="2" placeholder="Bereavement, financial stress, conflict, medication non-adherence, medical illness..."></textarea>
+                        </div>
+                        <div>
+                            <label>Biological &amp; Vegetative Functions</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
-                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Relationship <span class="text-rose-500">*</span></label>
-                                    <select id="emergencyRelation" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm bg-white">
-                                        <option value="">Select...</option>
-                                        <option value="Spouse">Spouse</option>
-                                        <option value="Parent">Parent</option>
-                                        <option value="Sibling">Sibling</option>
-                                        <option value="Child">Child</option>
-                                        <option value="Guardian / Relative">Guardian / Relative</option>
-                                        <option value="Friend / Neighbor">Friend / Neighbor</option>
+                                    <span style="font-size: 11px; font-weight: 600; color: #64748b; display: block; margin-bottom: 4px;">Sleep Pattern</span>
+                                    <select id="hpiSleep">
+                                        <option value="Normal / Restorative">Normal / Restorative</option>
+                                        <option value="Initial Insomnia">Initial Insomnia</option>
+                                        <option value="Middle Insomnia / Broken">Middle Insomnia / Broken</option>
+                                        <option value="Early Morning Awakening">Early Morning Awakening</option>
+                                        <option value="Decreased Need for Sleep">Decreased Need for Sleep</option>
+                                        <option value="Hypersomnia">Hypersomnia</option>
                                     </select>
-                                    <p class="text-xs text-rose-600 mt-1 hidden" id="err-emergencyRelation">Relationship is required.</p>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Emergency Phone <span class="text-rose-500">*</span></label>
-                                    <input type="tel" id="emergencyPhone" required placeholder="+251 912 000 000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                                    <p class="text-xs text-rose-600 mt-1 hidden" id="err-emergencyPhone">Emergency phone is required.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Payment / Insurance / CBHI -->
-                    <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                        <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex items-center gap-2.5">
-                            <i class="fa-solid fa-shield-heart text-[#0F4C81] text-lg"></i>
-                            <h2 class="font-bold text-slate-800 text-base">4. Payment / Insurance / CBHI Coverage</h2>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Payment / Coverage Category</label>
-                                <select id="paymentType" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm bg-white">
-                                    <option value="Community-Based Health Insurance (CBHI)">Community-Based Health Insurance (CBHI)</option>
-                                    <option value="Social Health Insurance (SHI)">Social Health Insurance (SHI)</option>
-                                    <option value="Private / Corporate Insurance">Private / Corporate Insurance</option>
-                                    <option value="Out-of-Pocket / Self-Pay">Out-of-Pocket / Self-Pay</option>
-                                    <option value="Free / Fee Waiver (Indigent)">Free / Fee Waiver (Indigent)</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">CBHI / Insurance ID No.</label>
-                                    <input type="text" id="policyNumber" placeholder="e.g., CBHI-04-88291" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Sponsor / Organization</label>
-                                    <input type="text" id="insuranceProvider" placeholder="e.g., Woreda CBHI Office" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
+                                    <span style="font-size: 11px; font-weight: 600; color: #64748b; display: block; margin-bottom: 4px;">Appetite / Weight</span>
+                                    <select id="hpiAppetite">
+                                        <option value="Normal / Stable">Normal / Stable</option>
+                                        <option value="Decreased / Weight Loss">Decreased / Weight Loss</option>
+                                        <option value="Increased / Weight Gain">Increased / Weight Gain</option>
+                                        <option value="Refusing Food / Fluids">Refusing Food / Fluids</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Step 1 Next Button -->
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                    <button type="button" onclick="printCurrentForm()" class="w-full sm:w-auto px-5 py-3 bg-white hover:bg-slate-100 text-[#0F4C81] font-semibold rounded-xl border border-slate-300 transition flex items-center justify-center gap-2 shadow-2xs">
-                        <i class="fa-solid fa-print text-[#1E7E74]"></i>
-                        <span>Print Clinical Chart</span>
-                    </button>
-                    <button type="button" onclick="validateAndProceedToTab2()" class="w-full sm:w-auto px-7 py-3.5 bg-[#0F4C81] hover:bg-[#0b3a63] text-white font-semibold rounded-xl shadow-sm transition flex items-center justify-center gap-2.5">
-                        <span>Save Registration & Continue to Mental Health Hx</span>
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
-            </section>
-
+            </div>
 
             <!-- =========================================================
-                 STEP 2: MENTAL HEALTH HX TAKING & CLINICIAN ACCEPTANCE
+                 SECTION 2: PAST PSYCHIATRIC HISTORY & MEDICATIONS
             ========================================================== -->
-            <section id="tab-panel-2" class="space-y-6 hidden">
+            <div class="clinical-card">
+                <div class="clinical-card-header">
+                    <h2><i class="fa fa-history"></i> 2. Previous Psychiatric History &amp; Current Medications</h2>
+                </div>
 
-                <!-- Linked Registered Patient Summary Banner -->
-                <div class="bg-gradient-to-r from-[#0F4C81] to-[#1E7E74] text-white rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-11 h-11 rounded-xl bg-white/15 border border-white/25 flex items-center justify-center text-lg font-bold">
-                            <i class="fa-solid fa-user-check"></i>
+                <div class="clinical-card-body">
+                    <!-- Past Diagnoses Table -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="margin: 0; font-size: 12px; color: #0F4C81;">Previous Psychiatric Diagnoses &amp; Episodes</label>
+                            <button type="button" onclick="addDiagnosisRow()" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <i class="fa fa-plus"></i> Add Diagnosis
+                            </button>
                         </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[11px] uppercase tracking-wider font-bold text-teal-200">Linked Registered Patient</span>
-                                <span id="context-mrn-badge" class="text-xs font-mono bg-black/25 px-2 py-0.5 rounded">MRN-2026-0000</span>
-                            </div>
-                            <p class="font-bold text-base mt-0.5" id="context-patient-summary">Unregistered Patient (Please complete Step 1)</p>
+                        <div class="table-responsive">
+                            <table class="clinical-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50%;">Diagnosis / Condition Name</th>
+                                        <th style="width: 25%;">Approx. Year / Age of Onset</th>
+                                        <th style="width: 20%;">Prior Hospitalization?</th>
+                                        <th style="width: 5%; text-align: center;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="diagnoses-container"></tbody>
+                            </table>
                         </div>
                     </div>
-                    <button type="button" onclick="switchTab(1)" class="text-xs font-semibold bg-white/15 hover:bg-white/25 px-3.5 py-2 rounded-xl border border-white/25 transition">
-                        <i class="fa-solid fa-pen-to-square mr-1.5"></i> Edit Registration
+
+                    <!-- Current Medications Table -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="margin: 0; font-size: 12px; color: #0F4C81;">Current &amp; Past Psychotropic Medications</label>
+                            <button type="button" onclick="addMedicationRow()" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <i class="fa fa-plus"></i> Add Medication
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="clinical-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50%;">Medication / Drug Name</th>
+                                        <th style="width: 25%;">Dose &amp; Frequency</th>
+                                        <th style="width: 20%;">Adherence Level</th>
+                                        <th style="width: 5%; text-align: center;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="medications-container"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 SECTION 3: SUBSTANCE USE SCREENING & HISTORY
+            ========================================================== -->
+            <div class="clinical-card">
+                <div class="clinical-card-header">
+                    <h2><i class="fa fa-beer"></i> 3. Substance Use Screening &amp; History</h2>
+                </div>
+
+                <div class="clinical-card-body">
+                    <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;">Screen for current and past substance use. Check substance to specify frequency/pattern:</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                        <!-- Alcohol -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-bottom: 6px;">
+                                <input type="checkbox" id="chkAlcohol" onchange="toggleSubSelect('chkAlcohol','subAlcohol')">
+                                <span style="font-weight: 700; color: #1e293b;">Alcohol</span>
+                            </label>
+                            <select id="subAlcohol" disabled>
+                                <option value="None">None</option>
+                                <option value="Occasional / Social">Occasional / Social</option>
+                                <option value="Daily / Heavy">Daily / Heavy</option>
+                                <option value="Binge Drinking">Binge Drinking</option>
+                                <option value="Past History Only">Past History Only</option>
+                            </select>
+                        </div>
+
+                        <!-- Khat -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-bottom: 6px;">
+                                <input type="checkbox" id="chkKhat" onchange="toggleSubSelect('chkKhat','subKhat')">
+                                <span style="font-weight: 700; color: #1e293b;">Khat (Chat)</span>
+                            </label>
+                            <select id="subKhat" disabled>
+                                <option value="None">None</option>
+                                <option value="Occasional / Social">Occasional / Social</option>
+                                <option value="Daily Chewing">Daily Chewing</option>
+                                <option value="Heavy / Compulsive">Heavy / Compulsive</option>
+                                <option value="Past History Only">Past History Only</option>
+                            </select>
+                        </div>
+
+                        <!-- Tobacco -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-bottom: 6px;">
+                                <input type="checkbox" id="chkTobacco" onchange="toggleSubSelect('chkTobacco','subTobacco')">
+                                <span style="font-weight: 700; color: #1e293b;">Tobacco / Smoking</span>
+                            </label>
+                            <select id="subTobacco" disabled>
+                                <option value="None">None</option>
+                                <option value="Light (<10 cig/day)">Light (&lt;10 cig/day)</option>
+                                <option value="Moderate (10–20 cig/day)">Moderate (10–20 cig/day)</option>
+                                <option value="Heavy (>1 pack/day)">Heavy (&gt;1 pack/day)</option>
+                                <option value="Shisha / Hookah">Shisha / Hookah</option>
+                                <option value="Ex-Smoker">Ex-Smoker</option>
+                            </select>
+                        </div>
+
+                        <!-- Cannabis -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-bottom: 6px;">
+                                <input type="checkbox" id="chkCannabis" onchange="toggleSubSelect('chkCannabis','subCannabis')">
+                                <span style="font-weight: 700; color: #1e293b;">Cannabis / Hashish</span>
+                            </label>
+                            <select id="subCannabis" disabled>
+                                <option value="None">None</option>
+                                <option value="Occasional">Occasional</option>
+                                <option value="Regular / Frequent">Regular / Frequent</option>
+                                <option value="Daily">Daily</option>
+                                <option value="Past History Only">Past History Only</option>
+                            </select>
+                        </div>
+
+                        <!-- Other -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-bottom: 6px;">
+                                <input type="checkbox" id="chkOtherSub" onchange="toggleSubSelect('chkOtherSub','subOther')">
+                                <span style="font-weight: 700; color: #1e293b;">Other Substances</span>
+                            </label>
+                            <input type="text" id="subOther" disabled placeholder="e.g., Benzodiazepines, Tramadol, Inhalants">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 SECTION 4: MEDICAL, SURGICAL, ALLERGIES & FAMILY HISTORY
+            ========================================================== -->
+            <div class="clinical-card">
+                <div class="clinical-card-header">
+                    <h2><i class="fa fa-medkit"></i> 4. Medical, Surgical, Allergies &amp; Family History</h2>
+                </div>
+
+                <div class="clinical-card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                        <div>
+                            <label for="medicalHistory">Past Medical &amp; Surgical History</label>
+                            <textarea id="medicalHistory" rows="2" placeholder="Chronic medical conditions (Epilepsy, Head Trauma, Thyroid, HTN, DM, HIV, TB...)" style="margin-bottom: 12px;"></textarea>
+
+                            <label for="allergies">Allergies &amp; Adverse Drug Reactions</label>
+                            <input type="text" id="allergies" placeholder="NKDA (No Known Drug Allergies) or specify...">
+                        </div>
+                        <div>
+                            <label for="familyHistory">Family Psychiatric &amp; Neurological History</label>
+                            <textarea id="familyHistory" rows="5" placeholder="Family history of Depression, Bipolar, Psychosis, Substance abuse, Epilepsy, Suicide in 1st/2nd degree relatives..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 SECTION 5: PSYCHOSOCIAL & LIVING SITUATION
+            ========================================================== -->
+            <div class="clinical-card">
+                <div class="clinical-card-header">
+                    <h2><i class="fa fa-users"></i> 5. Psychosocial, Education &amp; Living Situation</h2>
+                </div>
+
+                <div class="clinical-card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                        <div>
+                            <label for="education">Highest Level of Education</label>
+                            <select id="education">
+                                <option value="Informal / Religious Education">Informal / Religious Education</option>
+                                <option value="Primary School (Grade 1–8)">Primary School (Grade 1–8)</option>
+                                <option value="Secondary School (Grade 9–12)">Secondary School (Grade 9–12)</option>
+                                <option value="Technical / Vocational (TVET)">Technical / Vocational (TVET)</option>
+                                <option value="College Diploma / Degree">College Diploma / Degree</option>
+                                <option value="Postgraduate / Professional">Postgraduate / Professional</option>
+                                <option value="No Formal Education">No Formal Education</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="occupation">Occupation / Current Employment</label>
+                            <input type="text" id="occupation" placeholder="e.g., Farmer, Trader, Teacher, Student, Unemployed">
+                        </div>
+                        <div>
+                            <label for="livingSituation">Living Situation / Residence</label>
+                            <select id="livingSituation">
+                                <option value="With Immediate Family / Spouse">With Immediate Family / Spouse</option>
+                                <option value="With Extended Family / Relatives">With Extended Family / Relatives</option>
+                                <option value="Lives Alone">Lives Alone</option>
+                                <option value="Supported / Care Home">Supported / Care Home</option>
+                                <option value="Unhoused / Street Dwelling">Unhoused / Street Dwelling</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="supportSystem">Social Support System</label>
+                            <select id="supportSystem">
+                                <option value="Strong / Well-Supported">Strong / Well-Supported</option>
+                                <option value="Moderate / Adequate">Moderate / Adequate</option>
+                                <option value="Poor / Socially Isolated">Poor / Socially Isolated</option>
+                                <option value="Caregiver Burnout / Conflict">Caregiver Burnout / Conflict</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 SECTION 6: MENTAL STATUS EXAMINATION (MSE)
+            ========================================================== -->
+            <div class="clinical-card">
+                <div class="clinical-card-header">
+                    <h2><i class="fa fa-eye"></i> 6. Mental Status Examination (MSE)</h2>
+                </div>
+
+                <div class="clinical-card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label for="mseAppearance">General Appearance &amp; Behavior</label>
+                            <select id="mseAppearance">
+                                <option value="Neat, well-groomed, cooperative">Neat, well-groomed, cooperative</option>
+                                <option value="Disheveled, unkempt, poor hygiene">Disheveled, unkempt, poor hygiene</option>
+                                <option value="Restless, psychomotor agitation">Restless, psychomotor agitation</option>
+                                <option value="Psychomotor retardation, slowed">Psychomotor retardation, slowed</option>
+                                <option value="Guarded, suspicious, hostile">Guarded, suspicious, hostile</option>
+                                <option value="Inappropriate / bizarre attire">Inappropriate / bizarre attire</option>
+                                <option value="Catatonic posturing / stupor">Catatonic posturing / stupor</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="mseSpeech">Speech Characteristics</label>
+                            <select id="mseSpeech">
+                                <option value="Normal rate, tone and volume">Normal rate, tone and volume</option>
+                                <option value="Pressured, rapid, loud">Pressured, rapid, loud</option>
+                                <option value="Slowed, hesitant, low volume">Slowed, hesitant, low volume</option>
+                                <option value="Mute / Poverty of speech">Mute / Poverty of speech</option>
+                                <option value="Incoherent / Disorganized">Incoherent / Disorganized</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="mseMood">Mood (Subjective)</label>
+                            <input type="text" id="mseMood" placeholder="e.g., Euthymic, Depressed, Anxious, Irritable, Euphoric">
+                        </div>
+                        <div>
+                            <label for="mseAffect">Affect (Objective)</label>
+                            <select id="mseAffect">
+                                <option value="Broad / Congruent with mood">Broad / Congruent with mood</option>
+                                <option value="Blunted / Restricted range">Blunted / Restricted range</option>
+                                <option value="Flat / Non-reactive">Flat / Non-reactive</option>
+                                <option value="Labile / Rapidly shifting">Labile / Rapidly shifting</option>
+                                <option value="Incongruent with stated mood">Incongruent with stated mood</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px;">
+                        <div>
+                            <label for="mseThought">Thought Form &amp; Content</label>
+                            <select id="mseThought">
+                                <option value="Logical, goal-directed, no delusions">Logical, goal-directed, no delusions</option>
+                                <option value="Persecutory / Paranoid delusions">Persecutory / Paranoid delusions</option>
+                                <option value="Grandiose delusions">Grandiose delusions</option>
+                                <option value="Depressive / Nihilistic delusions">Depressive / Nihilistic delusions</option>
+                                <option value="Somatic delusions">Somatic delusions</option>
+                                <option value="Flight of ideas / Tangentiality">Flight of ideas / Tangentiality</option>
+                                <option value="Thought insertion / broadcasting">Thought insertion / broadcasting</option>
+                                <option value="Obsessions / Compulsions">Obsessions / Compulsions</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="msePerception">Perceptual Disturbances</label>
+                            <select id="msePerception">
+                                <option value="No hallucinations or illusions reported">No hallucinations reported</option>
+                                <option value="Auditory hallucinations (commentary/command)">Auditory hallucinations</option>
+                                <option value="Visual hallucinations">Visual hallucinations</option>
+                                <option value="Tactile / Olfactory hallucinations">Tactile / Olfactory hallucinations</option>
+                                <option value="Illusions / Derealization">Illusions / Derealization</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="mseOrientation">Cognition &amp; Orientation</label>
+                            <select id="mseOrientation">
+                                <option value="Fully oriented to time, place and person">Fully oriented (time, place, person)</option>
+                                <option value="Disoriented to time only">Disoriented to time only</option>
+                                <option value="Disoriented to time and place">Disoriented to time and place</option>
+                                <option value="Completely disoriented">Completely disoriented</option>
+                                <option value="Memory impairment / Amnesia">Memory impairment / Amnesia</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="mseInsight">Insight &amp; Judgment</label>
+                            <select id="mseInsight">
+                                <option value="Good insight &amp; intact judgment">Good insight &amp; intact judgment</option>
+                                <option value="Partial / Intellectual insight only">Partial / Intellectual insight only</option>
+                                <option value="Poor insight, impaired judgment">Poor insight, impaired judgment</option>
+                                <option value="Complete absence of insight">Complete absence of insight</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 SECTION 7: RISK ASSESSMENT & SAFETY TRIAGE
+            ========================================================== -->
+            <div class="clinical-card">
+                <div class="clinical-card-header">
+                    <h2><i class="fa fa-shield"></i> 7. Risk Assessment &amp; Clinical Safety Triage</h2>
+                    <span id="riskLevelBadge" style="padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;">
+                        <i class="fa fa-circle"></i> Low Risk
+                    </span>
+                </div>
+
+                <div class="clinical-card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px;">
+                        <div>
+                            <label for="riskSuicidal">Suicidal Ideation &amp; Intent</label>
+                            <select id="riskSuicidal" onchange="autoEvaluateRisk()">
+                                <option value="None / Denies suicidal thoughts">None / Denies suicidal thoughts</option>
+                                <option value="Passive death wish, no plan or intent">Passive death wish (no plan/intent)</option>
+                                <option value="Active suicidal ideation without plan">Active ideation without plan</option>
+                                <option value="Active suicidal plan and intent (HIGH)">Active plan and intent (HIGH)</option>
+                                <option value="Recent suicide attempt (< 1 month)">Recent suicide attempt (&lt; 1 month)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="riskHomicidal">Homicidal &amp; Aggression Risk</label>
+                            <select id="riskHomicidal" onchange="autoEvaluateRisk()">
+                                <option value="None / Low aggression risk">None / Low aggression risk</option>
+                                <option value="Verbal aggression / Irritable">Verbal aggression / Irritable</option>
+                                <option value="Threats of harm without specific target">Threats of harm without target</option>
+                                <option value="Active homicidal ideation with target">Active homicidal ideation with target</option>
+                                <option value="Recent physical violence / Assault">Recent physical violence / Assault</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="riskLevel">Overall Clinical Risk Level</label>
+                            <select id="riskLevel" onchange="updateRiskBadgeManual()">
+                                <option value="Low">Low Risk</option>
+                                <option value="Moderate">Moderate Risk</option>
+                                <option value="High">High Risk / Alert</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 SECTION 8: CLINICIAN SIGN-OFF & ATTESTATION
+            ========================================================== -->
+            <div class="clinical-card">
+                <div class="clinical-card-header">
+                    <h2><i class="fa fa-user-md"></i> 8. Assessing Clinician Sign-Off &amp; Attestation</h2>
+                </div>
+
+                <div class="clinical-card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label for="clinicianName">Assessing Clinician Full Name <span class="required-star">*</span></label>
+                            <input type="text" id="clinicianName" required placeholder="Clinician Full Name">
+                        </div>
+                        <div>
+                            <label for="clinicianRole">Professional Title / Role</label>
+                            <select id="clinicianRole">
+                                <option value="Psychiatrist">Psychiatrist</option>
+                                <option value="Mental Health Specialist">Mental Health Specialist</option>
+                                <option value="Integrated Clinical Officer">Integrated Clinical Officer</option>
+                                <option value="General Practitioner">General Practitioner</option>
+                                <option value="Psychiatric Nurse">Psychiatric Nurse</option>
+                                <option value="Clinical Psychologist">Clinical Psychologist</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="clinicianId">Professional License / Staff ID</label>
+                            <input type="text" id="clinicianId" placeholder="e.g., ETH-MD-49912">
+                        </div>
+                        <div>
+                            <label for="acceptingUnit">Clinical Unit / Service</label>
+                            <select id="acceptingUnit">
+                                <option value="Psychiatry Outpatient Department (OPD)">Psychiatry Outpatient Department (OPD)</option>
+                                <option value="Inpatient Psychiatric Ward">Inpatient Psychiatric Ward</option>
+                                <option value="Emergency Psychiatry Triage">Emergency Psychiatry Triage</option>
+                                <option value="Liaison / Consultation-Liaison">Liaison / Consultation-Liaison</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label for="acceptanceDateTime">Assessment Date &amp; Time <span class="required-star">*</span></label>
+                            <input type="datetime-local" id="acceptanceDateTime" required>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label for="acceptanceStatus">Clinical Disposition / Plan</label>
+                            <select id="acceptanceStatus">
+                                <option value="Accepted for Outpatient Follow-up">Accepted for Outpatient Follow-up</option>
+                                <option value="Accepted for Inpatient Admission">Accepted for Inpatient Admission</option>
+                                <option value="Accepted for Crisis Stabilization">Accepted for Crisis Stabilization</option>
+                                <option value="Referred to Specialized Tertiary Center">Referred to Specialized Tertiary Center</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Digital Signature & Legal Attestation -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 12px; border-top: 1px dashed #cbd5e1;">
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label style="margin: 0; font-size: 11px;">Signature Pad (Draw)</label>
+                                <button type="button" onclick="clearSignaturePad()" style="font-size: 11px; color: #dc2626; background: none; border: none; font-weight: 600; cursor: pointer;">Clear</button>
+                            </div>
+                            <canvas id="signature-pad"></canvas>
+                            <div style="margin-top: 8px;">
+                                <label for="typedSignature" style="font-size: 11px; margin-bottom: 4px;">Or Typed Signature Confirmation</label>
+                                <input type="text" id="typedSignature" placeholder="Type signature e.g., /s/ Dr. Selamawit">
+                            </div>
+                        </div>
+
+                        <div style="background: #f0fdf4; padding: 14px; border-radius: 8px; border: 1px solid #bbf7d0; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; color: #166534; font-size: 13px;">
+                                    <input type="checkbox" id="acceptanceConfirm" checked style="width: 18px; height: 18px; margin-top: 2px;">
+                                    <span><strong>Attestation &amp; Responsibility:</strong> I formally attest that I have conducted and documented the Mental Health History (Hx) and Mental Status Examination above, and accept clinical responsibility.</span>
+                                </label>
+                            </div>
+                            <div style="font-size: 11px; color: #15803d; margin-top: 12px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa fa-lock"></i> Digitally synchronized with Bahmni Clinical EMR.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Action Toolbar -->
+            <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 14px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 10px;">
+                <button type="button" onclick="resetForm()" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-eraser"></i> Clear Form
+                </button>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" onclick="printCurrentForm()" style="background: #ffffff; color: #0F4C81; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-print"></i> Print Clinical Chart
+                    </button>
+                    <button type="button" onclick="submitClinicalRecord()" style="background: #1E7E74; color: #ffffff; border: none; padding: 10px 24px; border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(30,126,116,0.3);">
+                        <i class="fa fa-check-circle"></i> Submit &amp; Save to EMR
                     </button>
                 </div>
+            </div>
 
-                <!-- Section A: Chief Complaint & History of Present Illness (HPI) -->
-                <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                    <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex items-center gap-2.5">
-                        <i class="fa-solid fa-comment-medical text-[#0F4C81] text-lg"></i>
-                        <h2 class="font-bold text-slate-800 text-base">A. Chief Complaint & History of Present Illness (HPI)</h2>
-                    </div>
-
-                    <div class="p-6 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Chief Complaint / Presenting Problem <span class="text-rose-500">*</span></label>
-                                <textarea id="chiefComplaint" rows="2" required placeholder="Document presenting problem in patient's or informant's own words..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm"></textarea>
-                                <p class="text-xs text-rose-600 mt-1 hidden" id="err-chiefComplaint">Chief complaint is required.</p>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Informant(s) & Reliability</label>
-                                <select id="informant" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm bg-white mb-2">
-                                    <option value="Self (Patient)">Self (Patient)</option>
-                                    <option value="Family / Caregiver">Family / Caregiver</option>
-                                    <option value="Self & Family">Self & Family</option>
-                                    <option value="Police / Escort">Police / Escort</option>
-                                    <option value="Referral Note / Chart">Referral Note / Chart</option>
-                                </select>
-                                <select id="informantReliability" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-xs bg-slate-50">
-                                    <option value="Good Reliability">Reliability: Good</option>
-                                    <option value="Fair / Partial Reliability">Reliability: Fair / Partial</option>
-                                    <option value="Poor / Guarded Reliability">Reliability: Poor / Guarded</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Onset of Episode</label>
-                                <select id="hpiOnset" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm bg-white">
-                                    <option value="Gradual / Insidious">Gradual / Insidious</option>
-                                    <option value="Acute (< 2 weeks)">Acute (&lt; 2 weeks)</option>
-                                    <option value="Subacute (2–4 weeks)">Subacute (2–4 weeks)</option>
-                                    <option value="Chronic / Recurrent">Chronic / Recurrent</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Duration of Symptoms</label>
-                                <input type="text" id="hpiDuration" placeholder="e.g., 3 weeks, 6 months" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                            </div>
-                            <div>
-                                <div class="flex justify-between items-center mb-1.5">
-                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600">Symptom Severity (1–10)</label>
-                                    <span id="severityBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">5 / 10 (Moderate)</span>
-                                </div>
-                                <input type="range" id="hpiSeverity" min="1" max="10" value="5" oninput="updateSeverityDisplay(this.value)" class="mt-2">
-                                <div class="flex justify-between text-[10px] text-slate-400 font-medium mt-1">
-                                    <span>1 Mild</span>
-                                    <span>5 Moderate</span>
-                                    <span>10 Severe</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Precipitating Factors & Stressors</label>
-                                <textarea id="hpiTriggers" rows="2" placeholder="Psychosocial stressors, bereavement, conflict, medication non-adherence..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Biological / Vegetative Functions (Sleep & Appetite)</label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <span class="text-[11px] font-semibold text-slate-500 block mb-1">Sleep Pattern</span>
-                                        <select id="hpiSleep" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none">
-                                            <option value="Normal / Restorative">Normal / Restorative</option>
-                                            <option value="Initial Insomnia">Initial Insomnia</option>
-                                            <option value="Early Morning Awakening">Early Morning Awakening</option>
-                                            <option value="Decreased Need for Sleep">Decreased Need for Sleep</option>
-                                            <option value="Hypersomnia">Hypersomnia</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <span class="text-[11px] font-semibold text-slate-500 block mb-1">Appetite / Weight</span>
-                                        <select id="hpiAppetite" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none">
-                                            <option value="Normal / Stable">Normal / Stable</option>
-                                            <option value="Decreased Appetite / Weight Loss">Decreased / Weight Loss</option>
-                                            <option value="Increased Appetite / Weight Gain">Increased / Weight Gain</option>
-                                            <option value="Refusing Food / Fluids">Refusing Food / Fluids</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section B: Past Psychiatric History (Dynamic Diagnoses & Medications) -->
-                <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                    <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex items-center gap-2.5">
-                        <i class="fa-solid fa-brain text-[#1E7E74] text-lg"></i>
-                        <h2 class="font-bold text-slate-800 text-base">B. Past Psychiatric & Psychotropic Medication History</h2>
-                    </div>
-
-                    <div class="p-6 space-y-6">
-                        <!-- Dynamic Past Diagnoses -->
-                        <div>
-                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600">Past Psychiatric Diagnoses</label>
-                                <button type="button" onclick="addDiagnosisRow()" class="text-xs font-semibold text-white bg-[#1E7E74] hover:bg-[#16635b] px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
-                                    <i class="fa-solid fa-plus"></i> Add Past Diagnosis
-                                </button>
-                            </div>
-                            <div id="diagnoses-container" class="space-y-2.5"></div>
-                        </div>
-
-                        <!-- Dynamic Psychotropic Medications -->
-                        <div class="border-t border-slate-100 pt-5">
-                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600">Psychotropic Medications (Current & Past)</label>
-                                <button type="button" onclick="addMedicationRow()" class="text-xs font-semibold text-white bg-[#0F4C81] hover:bg-[#0b3a63] px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
-                                    <i class="fa-solid fa-plus"></i> Add Psychotropic Medication
-                                </button>
-                            </div>
-                            <div id="medications-container" class="space-y-2.5"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section C: Substance Use & Medical History / Allergies -->
-                <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                    <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex items-center gap-2.5">
-                        <i class="fa-solid fa-notes-medical text-[#0F4C81] text-lg"></i>
-                        <h2 class="font-bold text-slate-800 text-base">C. Substance Use, Medical History & Allergies</h2>
-                    </div>
-
-                    <div class="p-6 space-y-6">
-                        <!-- Substance Use Screening -->
-                        <div>
-                            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-600 mb-3">Substance Use History (Check & Select Frequency)</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                    <label class="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2 cursor-pointer">
-                                        <input type="checkbox" id="chkAlcohol" onchange="toggleSubSelect('chkAlcohol','subAlcohol')" class="rounded text-[#0F4C81]"> Alcohol
-                                    </label>
-                                    <select id="subAlcohol" disabled class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white disabled:opacity-50">
-                                        <option value="None">None</option>
-                                        <option value="Occasional / Social">Occasional / Social</option>
-                                        <option value="Weekly">Weekly</option>
-                                        <option value="Daily / Dependence">Daily / Dependence</option>
-                                        <option value="In Remission">In Remission</option>
-                                    </select>
-                                </div>
-
-                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                    <label class="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2 cursor-pointer">
-                                        <input type="checkbox" id="chkKhat" onchange="toggleSubSelect('chkKhat','subKhat')" class="rounded text-[#0F4C81]"> Khat
-                                    </label>
-                                    <select id="subKhat" disabled class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white disabled:opacity-50">
-                                        <option value="None">None</option>
-                                        <option value="Occasional">Occasional</option>
-                                        <option value="Weekly">Weekly</option>
-                                        <option value="Daily / Heavy">Daily / Heavy</option>
-                                        <option value="In Remission">In Remission</option>
-                                    </select>
-                                </div>
-
-                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                    <label class="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2 cursor-pointer">
-                                        <input type="checkbox" id="chkTobacco" onchange="toggleSubSelect('chkTobacco','subTobacco')" class="rounded text-[#0F4C81]"> Tobacco / Nicotine
-                                    </label>
-                                    <select id="subTobacco" disabled class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white disabled:opacity-50">
-                                        <option value="None">None</option>
-                                        <option value="Occasional">Occasional</option>
-                                        <option value="Daily">Daily</option>
-                                        <option value="Former Smoker">Former Smoker</option>
-                                    </select>
-                                </div>
-
-                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                    <label class="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2 cursor-pointer">
-                                        <input type="checkbox" id="chkCannabis" onchange="toggleSubSelect('chkCannabis','subCannabis')" class="rounded text-[#0F4C81]"> Cannabis
-                                    </label>
-                                    <select id="subCannabis" disabled class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white disabled:opacity-50">
-                                        <option value="None">None</option>
-                                        <option value="Occasional">Occasional</option>
-                                        <option value="Weekly">Weekly</option>
-                                        <option value="Daily">Daily</option>
-                                    </select>
-                                </div>
-
-                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                    <label class="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2 cursor-pointer">
-                                        <input type="checkbox" id="chkOtherSub" onchange="toggleSubSelect('chkOtherSub','subOther')" class="rounded text-[#0F4C81]"> Other Substance
-                                    </label>
-                                    <input type="text" id="subOther" disabled placeholder="Specify substance..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white disabled:opacity-50">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Medical History & Allergies -->
-                        <div class="border-t border-slate-100 pt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Past Medical & Surgical History</label>
-                                <textarea id="medicalHistory" rows="2" placeholder="Hypertension, Diabetes, Epilepsy, Thyroid disease, HIV/TB, Head trauma, Pregnancy status..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Drug & Environmental Allergies</label>
-                                <textarea id="allergies" rows="2" placeholder="No Known Drug Allergies (NKDA) or list reactions..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section D: Family & Psychosocial History -->
-                <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                    <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex items-center gap-2.5">
-                        <i class="fa-solid fa-people-group text-[#1E7E74] text-lg"></i>
-                        <h2 class="font-bold text-slate-800 text-base">D. Family & Psychosocial History</h2>
-                    </div>
-
-                    <div class="p-6 space-y-5">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Family Psychiatric History</label>
-                            <textarea id="familyHistory" rows="2" placeholder="History of mental illness, suicide, epilepsy, or substance use in 1st/2nd degree relatives..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm"></textarea>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Education Level</label>
-                                <input type="text" id="education" placeholder="e.g., Grade 12, B.Sc." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Occupation</label>
-                                <input type="text" id="occupation" placeholder="e.g., Teacher, Student, Farmer" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Living Situation</label>
-                                <input type="text" id="livingSituation" placeholder="e.g., With parents / spouse" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Social Support</label>
-                                <select id="supportSystem" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm bg-white">
-                                    <option value="Strong Family / Community Support">Strong Support</option>
-                                    <option value="Moderate / Partial Support">Moderate Support</option>
-                                    <option value="Poor / Isolated">Poor / Isolated</option>
-                                    <option value="Homeless / Unstable Housing">Homeless / Unstable</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section E: Mental Status Examination (MSE) & Risk Assessment -->
-                <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-                    <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex items-center gap-2.5">
-                        <i class="fa-solid fa-stethoscope text-[#0F4C81] text-lg"></i>
-                        <h2 class="font-bold text-slate-800 text-base">E. Mental Status Examination (MSE) & Safety Risk Assessment</h2>
-                    </div>
-
-                    <div class="p-6 space-y-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Appearance & Behavior</label>
-                                <select id="mseAppearance" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white outline-none">
-                                    <option value="Kempt, cooperative, appropriate eye contact">Kempt, cooperative, appropriate eye contact</option>
-                                    <option value="Disheveled / Poor self-care">Disheveled / Poor self-care</option>
-                                    <option value="Psychomotor agitation / Restless">Psychomotor agitation / Restless</option>
-                                    <option value="Psychomotor retardation">Psychomotor retardation</option>
-                                    <option value="Guarded / Hostile / Uncooperative">Guarded / Hostile / Uncooperative</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Speech</label>
-                                <select id="mseSpeech" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white outline-none">
-                                    <option value="Normal rate, rhythm, and volume">Normal rate, rhythm, and volume</option>
-                                    <option value="Pressured / Rapid / Loud">Pressured / Rapid / Loud</option>
-                                    <option value="Slow / Soft / Increased latency">Slow / Soft / Increased latency</option>
-                                    <option value="Poverty of speech / Mute">Poverty of speech / Mute</option>
-                                    <option value="Slurred / Dysarthric">Slurred / Dysarthric</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Mood & Affect</label>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" id="mseMood" placeholder="Mood (e.g., Sad)" value="Euthymic" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs outline-none">
-                                    <select id="mseAffect" class="w-full px-2.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white outline-none">
-                                        <option value="Congruent / Full">Affect: Full</option>
-                                        <option value="Constricted">Constricted</option>
-                                        <option value="Blunted / Flat">Blunted / Flat</option>
-                                        <option value="Labile">Labile</option>
-                                        <option value="Anxious / Tearful">Anxious</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Thought Process & Content</label>
-                                <select id="mseThought" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white outline-none">
-                                    <option value="Linear, goal-directed; no delusions">Linear, goal-directed; no delusions</option>
-                                    <option value="Circumstantial / Tangential">Circumstantial / Tangential</option>
-                                    <option value="Flight of ideas / Loosening of associations">Flight of ideas / Loose associations</option>
-                                    <option value="Paranoid / Persecutory delusions">Paranoid / Persecutory delusions</option>
-                                    <option value="Grandiose / Somatic / Religious delusions">Grandiose / Religious delusions</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Perception (Hallucinations)</label>
-                                <select id="msePerception" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white outline-none">
-                                    <option value="No hallucinations or illusions reported">No hallucinations reported</option>
-                                    <option value="Auditory hallucinations (Command/Commenting)">Auditory hallucinations</option>
-                                    <option value="Visual hallucinations">Visual hallucinations</option>
-                                    <option value="Tactile / Olfactory hallucinations">Tactile / Olfactory hallucinations</option>
-                                    <option value="Responding to internal stimuli">Responding to internal stimuli</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Cognition / Orientation & Insight</label>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <select id="mseOrientation" class="w-full px-2.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white outline-none">
-                                        <option value="Oriented x4">Oriented x4</option>
-                                        <option value="Oriented x3">Oriented x3</option>
-                                        <option value="Disoriented">Disoriented</option>
-                                    </select>
-                                    <select id="mseInsight" class="w-full px-2.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white outline-none">
-                                        <option value="Good Insight">Good Insight</option>
-                                        <option value="Partial Insight">Partial Insight</option>
-                                        <option value="Poor Insight">Poor Insight</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Risk Assessment Panel -->
-                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-shield-virus text-[#0F4C81]"></i>
-                                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">Clinical Risk Assessment</h3>
-                                </div>
-                                <span id="risk-alert-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                                    <i class="fa-solid fa-circle-check mr-1"></i> Overall Risk Level: LOW
-                                </span>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Suicidal Ideation / Intent</label>
-                                    <select id="riskSuicidal" onchange="updateRiskBadge()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white outline-none">
-                                        <option value="None / Denies">None / Denies</option>
-                                        <option value="Passive ideation, no plan">Passive ideation, no plan</option>
-                                        <option value="Active ideation with plan/intent">Active ideation with plan/intent</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Homicidal Ideation / Aggression</label>
-                                    <select id="riskHomicidal" onchange="updateRiskBadge()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white outline-none">
-                                        <option value="None / Denies">None / Denies</option>
-                                        <option value="Verbalized anger, no target">Verbalized anger, no target</option>
-                                        <option value="Active threat / Violent intent">Active threat / Violent intent</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Overall Self-Harm / Safety Risk Level</label>
-                                    <select id="riskLevel" onchange="updateRiskBadge()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white outline-none">
-                                        <option value="Low">Low Risk</option>
-                                        <option value="Moderate">Moderate Risk</option>
-                                        <option value="High">High Risk (Immediate Precautions)</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- =========================================================
-                     MANDATORY CLINICIAN ACCEPTANCE & SIGN-OFF SECTION
-                ========================================================== -->
-                <div class="bg-white rounded-2xl shadow-md border-2 border-[#0F4C81] overflow-hidden">
-                    <div class="bg-[#0F4C81] text-white px-6 py-4 flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-user-doctor text-xl text-emerald-300"></i>
-                            <div>
-                                <h2 class="font-bold text-base">Accepted By / Assessing Clinician Sign-Off</h2>
-                                <p class="text-xs text-blue-100">Mandatory clinical verification & patient disposition acceptance</p>
-                            </div>
-                        </div>
-                        <span class="px-3 py-1 rounded-full bg-white/15 text-xs font-semibold border border-white/25">Mandatory Sign-Off</span>
-                    </div>
-
-                    <div class="p-6 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <!-- Accepting Clinician Full Name -->
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Accepting Clinician Full Name <span class="text-rose-500">*</span></label>
-                                <input type="text" id="clinicianName" required placeholder="e.g., Dr. Selamawit Tadesse" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm">
-                                <p class="text-xs text-rose-600 mt-1 hidden" id="err-clinicianName">Accepting clinician full name is required.</p>
-                            </div>
-
-                            <!-- Clinical Role / Title -->
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Clinical Role / Title <span class="text-rose-500">*</span></label>
-                                <select id="clinicianRole" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm bg-white">
-                                    <option value="">Select role / title...</option>
-                                    <option value="Psychiatrist">Psychiatrist</option>
-                                    <option value="Mental Health Officer / BSc Psychiatry">Mental Health Officer / BSc Psychiatry</option>
-                                    <option value="Clinical Psychologist">Clinical Psychologist</option>
-                                    <option value="Psychiatric Nurse">Psychiatric Nurse</option>
-                                    <option value="Resident / Intern">Resident / Intern</option>
-                                </select>
-                                <p class="text-xs text-rose-600 mt-1 hidden" id="err-clinicianRole">Clinical role is required.</p>
-                            </div>
-
-                            <!-- Staff / License ID -->
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Staff / License ID <span class="text-rose-500">*</span></label>
-                                <input type="text" id="clinicianId" required placeholder="e.g., EFDA-PSY-8941" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] focus:ring-2 focus:ring-[#0F4C81]/20 outline-none transition text-sm">
-                                <p class="text-xs text-rose-600 mt-1 hidden" id="err-clinicianId">Staff or License ID is required.</p>
-                            </div>
-
-                            <!-- Accepting Department / Unit -->
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Accepting Department / Unit <span class="text-rose-500">*</span></label>
-                                <select id="acceptingUnit" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm bg-white">
-                                    <option value="Outpatient Psychiatry">Outpatient Psychiatry</option>
-                                    <option value="Emergency Psychiatry">Emergency Psychiatry</option>
-                                    <option value="Inpatient Ward">Inpatient Ward</option>
-                                    <option value="Consultation-Liaison">Consultation-Liaison</option>
-                                </select>
-                            </div>
-
-                            <!-- Date & Time of Acceptance -->
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Date & Time of Acceptance <span class="text-rose-500">*</span></label>
-                                <input type="datetime-local" id="acceptanceDateTime" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#0F4C81] outline-none transition text-sm">
-                                <p class="text-xs text-rose-600 mt-1 hidden" id="err-acceptanceDateTime">Date and time of acceptance is required.</p>
-                            </div>
-
-                            <!-- Clinical Acceptance Status -->
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Clinical Acceptance Status <span class="text-rose-500">*</span></label>
-                                <select id="acceptanceStatus" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-semibold text-[#1E7E74] focus:border-[#0F4C81] outline-none transition text-sm bg-teal-50/40">
-                                    <option value="Accepted for Outpatient Follow-up">Accepted for Outpatient Follow-up</option>
-                                    <option value="Accepted for Inpatient Admission">Accepted for Inpatient Admission</option>
-                                    <option value="Accepted for Crisis Stabilization">Accepted for Crisis Stabilization</option>
-                                    <option value="Referred to Higher Center">Referred to Higher Center</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Electronic Signature Pad & Typed Confirmation + Attestation -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2 border-t border-slate-100">
-                            <!-- Signature Pad -->
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <label class="text-xs font-bold uppercase tracking-wider text-slate-700">Electronic Signature Pad (Draw below)</label>
-                                    <button type="button" onclick="clearSignaturePad()" class="text-xs text-rose-600 hover:underline font-semibold">Clear Pad</button>
-                                </div>
-                                <canvas id="signature-pad" class="w-full h-24 bg-white border border-slate-300 rounded-lg"></canvas>
-                                <div class="mt-2.5">
-                                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Or Typed Electronic Signature Confirmation <span class="text-rose-500">*</span></label>
-                                    <input type="text" id="typedSignature" required placeholder="Type full name to confirm signature (e.g., /s/ Dr. Selamawit Tadesse)" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs italic font-medium bg-white outline-none focus:border-[#0F4C81]">
-                                    <p class="text-xs text-rose-600 mt-1 hidden" id="err-typedSignature">Typed signature confirmation is required.</p>
-                                </div>
-                            </div>
-
-                            <!-- Digital Attestation Checkbox -->
-                            <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-200 flex flex-col justify-between">
-                                <div class="flex items-start gap-3">
-                                    <input type="checkbox" id="acceptanceConfirm" required class="mt-1 w-5 h-5 text-[#0F4C81] rounded border-slate-300 cursor-pointer">
-                                    <div>
-                                        <label for="acceptanceConfirm" class="text-sm font-bold text-[#0F4C81] cursor-pointer">
-                                            Clinician Digital Attestation <span class="text-rose-500">*</span>
-                                        </label>
-                                        <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                                            I formally attest that I have verified the patient's registration identity, conducted and documented the Mental Health History (Hx) and Mental Status Examination above, and officially accept clinical responsibility according to the selected disposition status.
-                                        </p>
-                                        <p class="text-xs text-rose-600 mt-1.5 font-semibold hidden" id="err-acceptanceConfirm">You must check the attestation box to complete sign-off.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 2 Action Buttons -->
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                    <button type="button" onclick="switchTab(1)" class="w-full sm:w-auto px-5 py-3 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl border border-slate-300 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        <span>Back to Step 1: Registration</span>
-                    </button>
-
-                    <div class="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-3">
-                        <button type="button" onclick="printCurrentForm()" class="w-full sm:w-auto px-5 py-3.5 bg-white hover:bg-slate-100 text-[#0F4C81] font-bold rounded-xl border border-slate-300 transition flex items-center justify-center gap-2 shadow-2xs">
-                            <i class="fa-solid fa-print text-[#1E7E74]"></i>
-                            <span>Print Clinical Chart</span>
-                        </button>
-                        <button type="button" onclick="submitClinicalRecord()" class="w-full sm:w-auto px-8 py-3.5 bg-[#1E7E74] hover:bg-[#16635b] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2.5">
-                            <i class="fa-solid fa-file-medical"></i>
-                            <span>Submit & Print / Export Clinical Summary</span>
-                        </button>
-                    </div>
-                </div>
-            </section>
         </form>
     </main>
 
     <!-- =========================================================
          PRINT / EXPORT A4 CLINICAL SUMMARY MODAL
     ========================================================== -->
-    <div id="summary-modal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden">
-            <!-- Modal Action Toolbar (Hidden on Print) -->
-            <div class="px-6 py-3.5 bg-[#0F4C81] text-white flex flex-wrap items-center justify-between gap-2 no-print">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-file-medical text-emerald-300 text-lg"></i>
-                    <h3 class="font-bold text-sm sm:text-base">Hospital-Grade Clinical Summary (A4 Print-Ready)</h3>
+    <div id="summary-modal" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; overflow-y: auto;">
+        <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); max-width: 900px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+            <div style="background: #0F4C81; color: #ffffff; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;" class="no-print">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa fa-file-text-o"></i>
+                    <strong style="font-size: 14px;">Clinical Summary (A4 Print-Ready)</strong>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button type="button" onclick="window.print()" class="px-3.5 py-1.5 bg-[#1E7E74] hover:bg-[#16635b] text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5 shadow-xs">
-                        <i class="fa-solid fa-print"></i> Print Chart / Save PDF
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" onclick="window.print()" style="background: #1E7E74; color: #fff; border: none; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                        <i class="fa fa-print"></i> Print
                     </button>
-                    <button type="button" onclick="exportRecordJSON()" class="px-3.5 py-1.5 bg-white/15 hover:bg-white/25 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-download"></i> Export JSON
-                    </button>
-                    <button type="button" onclick="closeSummaryModal()" class="p-1.5 hover:bg-white/15 rounded-lg text-white ml-1">
-                        <i class="fa-solid fa-xmark text-lg"></i>
+                    <button type="button" onclick="closeSummaryModal()" style="background: transparent; color: #fff; border: none; font-size: 16px; cursor: pointer; padding: 4px 8px;">
+                        <i class="fa fa-times"></i>
                     </button>
                 </div>
             </div>
-
-            <!-- Printable A4 Chart Container -->
-            <div id="printable-area" class="p-6 sm:p-8 overflow-y-auto space-y-5 text-xs text-slate-800 bg-white"></div>
+            <div id="printable-area" style="padding: 24px; overflow-y: auto; font-size: 12px; line-height: 1.5; color: #1e293b;"></div>
         </div>
     </div>
 
     <script>
-        // =========================================================
-        // GLOBAL STATE & INITIALIZATION
-        // =========================================================
         const STORAGE_KEY = 'psych_intake_hx_acceptance_v2';
         let savedRecords = [];
         let activePreviewRecord = null;
@@ -1023,16 +862,11 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadRecordsFromStorage();
-            if (!document.getElementById('mrnInput').value) {
-                generateNewMRN();
-            }
             setDefaultAcceptanceDateTime();
             initSignaturePad();
 
             addDiagnosisRow();
             addMedicationRow();
-
-            // search drawer removed
 
             if (window.BahmniCustomFormBridge) {
                 BahmniCustomFormBridge.init({
@@ -1068,12 +902,6 @@
             }
         });
 
-        function generateNewMRN() {
-            const rand = Math.floor(10000 + Math.random() * 90000);
-            document.getElementById('mrnInput').value = `MRN-2026-${rand}`;
-            updatePatientContextBanner();
-        }
-
         function setDefaultAcceptanceDateTime() {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -1081,7 +909,7 @@
         }
 
         // =========================================================
-        // SIGNATURE PAD (MOUSE & TOUCH SUPPORT)
+        // SIGNATURE PAD
         // =========================================================
         function initSignaturePad() {
             const canvas = document.getElementById('signature-pad');
@@ -1090,25 +918,16 @@
 
             function resizeCanvas() {
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                const rect = canvas.getBoundingClientRect();
-                if (rect.width > 0) {
-                    canvas.width = rect.width * ratio;
-                    canvas.height = rect.height * ratio;
-                    ctx.scale(ratio, ratio);
-                    ctx.lineWidth = 2;
-                    ctx.lineCap = 'round';
-                    ctx.strokeStyle = '#0F4C81';
-                }
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                ctx.scale(ratio, ratio);
+                ctx.strokeStyle = '#0F4C81';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
             }
 
+            resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
-            // Resize when tab 2 becomes visible
-            const observer = new MutationObserver(() => {
-                if (!document.getElementById('tab-panel-2').classList.contains('hidden')) {
-                    resizeCanvas();
-                }
-            });
-            observer.observe(document.getElementById('tab-panel-2'), { attributes: true });
 
             function getPos(e) {
                 const rect = canvas.getBoundingClientRect();
@@ -1153,220 +972,118 @@
         }
 
         // =========================================================
-        // NAVIGATION & LIVE CONTEXT SYNC
+        // SEVERITY & RISK
         // =========================================================
-        function switchTab(step) {
-            const p1 = document.getElementById('tab-panel-1');
-            const p2 = document.getElementById('tab-panel-2');
-            const b1 = document.getElementById('tab-btn-1');
-            const b2 = document.getElementById('tab-btn-2');
-            const b3 = document.getElementById('tab-btn-3');
-            const progLabel = document.getElementById('progress-label');
-
-            const activeClass = "py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all bg-[#0F4C81] text-white shadow-xs cursor-pointer";
-            const inactiveClass = "py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 cursor-pointer";
-
-            if (step === 1) {
-                p1.classList.remove('hidden');
-                p2.classList.add('hidden');
-                b1.className = activeClass;
-                b2.className = inactiveClass;
-                if (b3) b3.className = inactiveClass;
-                if (progLabel) progLabel.textContent = 'Section 1: Patient Demographics & Identification';
-            } else if (step === 2) {
-                updatePatientContextBanner();
-                p1.classList.add('hidden');
-                p2.classList.remove('hidden');
-                b1.className = inactiveClass;
-                b2.className = activeClass;
-                if (b3) b3.className = inactiveClass;
-                if (progLabel) progLabel.textContent = 'Section 2: Mental Health Assessment & Clinician Attestation';
-                setTimeout(resizeCanvas, 50);
-            } else if (step === 3) {
-                updatePatientContextBanner();
-                p1.classList.remove('hidden');
-                p2.classList.remove('hidden');
-                b1.className = inactiveClass;
-                b2.className = inactiveClass;
-                if (b3) b3.className = activeClass;
-                if (progLabel) progLabel.textContent = 'Complete Form (All Sections Visible)';
-                setTimeout(resizeCanvas, 50);
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function updatePatientContextBanner() {
-            const name = document.getElementById('fullName').value.trim();
-            const mrn = document.getElementById('mrnInput').value.trim() || 'MRN-UNASSIGNED';
-            const age = document.getElementById('ageDisplay').value;
-            const gender = document.getElementById('gender').value;
-            const phone = document.getElementById('phone').value.trim();
-
-            document.getElementById('context-mrn-badge').textContent = mrn;
-            const summaryEl = document.getElementById('context-patient-summary');
-
-            if (name) {
-                summaryEl.textContent = `${name} • ${age ? age + ' yrs' : 'Age --'} • ${gender || 'Gender --'} ${phone ? '• ' + phone : ''}`;
-            } else {
-                summaryEl.textContent = `Unregistered Patient (Complete Step 1 Demographics)`;
-            }
-        }
-
-        // =========================================================
-        // FORM HELPERS (AGE, SEVERITY, RISK, SUBSTANCES)
-        // =========================================================
-        function calculateAge() {
-            const dobVal = document.getElementById('dob').value;
-            const ageEl = document.getElementById('ageDisplay');
-            if (!dobVal) {
-                ageEl.value = '';
-                updatePatientContextBanner();
-                return;
-            }
-            const dob = new Date(dobVal);
-            const today = new Date();
-            let age = today.getFullYear() - dob.getFullYear();
-            const m = today.getMonth() - dob.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-            ageEl.value = age >= 0 ? age : 0;
-            updatePatientContextBanner();
-        }
-
         function updateSeverityDisplay(val) {
             const badge = document.getElementById('severityBadge');
-            const n = parseInt(val, 10);
-            let label = 'Moderate';
-            let cls = 'bg-amber-100 text-amber-800';
-            if (n <= 3) {
-                label = 'Mild';
-                cls = 'bg-emerald-100 text-emerald-800';
-            } else if (n >= 7) {
-                label = 'Severe';
-                cls = 'bg-rose-100 text-rose-800';
+            let text = `${val} / 10 `;
+            let style = 'padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700; ';
+
+            if (val <= 3) {
+                text += '(Mild)';
+                style += 'background: #dcfce7; color: #166534;';
+            } else if (val <= 6) {
+                text += '(Moderate)';
+                style += 'background: #fef3c7; color: #92400e;';
+            } else {
+                text += '(Severe)';
+                style += 'background: #fee2e2; color: #991b1b;';
             }
-            badge.className = `px-2.5 py-0.5 rounded-full text-xs font-bold ${cls}`;
-            badge.textContent = `${n} / 10 (${label})`;
+            badge.textContent = text;
+            badge.style.cssText = style;
         }
 
-        function updateRiskBadge() {
-            const levelSelect = document.getElementById('riskLevel');
-            const suicidal = document.getElementById('riskSuicidal').value;
-            const homicidal = document.getElementById('riskHomicidal').value;
+        function autoEvaluateRisk() {
+            const sui = document.getElementById('riskSuicidal').value;
+            const hom = document.getElementById('riskHomicidal').value;
+            const lvl = document.getElementById('riskLevel');
 
-            // Auto-escalate visual level if active ideation selected
-            if (suicidal.includes('Active') || homicidal.includes('Active')) {
-                levelSelect.value = 'High';
-            } else if ((suicidal.includes('Passive') || homicidal.includes('Verbalized')) && levelSelect.value === 'Low') {
-                levelSelect.value = 'Moderate';
-            }
-
-            const level = levelSelect.value;
-            const badge = document.getElementById('risk-alert-badge');
-            if (level === 'High') {
-                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-rose-600 text-white animate-pulse';
-                badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Overall Risk Level: HIGH ALERT';
-            } else if (level === 'Moderate') {
-                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300';
-                badge.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i> Overall Risk Level: MODERATE';
+            if (sui.includes('Active suicidal plan') || sui.includes('Recent suicide attempt') || hom.includes('Active homicidal') || hom.includes('Recent physical violence')) {
+                lvl.value = 'High';
+            } else if (sui.includes('Active suicidal ideation') || sui.includes('Passive death wish') || hom.includes('Threats of harm') || hom.includes('Verbal aggression')) {
+                lvl.value = 'Moderate';
             } else {
-                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
-                badge.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i> Overall Risk Level: LOW';
+                lvl.value = 'Low';
+            }
+            updateRiskBadgeManual();
+        }
+
+        function updateRiskBadgeManual() {
+            const lvl = document.getElementById('riskLevel').value;
+            const badge = document.getElementById('riskLevelBadge');
+            if (lvl === 'High') {
+                badge.style.cssText = 'padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;';
+                badge.innerHTML = '<i class="fa fa-exclamation-triangle"></i> HIGH RISK / ALERT';
+            } else if (lvl === 'Moderate') {
+                badge.style.cssText = 'padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: #fef3c7; color: #92400e; border: 1px solid #fde68a;';
+                badge.innerHTML = '<i class="fa fa-exclamation-circle"></i> MODERATE RISK';
+            } else {
+                badge.style.cssText = 'padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;';
+                badge.innerHTML = '<i class="fa fa-circle"></i> LOW RISK';
             }
         }
 
         function toggleSubSelect(chkId, inputId) {
-            const chk = document.getElementById(chkId);
-            const inp = document.getElementById(inputId);
-            inp.disabled = !chk.checked;
-            if (!chk.checked) {
-                if (inp.tagName === 'SELECT') inp.value = 'None';
-                else inp.value = '';
-            } else if (inp.tagName === 'SELECT' && inp.value === 'None') {
-                inp.selectedIndex = 1;
+            const checked = document.getElementById(chkId).checked;
+            const el = document.getElementById(inputId);
+            el.disabled = !checked;
+            if (!checked) {
+                el.value = el.tagName === 'SELECT' ? 'None' : '';
             }
         }
 
         // =========================================================
-        // DYNAMIC ROWS: PAST DIAGNOSES & PSYCHOTROPIC MEDICATIONS
+        // DYNAMIC TABLES
         // =========================================================
         function addDiagnosisRow(diagnosis = '', year = '', hospitalized = 'No') {
-            const container = document.getElementById('diagnoses-container');
-            const row = document.createElement('div');
-            row.className = 'diagnosis-row grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200';
-            row.innerHTML = `
-                <div class="sm:col-span-6">
-                    <input type="text" placeholder="Diagnosis (e.g., Bipolar I Disorder, Schizophrenia, MDD)" value="${escapeHtml(diagnosis)}" class="diag-name w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white outline-none focus:border-[#0F4C81]">
-                </div>
-                <div class="sm:col-span-2">
-                    <input type="text" placeholder="Year" value="${escapeHtml(year)}" class="diag-year w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white outline-none focus:border-[#0F4C81]">
-                </div>
-                <div class="sm:col-span-3">
-                    <select class="diag-hosp w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white outline-none focus:border-[#0F4C81]">
-                        <option value="No" ${hospitalized === 'No' ? 'selected' : ''}>Hospitalization: No</option>
-                        <option value="Yes" ${hospitalized === 'Yes' ? 'selected' : ''}>Hospitalization: Yes</option>
+            const tbody = document.getElementById('diagnoses-container');
+            const tr = document.createElement('tr');
+            tr.className = 'diagnosis-row';
+            tr.innerHTML = `
+                <td><input type="text" class="diag-name" value="${escapeHtml(diagnosis)}" placeholder="e.g., Major Depressive Disorder, Schizophrenia, Bipolar I"></td>
+                <td><input type="text" class="diag-year" value="${escapeHtml(year)}" placeholder="e.g., 2021, Age 19"></td>
+                <td>
+                    <select class="diag-hosp">
+                        <option value="No" ${hospitalized === 'No' ? 'selected' : ''}>No</option>
+                        <option value="Yes" ${hospitalized === 'Yes' ? 'selected' : ''}>Yes</option>
                     </select>
-                </div>
-                <div class="sm:col-span-1 flex justify-end">
-                    <button type="button" onclick="this.closest('.diagnosis-row').remove()" title="Remove row" class="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
+                </td>
+                <td style="text-align: center;">
+                    <button type="button" onclick="this.closest('tr').remove()" style="color: #dc2626; background: none; border: none; cursor: pointer; padding: 4px;" title="Remove row">
+                        <i class="fa fa-trash"></i>
                     </button>
-                </div>
+                </td>
             `;
-            container.appendChild(row);
+            tbody.appendChild(tr);
         }
 
         function addMedicationRow(name = '', dose = '', adherence = 'Good Adherence') {
-            const container = document.getElementById('medications-container');
-            const row = document.createElement('div');
-            row.className = 'medication-row grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200';
-            row.innerHTML = `
-                <div class="sm:col-span-5">
-                    <input type="text" placeholder="Medication Name (e.g., Risperidone, Fluoxetine, Sodium Valproate)" value="${escapeHtml(name)}" class="med-name w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white outline-none focus:border-[#0F4C81]">
-                </div>
-                <div class="sm:col-span-4">
-                    <input type="text" placeholder="Dose & Frequency (e.g., 2mg PO BID)" value="${escapeHtml(dose)}" class="med-dose w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white outline-none focus:border-[#0F4C81]">
-                </div>
-                <div class="sm:col-span-2">
-                    <select class="med-adherence w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white outline-none focus:border-[#0F4C81]">
+            const tbody = document.getElementById('medications-container');
+            const tr = document.createElement('tr');
+            tr.className = 'medication-row';
+            tr.innerHTML = `
+                <td><input type="text" class="med-name" value="${escapeHtml(name)}" placeholder="e.g., Fluoxetine, Olanzapine, Haloperidol, Sodium Valproate"></td>
+                <td><input type="text" class="med-dose" value="${escapeHtml(dose)}" placeholder="e.g., 20mg PO daily, 5mg PO at night"></td>
+                <td>
+                    <select class="med-adherence">
                         <option value="Good Adherence" ${adherence === 'Good Adherence' ? 'selected' : ''}>Good Adherence</option>
-                        <option value="Partial / Irregular" ${adherence === 'Partial / Irregular' ? 'selected' : ''}>Partial / Irregular</option>
-                        <option value="Poor / Discontinued" ${adherence === 'Poor / Discontinued' ? 'selected' : ''}>Poor / Discontinued</option>
+                        <option value="Partial / Inconsistent" ${adherence === 'Partial / Inconsistent' ? 'selected' : ''}>Partial / Inconsistent</option>
+                        <option value="Poor Adherence / Refusal" ${adherence === 'Poor Adherence / Refusal' ? 'selected' : ''}>Poor / Refusal</option>
+                        <option value="Discontinued / Stopped" ${adherence === 'Discontinued / Stopped' ? 'selected' : ''}>Discontinued</option>
                     </select>
-                </div>
-                <div class="sm:col-span-1 flex justify-end">
-                    <button type="button" onclick="this.closest('.medication-row').remove()" title="Remove row" class="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
+                </td>
+                <td style="text-align: center;">
+                    <button type="button" onclick="this.closest('tr').remove()" style="color: #dc2626; background: none; border: none; cursor: pointer; padding: 4px;" title="Remove row">
+                        <i class="fa fa-trash"></i>
                     </button>
-                </div>
+                </td>
             `;
-            container.appendChild(row);
+            tbody.appendChild(tr);
         }
 
         // =========================================================
-        // VALIDATION & SUBMISSION
+        // SNAPSHOT DATA EXTRACTION & RESTORE
         // =========================================================
-        function validateFields(ids) {
-            let valid = true;
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                const err = document.getElementById(`err-${id}`);
-                const ok = el.type === 'checkbox' ? el.checked : el.value.trim() !== '';
-                if (!ok) {
-                    valid = false;
-                    el.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/20');
-                    if (err) err.classList.remove('hidden');
-                } else {
-                    el.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
-                    if (err) err.classList.add('hidden');
-                }
-            });
-            return valid;
-        }
-
-        function validateAndProceedToTab2() {
-            switchTab(2);
-        }
-
         function collectCurrentFormSnapshot() {
             const diagnoses = [];
             document.querySelectorAll('.diagnosis-row').forEach(r => {
@@ -1392,26 +1109,26 @@
                 mrn: document.getElementById('mrnInput').value.trim() || 'MRN-UNASSIGNED',
                 createdAt: new Date().toISOString(),
                 registration: {
-                    fullName: document.getElementById('fullName').value.trim() || '____________________________',
-                    dob: document.getElementById('dob').value || '____-__-__',
-                    age: document.getElementById('ageDisplay').value || '__',
-                    gender: document.getElementById('gender').value || '________',
-                    maritalStatus: document.getElementById('maritalStatus').value,
-                    phone: document.getElementById('phone').value.trim() || '________________',
-                    referralSource: document.getElementById('referralSource').value,
-                    region: document.getElementById('addrRegion').value.trim() || '________',
-                    zone: document.getElementById('addrZone').value.trim() || 'N/A',
-                    woreda: document.getElementById('addrWoreda').value.trim() || '____',
-                    kebele: document.getElementById('addrKebele').value.trim() || 'N/A',
-                    emergencyName: document.getElementById('emergencyName').value.trim() || '____________________',
-                    emergencyRelation: document.getElementById('emergencyRelation').value || '________',
-                    emergencyPhone: document.getElementById('emergencyPhone').value.trim() || '________________',
-                    paymentType: document.getElementById('paymentType').value,
-                    policyNumber: document.getElementById('policyNumber').value.trim() || 'N/A',
-                    insuranceProvider: document.getElementById('insuranceProvider').value.trim() || 'N/A'
+                    fullName: document.getElementById('fullName').value.trim() || '',
+                    dob: document.getElementById('dob').value || '',
+                    age: document.getElementById('ageDisplay').value || '',
+                    gender: document.getElementById('gender').value || '',
+                    maritalStatus: document.getElementById('maritalStatus').value || 'Single',
+                    phone: document.getElementById('phone').value.trim() || '',
+                    referralSource: document.getElementById('referralSource').value || 'Self-Referral',
+                    region: document.getElementById('addrRegion').value.trim() || '',
+                    zone: document.getElementById('addrZone').value.trim() || '',
+                    woreda: document.getElementById('addrWoreda').value.trim() || '',
+                    kebele: document.getElementById('addrKebele').value.trim() || '',
+                    emergencyName: document.getElementById('emergencyName').value.trim() || '',
+                    emergencyRelation: document.getElementById('emergencyRelation').value || '',
+                    emergencyPhone: document.getElementById('emergencyPhone').value.trim() || '',
+                    paymentType: document.getElementById('paymentType').value || '',
+                    policyNumber: document.getElementById('policyNumber').value.trim() || '',
+                    insuranceProvider: document.getElementById('insuranceProvider').value.trim() || ''
                 },
                 mentalHealthHx: {
-                    chiefComplaint: document.getElementById('chiefComplaint').value.trim() || '____________________________________________________',
+                    chiefComplaint: document.getElementById('chiefComplaint').value.trim() || '',
                     informant: document.getElementById('informant').value,
                     informantReliability: document.getElementById('informantReliability').value,
                     hpiOnset: document.getElementById('hpiOnset').value,
@@ -1429,8 +1146,8 @@
                         cannabis: document.getElementById('chkCannabis').checked ? document.getElementById('subCannabis').value : 'None',
                         other: document.getElementById('chkOtherSub').checked ? (document.getElementById('subOther').value.trim() || 'Yes') : 'None'
                     },
-                    medicalHistory: document.getElementById('medicalHistory').value.trim() || 'No chronic medical illness reported',
-                    allergies: document.getElementById('allergies').value.trim() || 'No Known Drug Allergies (NKDA)',
+                    medicalHistory: document.getElementById('medicalHistory').value.trim() || 'None reported',
+                    allergies: document.getElementById('allergies').value.trim() || 'NKDA',
                     familyHistory: document.getElementById('familyHistory').value.trim() || 'None reported',
                     psychosocial: {
                         education: document.getElementById('education').value.trim() || 'Not specified',
@@ -1455,300 +1172,16 @@
                     }
                 },
                 acceptance: {
-                    clinicianName: document.getElementById('clinicianName').value.trim() || '__________________________',
+                    clinicianName: document.getElementById('clinicianName').value.trim() || '',
                     clinicianRole: document.getElementById('clinicianRole').value || 'Clinician',
-                    clinicianId: document.getElementById('clinicianId').value.trim() || '____________',
+                    clinicianId: document.getElementById('clinicianId').value.trim() || '',
                     acceptingUnit: document.getElementById('acceptingUnit').value,
                     acceptanceDateTime: document.getElementById('acceptanceDateTime').value,
                     acceptanceStatus: document.getElementById('acceptanceStatus').value,
-                    typedSignature: document.getElementById('typedSignature').value.trim() || 'Signature: ______________________',
+                    typedSignature: document.getElementById('typedSignature').value.trim() || '',
                     signatureImage: sigDataUrl
                 }
             };
-        }
-
-        function printCurrentForm() {
-            const snapshot = collectCurrentFormSnapshot();
-            openSummaryModal(snapshot);
-            setTimeout(() => {
-                window.print();
-            }, 250);
-        }
-
-        function submitClinicalRecord() {
-            const cc = document.getElementById('chiefComplaint')?.value?.trim();
-            if (!cc) {
-                switchTab(2);
-                showToast('Please document the Chief Complaint / Presenting Problem.', 'error');
-                document.getElementById('chiefComplaint')?.focus();
-                return;
-            }
-
-            const cName = document.getElementById('clinicianName')?.value?.trim();
-            if (!cName && window.BahmniCustomFormBridge && window.BahmniCustomFormBridge.currentUserFullName) {
-                document.getElementById('clinicianName').value = window.BahmniCustomFormBridge.currentUserFullName;
-            }
-
-            if (!document.getElementById('typedSignature')?.value?.trim() && document.getElementById('clinicianName')?.value?.trim()) {
-                document.getElementById('typedSignature').value = '/s/ ' + document.getElementById('clinicianName').value.trim();
-            }
-
-            document.getElementById('acceptanceConfirm').checked = true;
-
-            const record = collectCurrentFormSnapshot();
-
-            const existingIdx = savedRecords.findIndex(r => r.mrn === record.mrn);
-            if (existingIdx > -1) {
-                savedRecords[existingIdx] = record;
-            } else {
-                savedRecords.unshift(record);
-            }
-
-            persistRecords();
-            // search drawer removed
-            document.getElementById('tab-2-status').classList.remove('hidden');
-
-            if (window.BahmniCustomFormBridge && typeof window.BahmniCustomFormBridge.saveObservation === 'function') {
-                window.BahmniCustomFormBridge.saveObservation(record, function(err, res) {
-                    if (err) {
-                        console.error('Bahmni bridge save error:', err);
-                        showToast('Saved locally, but server sync failed: ' + (err.message || err), 'error');
-                    } else {
-                        showToast('Clinical intake & clinician acceptance saved to EMR!', 'success');
-                    }
-                });
-            } else {
-                showToast('Clinical intake & clinician acceptance saved!', 'success');
-            }
-            openSummaryModal(record);
-        }
-
-        // =========================================================
-        // HOSPITAL-GRADE PRINTABLE SUMMARY MODAL
-        // =========================================================
-        function openSummaryModal(rec) {
-            activePreviewRecord = rec;
-            const r = rec.registration;
-            const hx = rec.mentalHealthHx;
-            const acc = rec.acceptance;
-
-            const formattedAccDate = acc.acceptanceDateTime ? new Date(acc.acceptanceDateTime).toLocaleString() : 'N/A';
-
-            const diagHtml = hx.diagnoses.length
-                ? hx.diagnoses.map(d => `<tr><td class="py-1 px-2 border border-slate-200 font-semibold">${escapeHtml(d.name)}</td><td class="py-1 px-2 border border-slate-200">${escapeHtml(d.year)}</td><td class="py-1 px-2 border border-slate-200">${escapeHtml(d.hospitalized)}</td></tr>`).join('')
-                : '<tr><td colspan="3" class="py-1.5 px-2 border border-slate-200 italic text-slate-400">No previous psychiatric diagnoses reported</td></tr>';
-
-            const medHtml = hx.medications.length
-                ? hx.medications.map(m => `<tr><td class="py-1 px-2 border border-slate-200 font-semibold">${escapeHtml(m.name)}</td><td class="py-1 px-2 border border-slate-200">${escapeHtml(m.dose)}</td><td class="py-1 px-2 border border-slate-200">${escapeHtml(m.adherence)}</td></tr>`).join('')
-                : '<tr><td colspan="3" class="py-1.5 px-2 border border-slate-200 italic text-slate-400">No psychotropic medications recorded</td></tr>';
-
-            const riskColor = hx.risk.level === 'High' ? 'bg-rose-600 text-white' : (hx.risk.level === 'Moderate' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-50 text-emerald-900 border border-emerald-200');
-
-            document.getElementById('printable-area').innerHTML = `
-                <!-- Hospital Chart Header -->
-                <div class="border-b-2 border-[#0F4C81] pb-3 flex justify-between items-start gap-4">
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-[#1E7E74]">Department of Psychiatry & Behavioral Health • Confidential Medical Chart</p>
-                        <h1 class="text-xl font-bold text-[#0F4C81] mt-0.5">Patient Registration & Mental Health Intake Summary</h1>
-                    </div>
-                    <div class="text-right border border-slate-300 px-3 py-1.5 rounded-lg bg-slate-50">
-                        <span class="text-[10px] uppercase text-slate-500 block">MRN / Patient ID</span>
-                        <span class="font-mono font-bold text-sm text-[#0F4C81]">${escapeHtml(rec.mrn)}</span>
-                    </div>
-                </div>
-
-                <!-- 1. Patient Registration Table -->
-                <div>
-                    <h2 class="text-[11px] font-bold uppercase tracking-wider bg-[#0F4C81] text-white px-2.5 py-1 rounded-xs mb-2">1. Patient Registration & Demographics</h2>
-                    <table class="w-full border-collapse border border-slate-200 text-[11px]">
-                        <tr>
-                            <td class="p-1.5 border border-slate-200 bg-slate-50 font-semibold w-1/6">Full Name</td>
-                            <td class="p-1.5 border border-slate-200 font-bold w-2/6">${escapeHtml(r.fullName)}</td>
-                            <td class="p-1.5 border border-slate-200 bg-slate-50 font-semibold w-1/6">DOB / Age</td>
-                            <td class="p-1.5 border border-slate-200 w-2/6">${escapeHtml(r.dob)} (${escapeHtml(r.age)} yrs)</td>
-                        </tr>
-                        <tr>
-                            <td class="p-1.5 border border-slate-200 bg-slate-50 font-semibold">Gender / Marital</td>
-                            <td class="p-1.5 border border-slate-200">${escapeHtml(r.gender)} • ${escapeHtml(r.maritalStatus)}</td>
-                            <td class="p-1.5 border border-slate-200 bg-slate-50 font-semibold">Phone / Referral</td>
-                            <td class="p-1.5 border border-slate-200">${escapeHtml(r.phone)} (${escapeHtml(r.referralSource)})</td>
-                        </tr>
-                        <tr>
-                            <td class="p-1.5 border border-slate-200 bg-slate-50 font-semibold">Address</td>
-                            <td class="p-1.5 border border-slate-200" colspan="3">Region: ${escapeHtml(r.region)}, Zone/Sub-city: ${escapeHtml(r.zone)}, Woreda: ${escapeHtml(r.woreda)}, Kebele: ${escapeHtml(r.kebele)}</td>
-                        </tr>
-                        <tr>
-                            <td class="p-1.5 border border-slate-200 bg-slate-50 font-semibold">Emergency Contact</td>
-                            <td class="p-1.5 border border-slate-200">${escapeHtml(r.emergencyName)} (${escapeHtml(r.emergencyRelation)}) — ${escapeHtml(r.emergencyPhone)}</td>
-                            <td class="p-1.5 border border-slate-200 bg-slate-50 font-semibold">Payment / CBHI</td>
-                            <td class="p-1.5 border border-slate-200">${escapeHtml(r.paymentType)} (ID: ${escapeHtml(r.policyNumber)})</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <!-- 2. Chief Complaint & HPI -->
-                <div>
-                    <h2 class="text-[11px] font-bold uppercase tracking-wider bg-[#0F4C81] text-white px-2.5 py-1 rounded-xs mb-2">2. Chief Complaint & History of Present Illness (HPI)</h2>
-                    <div class="border border-slate-200 p-2.5 rounded-xs space-y-1.5 text-[11px]">
-                        <p><strong>Chief Complaint:</strong> "${escapeHtml(hx.chiefComplaint)}" <span class="text-slate-500">(${escapeHtml(hx.informant)} — ${escapeHtml(hx.informantReliability)})</span></p>
-                        <p><strong>Onset & Duration:</strong> ${escapeHtml(hx.hpiOnset)} • Duration: ${escapeHtml(hx.hpiDuration)} • <strong>Severity:</strong> ${escapeHtml(hx.hpiSeverity)}/10</p>
-                        <p><strong>Precipitating Factors:</strong> ${escapeHtml(hx.hpiTriggers)}</p>
-                        <p><strong>Vegetative Functions:</strong> Sleep: ${escapeHtml(hx.hpiSleep)} | Appetite/Weight: ${escapeHtml(hx.hpiAppetite)}</p>
-                    </div>
-                </div>
-
-                <!-- 3. Past Psychiatric & Medications -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <h3 class="text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 px-2.5 py-1 border border-slate-200">Past Psychiatric Diagnoses</h3>
-                        <table class="w-full border-collapse text-[11px]">
-                            <thead><tr class="bg-slate-50"><th class="p-1 border border-slate-200 text-left">Diagnosis</th><th class="p-1 border border-slate-200 text-left">Year</th><th class="p-1 border border-slate-200 text-left">Hosp.</th></tr></thead>
-                            <tbody>${diagHtml}</tbody>
-                        </table>
-                    </div>
-                    <div>
-                        <h3 class="text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 px-2.5 py-1 border border-slate-200">Psychotropic Medications</h3>
-                        <table class="w-full border-collapse text-[11px]">
-                            <thead><tr class="bg-slate-50"><th class="p-1 border border-slate-200 text-left">Medication</th><th class="p-1 border border-slate-200 text-left">Dose/Freq</th><th class="p-1 border border-slate-200 text-left">Adherence</th></tr></thead>
-                            <tbody>${medHtml}</tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- 4. Substance, Medical, Allergies & Psychosocial -->
-                <div>
-                    <h2 class="text-[11px] font-bold uppercase tracking-wider bg-[#0F4C81] text-white px-2.5 py-1 rounded-xs mb-2">3. Substance Use, Medical, Family & Psychosocial History</h2>
-                    <div class="border border-slate-200 p-2.5 rounded-xs space-y-1.5 text-[11px]">
-                        <p><strong>Substance Use:</strong> Alcohol: ${escapeHtml(hx.substances.alcohol)} | Khat: ${escapeHtml(hx.substances.khat)} | Tobacco: ${escapeHtml(hx.substances.tobacco)} | Cannabis: ${escapeHtml(hx.substances.cannabis)} | Other: ${escapeHtml(hx.substances.other)}</p>
-                        <p><strong>Medical / Surgical Hx:</strong> ${escapeHtml(hx.medicalHistory)} | <strong>Allergies:</strong> <span class="font-semibold text-rose-700">${escapeHtml(hx.allergies)}</span></p>
-                        <p><strong>Family Psychiatric Hx:</strong> ${escapeHtml(hx.familyHistory)}</p>
-                        <p><strong>Psychosocial Context:</strong> Education: ${escapeHtml(hx.psychosocial.education)} | Occupation: ${escapeHtml(hx.psychosocial.occupation)} | Living: ${escapeHtml(hx.psychosocial.livingSituation)} | Support: ${escapeHtml(hx.psychosocial.supportSystem)}</p>
-                    </div>
-                </div>
-
-                <!-- 5. Mental Status Exam & Risk -->
-                <div>
-                    <h2 class="text-[11px] font-bold uppercase tracking-wider bg-[#0F4C81] text-white px-2.5 py-1 rounded-xs mb-2">4. Mental Status Examination (MSE) & Safety Risk</h2>
-                    <div class="grid grid-cols-2 gap-1.5 text-[11px] border border-slate-200 p-2.5 rounded-xs">
-                        <p><strong>Appearance/Behavior:</strong> ${escapeHtml(hx.mse.appearance)}</p>
-                        <p><strong>Speech:</strong> ${escapeHtml(hx.mse.speech)}</p>
-                        <p><strong>Mood & Affect:</strong> ${escapeHtml(hx.mse.mood)} / ${escapeHtml(hx.mse.affect)}</p>
-                        <p><strong>Thought Process/Content:</strong> ${escapeHtml(hx.mse.thought)}</p>
-                        <p><strong>Perception:</strong> ${escapeHtml(hx.mse.perception)}</p>
-                        <p><strong>Orientation & Insight:</strong> ${escapeHtml(hx.mse.orientation)} • ${escapeHtml(hx.mse.insight)}</p>
-                    </div>
-                    <div class="mt-2 p-2 rounded-xs flex flex-wrap justify-between items-center text-[11px] ${riskColor}">
-                        <span><strong>Suicidal Risk:</strong> ${escapeHtml(hx.risk.suicidal)} • <strong>Homicidal Risk:</strong> ${escapeHtml(hx.risk.homicidal)}</span>
-                        <span class="font-bold uppercase">Overall Risk Level: ${escapeHtml(hx.risk.level)}</span>
-                    </div>
-                </div>
-
-                <!-- 6. Clinician Acceptance & Sign-Off Block -->
-                <div class="border-2 border-[#0F4C81] rounded-md p-3.5 bg-blue-50/40">
-                    <div class="flex flex-wrap justify-between items-start gap-4">
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-[#0F4C81]">Accepted By / Assessing Clinician Sign-Off</span>
-                            <p class="text-sm font-bold text-slate-900">${escapeHtml(acc.clinicianName)} <span class="font-normal text-xs text-slate-600">(${escapeHtml(acc.clinicianRole)})</span></p>
-                            <p class="text-[11px] text-slate-700"><strong>Staff / License ID:</strong> ${escapeHtml(acc.clinicianId)} • <strong>Unit:</strong> ${escapeHtml(acc.acceptingUnit)}</p>
-                            <p class="text-[11px] font-bold text-[#1E7E74]">Disposition Status: ${escapeHtml(acc.acceptanceStatus)}</p>
-                        </div>
-                        <div class="text-right space-y-1">
-                            <p class="text-[10px] text-slate-500">Accepted Date & Time: <strong class="text-slate-800">${escapeHtml(formattedAccDate)}</strong></p>
-                            ${acc.signatureImage ? `<img src="${acc.signatureImage}" alt="Clinician Signature" class="h-12 ml-auto border-b border-slate-400">` : ''}
-                            <p class="text-xs italic font-semibold text-[#0F4C81]">${escapeHtml(acc.typedSignature)}</p>
-                            <p class="text-[10px] text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> Digitally Attested & Verified</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('summary-modal').classList.remove('hidden');
-        }
-
-        function closeSummaryModal() {
-            document.getElementById('summary-modal').classList.add('hidden');
-        }
-
-        function exportRecordJSON() {
-            if (!activePreviewRecord) return;
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activePreviewRecord, null, 2));
-            const a = document.createElement('a');
-            a.setAttribute("href", dataStr);
-            a.setAttribute("download", `${activePreviewRecord.mrn}_Psychiatric_Intake.json`);
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            showToast('Clinical chart exported as JSON.', 'success');
-        }
-
-        // =========================================================
-        // LOCALSTORAGE DIRECTORY & DEMO PATIENT FILLER
-        // =========================================================
-        function loadRecordsFromStorage() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                savedRecords = raw ? JSON.parse(raw) : [];
-            } catch (e) {
-                savedRecords = [];
-            }
-        }
-
-        function persistRecords() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(savedRecords));
-            } catch (e) {
-                console.warn('LocalStorage error', e);
-            }
-        }
-
-        function renderSavedRecordsList() {
-            const container = document.getElementById('saved-records-list');
-            const badge = document.getElementById('record-count-badge');
-            const q = (document.getElementById('searchRecordsInput')?.value || '').toLowerCase();
-
-            badge.textContent = savedRecords.length;
-
-            const filtered = savedRecords.filter(r =>
-                r.registration.fullName.toLowerCase().includes(q) ||
-                r.mrn.toLowerCase().includes(q) ||
-                r.acceptance.clinicianName.toLowerCase().includes(q)
-            );
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No saved patient records found.</div>`;
-                return;
-            }
-
-            container.innerHTML = filtered.map(rec => `
-                <div class="p-4 rounded-xl border border-slate-200 bg-white hover:border-[#0F4C81] shadow-2xs transition space-y-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[11px] font-mono font-bold text-[#0F4C81] bg-blue-50 px-2 py-0.5 rounded">${escapeHtml(rec.mrn)}</span>
-                            <h4 class="font-bold text-slate-800 text-sm mt-1">${escapeHtml(rec.registration.fullName)}</h4>
-                            <p class="text-xs text-slate-500">${escapeHtml(rec.registration.age)} yrs • ${escapeHtml(rec.registration.gender)} • ${escapeHtml(rec.registration.region)}</p>
-                        </div>
-                        <button type="button" onclick="deleteRecord('${rec.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="Delete Record">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
-                        </button>
-                    </div>
-                    <p class="text-xs text-slate-600 bg-slate-50 p-2 rounded-lg line-clamp-2"><strong>CC:</strong> "${escapeHtml(rec.mentalHealthHx.chiefComplaint)}"</p>
-                    <div class="flex items-center justify-between pt-1.5 border-t border-slate-100 text-[11px]">
-                        <span class="text-[#1E7E74] font-semibold"><i class="fa-solid fa-user-doctor mr-1"></i>${escapeHtml(rec.acceptance.clinicianName)}</span>
-                        <div class="flex gap-1.5">
-                            <button type="button" onclick="loadRecordIntoForm('${rec.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold">Reload</button>
-                            <button type="button" onclick="viewSavedRecordSummary('${rec.id}')" class="px-2.5 py-1 rounded-lg bg-[#0F4C81] hover:bg-[#0b3a63] text-white font-semibold">Print / View</button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function viewSavedRecordSummary(id) {
-            const rec = savedRecords.find(r => r.id === id);
-            if (rec) {
-                // drawer removed
-                openSummaryModal(rec);
-            }
         }
 
         function loadRecordIntoForm(arg) {
@@ -1766,19 +1199,6 @@
             if (r.dob) document.getElementById('dob').value = r.dob;
             if (r.age) document.getElementById('ageDisplay').value = r.age;
             if (r.gender) document.getElementById('gender').value = r.gender;
-            if (r.maritalStatus) document.getElementById('maritalStatus').value = r.maritalStatus;
-            if (r.phone) document.getElementById('phone').value = r.phone;
-            if (r.referralSource) document.getElementById('referralSource').value = r.referralSource;
-            if (r.region) document.getElementById('addrRegion').value = r.region;
-            if (r.zone !== undefined) document.getElementById('addrZone').value = r.zone === 'N/A' ? '' : r.zone;
-            if (r.woreda) document.getElementById('addrWoreda').value = r.woreda;
-            if (r.kebele !== undefined) document.getElementById('addrKebele').value = r.kebele === 'N/A' ? '' : r.kebele;
-            if (r.emergencyName) document.getElementById('emergencyName').value = r.emergencyName;
-            if (r.emergencyRelation) document.getElementById('emergencyRelation').value = r.emergencyRelation;
-            if (r.emergencyPhone) document.getElementById('emergencyPhone').value = r.emergencyPhone;
-            if (r.paymentType) document.getElementById('paymentType').value = r.paymentType;
-            if (r.policyNumber !== undefined) document.getElementById('policyNumber').value = r.policyNumber === 'N/A' ? '' : r.policyNumber;
-            if (r.insuranceProvider !== undefined) document.getElementById('insuranceProvider').value = r.insuranceProvider === 'N/A' ? '' : r.insuranceProvider;
 
             const hx = rec.mentalHealthHx || {};
             if (hx.chiefComplaint) document.getElementById('chiefComplaint').value = hx.chiefComplaint;
@@ -1838,7 +1258,7 @@
             if (risk.homicidal) document.getElementById('riskHomicidal').value = risk.homicidal;
             if (risk.level) {
                 document.getElementById('riskLevel').value = risk.level;
-                updateRiskBadge();
+                updateRiskBadgeManual();
             }
 
             const acc = rec.acceptance || {};
@@ -1865,12 +1285,7 @@
                 img.src = acc.signatureImage;
             }
 
-            // drawer removed
-            updatePatientContextBanner();
-            switchTab(1);
-            if (r.fullName) {
-                showToast(`Loaded record for ${r.fullName}`, 'info');
-            }
+            showToast('Clinical record loaded successfully.', 'info');
         }
 
         function setSubState(chkId, selId, val) {
@@ -1881,50 +1296,189 @@
             sel.value = active ? val : 'None';
         }
 
-        function deleteRecord(id) {
-            savedRecords = savedRecords.filter(r => r.id !== id);
+        // =========================================================
+        // SUBMIT & PRINT
+        // =========================================================
+        function submitClinicalRecord() {
+            const cc = document.getElementById('chiefComplaint')?.value?.trim();
+            if (!cc) {
+                showToast('Please document the Chief Complaint / Presenting Problem.', 'error');
+                document.getElementById('chiefComplaint')?.focus();
+                return;
+            }
+
+            let cName = document.getElementById('clinicianName')?.value?.trim();
+            if (!cName && window.BahmniCustomFormBridge && window.BahmniCustomFormBridge.currentUserFullName) {
+                cName = window.BahmniCustomFormBridge.currentUserFullName;
+                document.getElementById('clinicianName').value = cName;
+            }
+
+            if (!document.getElementById('typedSignature')?.value?.trim() && cName) {
+                document.getElementById('typedSignature').value = '/s/ ' + cName;
+            }
+
+            document.getElementById('acceptanceConfirm').checked = true;
+
+            const record = collectCurrentFormSnapshot();
+
+            const existingIdx = savedRecords.findIndex(r => r.mrn === record.mrn);
+            if (existingIdx > -1) {
+                savedRecords[existingIdx] = record;
+            } else {
+                savedRecords.unshift(record);
+            }
+
             persistRecords();
-            // search drawer removed
-            showToast('Patient record deleted.', 'info');
+
+            if (window.BahmniCustomFormBridge && typeof window.BahmniCustomFormBridge.saveObservation === 'function') {
+                window.BahmniCustomFormBridge.saveObservation(record, function(err, res) {
+                    if (err) {
+                        console.error('Bahmni bridge save error:', err);
+                        showToast('Saved locally, but server sync failed: ' + (err.message || err), 'error');
+                    } else {
+                        showToast('Clinical intake saved & synchronized to Bahmni EMR!', 'success');
+                    }
+                });
+            } else {
+                showToast('Clinical intake saved successfully!', 'success');
+            }
+        }
+
+        function printCurrentForm() {
+            const snapshot = collectCurrentFormSnapshot();
+            openSummaryModal(snapshot);
+            setTimeout(() => {
+                window.print();
+            }, 250);
+        }
+
+        function openSummaryModal(rec) {
+            activePreviewRecord = rec;
+            const r = rec.registration || {};
+            const hx = rec.mentalHealthHx || {};
+            const acc = rec.acceptance || {};
+
+            const diagHtml = (hx.diagnoses && hx.diagnoses.length)
+                ? hx.diagnoses.map(d => `<tr><td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: 600;">${escapeHtml(d.name)}</td><td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(d.year)}</td><td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(d.hospitalized)}</td></tr>`).join('')
+                : '<tr><td colspan="3" style="padding: 8px; border: 1px solid #cbd5e1; font-style: italic; color: #94a3b8;">No previous psychiatric diagnoses reported</td></tr>';
+
+            const medHtml = (hx.medications && hx.medications.length)
+                ? hx.medications.map(m => `<tr><td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: 600;">${escapeHtml(m.name)}</td><td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(m.dose)}</td><td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(m.adherence)}</td></tr>`).join('')
+                : '<tr><td colspan="3" style="padding: 8px; border: 1px solid #cbd5e1; font-style: italic; color: #94a3b8;">No psychotropic medications recorded</td></tr>';
+
+            const riskText = (hx.risk && hx.risk.level) || 'Low';
+            const riskColor = riskText === 'High' ? 'background: #fee2e2; color: #991b1b;' : (riskText === 'Moderate' ? 'background: #fef3c7; color: #92400e;' : 'background: #dcfce7; color: #166534;');
+
+            document.getElementById('printable-area').innerHTML = `
+                <div style="border-bottom: 2px solid #0F4C81; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #1E7E74; letter-spacing: 0.5px;">Department of Psychiatry &amp; Behavioral Health</div>
+                        <h1 style="font-size: 18px; font-weight: 800; color: #0F4C81; margin: 4px 0 0 0;">Psychiatric Intake &amp; Mental Health Assessment</h1>
+                    </div>
+                    <div style="text-align: right; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; background: #f8fafc;">
+                        <span style="font-size: 10px; text-transform: uppercase; color: #64748b; display: block;">Patient MRN</span>
+                        <strong style="font-size: 13px; color: #0F4C81;">${escapeHtml(rec.mrn || 'N/A')}</strong>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; background: #0F4C81; color: #fff; padding: 4px 8px; border-radius: 4px; margin: 0 0 8px 0;">1. Chief Complaint &amp; History of Present Illness (HPI)</h3>
+                    <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 8px;">
+                        <strong>Chief Complaint:</strong> ${escapeHtml(hx.chiefComplaint || 'None recorded')}
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11.5px;">
+                        <div><strong>Informant:</strong> ${escapeHtml(hx.informant || '-')}</div>
+                        <div><strong>Onset:</strong> ${escapeHtml(hx.hpiOnset || '-')}</div>
+                        <div><strong>Duration:</strong> ${escapeHtml(hx.hpiDuration || '-')}</div>
+                        <div><strong>Severity:</strong> ${escapeHtml(hx.hpiSeverity || '-')}/10</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; background: #0F4C81; color: #fff; padding: 4px 8px; border-radius: 4px; margin: 0 0 8px 0;">2. Past Psychiatric History &amp; Medications</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; margin-bottom: 8px;">
+                        <thead><tr style="background: #f1f5f9;"><th style="padding: 4px 6px; border: 1px solid #cbd5e1; text-align: left;">Diagnosis</th><th style="padding: 4px 6px; border: 1px solid #cbd5e1; text-align: left;">Year</th><th style="padding: 4px 6px; border: 1px solid #cbd5e1; text-align: left;">Hospitalized</th></tr></thead>
+                        <tbody>${diagHtml}</tbody>
+                    </table>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
+                        <thead><tr style="background: #f1f5f9;"><th style="padding: 4px 6px; border: 1px solid #cbd5e1; text-align: left;">Medication</th><th style="padding: 4px 6px; border: 1px solid #cbd5e1; text-align: left;">Dose</th><th style="padding: 4px 6px; border: 1px solid #cbd5e1; text-align: left;">Adherence</th></tr></thead>
+                        <tbody>${medHtml}</tbody>
+                    </table>
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; background: #0F4C81; color: #fff; padding: 4px 8px; border-radius: 4px; margin: 0 0 8px 0;">3. Mental Status Examination (MSE)</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 11.5px;">
+                        <div><strong>Appearance:</strong> ${escapeHtml((hx.mse && hx.mse.appearance) || '-')}</div>
+                        <div><strong>Speech:</strong> ${escapeHtml((hx.mse && hx.mse.speech) || '-')}</div>
+                        <div><strong>Mood / Affect:</strong> ${escapeHtml((hx.mse && hx.mse.mood) || '-')} / ${escapeHtml((hx.mse && hx.mse.affect) || '-')}</div>
+                        <div><strong>Thought:</strong> ${escapeHtml((hx.mse && hx.mse.thought) || '-')}</div>
+                        <div><strong>Perception:</strong> ${escapeHtml((hx.mse && hx.mse.perception) || '-')}</div>
+                        <div><strong>Insight / Judgment:</strong> ${escapeHtml((hx.mse && hx.mse.insight) || '-')}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; background: #0F4C81; color: #fff; padding: 4px 8px; border-radius: 4px; margin: 0 0 8px 0;">4. Risk Triage &amp; Clinician Attestation</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div><strong>Overall Risk Level:</strong> <span style="padding: 2px 8px; border-radius: 4px; font-weight: 700; ${riskColor}">${escapeHtml(riskText)}</span></div>
+                        <div><strong>Disposition:</strong> <strong>${escapeHtml(acc.acceptanceStatus || 'Accepted for Follow-up')}</strong></div>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 8px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <div><strong>Assessing Clinician:</strong> ${escapeHtml(acc.clinicianName || '-')} (${escapeHtml(acc.clinicianRole || 'Clinician')})</div>
+                            <div style="font-size: 11px; color: #64748b;">License: ${escapeHtml(acc.clinicianId || '-')} | Unit: ${escapeHtml(acc.acceptingUnit || '-')}</div>
+                            <div style="font-size: 11px; color: #64748b;">Date: ${escapeHtml(acc.acceptanceDateTime || '-')}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-style: italic; color: #0F4C81; font-weight: 600;">${escapeHtml(acc.typedSignature || '')}</div>
+                            ${acc.signatureImage ? `<img src="${acc.signatureImage}" style="max-height: 40px; margin-top: 4px;" alt="Signature">` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('summary-modal').style.display = 'flex';
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('summary-modal').style.display = 'none';
         }
 
         function resetForm() {
             document.getElementById('clinical-intake-form').reset();
-            document.getElementById('ageDisplay').value = '';
             updateSeverityDisplay(5);
-            updateRiskBadge();
+            autoEvaluateRisk();
             clearSignaturePad();
             document.getElementById('diagnoses-container').innerHTML = '';
             document.getElementById('medications-container').innerHTML = '';
             addDiagnosisRow();
             addMedicationRow();
             ['subAlcohol','subKhat','subTobacco','subCannabis','subOther'].forEach(id => document.getElementById(id).disabled = true);
-            document.getElementById('tab-1-status').classList.add('hidden');
-            document.getElementById('tab-2-status').classList.add('hidden');
-            generateNewMRN();
             setDefaultAcceptanceDateTime();
-            switchTab(1);
-            showToast('Form cleared for new patient intake.', 'info');
+            showToast('Form cleared for new examination.', 'info');
         }
 
-        function toggleDrawer(open) {
-            // Search drawer removed - standalone search section not used in Bahmni EMR
+        function loadRecordsFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                savedRecords = raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                savedRecords = [];
+            }
         }
 
-        function renderSavedRecordsList() {
-            // Search drawer removed
+        function persistRecords() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(savedRecords));
+            } catch (e) {}
         }
 
         function showToast(msg, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            const styles = {
-                success: 'bg-[#1E7E74] text-white border-teal-400',
-                error: 'bg-rose-700 text-white border-rose-400',
-                info: 'bg-[#0F4C81] text-white border-blue-400'
-            };
-            toast.className = `px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 transition-all ${styles[type]}`;
-            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${escapeHtml(msg)}</span>`;
+            const bg = type === 'success' ? '#166534' : (type === 'error' ? '#991b1b' : '#0F4C81');
+            toast.style.cssText = `background: ${bg}; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;`;
+            toast.innerHTML = `<i class="fa fa-info-circle"></i><span>${escapeHtml(msg)}</span>`;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3500);
         }
