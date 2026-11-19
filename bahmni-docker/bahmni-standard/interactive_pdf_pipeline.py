@@ -1014,7 +1014,10 @@ def main():
     print("\n[*] Automatically attaching PDFs to Docker Bahmni Patient Documents...", flush=True)
     attach_script = os.path.join(os.path.dirname(__file__), "attach_patient_documents.py")
     if os.path.exists(attach_script):
-        subprocess.run([sys.executable, attach_script, PDF_OUTPUT_DIR])
+        attach_cmd = [sys.executable, attach_script, PDF_OUTPUT_DIR]
+        if os.environ.get("EXISTING_MODE"):
+            attach_cmd.extend(["--mode", os.environ.get("EXISTING_MODE")])
+        subprocess.run(attach_cmd)
     else:
         print("[!] attach_patient_documents.py not found, skipping attachment.", flush=True)
 

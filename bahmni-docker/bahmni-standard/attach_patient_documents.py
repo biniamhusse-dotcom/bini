@@ -30,8 +30,43 @@ MYSQL_USER = "root"
 MYSQL_PASS = "adminAdmin!123"
 LIVE_DB = "openmrs"
 DEFAULT_PDF_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "backups", "patient_summary_pdfs"))
-PDF_DIR = os.environ.get("PDF_DIR") or (sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].strip() else (DEFAULT_PDF_DIR if os.name == "nt" or not os.path.exists("/opt/emr/backups/patient_summary_pdfs") else "/opt/emr/backups/patient_summary_pdfs"))
 CONTAINER_DOC_DIR = "/home/bahmni/document_images"
+
+
+def parse_arguments():
+    """Parse CLI arguments and environment variables for PDF_DIR and EXISTING_MODE."""
+    mode = os.environ.get("EXISTING_MODE", "skip").strip().lower()
+    pdf_dir = os.environ.get("PDF_DIR")
+
+    args = sys.argv[1:]
+    idx = 0
+    while idx < len(args):
+        arg = args[idx]
+        if arg in ("--replace", "-r"):
+            mode = "replace"
+        elif arg in ("--additional", "--append", "-a"):
+            mode = "additional"
+        elif arg in ("--skip", "-s"):
+            mode = "skip"
+        elif arg.startswith("--mode="):
+            mode = arg.split("=", 1)[1].strip().lower()
+        elif arg == "--mode" and idx + 1 < len(args):
+            idx += 1
+            mode = args[idx].strip().lower()
+        elif not arg.startswith("-") and not pdf_dir:
+            pdf_dir = arg.strip()
+        idx += 1
+
+    if mode not in ("skip", "replace", "additional"):
+        mode = "skip"
+
+    if not pdf_dir:
+        if os.name == "nt" or not os.path.exists("/opt/emr/backups/patient_summary_pdfs"):
+            pdf_dir = DEFAULT_PDF_DIR
+        else:
+            pdf_dir = "/opt/emr/backups/patient_summary_pdfs"
+
+    return pdf_dir, mode
 
 _SQL_CONNS = {}
 
@@ -132,13 +167,17 @@ def main():
     else:
         lock_fd = None
 
+    pdf_dir, mode = parse_arguments()
+
     print(f"\n=======================================================")
     print(f"[*] Attaching Generated Clinical Summaries to Bahmni...")
+    print(f"[*] Mode: {mode.upper()} ({'Skip if exists' if mode == 'skip' else ('Replace with new one if exists' if mode == 'replace' else 'Add as additional document if exists')})")
+    print(f"[*] PDF Directory: {pdf_dir}")
     print(f"=======================================================")
 
-    pdf_files = glob.glob(os.path.join(PDF_DIR, "patient_*.pdf"))
+    pdf_files = glob.glob(os.path.join(pdf_dir, "patient_*.pdf"))
     if not pdf_files:
-        print(f"[!] No summary PDFs found in {PDF_DIR}")
+        print(f"[!] No summary PDFs found in {pdf_dir}")
         sys.exit(1)
 
     print(f"[✔] Found {len(pdf_files)} PDF summaries to process.")
@@ -151,12 +190,22 @@ def main():
     LIMIT 1;
     """) or "1"
 
-    # Pre-fetch existing documents to avoid duplicate inserts
+    # Pre-fetch existing documents to avoid duplicate inserts or handle replace/additional
     existing_docs = set()
-    existing_out = run_sql("SELECT value_text FROM obs WHERE concept_id = 57353 AND voided = 0;")
+    existing_doc_records = {}  # value_text -> list of (obs_id, encounter_id, obs_group_id)
+    existing_out = run_sql("""
+    SELECT obs_id, encounter_id, obs_group_id, value_text 
+    FROM obs 
+    WHERE concept_id = 57353 AND voided = 0;
+    """)
     for line in existing_out.splitlines():
-        if line.strip():
-            existing_docs.add(line.strip())
+        parts = line.strip().split("\t")
+        if len(parts) >= 4:
+            obs_id, enc_id, group_id, val = parts[0], parts[1], parts[2], parts[3]
+            existing_docs.add(val)
+            existing_doc_records.setdefault(val, []).append((obs_id, enc_id, group_id))
+        elif len(parts) == 1 and parts[0]:
+            existing_docs.add(parts[0])
 
     # 2. Resolve all MRNs to live patient/person ids in ONE bulk query.
     #    MRNs may carry trailing marks in the legacy data; match on the raw
@@ -192,6 +241,8 @@ def main():
 
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     attached_count = 0
+    replaced_count = 0
+    additional_count = 0
     skipped_count = 0
     not_found_count = 0
 
@@ -231,7 +282,8 @@ def main():
     # 4. Stage every new file locally, then copy the whole tree into the
     #    container with ONE docker cp (per-file docker cp = ~0.5s x 30k = hours).
     stage_root = os.path.join("/tmp", f"attach_stage_{os.getpid()}")
-    pending = []  # (person_id, patient_id, visit_id, doc_rel_path, pdf_path)
+    pending = []  # (person_id, patient_id, visit_id, doc_rel_path, pdf_path, is_replacement, is_additional)
+    staged_docs = set(existing_docs)
 
     for idx, pdf_path in enumerate(pdf_files, 1):
         filename = os.path.basename(pdf_path)
@@ -244,12 +296,31 @@ def main():
             not_found_count += 1
             continue
         person_id, patient_id = info
-        target_filename = f"legacy_summary_{mrn.replace('/', '_')}.pdf"
-        doc_rel_path = f"{patient_id}/{target_filename}"
+        mrn_clean = mrn.replace('/', '_')
+        base_filename = f"legacy_summary_{mrn_clean}.pdf"
+        base_rel_path = f"{patient_id}/{base_filename}"
 
-        if doc_rel_path in existing_docs:
-            skipped_count += 1
-            continue
+        is_replacement = False
+        is_additional = False
+
+        if base_rel_path in existing_docs:
+            if mode == "skip":
+                skipped_count += 1
+                continue
+            elif mode == "replace":
+                is_replacement = True
+                target_filename = base_filename
+                doc_rel_path = base_rel_path
+            elif mode == "additional":
+                is_additional = True
+                ver = 2
+                while f"{patient_id}/legacy_summary_{mrn_clean}_v{ver}.pdf" in staged_docs:
+                    ver += 1
+                target_filename = f"legacy_summary_{mrn_clean}_v{ver}.pdf"
+                doc_rel_path = f"{patient_id}/{target_filename}"
+        else:
+            target_filename = base_filename
+            doc_rel_path = base_rel_path
 
         # 3. Get or create active OPD Visit (visit_type_id = 4)
         visit_id = ensure_visit(patient_id)
@@ -257,11 +328,12 @@ def main():
         stage_dir = os.path.join(stage_root, str(patient_id))
         os.makedirs(stage_dir, exist_ok=True)
         shutil.copyfile(pdf_path, os.path.join(stage_dir, target_filename))
-        pending.append((person_id, patient_id, visit_id, doc_rel_path, pdf_path))
+        staged_docs.add(doc_rel_path)
+        pending.append((person_id, patient_id, visit_id, doc_rel_path, pdf_path, is_replacement, is_additional))
         if len(pending) % 500 == 0:
             print(f"  [staged {len(pending)}/{total}...]", flush=True)
 
-    print(f"[*] Staged {len(pending)} new documents; copying to container in one batch...", flush=True)
+    print(f"[*] Staged {len(pending)} documents; copying to container in one batch...", flush=True)
 
     # 5. Copy the whole staged tree into the container (single docker cp)
     if pending:
@@ -274,10 +346,10 @@ def main():
             if line.startswith(CONTAINER_DOC_DIR + "/"):
                 present.add(line[len(CONTAINER_DOC_DIR) + 1:])
         # Retry any missing file individually
-        retried = [(pe, pa, vi, rel, src) for (pe, pa, vi, rel, src) in pending if rel not in present]
+        retried = [t for t in pending if t[3] not in present]
         if retried:
             print(f"[*] Retrying {len(retried)} file(s) individually...", flush=True)
-            for _pe, _pa, _vi, rel, src in retried:
+            for _pe, _pa, _vi, rel, src, _rep, _add in retried:
                 _docker(f"docker cp '{src}' '{APP_CONTAINER}:{CONTAINER_DOC_DIR}/{rel}'")
             listing = _docker_out(f"docker exec {APP_CONTAINER} find {CONTAINER_DOC_DIR} -name 'legacy_summary_*.pdf'")
             present = set()
@@ -291,15 +363,29 @@ def main():
 
         # 6. Insert Encounter & Hierarchical Obs (Parent: 57356 -> Child: 57353)
         #    only for files confirmed present on disk.
-        for person_id, patient_id, visit_id, doc_rel_path, pdf_path in confirmed:
-            if doc_rel_path in existing_docs:
-                skipped_count += 1
-                continue
+        for person_id, patient_id, visit_id, doc_rel_path, pdf_path, is_replacement, is_additional in confirmed:
             enc_uuid = str(uuid.uuid4())
             parent_obs_uuid = str(uuid.uuid4())
             child_obs_uuid = str(uuid.uuid4())
 
-            insert_sql = f"""
+            void_sql = ""
+            if is_replacement:
+                old_records = existing_doc_records.get(doc_rel_path, [])
+                obs_ids = []
+                enc_ids = []
+                for o_id, e_id, g_id in old_records:
+                    if o_id and str(o_id).isdigit():
+                        obs_ids.append(str(int(o_id)))
+                    if g_id and str(g_id).isdigit() and str(g_id) != '0':
+                        obs_ids.append(str(int(g_id)))
+                    if e_id and str(e_id).isdigit():
+                        enc_ids.append(str(int(e_id)))
+                if obs_ids:
+                    void_sql += f"UPDATE obs SET voided = 1, void_reason = 'Replaced by newer document', date_voided = '{now_str}', voided_by = 1 WHERE obs_id IN ({','.join(set(obs_ids))});\n"
+                if enc_ids:
+                    void_sql += f"UPDATE encounter SET voided = 1, void_reason = 'Replaced by newer document', date_voided = '{now_str}', voided_by = 1 WHERE encounter_id IN ({','.join(set(enc_ids))});\n"
+
+            insert_sql = void_sql + f"""
             INSERT INTO encounter (
                 encounter_type, patient_id, visit_id, location_id, encounter_datetime,
                 creator, date_created, voided, uuid
@@ -328,23 +414,28 @@ def main():
             """
             run_sql_multi(insert_sql)
             existing_docs.add(doc_rel_path)
-            attached_count += 1
+            if is_replacement:
+                replaced_count += 1
+            elif is_additional:
+                additional_count += 1
+            else:
+                attached_count += 1
 
-        for _pe, _pa, _vi, rel, src in unconfirmed:
+        for _pe, _pa, _vi, rel, src, _rep, _add in unconfirmed:
             print(f"[!] File not found in container after copy: {rel} (from {src})", file=sys.stderr, flush=True)
 
         # cleanup staging tree
         shutil.rmtree(stage_root, ignore_errors=True)
 
-    print(f"  attached={attached_count}, skipped/existing={skipped_count}, "
-          f"mrn-not-found={not_found_count} (of {total} PDFs)", flush=True)
+    print(f"  attached={attached_count}, replaced={replaced_count}, additional={additional_count}, "
+          f"skipped/existing={skipped_count}, mrn-not-found={not_found_count} (of {total} PDFs)", flush=True)
 
     # Set container permissions once after the batch finishes
     print("[*] Setting filesystem permissions in Bahmni container...")
     _docker(f"docker exec {APP_CONTAINER} chown -R root:root '{CONTAINER_DOC_DIR}' 2>/dev/null || docker exec {APP_CONTAINER} chown -R nginx:nginx '{CONTAINER_DOC_DIR}' 2>/dev/null || true")
     _docker(f"docker exec {APP_CONTAINER} chmod -R 775 '{CONTAINER_DOC_DIR}'")
 
-    print(f"\n[✔] Attachment Complete! Total: {total} (Newly Attached: {attached_count}, Skipped/Existing: {skipped_count}, MRN not found: {not_found_count})")
+    print(f"\n[✔] Attachment Complete! Total: {total} (Newly Attached: {attached_count}, Replaced: {replaced_count}, Additional: {additional_count}, Skipped/Existing: {skipped_count}, MRN not found: {not_found_count})")
 
     if lock_fd is not None:
         try:

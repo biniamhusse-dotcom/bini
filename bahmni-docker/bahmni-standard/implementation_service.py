@@ -879,9 +879,14 @@ def api_run_script(script_key):
 
     elif script_key == "attach_patient_documents":
         pdf_dir = data.get("pdf_dir", "").strip()
+        existing_mode = data.get("existing_mode", "skip").strip().lower()
+        if existing_mode not in ("skip", "replace", "additional"):
+            existing_mode = "skip"
         if pdf_dir:
             env_vars["PDF_DIR"] = pdf_dir
             cmd_args.append(pdf_dir)
+        env_vars["EXISTING_MODE"] = existing_mode
+        cmd_args.extend(["--mode", existing_mode])
 
     elif script_key == "migrate_patient_profiles":
         backup_file = data.get("backup_file", "").strip()
@@ -1619,6 +1624,32 @@ INDEX_TEMPLATE = """
                     </div>
                     <div class="path-drop"><i class="fa-solid fa-hand-pointer me-1"></i>Click <b>Browse</b> and hit <b>Select this folder</b>, or <b>drag &amp; drop</b> the folder of PDFs here (copied into <code>portal_uploads</code>).</div>
                     <div class="path-status" id="status-attachPdfDir"></div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">If Document Already Exists for Patient</label>
+                  <div class="border rounded p-2 bg-light">
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="radio" name="attachExistingMode" id="attachModeSkip" value="skip" checked>
+                      <label class="form-check-label small" for="attachModeSkip">
+                        <span class="fw-semibold text-dark">Skip existing</span>
+                        <span class="text-muted d-block" style="font-size: 0.82rem;">Keep existing document without re-attaching (Default).</span>
+                      </label>
+                    </div>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="radio" name="attachExistingMode" id="attachModeReplace" value="replace">
+                      <label class="form-check-label small" for="attachModeReplace">
+                        <span class="fw-semibold text-primary"><i class="fa-solid fa-arrows-rotate me-1"></i> Replace with new one</span>
+                        <span class="text-muted d-block" style="font-size: 0.82rem;">If exists, overwrite the existing file with the new PDF and update the clinical document record.</span>
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="attachExistingMode" id="attachModeAdditional" value="additional">
+                      <label class="form-check-label small" for="attachModeAdditional">
+                        <span class="fw-semibold text-success"><i class="fa-solid fa-file-circle-plus me-1"></i> Add as additional document</span>
+                        <span class="text-muted d-block" style="font-size: 0.82rem;">If exists without replacing, attach the new PDF as an additional document (keeps both documents).</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <button class="btn btn-secondary btn-action" onclick="executeAttachDocs()">
@@ -2423,7 +2454,12 @@ INDEX_TEMPLATE = """
     function executeAttachDocs() {
       const pdfDir = pathOrConfirm('attachPdfDir', 'PDF directory');
       if (pdfDir === null) return;
-      triggerScript('attach_patient_documents', {pdf_dir: pdfDir});
+      const modeElem = document.querySelector('input[name="attachExistingMode"]:checked');
+      const existingMode = modeElem ? modeElem.value : 'skip';
+      triggerScript('attach_patient_documents', {
+        pdf_dir: pdfDir,
+        existing_mode: existingMode
+      });
     }
 
     // 6. Backup & Restore (proxied to the backup service)
