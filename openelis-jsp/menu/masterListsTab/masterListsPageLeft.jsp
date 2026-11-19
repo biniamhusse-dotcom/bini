@@ -106,6 +106,11 @@
   </html:link>
 </li>
 <li>
+  <html:link action="/LabOrderSyncAdmin">
+    Lab Order Sync &amp; Feed Diagnostics
+  </html:link>
+</li>
+<li>
   <html:link action="/PaymentGateAdmin">
     Payment Validation Gate (Odoo Billing)
   </html:link>
