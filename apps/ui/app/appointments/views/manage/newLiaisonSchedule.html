@@ -1,0 +1,194 @@
+<style>
+    li {
+        cursor: pointer;
+    }
+
+    li:hover {
+        background-color: #f9f9f9;
+    }
+
+    .list-group-item {
+        border: 1px solid #d4d4d4;
+        line-height: 25px;
+        border-bottom: none;
+        z-index: 99;
+        top: 100%;
+        left: 0;
+        right: 0;
+        opacity: 50;
+    }
+</style>
+<div class="create-new-app-wrapper">
+    <div class="create-new-app-container" style="width: 50%;">
+        <span ng-click="navigateToPreviousState()">
+            <a>
+                <i class="fa fa-angle-double-right" aria-hidden="true"></i>
+            </a>
+        </span>
+
+        <h2 ng-hide="isEditMode()">{{ ::'ADD_NEW_LIAISON_APPOINTMENT' | translate}}</h2>
+        <h2 ng-show="isEditMode()">{{ ::'EDIT_LIAISON_APPOINTMENT_KEY' | translate}}</h2>
+        <form ng-submit="save()" id="create-appointment-form" name="createAppointmentForm">
+
+            <section id="addNewAppointment">
+                <p>
+                    <label>{{'APPOINTMENT_CREATE_PATIENT_NAME' | translate}}<sup class="asterick">*</sup></label>
+
+                    <input type="text" id="patientID" min-length="minCharLengthToTriggerPatientSearch"
+                        bahmni-autocomplete ng-model="appointment.patient.label" source="search"
+                        response-map="responseMap" on-select="onSelectPatient" strict-select="true" 
+                        ng-class="{'illegalValue': isInvalid}"
+                        placeholder="{{'PLACEHOLDER_APPOINTMENT_CREATE_SEARCH_PATIENT' | translate }}" non-blank
+                        ng-disabled="isEditMode()" required />
+                    <i class="fa fa-search search-icon-app" aria-hidden="true"></i>
+                </p>
+                <p>
+                    <label for="service">
+                        {{'APPOINTMENT_SERVICE_DIAGNOSIS' | translate}}<sup class="asterick">*</sup>
+                    </label>
+                    <select id="service" ng-model="appointment.service"
+                        ng-options="service.name for service in appointmentCreateConfig.services"
+                        ng-change="onServiceChange()"
+                        ng-disabled="isEditMode() && (!isEditAllowed() || !enableEditService)" required
+                        style="float: right;">
+                        <option disabled value="">{{ ::'PLACEHOLDER_SERVICE_DIAGNOSIS' | translate}}
+                        </option>
+                        <input type="text" id="service" ng-model="members" ng-change="complete(members)"
+                            ng-keyup="complete(members)" class="form-control" placeholder="Search diagnosis"
+                            style="float: right; margin-top: -5px;">
+                        <ul class="list-group" ng-model="hidethis" ng-hide="hidethis" ng-hide="hideSearchField"
+                            style="margin-top: -5px; margin-left: 22%; width: 470px;">
+                            <li class="list-group-item" ng-repeat="membersdata in filterMember"
+                                ng-click="onServiceChange(membersdata)">{{membersdata}}</li>
+                        </ul>
+                    </select>
+                </p>                
+                <p>
+                    <label for="location">
+                        {{'APPOINTMENT_SERVICE_DEPARTMENT_KEY' | translate}} <span
+                            style="color: red; font-weight: bolder;">*</span>
+                    </label>
+                    <select id="location" ng-model="appointment.location"
+                        ng-options="location.display for location in filteredLiaisonLocations | orderBy:'display'"
+                        ng-disabled="isEditMode() && isFieldEditNotAllowed()" required>
+                        <option value="">{{ ::'PLACEHOLDER_SERVICE_DEPARTMENT' | translate}}
+                        </option>
+                    </select>
+                </p>
+                <p>
+                    <label for="eleNewProvider">
+                        {{'SELECT_APPOINTMENT_PROVIDER' | translate}}
+                    </label>
+                    <select id="eleNewProvider" ng-model="appointment.newProvider"
+                        ng-options="provider.person.display for provider in appointmentProviders | orderBy:'person.display'"
+                        ng-disabled="isEditMode() && !isEditAllowed()" ng-change="addNewProvider()">
+                        <option value="">{{ ::'PLACEHOLDER_CREATE_PROVIDER' | translate}}</option>
+                    </select>
+                </p>
+
+                <div>
+                    <p>
+                        <label>
+                            {{'INVITED_PROVIDERS' | translate}}
+                        </label>
+                    </p>
+                    <div>
+                        <!--<input type="button" ng-repeat="appProvider in appointment.providers" value="{{ appProvider.name || appProvider.person.display }}"-->
+                        <!--ng-click="removeProviderFromAttendees(appProvider)"/>-->
+                        <ul>
+                            <li ng-repeat="appProvider in appointment.providers"
+                                ng-show="appProvider.response != 'CANCELLED'">
+                                <label>{{ appProvider.name || appProvider.person.display }}</label>
+                                <input type="button" value="{{'APPOINTMENT_PROVIDER_REMOVE_ACTION' | translate }}"
+                                    ng-click="removeProviderFromAttendees(appProvider)"
+                                    ng-disabled="isEditMode() && !isUserAllowedToRemoveProvider(appProvider.uuid)" />
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div ng-hide="isEditMode()">
+                    <p>
+                        <label style="padding: 5px;">
+                            {{'Urgency:' | translate}}
+                        </label>
+                    </p>
+                    <div>
+                        <ul>
+                            <label ng-model="category" ng-show="appointment.service"
+                                style="background-color: wheat; font-weight: bolder; padding: 5px; font-family: 'Times New Roman', Times, serif; margin-left: 10px;">{{category}}
+                                <span
+                                    style="background-color: wheat; font-weight: normal; padding: 5px; font-family: 'Times New Roman', Times, serif;"
+                                    ng-show="duration">
+                                    <i class="fa fa-info-circle"></i> This service should be given in the comming
+                                    {{duration}}.
+                                </span></label>
+                        </ul>
+                    </div>
+                </div>
+
+                <p class="app-ava-slots"
+                    ng-if="currentLoad || maxAppointmentsLimit || (maxAppointmentsLimit && currentLoad)">
+                    <span ng-if="maxAppointmentsLimit"><span
+                            style="color: #5cb85c;">{{maxAppointmentsLimit-currentLoad}} {{'APPOINTMENT_CREATE_SLOT' |
+                            translate}} {{'APPOINTMENT_CREATE_AVAL' | translate}}</span>
+                        {{'APPOINTMENT_CREATE_OUTOF' | translate}} <span
+                            style="color: #0275d8;">{{maxAppointmentsLimit}} {{'APPOINTMENT_CREATE_SLOT' |
+                            translate}}</span><span ng-if="maxAppointmentsLimit && currentLoad">, </span></span>
+                    <span style="color: #f0ad4e;" ng-if="currentLoad">{{currentLoad}} {{'APPOINTMENT_CREATE_SLOT' |
+                        translate}} {{'APPOINTMENT_CREATE_BOOKED' | translate}}</span>
+                </p>
+                <p class="warning-message" ng-if="warning.endTime">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span> {{'APPOINTMENT_CREATION_END_TIME_WARNING' | translate}} </span>
+                </p>
+                <p class="warning-message" ng-if="warning.outOfRange">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span> {{'APPOINTMENT_CREATION_OUT_OF_RANGE_WARNING' | translate}} </span>
+                </p>
+
+                <button ng-show="isEditMode()" ng-click="editObs()">Edit Phone Number</button>
+                <br> <br> <br>
+                
+                <p ng-if="allowEdit || allowCreate">
+                    <label for="primaryPhoneNumber">{{'Phone Number' | translate}}<sup class="asterick">*</sup></label>
+                    <input type="text" ng-model="primaryPhoneNumber.obsValue" id="primaryPhoneNumber"
+                        ng-pattern="/^0[0-9]{9}$/" maxlength="10"
+                        ng-click="createObs();" required>
+                    <span ng-show="form.primaryPhoneNumber.$error.pattern">
+                        Please enter a valid 10-digit phone number starting with 0.
+                    </span>
+                </p>
+                
+                <p ng-if="allowEdit || allowCreate">
+                    <label for="alternativePhoneNumber">{{'Alternative Phone Number' | translate}}<sup class="asterick">*</sup></label>
+                    <input type="text" ng-model="alternativePhoneNumber.obsValue" id="alternativePhoneNumber"
+                        ng-pattern="/^0[0-9]{9}$/" maxlength="10" 
+                        ng-click="createObs();" required>
+                    <span ng-show="form.alternativePhoneNumber.$error.pattern">
+                        Please enter a valid 10-digit phone number starting with 0.
+                    </span>
+                </p>
+                <p class="walk-in-app">
+                    <input type="checkbox" ng-model="appointment.appointmentKind" ng-true-value="'WalkIn'"
+                        ng-false-value="'Scheduled'" ng-disabled="isEditMode() && isFieldEditNotAllowed()"
+                        ng-required="true">
+                    <span class="walk-in-text">{{'LIAISON_SCHEDULE' | translate}} <span
+                            style="color: red;">*</span></span>
+                </p>
+
+                <p>
+                    <label for="notes">
+                        {{'APPOINTMENT_CREATE_NOTES' | translate}}
+                    </label>
+                    <textarea placeholder="{{ ::'PLACEHOLDER_CREATE_NOTES' | translate }}" id="notes"
+                        ng-model="appointment.comments"
+                        ng-disabled="isEditMode() && canManageOwnAppointmentOnly() && !isCurrentProviderPartOfAppointment() && !doesAppointmentHaveProvider()"></textarea>
+                </p>
+            </section>
+            <a class="create-appointment-action-btn" ui-sref="^">{{::'APPOINTMENT_CREATE_CANCEL' | translate }}</a>
+            <button type="submit" class="service-save-btn create-appointment-action-btn">{{::'APPOINTMENT_CREATE_SAVE' |
+                translate }}
+            </button>
+        </form>
+    </div>
+</div>

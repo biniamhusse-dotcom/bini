@@ -1,0 +1,50 @@
+<style>
+    .scheduleView{
+        margin-top: 7%;
+        font-family: 'Times New Roman', Times, serif;
+        padding: 7px;
+        line-height: 25px;
+        width: 50%;
+    }
+    .label{
+        font-weight: bolder;
+    }
+    .value{
+        float: inline-end;
+    }
+</style> 
+<div class="create-new-app-wrapper">
+    <div class="create-new-app-container" style="width: 50%;         background-color: whitesmoke;">
+        <span ng-click="navigateToPreviousState()">
+            <a>
+                <i class="fa fa-angle-double-right" aria-hidden="true"></i>
+            </a>
+        </span>
+
+        <h2 ng-show="isEditMode()">{{ ::'VIEW_LIAISON_APPOINTMENT_KEY' | translate}}</h2>
+            <section class="scheduleView">
+                    <div>
+                        <ul ng-repeat="Schedules in loadedSchedules">
+                            <li><span class="label">MRN:</span> <span class="value">{{Schedules.identifier}}</span></li>
+                            <li><span class="label">Name:</span> <span class="value">{{Schedules.full_name}}</span></li>
+                            <li><span class="label">Gender:</span> <span class="value">{{Schedules.gender}}</span></li>
+                            <li><span class="label">Age:</span> <span class="value">{{Schedules.birthdate}}</span></li>
+                            <li><span class="label">Phone Number:</span> <span class="value">{{Schedules.phone_number}}</span></li>
+                            <li><span class="label">Department:</span> <span class="value">{{Schedules.location_name}}</span></li>
+                            <li><span class="label">Physician:</span> <span class="value">{{Schedules.provider}}</span></li>
+                            <li><span class="label">Diagnosis:</span> <span class="value">{{Schedules.service_name}}</span></li>
+                            <li><span class="label">Status:</span> <span class="value">{{Schedules.status}}</span></li>
+                            <li><span class="label">Liaison Officer:</span> <span class="value">{{Schedules.officer}}</span></li>
+                            <li><span class="label">Registration Date:</span> <span class="value">{{Schedules.date_created}}</span></li>
+                            <li><span class="label">End Date:</span> <span class="value">{{Schedules.date_created}}</span></li>
+                            <li><span class="label">Region:</span> <span class="value">{{Schedules.region}}</span></li>
+                            <li><span class="label">Zone:</span> <span class="value">{{Schedules.zone}}</span></li>
+                            <li><span class="label">Woreda:</span> <span class="value">{{Schedules.woreda}}</span></li>
+                            <li><span class="label">Kebele:</span> <span class="value">{{Schedules.kebele}}</span></li>
+
+                        </ul>
+                    </div>
+            </section>
+            <a class="create-appointment-action-btn" ui-sref="^" style="color: red;">{{::'APPOINTMENT_CREATE_CANCEL' | translate }}</a>
+    </div>
+</div>
