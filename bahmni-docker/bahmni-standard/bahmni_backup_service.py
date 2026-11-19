@@ -2951,6 +2951,235 @@ def export_drug_csv_text():
         ])
     return "\ufeff" + output.getvalue()
 
+# ==========================================
+# Home Apps & Role Permissions Management
+# ==========================================
+
+HOME_APPS = [
+    {
+        "id": "clinical",
+        "name": "Clinical",
+        "privilege": "app:clinical",
+        "icon": "fa-stethoscope",
+        "category": "Core Clinical",
+        "description": "Doctor consultation, patient diagnosis, treatments, clinical history and active visits"
+    },
+    {
+        "id": "appointments",
+        "name": "Appointment Scheduling",
+        "privilege": "app:appointments",
+        "icon": "fa-calendar",
+        "category": "Patient Scheduling",
+        "description": "Patient appointments calendar, scheduling slots, provider schedules"
+    },
+    {
+        "id": "adt",
+        "name": "InPatient (ADT)",
+        "privilege": "app:adt",
+        "icon": "fa-bed",
+        "category": "InPatient",
+        "description": "InPatient admissions, discharge, transfers and ward bed management"
+    },
+    {
+        "id": "bedManagement",
+        "name": "Bed Management",
+        "privilege": "app:bedManagement",
+        "icon": "fa-hotel",
+        "category": "InPatient",
+        "description": "Dedicated visual bed allocation, room layout and ward capacity tracking"
+    },
+    {
+        "id": "liaison",
+        "name": "Liaison Scheduling",
+        "privilege": "app:liaison",
+        "icon": "fa-calendar-o",
+        "category": "Patient Scheduling",
+        "description": "Liaison department appointment waiting list and schedule coordination"
+    },
+    {
+        "id": "registration",
+        "name": "Registration",
+        "privilege": "app:registration",
+        "icon": "fa-user-plus",
+        "category": "Front Desk",
+        "description": "Patient registration, search, and demographics capture"
+    },
+    {
+        "id": "register",
+        "name": "Register",
+        "privilege": "app:register",
+        "icon": "fa-book",
+        "category": "Front Desk",
+        "description": "Patient registry and quick registration entry app"
+    },
+    {
+        "id": "ertriage",
+        "name": "Emergency Triage",
+        "privilege": "app:ertriage",
+        "icon": "fa-ambulance",
+        "category": "Emergency",
+        "description": "Emergency triage intake, acuity scoring and ER queue assignment"
+    },
+    {
+        "id": "orders",
+        "name": "Orders (Fulfillment)",
+        "privilege": "app:orders",
+        "icon": "fa-list-alt",
+        "category": "Diagnostic Services",
+        "description": "Order fulfillment app for lab and radiology departments"
+    },
+    {
+        "id": "patientDocuments",
+        "name": "Patient Documents",
+        "privilege": "app:patient-documents",
+        "icon": "fa-paperclip",
+        "category": "Documents",
+        "description": "Home page document scanning and manual file upload portal"
+    },
+    {
+        "id": "reports",
+        "name": "Reports",
+        "privilege": "app:reports",
+        "icon": "fa-bar-chart",
+        "category": "Analytics",
+        "description": "Bahmni statistical reports, OPD summaries and register extracts"
+    },
+    {
+        "id": "admin",
+        "name": "Admin",
+        "privilege": "app:admin",
+        "icon": "fa-cogs",
+        "category": "Administration",
+        "description": "System administration, configuration and master data management"
+    },
+    {
+        "id": "prescription",
+        "name": "Prescription / Pharmacy",
+        "privilege": "app:prescription",
+        "icon": "fa-medkit",
+        "category": "Pharmacy",
+        "description": "Prescription fulfillment, dispensary and pharmacy queue"
+    },
+    {
+        "id": "ot",
+        "name": "Operation Theatre (OT)",
+        "privilege": "app:ot",
+        "icon": "fa-hospital-o",
+        "category": "Surgical",
+        "description": "Surgical schedules, OT bookings and surgical safety checklists"
+    },
+    {
+        "id": "medicoLegal",
+        "name": "Medico-Legal",
+        "privilege": "app:medicoLegal",
+        "icon": "fa-gavel",
+        "category": "Specialized",
+        "description": "Forensic, clinical post-mortem and medico-legal case records"
+    }
+]
+
+def get_role_app_permissions():
+    omrs = get_container("openmrsdb") or "bahmni-standard-openmrsdb-1"
+    cmd_roles = f'docker exec -i {omrs} mysql -uroot -p"{MYSQL_PASS}" -N -B openmrs -e "SELECT role, IFNULL(description, \'\') FROM role ORDER BY role;"'
+    out_roles = subprocess.run(cmd_roles, shell=True, capture_output=True, text=True).stdout
+    roles = []
+    for line in out_roles.strip().splitlines():
+        if line.strip():
+            parts = line.split("\t")
+            r_name = parts[0].strip()
+            r_desc = parts[1].strip() if len(parts) > 1 else ""
+            roles.append({"role": r_name, "description": r_desc})
+
+    cmd_privs = f'docker exec -i {omrs} mysql -uroot -p"{MYSQL_PASS}" -N -B openmrs -e "SELECT role, privilege FROM role_privilege WHERE privilege LIKE \'app:%\';" '
+    out_privs = subprocess.run(cmd_privs, shell=True, capture_output=True, text=True).stdout
+    role_privs_map = {}
+    for line in out_privs.strip().splitlines():
+        if line.strip():
+            parts = line.split("\t")
+            if len(parts) >= 2:
+                r_name = parts[0].strip()
+                p_name = parts[1].strip()
+                if r_name not in role_privs_map:
+                    role_privs_map[r_name] = []
+                role_privs_map[r_name].append(p_name)
+
+    cmd_supers = f'docker exec -i {omrs} mysql -uroot -p"{MYSQL_PASS}" -N -B openmrs -e "SELECT parent_role, child_role FROM role_role WHERE child_role IN (\'Privilege Level: Full\', \'Privilege Level: High\');" '
+    out_supers = subprocess.run(cmd_supers, shell=True, capture_output=True, text=True).stdout
+    role_supers_map = {}
+    for line in out_supers.strip().splitlines():
+        if line.strip():
+            parts = line.split("\t")
+            if len(parts) >= 2:
+                p_role = parts[0].strip()
+                c_role = parts[1].strip()
+                if p_role not in role_supers_map:
+                    role_supers_map[p_role] = []
+                role_supers_map[p_role].append(c_role)
+
+    roles_data = []
+    for r in roles:
+        r_name = r["role"]
+        active_privs = role_privs_map.get(r_name, [])
+        super_roles = role_supers_map.get(r_name, [])
+        enabled_app_ids = []
+        for app in HOME_APPS:
+            if app["privilege"] in active_privs:
+                enabled_app_ids.append(app["id"])
+        roles_data.append({
+            "role": r_name,
+            "description": r["description"],
+            "enabledAppIds": enabled_app_ids,
+            "superRoles": super_roles,
+            "hasSuperRole": len(super_roles) > 0
+        })
+
+    return {
+        "success": True,
+        "apps": HOME_APPS,
+        "roles": roles_data
+    }
+
+def save_role_app_permissions(data):
+    role = data.get("role")
+    if not role:
+        raise ValueError("Role name is required")
+    
+    enabled_privileges = data.get("enabledPrivileges", [])
+    detach_super_roles = data.get("detachSuperRoles", True)
+    
+    all_home_privs = [a["privilege"] for a in HOME_APPS]
+    
+    target_roles = [role]
+    if role.lower() == "doctor":
+        target_roles = ["Doctor", "General Practitioner", "Resident", "Senior Physician", "Specialist"]
+        
+    omrs = get_container("openmrsdb") or "bahmni-standard-openmrsdb-1"
+    
+    sql_lines = ["START TRANSACTION;"]
+    
+    for r in target_roles:
+        safe_r = r.replace("'", "''")
+        if detach_super_roles:
+            sql_lines.append(f"DELETE FROM role_role WHERE parent_role='{safe_r}' AND child_role IN ('Privilege Level: Full', 'Privilege Level: High');")
+            
+        for p in all_home_privs:
+            safe_p = p.replace("'", "''")
+            if p in enabled_privileges:
+                sql_lines.append(f"INSERT IGNORE INTO privilege (privilege, description, uuid) VALUES ('{safe_p}', '{safe_p}', UUID());")
+                sql_lines.append(f"INSERT IGNORE INTO role_privilege (role, privilege) VALUES ('{safe_r}', '{safe_p}');")
+            else:
+                sql_lines.append(f"DELETE FROM role_privilege WHERE role='{safe_r}' AND privilege='{safe_p}';")
+                
+    sql_lines.append("COMMIT;")
+    sql_payload = " ".join(sql_lines)
+    
+    cmd = f'docker exec -i {omrs} mysql -uroot -p"{MYSQL_PASS}" openmrs -e "{sql_payload}"'
+    res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"Database error: {res.stderr}")
+        
+    return {"success": True, "message": f"Updated home app permissions for '{role}' successfully"}
+
 class BackupAPIHandler(BaseHTTPRequestHandler):
     def _send_cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -3135,6 +3364,15 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 log(f"Error getting address hierarchy entries: {e}")
                 self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/role-app-permissions", "/role-app-permissions"):
+            try:
+                res = get_role_app_permissions()
+                self._send_json(200, res)
+            except Exception as e:
+                log(f"Error fetching role app permissions: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
         else:
             self._send_json(404, {"error": "Endpoint not found", "path": path})
 
@@ -3595,6 +3833,16 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(400, {"success": False, "error": str(e)})
             except Exception as e:
                 log(f"Error deleting address hierarchy entry: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/role-app-permissions", "/role-app-permissions"):
+            try:
+                res = save_role_app_permissions(payload)
+                self._send_json(200, res)
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                log(f"Error saving role app permissions: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         else:

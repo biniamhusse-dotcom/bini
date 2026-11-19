@@ -163,5 +163,16 @@
         "icon": "fa-pills",
         "order": 15,
         "requiredPrivilege": "app:admin"
+    },
+    "roleAppManager": {
+        "id": "bahmni.admin.roleAppManager",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {},
+        "label": "Home Apps & Role Permissions",
+        "url": "#/roleAppManager",
+        "icon": "fa-users",
+        "order": 16,
+        "requiredPrivilege": "app:admin"
     }
 }

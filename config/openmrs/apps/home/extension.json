@@ -7,7 +7,7 @@
     "url": "../registration/index.html#/patient/triagePatient",
     "icon": "fa-ambulance",
     "order": 1,
-    "requiredPrivilege": "app:registration"
+    "requiredPrivilege": "app:ertriage"
   },
   "registration": {
     "id": "bahmni.registration",
@@ -58,7 +58,7 @@
     "url": "../bedmanagement/#/home",
     "icon": "fa-bed",
     "order": 7,
-    "requiredPrivilege": "app:adt"
+    "requiredPrivilege": "app:bedManagement"
   },
   "register": {
     "id": "bahmni.register",
@@ -210,7 +210,7 @@
     "url": "../appointments/#/liaisonHome/manage/appointments/waitingList",
     "icon": "fa fa-calendar-o",
     "order": 8,
-    "requiredPrivilege": "app:appointments"
+    "requiredPrivilege": "app:liaison"
   },
   "hmis": {
     "id": "bahmni.hmis",
@@ -230,7 +230,7 @@
     "url": "../clinical-reference/index.html#/dashboard/clinicalReference",
     "icon": "fa-book",
     "order": 14,
-    "requiredPrivilege": "app:clinical"
+    "requiredPrivilege": "app:clinicalReference"
   },
   "emrEapts": {
     "id": "bahmni.emr.eapts",
