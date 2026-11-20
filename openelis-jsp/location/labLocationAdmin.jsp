@@ -247,15 +247,58 @@
             try {
                 Class.forName("org.postgresql.Driver");
                 mConn = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-                PreparedStatement ps = mConn.prepareStatement("UPDATE sample_source SET name = ?, description = ? WHERE id = ?::int");
-                ps.setString(1, targetName.trim());
-                ps.setString(2, targetName.trim());
-                ps.setString(3, targetId.trim());
-                ps.executeUpdate();
-                ps.close();
+                mConn.setAutoCommit(false);
+                int sid = Integer.parseInt(targetId.trim());
+                String tName = targetName.trim();
+
+                // Check if another row already has this name
+                PreparedStatement chkDup = mConn.prepareStatement("SELECT id FROM sample_source WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) AND id != ?");
+                chkDup.setString(1, tName);
+                chkDup.setInt(2, sid);
+                ResultSet dupRs = chkDup.executeQuery();
+
+                if (dupRs.next()) {
+                    int existingId = dupRs.getInt("id");
+                    PreparedStatement uSamp = mConn.prepareStatement("UPDATE sample SET sample_source_id = ? WHERE sample_source_id = ?");
+                    uSamp.setInt(1, existingId);
+                    uSamp.setInt(2, sid);
+                    uSamp.executeUpdate();
+                    uSamp.close();
+
+                    PreparedStatement uRef = mConn.prepareStatement(
+                        "UPDATE external_reference SET item_id = ? WHERE item_id = ? AND type = 'SampleSource' AND NOT EXISTS (SELECT 1 FROM external_reference WHERE item_id = ? AND type = 'SampleSource')");
+                    uRef.setInt(1, existingId);
+                    uRef.setInt(2, sid);
+                    uRef.setInt(3, existingId);
+                    uRef.executeUpdate();
+                    uRef.close();
+
+                    PreparedStatement dRef = mConn.prepareStatement("DELETE FROM external_reference WHERE item_id = ? AND type = 'SampleSource'");
+                    dRef.setInt(1, sid);
+                    dRef.executeUpdate();
+                    dRef.close();
+
+                    PreparedStatement dSrc = mConn.prepareStatement("DELETE FROM sample_source WHERE id = ?");
+                    dSrc.setInt(1, sid);
+                    dSrc.executeUpdate();
+                    dSrc.close();
+
+                    msgText = "Source #" + sid + " merged with existing Source #" + existingId + " (\"" + tName + "\") successfully!";
+                } else {
+                    PreparedStatement ps = mConn.prepareStatement("UPDATE sample_source SET name = ?, description = ? WHERE id = ?");
+                    ps.setString(1, tName);
+                    ps.setString(2, tName);
+                    ps.setInt(3, sid);
+                    ps.executeUpdate();
+                    ps.close();
+                    msgText = "Source #" + sid + " name updated to match OpenMRS: \"" + tName + "\"";
+                }
+                dupRs.close();
+                chkDup.close();
+                mConn.commit();
                 msgType = "success";
-                msgText = "Source #" + targetId + " name updated to match OpenMRS: \"" + targetName.trim() + "\"";
             } catch (Exception e) {
+                if (mConn != null) try { mConn.rollback(); } catch (Exception rx) {}
                 msgType = "error";
                 msgText = "Match name error: " + e.getMessage();
             } finally {
@@ -275,8 +318,16 @@
             ResultSet qRs = qStmt.executeQuery(
                 "SELECT ss.id, ss.name, er.external_id FROM sample_source ss JOIN external_reference er ON ss.id = er.item_id AND er.type = 'SampleSource'");
 
+            PreparedStatement chkDup = maConn.prepareStatement("SELECT id FROM sample_source WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) AND id != ?");
             PreparedStatement updStmt = maConn.prepareStatement("UPDATE sample_source SET name = ?, description = ? WHERE id = ?");
+            PreparedStatement uSamp = maConn.prepareStatement("UPDATE sample SET sample_source_id = ? WHERE sample_source_id = ?");
+            PreparedStatement uRef = maConn.prepareStatement(
+                "UPDATE external_reference SET item_id = ? WHERE item_id = ? AND type = 'SampleSource' AND NOT EXISTS (SELECT 1 FROM external_reference WHERE item_id = ? AND type = 'SampleSource')");
+            PreparedStatement dRef = maConn.prepareStatement("DELETE FROM external_reference WHERE item_id = ? AND type = 'SampleSource'");
+            PreparedStatement dSrc = maConn.prepareStatement("DELETE FROM sample_source WHERE id = ?");
+
             int matchedCount = 0;
+            int mergedCount = 0;
 
             while (qRs.next()) {
                 int sid = qRs.getInt("id");
@@ -284,21 +335,51 @@
                 String uuid = qRs.getString("external_id");
                 String omrsName = omrsUuidToName.get(uuid);
 
-                if (omrsName != null && !omrsName.trim().isEmpty() && !omrsName.trim().equals(currentName.trim())) {
-                    updStmt.setString(1, omrsName.trim());
-                    updStmt.setString(2, omrsName.trim());
-                    updStmt.setInt(3, sid);
-                    updStmt.executeUpdate();
-                    matchedCount++;
+                if (omrsName != null && !omrsName.trim().isEmpty() && !omrsName.trim().equalsIgnoreCase(currentName.trim())) {
+                    String targetName = omrsName.trim();
+                    chkDup.setString(1, targetName);
+                    chkDup.setInt(2, sid);
+                    ResultSet dupRs = chkDup.executeQuery();
+
+                    if (dupRs.next()) {
+                        int existingId = dupRs.getInt("id");
+                        uSamp.setInt(1, existingId);
+                        uSamp.setInt(2, sid);
+                        uSamp.executeUpdate();
+
+                        uRef.setInt(1, existingId);
+                        uRef.setInt(2, sid);
+                        uRef.setInt(3, existingId);
+                        uRef.executeUpdate();
+
+                        dRef.setInt(1, sid);
+                        dRef.executeUpdate();
+
+                        dSrc.setInt(1, sid);
+                        dSrc.executeUpdate();
+                        mergedCount++;
+                    } else {
+                        updStmt.setString(1, targetName);
+                        updStmt.setString(2, targetName);
+                        updStmt.setInt(3, sid);
+                        updStmt.executeUpdate();
+                        matchedCount++;
+                    }
+                    dupRs.close();
                 }
             }
+            chkDup.close();
             updStmt.close();
+            uSamp.close();
+            uRef.close();
+            dRef.close();
+            dSrc.close();
             qRs.close();
             qStmt.close();
             maConn.commit();
 
             msgType = "success";
-            msgText = "Matched " + matchedCount + " source name(s) to exact OpenMRS location names!";
+            msgText = "Successfully matched " + matchedCount + " source names and merged " + mergedCount + " duplicate sources with OpenMRS!";
         } catch (Exception e) {
             msgType = "error";
             msgText = "Match all names error: " + e.getMessage();

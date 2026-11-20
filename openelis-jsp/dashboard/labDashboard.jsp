@@ -251,7 +251,7 @@
 
 <style>
 #contentTable{display:none!important}
-.dash{display:flex;flex-direction:column;min-height:calc(100vh - 110px);overflow-y:auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e}
+.dash{display:flex;flex-direction:column;min-height:calc(100vh - 80px);width:100%!important;clear:both!important;box-sizing:border-box!important;overflow-y:auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e}
 .dash-header{display:flex;align-items:center;justify-content:space-between;padding:8px 24px;background:#0f766e;color:#fff}
 .dash-header h1{font-size:20px;font-weight:700}
 .dash-header .date-display{font-size:13px;opacity:.9}

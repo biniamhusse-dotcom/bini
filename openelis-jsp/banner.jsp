@@ -22,7 +22,6 @@ request.setAttribute("oe_banner_rendered", Boolean.TRUE);
 <%!String path = "";
 	String basePath = "";
 	String bannerStyle = null;
-	String menuItems[];
 	boolean languageSwitch = false;
 %>
 <%
@@ -30,113 +29,227 @@ request.setAttribute("oe_banner_rendered", Boolean.TRUE);
 	basePath = path + "/";
 	bannerStyle = SystemConfiguration.getInstance().getBannerStyle();
 	languageSwitch = "true".equals(ConfigurationProperties.getInstance().getPropertyValue(Property.allowLanguageChange));
+
+	UserSessionData usd = null;
+	if (request.getSession().getAttribute(IActionConstants.USER_SESSION_DATA) != null) {
+		usd = (UserSessionData) request.getSession().getAttribute(IActionConstants.USER_SESSION_DATA);
+	}
+	String elisUser = (usd != null && usd.getElisUserName() != null && !usd.getElisUserName().trim().isEmpty()) ? usd.getElisUserName() : "superman";
+
+	String locName = (String) session.getAttribute("selectedLabLocationName");
+	if (locName == null || locName.trim().isEmpty()) {
+		locName = "Main Laboratory";
+		session.setAttribute("selectedLabLocationName", locName);
+		session.setAttribute("selectedLabLocationCode", "MAIN_LAB");
+	}
 %>
 
-<script language="JavaScript1.2">
-function /*void*/ setLanguage( language ){
-    var languageMessage = "data-message-"+language;
-	update = confirm(jQuery("#updateMessage").attr(languageMessage));
-	if( update ){
-		var form = window.document.forms[0];
-		form.action = "LoginPage.do?lang=" + language;
-		form.submit();
-	}
-}
-
-function displayHelp(){
-    var url = '<%=basePath%>' + 'documentation/' + '<%= StringUtil.getContextualMessageForKey("documentation") %>';
-	var newwindow=window.open( url,'name','height=1000,width=850, menuBar=yes');
-	if (window.focus) {newwindow.focus()}
-}
-</script>
-
 <link rel="stylesheet" type="text/css" href="<%=basePath%>css/menu.css?ver=<%= Versioning.getBuildNumber() %>" />
-
 <script type="text/javascript" src="<%=basePath%>scripts/menu/hoverIntent.js?ver=<%= Versioning.getBuildNumber() %>"></script>
 <script type="text/javascript" src="<%=basePath%>scripts/menu/superfish.js?ver=<%= Versioning.getBuildNumber() %>"></script>
 <script type="text/javascript" src="<%=basePath%>scripts/menu/supersubs.js?ver=<%= Versioning.getBuildNumber() %>"></script>
 <script type="text/javascript" src="<%=basePath%>scripts/menu/supposition.js?ver=<%= Versioning.getBuildNumber() %>"></script>
+
+<style>
+/* Reset and ensure full width banner */
+#oe-banner-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    clear: both !important;
+    float: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #00463f !important;
+    position: relative !important;
+    z-index: 9999 !important;
+    box-sizing: border-box !important;
+}
+#oe-top-bar {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 6px 16px !important;
+    background: linear-gradient(135deg, #00463f, #037469) !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    min-height: 38px !important;
+    box-sizing: border-box !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+.oe-top-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    cursor: pointer !important;
+}
+.oe-top-left img {
+    height: 24px !important;
+    width: auto !important;
+    vertical-align: middle !important;
+}
+.oe-top-title {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: 0.3px !important;
+}
+.oe-top-center {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+.oe-loc-badge {
+    background: #27ae60 !important;
+    color: #fff !important;
+    padding: 3px 10px !important;
+    border-radius: 4px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+.oe-loc-badge a {
+    color: #fff !important;
+    text-decoration: underline !important;
+}
+.oe-transfer-btn {
+    background: rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+    padding: 2px 8px !important;
+    border-radius: 3px !important;
+    text-decoration: none !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+}
+.oe-transfer-btn:hover {
+    background: rgba(255,255,255,0.3) !important;
+}
+.oe-top-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-size: 11px !important;
+    color: #e2e8f0 !important;
+}
+.oe-top-right a {
+    color: #fff !important;
+    text-decoration: underline !important;
+}
+
+/* Menu bar styles */
+#oe-menu-bar {
+    width: 100% !important;
+    display: block !important;
+    clear: both !important;
+    background: #0f766e !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+    box-sizing: border-box !important;
+}
+#oe-menu-bar form {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+#oe-menu-bar ul.nav-menu {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    list-style: none !important;
+    width: 100% !important;
+}
+#oe-menu-bar ul.nav-menu > li {
+    float: left !important;
+}
+#oe-menu-bar .nav-menu a {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+    color: #fff !important;
+}
+#oe-menu-bar .nav-menu li:hover > a,
+#oe-menu-bar .nav-menu li.sfHover > a {
+    background: #00463f !important;
+    color: #fff !important;
+}
+#oe-menu-bar .nav-menu ul {
+    background: #00463f !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
+}
+#oe-menu-bar .nav-menu ul a {
+    background: #00463f !important;
+    color: #fff !important;
+    padding: 8px 14px !important;
+}
+#oe-menu-bar .nav-menu ul a:hover {
+    background: #0d9488 !important;
+}
+
+/* Force clearing so subsequent page content is 100% wide below header */
+.oe-banner-clear {
+    clear: both !important;
+    width: 100% !important;
+    height: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+    display: block !important;
+}
+</style>
+
+<div id="oe-banner-wrapper">
+    <div id="oe-top-bar">
+        <div class="oe-top-left" onclick="window.location.href='<%=basePath%>LabDashboard.do';">
+            <img src="<%=basePath%>images/openelis_logo.png" title="OpenELIS" alt="OpenELIS" onerror="this.style.display='none'" />
+            <span class="oe-top-title"><%=StringUtil.getContextualMessageForKey("title.default")%></span>
+        </div>
+
+        <div class="oe-top-center">
+            <div class="oe-loc-badge">
+                <span>Location: <strong><%= locName %></strong></span>
+                <a href="<%=basePath%>LocationSelect.do">(Change)</a>
+                <a href="<%=basePath%>SampleTransfer.do" class="oe-transfer-btn">Transfer Sample</a>
+            </div>
+        </div>
+
+        <div class="oe-top-right">
+            <span>Version: <%= ConfigurationProperties.getInstance().getPropertyValue(Property.releaseNumber)%></span>
+            <span>|</span>
+            <span><%= elisUser %></span>
+            <html:link page="/LogoutPage.do" styleId="log-out-link" titleKey="homePage.menu.logOut.toolTip"><bean:message key="homePage.menu.logOut.toolTip"/></html:link>
+        </div>
+    </div>
+
+    <div id="oe-menu-bar">
+        <%= MenuUtil.getMenuAsHTML(path) %>
+    </div>
+</div>
+<div class="oe-banner-clear"></div>
+
 <script type="text/javascript">
-	jQuery(function(){
-		if (jQuery('ul.nav-menu').length) {
-			jQuery('ul.nav-menu').supersubs({
-				minWidth: 9,
-				maxWidth: 100,
-				extraWidth: 1
-			}).superfish({
-				delay: 400,
-				speed: 0
-			}).supposition();
-		}
+jQuery(function(){
+    if (jQuery('ul.nav-menu').length) {
+        try {
+            jQuery('ul.nav-menu').supersubs({
+                minWidth: 9,
+                maxWidth: 100,
+                extraWidth: 1
+            }).superfish({
+                delay: 400,
+                speed: 0
+            }).supposition();
+        } catch (e) {}
+    }
 
-		if (!window._oeKeepAliveInterval) {
-			window._oeKeepAliveInterval = setInterval(function() {
-				try {
-					var xhr = new XMLHttpRequest();
-					xhr.open('GET', '<%=basePath%>pages/common/sessionKeepAlive.jsp?_=' + Date.now(), true);
-					xhr.send();
-				} catch (e) {}
-			}, 240000);
-		}
-	});
+    if (!window._oeKeepAliveInterval) {
+        window._oeKeepAliveInterval = setInterval(function() {
+            try {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', '<%=basePath%>pages/common/sessionKeepAlive.jsp?_=' + Date.now(), true);
+                xhr.send();
+            } catch (e) {}
+        }, 240000);
+    }
+});
 </script>
-
-<div id="header" style="position:relative;z-index:9999;">
-  	<div id="oe-logo" style="width: 89px" onclick="navigateToHomePage();"><img src="images/openelis_logo.png" title="OpenELIS" alt="OpenELIS" /></div>
-	<div class="header-def">
- 		<div style="display: block">
-			<%
-				UserSessionData usd = null;
-				if (request.getSession().getAttribute(IActionConstants.USER_SESSION_DATA) != null) {
-					usd = (UserSessionData) request.getSession().getAttribute(IActionConstants.USER_SESSION_DATA);
-				}
-				String elisUser = (usd != null && usd.getElisUserName() != null && !usd.getElisUserName().trim().isEmpty()) ? usd.getElisUserName() : "superman";
-			%>
-			<div id="user-info"><div><%=elisUser%> - <html:link page="/LogoutPage.do" styleId="log-out-link" titleKey="homePage.menu.logOut.toolTip"><bean:message key="homePage.menu.logOut.toolTip"/></html:link></div></div>
-		<%
-			String locName = (String) session.getAttribute("selectedLabLocationName");
-			if (locName == null || locName.trim().isEmpty()) {
-				locName = "Main Laboratory";
-				session.setAttribute("selectedLabLocationName", locName);
-				session.setAttribute("selectedLabLocationCode", "MAIN_LAB");
-			}
-		%>
-		<div style="background:#27ae60;color:white;padding:2px 8px;border-radius:3px;font-size:11px;display:inline-block;margin-top:2px;">
-			Location: <strong><%= locName %></strong> <a href="<%=basePath%>LocationSelect.do" style="color:#fff;text-decoration:underline;">(Change)</a>
-			<a href="<%=basePath%>SampleTransfer.do" style="color:#fff;text-decoration:underline;margin-left:8px;background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:3px;">Transfer Sample</a>
-		</div>
-  	  		<div id="oe-title" onclick="navigateToHomePage();"><%=StringUtil.getContextualMessageForKey("title.default")%></div>
-  		</div>
-  		<div id="oe-version" style="display: block">
-    		<div id="appVersion">
-    		<bean:message key="ellis.version" />:&nbsp;
-		    <%= ConfigurationProperties.getInstance().getPropertyValue(Property.releaseNumber)%> (<%= ConfigurationProperties.getInstance().getPropertyValue(Property.buildNumber) %>)&nbsp;&nbsp;&nbsp;
-	        </div>
-
-		    <% if("true".equals(ConfigurationProperties.getInstance().getPropertyValueLowerCase(Property.TrainingInstallation))){ %>
-		      <div id="training-alert"><span title="<bean:message key="training.note"/>"><bean:message key="training.note"/></span></div>
-		    <% } %>
-  		</div>
-
-<%= MenuUtil.getMenuAsHTML(path) %>
-
-	</div>
-</div> <!-- Closes id=header -->
-
-<% if( languageSwitch && "loginForm".equals((String)request.getAttribute(IActionConstants.FORM_NAME)) ){ %>
-  <div id="language-chooser"> <bean:message key="banner.message.selectLanguage"/>
-    <select onchange="setLanguage(this.options[this.selectedIndex].value)">
-        <option selected></option>
-        <option value="en_US"><bean:message bundle="setOfLanguagesBundle" key="en_US"/></option>
-        <option value="fr-FR"><bean:message bundle="setOfLanguagesBundle" key="fr-FR"/></option>
-        <option value="es-ES"><bean:message bundle="setOfLanguagesBundle" key="es-ES"/></option>
-		   <option value="pt-BR"><bean:message bundle="setOfLanguagesBundle" key="pt-BR"/></option>
-    </select>
-  </div>
-  <span id = "updateMessage"
-    data-message-en_US = '<bean:message bundle="setOfLanguagesBundle" key="languageConfirmation.message.english"/>'
-    data-message-fr-FR = '<bean:message bundle="setOfLanguagesBundle" key="languageConfirmation.message.french"/>'
-    data-message-es-ES = '<bean:message bundle="setOfLanguagesBundle" key="languageConfirmation.message.spanish"/>'
-	     data-message-pt-BR = '<bean:message bundle="setOfLanguagesBundle" key="languageConfirmation.message.portuguese"/>'
-    ></span>
-<% } %>

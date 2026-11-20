@@ -114,7 +114,7 @@ html,body{height:100%;overflow:auto}
 body>table>tbody>tr:first-child,body>table>tbody>tr:last-child{display:none!important}
 body>table{border:none!important;width:100%!important;border-collapse:collapse!important;margin:0!important;padding:0!important}
 body>table>tbody>tr:nth-child(3)>td{padding:0!important;margin:0!important;vertical-align:top!important}
-.od-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;line-height:1.5;display:flex;flex-direction:column;min-height:calc(100vh - 120px);overflow:hidden}
+.od-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;line-height:1.5;display:flex;flex-direction:column;min-height:calc(100vh - 80px);width:100%!important;clear:both!important;box-sizing:border-box!important;overflow:hidden}
 form[name="menuForm"]{position:sticky!important;top:0!important;z-index:50!important;background:#fff!important;flex-shrink:0}
 
 .od-sticky-top{background:#f0f2f5;padding:8px 16px 0;border-bottom:1px solid #e2e8f0;flex-shrink:0}
