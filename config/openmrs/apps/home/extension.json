@@ -8,7 +8,7 @@
     "url": "../registration/index.html#/patient/triagePatient",
     "icon": "fa-ambulance",
     "order": 2,
-    "requiredPrivilege": "app:triage"
+    "requiredPrivilege": "app:registration"
   },
   "registration": {
     "id": "bahmni.registration",
@@ -59,7 +59,7 @@
     "url": "../bedmanagement/#/home",
     "icon": "fa-bed",
     "order": 5,
-    "requiredPrivilege": "app:bedManagement"
+    "requiredPrivilege": "app:registration"
   },
   "register": {
     "id": "bahmni.register",

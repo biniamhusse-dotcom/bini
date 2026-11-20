@@ -46,8 +46,22 @@
             com.fasterxml.jackson.databind.ObjectMapper mapper = org.bahmni.feed.openelis.ObjectMapperRepository.objectMapper;
             todayOrderListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllToday()));
             todaySampleNotCollectedListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllSampleNotCollectedToday()));
-            backlogSampleNotCollectedListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllSampleNotCollectedPendingBeforeToday()));
-            backlogOrderListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllPendingBeforeToday()));
+
+            String cBNotColl = (String) application.getAttribute("cached_backlog_not_coll");
+            String cBOrders = (String) application.getAttribute("cached_backlog_orders");
+            Long cBTime = (Long) application.getAttribute("cached_backlog_time");
+            long nowMs = System.currentTimeMillis();
+
+            if (cBNotColl != null && cBOrders != null && cBTime != null && (nowMs - cBTime < 180000L)) {
+                backlogSampleNotCollectedListJson = cBNotColl;
+                backlogOrderListJson = cBOrders;
+            } else {
+                backlogSampleNotCollectedListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllSampleNotCollectedPendingBeforeToday()));
+                backlogOrderListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllPendingBeforeToday()));
+                application.setAttribute("cached_backlog_not_coll", backlogSampleNotCollectedListJson);
+                application.setAttribute("cached_backlog_orders", backlogOrderListJson);
+                application.setAttribute("cached_backlog_time", nowMs);
+            }
         } catch (Exception ignore) {}
     }
 %>
@@ -68,6 +82,8 @@ String selectedLabLocationName = (String) session.getAttribute("selectedLabLocat
 if (selectedLabLocationName == null) selectedLabLocationName = "";
 %>
 
+<link rel="stylesheet" type="text/css" href="<%=basePath%>css/openElisCore.css" />
+<script type="text/javascript" src="<%=basePath%>scripts/jquery-1.8.0.min.js"></script>
 <link rel="stylesheet" type="text/css" href="<%=basePath%>css/slickgrid/examples.css" />
 <link rel="stylesheet" type="text/css" href="<%=basePath%>css/slickgrid/slick.grid.css" />
 
@@ -90,13 +106,15 @@ if (selectedLabLocationName == null) selectedLabLocationName = "";
 <script type="text/javascript" src="<%=basePath%>scripts/utils.js"></script>
 <script type="text/javascript" src="<%=basePath%>scripts/JsBarcode.all.min.js"></script>
 
+<jsp:include page="/pages/common/banner.jsp" />
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
-body>table>tbody>tr:first-child,body>table>tbody>tr:nth-child(2),body>table>tbody>tr:last-child{display:none!important}
-body>table{border:none!important;width:100%!important;height:calc(100vh - 85px)!important;border-collapse:collapse!important;margin:0!important;padding:0!important}
-body>table>tbody>tr:nth-child(3)>td{padding:0!important;margin:0!important;vertical-align:top!important;height:100%!important}
-.od-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;line-height:1.5;display:flex;flex-direction:column;height:calc(100vh - 85px);overflow:hidden}
+html,body{height:100%;overflow:auto}
+body>table>tbody>tr:first-child,body>table>tbody>tr:last-child{display:none!important}
+body>table{border:none!important;width:100%!important;border-collapse:collapse!important;margin:0!important;padding:0!important}
+body>table>tbody>tr:nth-child(3)>td{padding:0!important;margin:0!important;vertical-align:top!important}
+.od-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;line-height:1.5;display:flex;flex-direction:column;min-height:calc(100vh - 120px);overflow:hidden}
 form[name="menuForm"]{position:sticky!important;top:0!important;z-index:50!important;background:#fff!important;flex-shrink:0}
 
 .od-sticky-top{background:#f0f2f5;padding:8px 16px 0;border-bottom:1px solid #e2e8f0;flex-shrink:0}
@@ -318,27 +336,27 @@ form[name="menuForm"]{position:sticky!important;top:0!important;z-index:50!impor
 
     <div class="od-main-content">
     <span id="translatedColumnNames"
-        data-patientID='<bean:message key="dashboard.sample.column.patientID"/>'
-        data-patientName='<bean:message key="dashboard.sample.column.patientName"/>'
-        data-source='<bean:message key="dashboard.sample.column.source"/>'
-        data-sectionNames='<bean:message key="dashboard.sample.column.sectionNames"/>'
-        data-sampleType='<bean:message key="dashboard.sample.column.sampleType"/>'
-        data-priority='<bean:message key="dashboard.sample.column.priority"/>'
-        data-total='<bean:message key="dashboard.sample.column.total"/>'
-        data-notes='<bean:message key="dashboard.sample.column.notes"/>'
-        data-action='<bean:message key="dashboard.sample.column.action"/>'
-        data-accessionNumber='<bean:message key="dashboard.sample.column.accessionNumber"/>'
-        data-pendingTests='<bean:message key="dashboard.sample.column.pendingTests"/>'
-        data-pendingValidation='<bean:message key="dashboard.sample.column.pendingValidation"/>'
-        data-referredTests='<bean:message key="dashboard.sample.column.referredTests"/>'
-        data-completed='<bean:message key="dashboard.sample.column.completed"/>'
-        data-printed='<bean:message key="dashboard.sample.column.printed"/>'
-        data-tat='<bean:message key="dashboard.sample.column.tat"/>'
-        data-link-collectSample='<bean:message key="dashboard.sample.column.link.collectSample"/>'
-        data-link-result='<bean:message key="dashboard.sample.column.link.result"/>'
-        data-link-validate='<bean:message key="dashboard.sample.column.link.validate"/>'
-        data-link-print='<bean:message key="dashboard.sample.column.link.print"/>'
-        data-link-label='<bean:message key="dashboard.sample.column.link.label"/>'
+        data-patientID="Patient ID"
+        data-patientName="Patient Name"
+        data-source="Sample Source"
+        data-sectionNames="Lab Section"
+        data-sampleType="Sample Type"
+        data-priority="Priority"
+        data-total="Total"
+        data-notes="Notes"
+        data-action="Action"
+        data-accessionNumber="Accession Number"
+        data-pendingTests="Pending Tests"
+        data-pendingValidation="Pending Validation"
+        data-referredTests="Referred Tests"
+        data-completed="Completed"
+        data-printed="Printed"
+        data-tat="TAT"
+        data-link-collectSample="Collect Sample"
+        data-link-result="Enter Result"
+        data-link-validate="Validate"
+        data-link-print="Print"
+        data-link-label="Label"
     ></span>
 
     <div class="od-section">

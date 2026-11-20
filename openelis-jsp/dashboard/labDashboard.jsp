@@ -36,8 +36,22 @@
             com.fasterxml.jackson.databind.ObjectMapper mapper = org.bahmni.feed.openelis.ObjectMapperRepository.objectMapper;
             todayOrderListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllToday()));
             todaySampleNotCollectedListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllSampleNotCollectedToday()));
-            backlogSampleNotCollectedListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllSampleNotCollectedPendingBeforeToday()));
-            backlogOrderListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllPendingBeforeToday()));
+
+            String cBNotColl = (String) application.getAttribute("cached_backlog_not_coll");
+            String cBOrders = (String) application.getAttribute("cached_backlog_orders");
+            Long cBTime = (Long) application.getAttribute("cached_backlog_time");
+            long nowMs = System.currentTimeMillis();
+
+            if (cBNotColl != null && cBOrders != null && cBTime != null && (nowMs - cBTime < 180000L)) {
+                backlogSampleNotCollectedListJson = cBNotColl;
+                backlogOrderListJson = cBOrders;
+            } else {
+                backlogSampleNotCollectedListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllSampleNotCollectedPendingBeforeToday()));
+                backlogOrderListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllPendingBeforeToday()));
+                application.setAttribute("cached_backlog_not_coll", backlogSampleNotCollectedListJson);
+                application.setAttribute("cached_backlog_orders", backlogOrderListJson);
+                application.setAttribute("cached_backlog_time", nowMs);
+            }
         } catch (Exception ignore) {
             todayOrderListJson = "[]";
             todaySampleNotCollectedListJson = "[]";
@@ -64,138 +78,181 @@
     JSONArray deptVolumeList = new JSONArray();
     JSONObject dayVolumeMap = new JSONObject();
 
-    Connection connDash = null;
-    PreparedStatement psDash = null;
-    ResultSet rsDash = null;
-
-    try {
-        Class.forName("org.postgresql.Driver");
-        connDash = DriverManager.getConnection("jdbc:postgresql://openelisdb:5432/clinlims", "clinlims", "clinlims");
-
-        // 1. Critical alerts
-        psDash = connDash.prepareStatement(
-            "SELECT (SELECT count(*) FROM result WHERE abnormal = true) + " +
-            "(SELECT count(*) FROM analysis WHERE status_id IN (7, 17, 22)) as alerts"
-        );
-        rsDash = psDash.executeQuery();
-        if (rsDash.next()) {
-            dbCriticalAlerts = rsDash.getInt("alerts");
-        }
-        rsDash.close();
-        psDash.close();
-
-        // 2. Average TAT in hours
-        psDash = connDash.prepareStatement(
-            "SELECT ROUND(COALESCE(AVG(EXTRACT(EPOCH FROM (a.lastupdated - s.entered_date))/3600), 0)::numeric, 1) as avg_tat " +
-            "FROM analysis a " +
-            "JOIN sample_item si ON a.sampitem_id = si.id " +
-            "JOIN sample s ON si.samp_id = s.id " +
-            "WHERE a.completed_date IS NOT NULL"
-        );
-        rsDash = psDash.executeQuery();
-        if (rsDash.next()) {
-            dbAvgTat = rsDash.getDouble("avg_tat");
-        }
-        rsDash.close();
-        psDash.close();
-
-        // 3. Pending analyses count (not completed, not canceled)
-        psDash = connDash.prepareStatement(
-            "SELECT COALESCE(s.priority, 0) as pri, count(a.id) as cnt " +
-            "FROM analysis a " +
-            "JOIN sample_item si ON a.sampitem_id = si.id " +
-            "JOIN sample s ON si.samp_id = s.id " +
-            "WHERE a.completed_date IS NULL AND a.status_id != 15 " +
-            "GROUP BY pri"
-        );
-        rsDash = psDash.executeQuery();
-        while (rsDash.next()) {
-            int pri = rsDash.getInt("pri");
-            int cnt = rsDash.getInt("cnt");
-            dbPendingAnalyses += cnt;
-            if (pri > 0) {
-                dbPendingStat += cnt;
-            } else {
-                dbPendingRoutine += cnt;
+    Long cachedAt = (Long) application.getAttribute("dash_cached_at");
+    boolean cacheValid = false;
+    if (cachedAt != null && (System.currentTimeMillis() - cachedAt < 120000L)) {
+        try {
+            Integer ca = (Integer) application.getAttribute("dash_critical_alerts");
+            Double at = (Double) application.getAttribute("dash_avg_tat");
+            Integer pa = (Integer) application.getAttribute("dash_pending_analyses");
+            Integer ps = (Integer) application.getAttribute("dash_pending_stat");
+            Integer pr = (Integer) application.getAttribute("dash_pending_routine");
+            String dtStr = (String) application.getAttribute("dash_dept_tat");
+            String dvStr = (String) application.getAttribute("dash_dept_vol");
+            String dyStr = (String) application.getAttribute("dash_day_vol");
+            if (ca != null && at != null && pa != null && ps != null && pr != null && dtStr != null && dvStr != null && dyStr != null) {
+                dbCriticalAlerts = ca;
+                dbAvgTat = at;
+                dbPendingAnalyses = pa;
+                dbPendingStat = ps;
+                dbPendingRoutine = pr;
+                deptTatList = new JSONArray(dtStr);
+                deptVolumeList = new JSONArray(dvStr);
+                dayVolumeMap = new JSONObject(dyStr);
+                cacheValid = true;
             }
-        }
-        rsDash.close();
-        psDash.close();
+        } catch (Exception ignore) {}
+    }
 
-        // 4. TAT by department (top completed)
-        psDash = connDash.prepareStatement(
-            "SELECT ts.name as dept, " +
-            "       ROUND(AVG(EXTRACT(EPOCH FROM (a.lastupdated - s.entered_date))/3600)::numeric, 1) as tat_hrs " +
-            "FROM analysis a " +
-            "JOIN test_section ts ON a.test_sect_id = ts.id " +
-            "JOIN sample_item si ON a.sampitem_id = si.id " +
-            "JOIN sample s ON si.samp_id = s.id " +
-            "WHERE a.completed_date IS NOT NULL " +
-            "GROUP BY ts.name " +
-            "ORDER BY tat_hrs DESC LIMIT 5"
-        );
-        rsDash = psDash.executeQuery();
-        while (rsDash.next()) {
-            JSONObject obj = new JSONObject();
-            String dName = rsDash.getString("dept");
-            if (dName != null) {
-                dName = dName.replace(" Department", "").replace(" Lab", "");
+    if (!cacheValid) {
+        Connection connDash = null;
+        PreparedStatement psDash = null;
+        ResultSet rsDash = null;
+
+        try {
+            Class.forName("org.postgresql.Driver");
+            connDash = DriverManager.getConnection("jdbc:postgresql://openelisdb:5432/clinlims", "clinlims", "clinlims");
+
+            // 1. Critical alerts (recent 14 days)
+            psDash = connDash.prepareStatement(
+                "SELECT (SELECT count(*) FROM result WHERE abnormal = true AND lastupdated >= CURRENT_DATE - INTERVAL '14 days') + " +
+                "(SELECT count(*) FROM analysis WHERE status_id IN (7, 17, 22) AND lastupdated >= CURRENT_DATE - INTERVAL '14 days') as alerts"
+            );
+            rsDash = psDash.executeQuery();
+            if (rsDash.next()) {
+                dbCriticalAlerts = rsDash.getInt("alerts");
             }
-            obj.put("dept", dName);
-            obj.put("tat", rsDash.getDouble("tat_hrs"));
-            deptTatList.put(obj);
-        }
-        rsDash.close();
-        psDash.close();
+            rsDash.close();
+            psDash.close();
 
-        // 5. Volume by department (top sections)
-        psDash = connDash.prepareStatement(
-            "SELECT ts.name as dept, count(a.id) as cnt " +
-            "FROM analysis a " +
-            "JOIN test_section ts ON a.test_sect_id = ts.id " +
-            "GROUP BY ts.name " +
-            "ORDER BY cnt DESC LIMIT 6"
-        );
-        rsDash = psDash.executeQuery();
-        while (rsDash.next()) {
-            JSONObject obj = new JSONObject();
-            String dName = rsDash.getString("dept");
-            if (dName != null) {
-                dName = dName.replace(" Department", "").replace(" Lab", "");
+            // 2. Average TAT in hours (recent 30 days)
+            psDash = connDash.prepareStatement(
+                "SELECT ROUND(COALESCE(AVG(EXTRACT(EPOCH FROM (a.lastupdated - s.entered_date))/3600), 0)::numeric, 1) as avg_tat " +
+                "FROM analysis a " +
+                "JOIN sample_item si ON a.sampitem_id = si.id " +
+                "JOIN sample s ON si.samp_id = s.id " +
+                "WHERE a.completed_date IS NOT NULL AND s.entered_date >= CURRENT_DATE - INTERVAL '30 days'"
+            );
+            rsDash = psDash.executeQuery();
+            if (rsDash.next()) {
+                dbAvgTat = rsDash.getDouble("avg_tat");
             }
-            obj.put("dept", dName);
-            obj.put("cnt", rsDash.getInt("cnt"));
-            deptVolumeList.put(obj);
-        }
-        rsDash.close();
-        psDash.close();
+            rsDash.close();
+            psDash.close();
 
-        // 6. Volume by day of week
-        psDash = connDash.prepareStatement(
-            "SELECT TO_CHAR(COALESCE(a.started_date, s.entered_date), 'Dy') as day_name, " +
-            "       count(a.id) as cnt " +
-            "FROM analysis a " +
-            "JOIN sample_item si ON a.sampitem_id = si.id " +
-            "JOIN sample s ON si.samp_id = s.id " +
-            "GROUP BY day_name"
-        );
-        rsDash = psDash.executeQuery();
-        while (rsDash.next()) {
-            dayVolumeMap.put(rsDash.getString("day_name"), rsDash.getInt("cnt"));
+            // 3. Pending analyses count (recent 60 days)
+            psDash = connDash.prepareStatement(
+                "SELECT COALESCE(s.priority, 0) as pri, count(a.id) as cnt " +
+                "FROM analysis a " +
+                "JOIN sample_item si ON a.sampitem_id = si.id " +
+                "JOIN sample s ON si.samp_id = s.id " +
+                "WHERE a.completed_date IS NULL AND a.status_id != 15 AND s.entered_date >= CURRENT_DATE - INTERVAL '60 days' " +
+                "GROUP BY pri"
+            );
+            rsDash = psDash.executeQuery();
+            while (rsDash.next()) {
+                int pri = rsDash.getInt("pri");
+                int cnt = rsDash.getInt("cnt");
+                dbPendingAnalyses += cnt;
+                if (pri > 0) {
+                    dbPendingStat += cnt;
+                } else {
+                    dbPendingRoutine += cnt;
+                }
+            }
+            rsDash.close();
+            psDash.close();
+
+            // 4. TAT by department (recent 30 days)
+            psDash = connDash.prepareStatement(
+                "SELECT ts.name as dept, " +
+                "       ROUND(AVG(EXTRACT(EPOCH FROM (a.lastupdated - s.entered_date))/3600)::numeric, 1) as tat_hrs " +
+                "FROM analysis a " +
+                "JOIN test_section ts ON a.test_sect_id = ts.id " +
+                "JOIN sample_item si ON a.sampitem_id = si.id " +
+                "JOIN sample s ON si.samp_id = s.id " +
+                "WHERE a.completed_date IS NOT NULL AND s.entered_date >= CURRENT_DATE - INTERVAL '30 days' " +
+                "GROUP BY ts.name " +
+                "ORDER BY tat_hrs DESC LIMIT 5"
+            );
+            rsDash = psDash.executeQuery();
+            while (rsDash.next()) {
+                JSONObject obj = new JSONObject();
+                String dName = rsDash.getString("dept");
+                if (dName != null) {
+                    dName = dName.replace(" Department", "").replace(" Lab", "");
+                }
+                obj.put("dept", dName);
+                obj.put("tat", rsDash.getDouble("tat_hrs"));
+                deptTatList.put(obj);
+            }
+            rsDash.close();
+            psDash.close();
+
+            // 5. Volume by department (recent 30 days)
+            psDash = connDash.prepareStatement(
+                "SELECT ts.name as dept, count(a.id) as cnt " +
+                "FROM analysis a " +
+                "JOIN test_section ts ON a.test_sect_id = ts.id " +
+                "JOIN sample_item si ON a.sampitem_id = si.id " +
+                "JOIN sample s ON si.samp_id = s.id " +
+                "WHERE s.entered_date >= CURRENT_DATE - INTERVAL '30 days' " +
+                "GROUP BY ts.name " +
+                "ORDER BY cnt DESC LIMIT 6"
+            );
+            rsDash = psDash.executeQuery();
+            while (rsDash.next()) {
+                JSONObject obj = new JSONObject();
+                String dName = rsDash.getString("dept");
+                if (dName != null) {
+                    dName = dName.replace(" Department", "").replace(" Lab", "");
+                }
+                obj.put("dept", dName);
+                obj.put("cnt", rsDash.getInt("cnt"));
+                deptVolumeList.put(obj);
+            }
+            rsDash.close();
+            psDash.close();
+
+            // 6. Volume by day of week (recent 30 days)
+            psDash = connDash.prepareStatement(
+                "SELECT TO_CHAR(COALESCE(a.started_date, s.entered_date), 'Dy') as day_name, " +
+                "       count(a.id) as cnt " +
+                "FROM analysis a " +
+                "JOIN sample_item si ON a.sampitem_id = si.id " +
+                "JOIN sample s ON si.samp_id = s.id " +
+                "WHERE s.entered_date >= CURRENT_DATE - INTERVAL '30 days' " +
+                "GROUP BY day_name"
+            );
+            rsDash = psDash.executeQuery();
+            while (rsDash.next()) {
+                dayVolumeMap.put(rsDash.getString("day_name"), rsDash.getInt("cnt"));
+            }
+
+            // Save to application cache (120 seconds TTL)
+            application.setAttribute("dash_cached_at", System.currentTimeMillis());
+            application.setAttribute("dash_critical_alerts", dbCriticalAlerts);
+            application.setAttribute("dash_avg_tat", dbAvgTat);
+            application.setAttribute("dash_pending_analyses", dbPendingAnalyses);
+            application.setAttribute("dash_pending_stat", dbPendingStat);
+            application.setAttribute("dash_pending_routine", dbPendingRoutine);
+            application.setAttribute("dash_dept_tat", deptTatList.toString());
+            application.setAttribute("dash_dept_vol", deptVolumeList.toString());
+            application.setAttribute("dash_day_vol", dayVolumeMap.toString());
+        } catch (Exception e) {
+            // Fallback gracefully
+        } finally {
+            if (rsDash != null) try { rsDash.close(); } catch (Exception e) {}
+            if (psDash != null) try { psDash.close(); } catch (Exception e) {}
+            if (connDash != null) try { connDash.close(); } catch (Exception e) {}
         }
-    } catch (Exception e) {
-        // Fallback gracefully
-    } finally {
-        if (rsDash != null) try { rsDash.close(); } catch (Exception e) {}
-        if (psDash != null) try { psDash.close(); } catch (Exception e) {}
-        if (connDash != null) try { connDash.close(); } catch (Exception e) {}
     }
 %>
 
 <style>
 #contentTable{display:none!important}
-.dash{display:flex;flex-direction:column;height:calc(100vh - 60px);overflow:hidden;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e}
-.dash-header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:#0f766e;color:#fff}
+.dash{display:flex;flex-direction:column;min-height:calc(100vh - 110px);overflow-y:auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e}
+.dash-header{display:flex;align-items:center;justify-content:space-between;padding:8px 24px;background:#0f766e;color:#fff}
 .dash-header h1{font-size:20px;font-weight:700}
 .dash-header .date-display{font-size:13px;opacity:.9}
 .dash-header .header-right{display:flex;align-items:center;gap:12px;font-size:12px}
@@ -255,6 +312,8 @@
 .chart-container{position:relative;width:100%;flex:1;min-height:180px}
 .chart-container canvas{width:100%!important;height:100%!important}
 </style>
+
+<jsp:include page="/pages/common/banner.jsp" />
 
 <div class="dash">
     <div class="dash-header">
