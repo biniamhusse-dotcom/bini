@@ -1,0 +1,2875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dermatology OPD — Clinical History &amp; Assessment Form</title>
+  <style>
+    /* ==========================================================================
+       1. Design Tokens & Theme Variables (Zero External Dependencies)
+       ========================================================================== */
+    :root {
+      --primary: #0f766e;
+      --primary-hover: #115e59;
+      --primary-light: #f0fdfa;
+      --primary-border: #99f6e4;
+      --secondary: #1d4ed8;
+      --secondary-light: #eff6ff;
+      --bg-page: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-subtle: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-light: #64748b;
+      --border: #cbd5e1;
+      --border-light: #e2e8f0;
+      --amber: #b45309;
+      --amber-bg: #fffbeb;
+      --amber-border: #fde68a;
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.16);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ==========================================================================
+       2. Sticky Top Clinical Action Bar
+       ========================================================================== */
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 120;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 10px 16px;
+    }
+
+    .toolbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      color: var(--primary);
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-main);
+      transition: all 0.15s ease;
+      min-height: 36px;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--bg-subtle);
+      border-color: #94a3b8;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--secondary-light);
+      color: var(--secondary);
+      border-color: #bfdbfe;
+    }
+
+    .btn-secondary:hover {
+      background: #dbeafe;
+    }
+
+    .btn-danger {
+      color: var(--danger);
+      border-color: #fecaca;
+      background: #fff;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-bg);
+    }
+
+    .btn-pearl-active {
+      background: var(--amber-bg);
+      color: var(--amber);
+      border-color: var(--amber-border);
+    }
+
+    /* ==========================================================================
+       3. Clinical Reference Drawer
+       ========================================================================== */
+    .ref-drawer {
+      display: none;
+      background: var(--amber-bg);
+      border-bottom: 1px solid var(--amber-border);
+      padding: 14px 16px;
+    }
+
+    .ref-drawer.open {
+      display: block;
+      animation: fadeDown 0.18s ease;
+    }
+
+    .ref-drawer-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .ref-card {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid var(--amber-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #78350f;
+    }
+
+    .ref-card h4 {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #92400e;
+      margin-bottom: 5px;
+    }
+
+    .ref-card ul {
+      padding-left: 16px;
+      line-height: 1.4;
+    }
+
+    /* ==========================================================================
+       4. Main Layout, Header & Cards
+       ========================================================================== */
+    .container {
+      max-width: 1220px;
+      margin: 20px auto 60px;
+      padding: 0 16px;
+    }
+
+    .clinic-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: 5px solid var(--primary);
+      border-radius: var(--radius-lg);
+      padding: 18px 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .clinic-header-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .clinic-title h1 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .clinic-title p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .header-meta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .date-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: var(--bg-subtle);
+      padding: 9px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+      overflow: visible;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 20px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border-light);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card-header:hover {
+      background: #f1f5f9;
+    }
+
+    .card.collapsed .card-header {
+      border-bottom: none;
+      border-radius: var(--radius-lg);
+    }
+
+    .card.collapsed .card-body {
+      display: none;
+    }
+
+    .card.collapsed .collapse-icon {
+      transform: rotate(-90deg);
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .section-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .collapse-icon {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* ==========================================================================
+       5. Responsive Grids & Form Controls
+       ========================================================================== */
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+    @media (max-width: 960px) {
+      .grid-4, .grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
+      .card-body { padding: 14px; }
+      .clinic-header { padding: 14px; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .hint {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-light);
+    }
+
+    .group-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px dashed var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="tel"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      color: var(--text-main);
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 68px;
+    }
+
+    .sub-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 16px 0;
+    }
+
+    /* ==========================================================================
+       6. Clinical Chips, Checkboxes & Pruritus VAS Slider
+       ========================================================================== */
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      font-size: 12.5px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.14s ease;
+    }
+
+    .chip:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .chip input[type="checkbox"],
+    .chip input[type="radio"] {
+      accent-color: var(--primary);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .chip:has(input:checked) {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-hover);
+      font-weight: 600;
+    }
+
+    .vas-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+    }
+
+    .vas-wrap input[type="range"] {
+      flex: 1;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .vas-badge {
+      font-weight: 700;
+      font-size: 12.5px;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      padding: 2px 8px;
+      border-radius: 999px;
+      min-width: 68px;
+      text-align: center;
+    }
+
+    /* ==========================================================================
+       7. Interactive Anatomical Body Map & Anchored Finding Popover
+       ========================================================================== */
+    .bodymap-layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      .bodymap-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .svg-stage {
+      position: relative;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stage-top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+    }
+
+    .seg-btn {
+      border: none;
+      background: transparent;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .seg-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .pin-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .legend-pill.active {
+      border-color: var(--text-main);
+      color: var(--text-main);
+      background: var(--bg-subtle);
+      box-shadow: 0 0 0 1px var(--text-main);
+    }
+
+    .dot-swatch {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .svg-canvas-box {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .svg-canvas-box svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: crosshair;
+      touch-action: manipulation;
+    }
+
+    /* Anatomical SVG Styling (Warm Peach #f2cbb2, Shading #e3b296, Outline #5b2316) */
+    .body-base {
+      fill: #f2cbb2;
+      stroke: #5b2316;
+      stroke-width: 1.85;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+
+    .body-shade {
+      fill: #e3b296;
+      stroke: none;
+      pointer-events: none;
+    }
+
+    .body-hair {
+      fill: #d8a786;
+      stroke: #5b2316;
+      stroke-width: 1.5;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+
+    .body-region {
+      fill: transparent;
+      stroke: transparent;
+      transition: fill 0.14s ease;
+    }
+
+    .body-region:hover {
+      fill: rgba(15, 118, 110, 0.16);
+      stroke: rgba(15, 118, 110, 0.5);
+      stroke-width: 0.9;
+    }
+
+    .anatomical-landmark {
+      fill: none;
+      stroke: #5b2316;
+      stroke-width: 1.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .anatomical-subtle {
+      fill: none;
+      stroke: #7c3f2c;
+      stroke-width: 0.95;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .lesion-dot {
+      stroke: #ffffff;
+      stroke-width: 1.7;
+      cursor: pointer;
+      transition: r 0.12s ease;
+    }
+
+    .lesion-dot-ring {
+      fill: none;
+      stroke: #0f172a;
+      stroke-width: 1.5;
+      stroke-dasharray: 2 2;
+      pointer-events: none;
+    }
+
+    .dot-num {
+      font-size: 8.5px;
+      font-weight: 800;
+      fill: #ffffff;
+      pointer-events: none;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+
+    /* Floating Hover Tooltip for Dots */
+    .dot-tooltip {
+      position: fixed;
+      z-index: 300;
+      background: #0f172a;
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      line-height: 1.35;
+      max-width: 250px;
+      pointer-events: none;
+      box-shadow: var(--shadow-md);
+      display: none;
+    }
+
+    /* Anchored Inline Finding Popover */
+    .dot-popover {
+      position: fixed;
+      z-index: 350;
+      width: 340px;
+      max-width: calc(100vw - 24px);
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--primary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      padding: 14px;
+      display: none;
+      text-align: left;
+    }
+
+    .dot-popover.open {
+      display: block;
+      animation: popIn 0.14s ease;
+    }
+
+    @media (max-width: 640px) {
+      .dot-popover {
+        left: 12px !important;
+        right: 12px !important;
+        top: auto !important;
+        bottom: 14px !important;
+        width: auto !important;
+      }
+    }
+
+    .popover-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .popover-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .morph-quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin: 6px 0 8px;
+    }
+
+    .morph-chip-btn {
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .morph-chip-btn:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-hover);
+    }
+
+    .popover-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    /* Documented Dots & Findings Table/List */
+    .dots-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .dots-table-wrap {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .dots-table-head {
+      background: var(--bg-subtle);
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+
+    .dots-list {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .dot-entry {
+      display: grid;
+      grid-template-columns: 26px 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-light);
+      transition: background 0.12s;
+    }
+
+    .dot-entry:last-child {
+      border-bottom: none;
+    }
+
+    .dot-entry:hover {
+      background: var(--bg-subtle);
+    }
+
+    .dot-num-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .dot-entry-region {
+      font-weight: 700;
+      font-size: 12.5px;
+      color: var(--text-main);
+    }
+
+    .dot-entry-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .dot-entry-finding {
+      font-size: 12.5px;
+      color: var(--text-main);
+      margin-top: 4px;
+      background: var(--bg-subtle);
+      padding: 4px 8px;
+      border-radius: 4px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .dot-entry-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 4px;
+      padding: 3px 7px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .icon-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .icon-btn.del:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    /* Rule of 9s BSA Calculator */
+    .bsa-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .bsa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 8px;
+      margin: 8px 0 10px;
+    }
+
+    .bsa-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+
+    .bsa-cell input {
+      width: 52px;
+      padding: 3px 5px;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .bsa-summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .severity-pill {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary-hover);
+      border: 1px solid var(--primary-border);
+    }
+
+    /* ==========================================================================
+       8. Modals, Toast & Animations
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 400;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      max-width: 620px;
+      width: 100%;
+      padding: 20px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .soap-textarea {
+      width: 100%;
+      height: 300px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.45;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      color: var(--text-main);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #0f172a;
+      color: #fff;
+      padding: 11px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      z-index: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ==========================================================================
+       9. Print Stylesheet (@media print — A4 Optimized Clinical Record)
+       ========================================================================== */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 9mm 11mm;
+      }
+
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 10.5pt;
+        line-height: 1.35;
+      }
+
+      .toolbar,
+      .ref-drawer,
+      .no-print,
+      .collapse-icon,
+      .dot-popover,
+      .dot-tooltip,
+      .dot-entry-actions {
+        display: none !important;
+      }
+
+      .container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .card, .clinic-header {
+        box-shadow: none !important;
+        border: 1px solid #94a3b8 !important;
+        border-radius: 4px !important;
+        margin-bottom: 10px !important;
+        break-inside: avoid;
+      }
+
+      .card.collapsed .card-body {
+        display: block !important;
+      }
+
+      .card-header {
+        background: #f1f5f9 !important;
+        padding: 6px 12px !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .card-body {
+        padding: 10px 12px !important;
+      }
+
+      input, select, textarea {
+        border: none !important;
+        border-bottom: 1px solid #94a3b8 !important;
+        border-radius: 0 !important;
+        padding: 2px 4px !important;
+        background: transparent !important;
+        font-size: 10pt !important;
+      }
+
+      textarea {
+        min-height: 36px !important;
+      }
+
+      .chip {
+        border: none !important;
+        padding: 1px 6px 1px 0 !important;
+        background: transparent !important;
+      }
+
+      .chip:not(:has(input:checked)) {
+        opacity: 0.4;
+      }
+
+      .chip:has(input:checked) {
+        font-weight: 700 !important;
+        color: #000 !important;
+      }
+
+      .bodymap-layout {
+        grid-template-columns: 310px 1fr !important;
+        gap: 12px !important;
+      }
+
+      .dots-list {
+        max-height: none !important;
+        overflow: visible !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       Top Sticky Clinical Action Bar
+       ======================================================================== -->
+  <header class="toolbar no-print">
+    <div class="toolbar-inner">
+      <div class="brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+        <span>DermaOPD Clerking Pro</span>
+        <span class="brand-sub">Offline Ready</span>
+      </div>
+
+      <div class="toolbar-actions">
+        <button type="button" class="btn" id="btnRefToggle" onclick="toggleRefDrawer()">
+          <span>💡 Clinical Reference Guide</span>
+        </button>
+
+        <button type="button" class="btn btn-secondary" onclick="openSoapModal()">
+          <span>📄 Copy EMR SOAP Note</span>
+        </button>
+
+        <button type="button" class="btn btn-danger" onclick="openModal('clearModal')">
+          <span>🗑️ Clear Form</span>
+        </button>
+
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <span>🖨️ Print / Save PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       Collapsible Physician Clinical Reference Drawer
+       ======================================================================== -->
+  <aside class="ref-drawer no-print" id="refDrawer">
+    <div class="ref-drawer-inner">
+      <div class="ref-card">
+        <h4>1. 7-Point Dermatology HPI Checklist</h4>
+        <ul>
+          <li><strong>Site of onset &amp; spread:</strong> Centripetal, centrifugal, flexural, extensor, photo-exposed.</li>
+          <li><strong>Evolution:</strong> Fleeting (&lt;24h = urticaria) vs. fixed plaques/papules.</li>
+          <li><strong>Symptoms:</strong> Nocturnal itch (scabies), burning (herpes/contact), anesthesia (leprosy).</li>
+          <li><strong>Prior topical steroids:</strong> Screen for <em>tinea incognito</em> or perioral dermatitis.</li>
+        </ul>
+      </div>
+      <div class="ref-card">
+        <h4>2. Critical 8-Week Drug Reaction Window</h4>
+        <ul>
+          <li>Always review all systemic &amp; OTC drugs started within the past <strong>8 weeks</strong>.</li>
+          <li><strong>High-risk culprits:</strong> Allopurinol, Carbamazepine, Phenytoin, Lamotrigine, Cotrimoxazole, NSAIDs, Antiretrovirals.</li>
+          <li><strong>Red flags (SJS/TEN / DRESS):</strong> Mucosal erosions, skin pain, Nikolsky (+), facial edema, fever, eosinophilia.</li>
+        </ul>
+      </div>
+      <div class="ref-card">
+        <h4>3. Primary vs. Secondary Morphology</h4>
+        <ul>
+          <li><strong>Flat (&lt;1cm / ≥1cm):</strong> Macule / Patch.</li>
+          <li><strong>Elevated solid (&lt;1cm / ≥1cm):</strong> Papule / Plaque; deep dermal = Nodule.</li>
+          <li><strong>Fluid-filled:</strong> Vesicle (&lt;1cm), Bulla (≥1cm), Pustule (purulent).</li>
+          <li><strong>Secondary:</strong> Scale (keratin), Crust (dried exudate), Erosion (epidermal) vs. Ulcer (dermal).</li>
+        </ul>
+      </div>
+      <div class="ref-card">
+        <h4>4. Finger-Tip Unit (FTU) Dosing Guide</h4>
+        <ul>
+          <li><strong>1 FTU</strong> (~0.5 g) covers <strong>2 adult palms (~2% BSA)</strong>.</li>
+          <li>Face &amp; Neck: 2.5 FTU | One Arm &amp; Hand: 4 FTU.</li>
+          <li>Anterior or Posterior Trunk: 7 FTU each | One Leg &amp; Foot: 8 FTU.</li>
+          <li>Use low-potency steroids on face, eyelids, axillae &amp; groin.</li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================================================
+       Main Clerking Form Container
+       ======================================================================== -->
+  <main class="container">
+    <form id="dermaForm" autocomplete="off">
+
+      <!-- Hospital / Clinic Branding & Dual Calendar Header -->
+      <section class="clinic-header">
+        <div class="clinic-header-top">
+          <div class="clinic-title">
+            <h1>Dermatology Outpatient Department (OPD) — Clinical History &amp; Examination</h1>
+            <p>Comprehensive Cutaneous, Hair, Nail, Mucosal &amp; Anatomical Lesion Clerking Record</p>
+          </div>
+
+          <div class="header-meta-group">
+            <div class="field" style="min-width: 240px;">
+              <label for="facilityName">Hospital / Dermatology Clinic</label>
+              <input type="text" id="facilityName" value="Dermatology Specialty OPD Clinic" placeholder="Hospital / Clinic Name" />
+            </div>
+
+            <div class="date-box">
+              <div class="field" style="min-width: 138px;">
+                <label for="visitDateGC">Gregorian Date</label>
+                <input type="date" id="visitDateGC" onchange="syncEthiopianDate()" />
+              </div>
+              <div class="field" style="min-width: 145px;">
+                <label for="visitDateEC">Ethiopian Cal. Date</label>
+                <input type="text" id="visitDateEC" placeholder="DD/MM/YYYY E.C." />
+              </div>
+              <div class="field" style="min-width: 105px;">
+                <label for="visitTime">Consult Time</label>
+                <input type="time" id="visitTime" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SECTION 1: Patient Demographics & Vitals
+           ====================================================================== -->
+      <section class="card" id="sec-demo">
+        <div class="card-header" onclick="toggleCard('sec-demo')">
+          <div class="card-title">
+            <span class="section-badge">1</span>
+            <span>Patient Demographics &amp; Baseline Vitals</span>
+          </div>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="card-body">
+          <div class="grid grid-4">
+            <div class="field" style="grid-column: span 2;">
+              <label for="ptName">Full Name <span style="color:var(--danger);">*</span></label>
+              <input type="text" id="ptName" placeholder="Patient First, Father's &amp; Grandfather's / Last Name" />
+            </div>
+            <div class="field">
+              <label for="ptMrn">MRN / Chart #</label>
+              <input type="text" id="ptMrn" placeholder="e.g., MRN-2026-0412" />
+            </div>
+            <div class="field">
+              <label for="ptAge">Age</label>
+              <input type="text" id="ptAge" placeholder="e.g., 34 yrs / 10 mos" />
+            </div>
+
+            <div class="field">
+              <label for="ptSex">Sex <span class="hint">(Syncs Body Map)</span></label>
+              <select id="ptSex" onchange="syncSexFromDropdown(this.value)">
+                <option value="">Select Sex...</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ptOccupation">Occupation <span class="hint">(Contact/UV exposure)</span></label>
+              <input type="text" id="ptOccupation" placeholder="e.g., Farmer, Nurse, Builder, Student" />
+            </div>
+            <div class="field">
+              <label for="ptResidence">Residence / Sub-city / Woreda</label>
+              <input type="text" id="ptResidence" placeholder="City, Sub-city / Woreda" />
+            </div>
+            <div class="field">
+              <label for="ptReferral">Referral Source</label>
+              <select id="ptReferral">
+                <option value="Self-referred / Walk-in">Self-referred / Walk-in OPD</option>
+                <option value="Health Center / GP Referral">Health Center / GP Referral</option>
+                <option value="Internal Hospital Consult">Internal Hospital Consult</option>
+                <option value="Dermatology Follow-up">Dermatology Follow-up</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="sub-box">
+            <div class="group-label">Baseline Vitals &amp; Anthropometry <span class="hint">Essential prior to systemic immunosuppressants / retinoids</span></div>
+            <div class="grid grid-4">
+              <div class="field">
+                <label for="vitalWt">Weight (kg)</label>
+                <input type="number" step="0.1" id="vitalWt" placeholder="e.g., 68.5" />
+              </div>
+              <div class="field">
+                <label for="vitalTemp">Temperature (°C)</label>
+                <input type="number" step="0.1" id="vitalTemp" placeholder="e.g., 36.7" />
+              </div>
+              <div class="field">
+                <label for="vitalBp">Blood Pressure (mmHg)</label>
+                <input type="text" id="vitalBp" placeholder="e.g., 120/78" />
+              </div>
+              <div class="field">
+                <label for="vitalPulse">Pulse (bpm)</label>
+                <input type="number" id="vitalPulse" placeholder="e.g., 76" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SECTION 2: Chief Complaint & History of Present Illness (HPI)
+           ====================================================================== -->
+      <section class="card" id="sec-hpi">
+        <div class="card-header" onclick="toggleCard('sec-hpi')">
+          <div class="card-title">
+            <span class="section-badge">2</span>
+            <span>Chief Complaint &amp; 7-Point Dermatology History of Present Illness (HPI)</span>
+          </div>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="card-body">
+          <div class="grid grid-3">
+            <div class="field" style="grid-column: span 2;">
+              <label for="ccText">Chief Complaint(s) <span style="color:var(--danger);">*</span></label>
+              <input type="text" id="ccText" placeholder="e.g., Pruritic scaly erythematous plaques over extensor elbows, knees, and scalp" />
+            </div>
+            <div class="field">
+              <label for="ccDuration">Duration</label>
+              <input type="text" id="ccDuration" placeholder="e.g., 2 years (flared for 3 weeks)" />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- 7-Point Dermatology HPI Grid -->
+          <div class="grid grid-2">
+            <div class="field">
+              <label for="hpiOnsetSpread">1. Site of Onset &amp; Spread Pattern</label>
+              <textarea id="hpiOnsetSpread" placeholder="Exact initial anatomical site, direction/rate of spread (e.g., started on scalp, spread symmetrically to elbows/knees)."></textarea>
+            </div>
+            <div class="field">
+              <label for="hpiEvolution">2. Lesion Evolution &amp; Clinical Course</label>
+              <div class="chip-group" id="courseChips" style="margin-bottom:6px;">
+                <label class="chip"><input type="checkbox" value="Acute (<6 wks)" /> Acute (&lt;6 wks)</label>
+                <label class="chip"><input type="checkbox" value="Subacute" /> Subacute</label>
+                <label class="chip"><input type="checkbox" value="Chronic (≥6 wks)" /> Chronic (≥6 wks)</label>
+                <label class="chip"><input type="checkbox" value="Relapsing-Remitting" /> Relapsing-Remitting</label>
+                <label class="chip"><input type="checkbox" value="Fleeting (<24h individual lesions)" /> Fleeting (&lt;24h)</label>
+              </div>
+              <textarea id="hpiEvolution" style="min-height:48px;" placeholder="How individual lesions change over time (enlarging, coalescing, blistering, leaving hyperpigmentation/scars)..."></textarea>
+            </div>
+          </div>
+
+          <div class="sub-box">
+            <div class="group-label">3. Associated Cutaneous &amp; Systemic Symptoms</div>
+            <div class="grid grid-2" style="align-items:center; margin-bottom:10px;">
+              <div class="field">
+                <label for="pruritusVas">Pruritus (Itch) Severity — 0 to 10 VAS</label>
+                <div class="vas-wrap">
+                  <input type="range" id="pruritusVas" min="0" max="10" value="0" oninput="updateVasLabel(this.value)" />
+                  <span class="vas-badge" id="vasBadge">0 / 10</span>
+                </div>
+              </div>
+              <div class="chip-group" id="symptomChips" style="padding-top:16px;">
+                <label class="chip"><input type="checkbox" value="Nocturnal Pruritus" /> Nocturnal Itch</label>
+                <label class="chip"><input type="checkbox" value="Pain / Burning" /> Pain / Burning</label>
+                <label class="chip"><input type="checkbox" value="Tenderness" /> Tenderness</label>
+                <label class="chip"><input type="checkbox" value="Oozing / Bleeding" /> Oozing / Bleeding</label>
+                <label class="chip"><input type="checkbox" value="Numbness / Paresthesia" /> Numbness</label>
+                <label class="chip"><input type="checkbox" value="Fever / Malaise" /> Fever / Malaise</label>
+                <label class="chip"><input type="checkbox" value="Arthralgia / Joint Swelling" /> Arthralgia</label>
+              </div>
+            </div>
+            <input type="text" id="symptomNotes" placeholder="Additional symptom details (e.g., sleep disturbance, morning joint stiffness, mucosal pain)..." />
+          </div>
+
+          <div class="grid grid-2" style="margin-top:14px;">
+            <div class="sub-box" style="margin-top:0;">
+              <div class="group-label">4. Aggravating &amp; Relieving Factors</div>
+              <div class="chip-group" id="triggerChips" style="margin-bottom:8px;">
+                <label class="chip"><input type="checkbox" value="Sunlight / UV" /> Sunlight / UV</label>
+                <label class="chip"><input type="checkbox" value="Heat / Sweat" /> Heat / Sweat</label>
+                <label class="chip"><input type="checkbox" value="Cold / Dryness" /> Cold / Dryness</label>
+                <label class="chip"><input type="checkbox" value="Stress" /> Stress</label>
+                <label class="chip"><input type="checkbox" value="Soaps / Cosmetics" /> Soaps / Cosmetics</label>
+                <label class="chip"><input type="checkbox" value="Occupational Chemicals" /> Occupational Chemicals</label>
+                <label class="chip"><input type="checkbox" value="Foods" /> Foods</label>
+              </div>
+              <input type="text" id="triggerNotes" placeholder="Specific triggers or relieving factors (e.g., improves with sun, flares in dry season)..." />
+            </div>
+
+            <div class="sub-box" style="margin-top:0;">
+              <div class="group-label">5. Previous Treatments &amp; Response</div>
+              <div class="chip-group" id="priorTxChips" style="margin-bottom:8px;">
+                <label class="chip"><input type="checkbox" value="Topical Steroids" /> Topical Steroids</label>
+                <label class="chip"><input type="checkbox" value="Combo Creams (Steroid+Antifungal)" /> OTC Combo Creams</label>
+                <label class="chip"><input type="checkbox" value="Topical/Oral Antifungals" /> Antifungals</label>
+                <label class="chip"><input type="checkbox" value="Antibiotics" /> Antibiotics</label>
+                <label class="chip"><input type="checkbox" value="Oral Antihistamines / Steroids" /> Oral Meds</label>
+                <label class="chip"><input type="checkbox" value="Herbal / Traditional Remedies" /> Herbal / Traditional</label>
+              </div>
+              <input type="text" id="priorTxNotes" placeholder="Exact drug names, steroid potency, duration &amp; response (e.g., Clobetasol 2 wks — transient relief)..." />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SECTION 3: Past Medical, Drug, Allergy, Family & Social History
+           ====================================================================== -->
+      <section class="card" id="sec-pmh">
+        <div class="card-header" onclick="toggleCard('sec-pmh')">
+          <div class="card-title">
+            <span class="section-badge">3</span>
+            <span>Past Medical, Drug, Allergy, Family &amp; Social History</span>
+          </div>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="card-body">
+          <div class="grid grid-2">
+            <div class="field">
+              <label for="drugAllergies">Known Drug &amp; Contact Allergies <span class="hint">(Include reaction type)</span></label>
+              <input type="text" id="drugAllergies" placeholder="e.g., NKDA, or Sulfonamides (morbilliform rash), Nickel (earlobe dermatitis)" />
+            </div>
+            <div class="field">
+              <label for="recentMeds">Current &amp; Recent Medications (Past 8 Weeks) <span class="hint">(SJS/TEN, DRESS, FDE screen)</span></label>
+              <input type="text" id="recentMeds" placeholder="List all Rx, OTC, herbal &amp; supplements started in the last 8 weeks..." />
+            </div>
+          </div>
+
+          <div class="sub-box">
+            <div class="group-label">Personal &amp; Family Atopy / Skin / Systemic Comorbidities</div>
+            <div class="chip-group" id="comorbidityChips" style="margin-bottom:10px;">
+              <label class="chip"><input type="checkbox" value="Atopic Dermatitis" /> Atopic Dermatitis</label>
+              <label class="chip"><input type="checkbox" value="Allergic Rhinitis" /> Allergic Rhinitis</label>
+              <label class="chip"><input type="checkbox" value="Bronchial Asthma" /> Asthma</label>
+              <label class="chip"><input type="checkbox" value="Psoriasis" /> Psoriasis</label>
+              <label class="chip"><input type="checkbox" value="Vitiligo" /> Vitiligo</label>
+              <label class="chip"><input type="checkbox" value="Autoimmune / Connective Tissue Disease" /> Autoimmune / CTD</label>
+              <label class="chip"><input type="checkbox" value="Skin Malignancy" /> Skin Malignancy</label>
+              <label class="chip"><input type="checkbox" value="Chronic Kidney / Liver Disease" /> CKD / Liver Disease</label>
+              <label class="chip"><input type="checkbox" value="Diabetes Mellitus" /> Diabetes</label>
+              <label class="chip"><input type="checkbox" value="HIV / Immunosuppression" /> HIV / Immunosuppression</label>
+            </div>
+            <div class="grid grid-2">
+              <div class="field">
+                <label for="familyHxNotes">Family Skin &amp; Atopy History</label>
+                <input type="text" id="familyHxNotes" placeholder="e.g., Mother with asthma; paternal uncle with plaque psoriasis" />
+              </div>
+              <div class="field">
+                <label for="socialExposureNotes">Social &amp; Exposure History (Occupation/Hobbies, Travel, Pets, Household Contacts, Smoking/Alcohol)</label>
+                <input type="text" id="socialExposureNotes" placeholder="e.g., No household contacts with similar rash; non-smoker; no pets or recent travel" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SECTION 4: Interactive Anatomical Lesion Mapping (Click-to-Dot & Findings)
+           ====================================================================== -->
+      <section class="card" id="sec-bodymap">
+        <div class="card-header" onclick="toggleCard('sec-bodymap')">
+          <div class="card-title">
+            <span class="section-badge">4</span>
+            <span>Interactive Anatomical Lesion Mapping &amp; Rule-of-9s BSA Calculator</span>
+          </div>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="card-body">
+          <div class="bodymap-layout">
+
+            <!-- Left Column: Interactive Male / Female Anatomical SVG Stage -->
+            <div class="svg-stage">
+              <div class="stage-top-bar">
+                <div class="segmented" role="group" aria-label="Body Map Sex Toggle">
+                  <button type="button" class="seg-btn active" id="btnSexMale" onclick="setBodySex('Male', true)">♂ Male (M)</button>
+                  <button type="button" class="seg-btn" id="btnSexFemale" onclick="setBodySex('Female', true)">♀ Female (F)</button>
+                </div>
+                <span style="font-size:11.5px; font-weight:700; color:var(--primary);" id="activeSilhouetteLabel">ANTERIOR &amp; POSTERIOR [MALE]</span>
+              </div>
+
+              <!-- Marker Category Selector -->
+              <div class="pin-legend no-print" id="categoryBar">
+                <button type="button" class="legend-pill active" data-cat="Primary" data-color="#dc2626" onclick="selectCategory(this)">
+                  <span class="dot-swatch" style="background:#dc2626;"></span>Primary
+                </button>
+                <button type="button" class="legend-pill" data-cat="Secondary" data-color="#d97706" onclick="selectCategory(this)">
+                  <span class="dot-swatch" style="background:#d97706;"></span>Secondary
+                </button>
+                <button type="button" class="legend-pill" data-cat="Erosion/Ulcer" data-color="#7c3aed" onclick="selectCategory(this)">
+                  <span class="dot-swatch" style="background:#7c3aed;"></span>Erosion/Ulcer
+                </button>
+                <button type="button" class="legend-pill" data-cat="Pigmented" data-color="#0d9488" onclick="selectCategory(this)">
+                  <span class="dot-swatch" style="background:#0d9488;"></span>Pigmented
+                </button>
+                <button type="button" class="legend-pill" data-cat="Biopsy Site" data-color="#2563eb" onclick="selectCategory(this)">
+                  <span class="dot-swatch" style="background:#2563eb;"></span>Biopsy Site
+                </button>
+              </div>
+
+              <!-- Anatomical Vector Figure (440 x 470, Clean Unlabeled Silhouette) -->
+              <div class="svg-canvas-box">
+                <svg id="bodySvg" viewBox="0 0 440 470" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <radialGradient id="umbilicusGrad" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#5b2316" stop-opacity="0.85"/>
+                      <stop offset="60%" stop-color="#b97b5d" stop-opacity="0.55"/>
+                      <stop offset="100%" stop-color="#f2cbb2" stop-opacity="0"/>
+                    </radialGradient>
+                  </defs>
+
+                  <!-- ==================== MALE ANATOMICAL MODEL ==================== -->
+                  <g id="maleAnatomyGroup">
+                    <!-- MALE ANTERIOR (Center X = 110) -->
+                    <g id="maleAnterior">
+                      <path d="M90,36 C87,35 86,41 88,46 C89,48 91,48 92,46 Z" class="body-base" />
+                      <path d="M130,36 C133,35 134,41 132,46 C131,48 129,48 128,46 Z" class="body-base" />
+                      <path class="body-base" d="
+                        M92,32 C92,16 128,16 128,32
+                        C129,44 125,56 117,62
+                        C113,65 107,65 103,62
+                        C95,56 91,44 92,32 Z
+                      " />
+                      <path class="body-base" d="
+                        M100,60 L99,76
+                        C85,80 68,82 61,93
+                        C56,101 55,118 52,138
+                        C49,158 45,178 42,198
+                        C39,212 35,221 31,229
+                        C29,233 31,237 33,235
+                        L37,227 L35,243 C35,246 38,246 39,243 L42,230
+                        L41,246 C41,249 44,249 45,245 L47,231
+                        L47,244 C47,247 50,246 50,243 L51,228
+                        L52,238 C53,241 55,240 55,237 L53,218
+                        C53,210 52,204 53,198
+                        C58,179 64,159 67,140
+                        L71,122
+                        C73,138 74,154 73,174
+                        C71,191 68,205 68,224
+                        C68,248 73,275 78,302
+                        C81,318 80,334 81,352
+                        C82,374 87,396 88,416
+                        C88,425 81,434 78,440
+                        C76,443 79,446 82,445
+                        C85,446 88,446 91,446
+                        C95,446 98,446 101,445
+                        C103,444 103,440 101,436
+                        C99,430 98,423 98,415
+                        C100,394 104,372 104,350
+                        C104,332 103,316 105,300
+                        C107,276 108,252 109,230
+                        L111,230
+                        C112,252 113,276 115,300
+                        C117,316 116,332 116,350
+                        C116,372 120,394 122,415
+                        C122,423 121,430 119,436
+                        C117,440 117,444 119,445
+                        C122,446 125,446 129,446
+                        C132,446 135,446 138,445
+                        C141,446 144,443 142,440
+                        C139,434 132,425 132,416
+                        C133,396 138,374 139,352
+                        C140,334 139,318 142,302
+                        C147,275 152,248 152,224
+                        C152,205 149,191 147,174
+                        C146,154 147,138 149,122
+                        L153,140
+                        C156,159 162,179 167,198
+                        C168,204 167,210 167,218
+                        L165,237 C165,240 167,241 168,238 L169,228
+                        L170,243 C170,246 173,247 173,244 L173,231
+                        L175,245 C176,249 179,249 179,246 L178,230
+                        L181,243 C182,246 185,246 185,243 L183,227
+                        L187,235 C189,237 191,233 189,229
+                        C185,221 181,212 178,198
+                        C175,178 171,158 168,138
+                        C165,118 164,101 159,93
+                        C152,82 135,80 121,76
+                        L120,60 Z
+                      " />
+                      <path class="body-shade" d="M101,62 C106,66 114,66 119,62 L119,70 C113,73 107,73 101,70 Z" />
+                      <path class="body-shade" d="M74,119 C84,125 97,125 106,120 C97,128 83,128 74,122 Z" />
+                      <path class="body-shade" d="M146,119 C136,125 123,125 114,120 C123,128 137,128 146,122 Z" />
+                      <path class="body-shade" d="M84,196 L110,226 L136,196 L126,214 L110,229 L94,214 Z" />
+                      <circle cx="110" cy="172" r="4.5" fill="url(#umbilicusGrad)" pointer-events="none" />
+                      <path class="body-hair" d="
+                        M92,34 C90,26 92,15 103,12 C110,10 119,11 124,16
+                        C129,21 130,28 128,34 C127,27 124,23 118,22
+                        C111,21 103,22 97,25 C94,27 93,30 92,34 Z
+                      " />
+                      <g class="anatomical-landmark">
+                        <path d="M96,32 Q101,30 106,32" stroke="#7c3f2c" stroke-width="1.3" />
+                        <path d="M114,32 Q119,30 124,32" stroke="#7c3f2c" stroke-width="1.3" />
+                        <ellipse cx="101" cy="36" rx="3.4" ry="1.8" fill="#ffffff" stroke="#5b2316" stroke-width="0.9" />
+                        <circle cx="101" cy="36" r="1.3" fill="#4b6b82" stroke="none" />
+                        <circle cx="101" cy="36" r="0.6" fill="#1e293b" stroke="none" />
+                        <ellipse cx="119" cy="36" rx="3.4" ry="1.8" fill="#ffffff" stroke="#5b2316" stroke-width="0.9" />
+                        <circle cx="119" cy="36" r="1.3" fill="#4b6b82" stroke="none" />
+                        <circle cx="119" cy="36" r="0.6" fill="#1e293b" stroke="none" />
+                        <path d="M109,35 L108,43 Q110,45 112,43" stroke="#7c3f2c" stroke-width="1" />
+                        <path d="M106,43.5 Q107.5,44.5 109,44 M111,44 Q112.5,44.5 114,43.5" stroke="#7c3f2c" stroke-width="0.9" />
+                        <path d="M104,50 Q108,48.5 110,49.5 Q112,48.5 116,50 Q110,51 104,50 Z" fill="#d98a7c" stroke="#5b2316" stroke-width="0.8" />
+                        <path d="M105,50.5 Q110,53.5 115,50.5" fill="#e29a8c" stroke="#5b2316" stroke-width="0.8" />
+                        <path d="M107,57 Q110,58 113,57" stroke="#7c3f2c" stroke-width="0.9" />
+                      </g>
+                      <g class="anatomical-subtle">
+                        <path d="M103,65 L108,78 M117,65 L112,78" />
+                        <path d="M77,83 Q94,87 106,82 M143,83 Q126,87 114,82" />
+                        <path d="M75,114 C84,121 98,121 106,115" stroke="#5b2316" stroke-width="1.2" />
+                        <path d="M145,114 C136,121 122,121 114,115" stroke="#5b2316" stroke-width="1.2" />
+                        <circle cx="86" cy="109" r="2.2" fill="#d8977c" stroke="#b97b5d" stroke-width="0.6" />
+                        <circle cx="134" cy="109" r="2.2" fill="#d8977c" stroke="#b97b5d" stroke-width="0.6" />
+                        <path d="M81,193 C89,205 97,214 104,221" stroke="#5b2316" stroke-width="1.15" />
+                        <path d="M139,193 C131,205 123,214 116,221" stroke="#5b2316" stroke-width="1.15" />
+                        <path d="M104,216 C103,224 105,232 110,232 C115,232 117,224 116,216" stroke="#5b2316" stroke-width="1.1" />
+                        <path d="M86,294 Q91,302 88,314 M96,296 Q93,305 95,313" />
+                        <path d="M134,294 Q129,302 132,314 M124,296 Q127,305 125,313" />
+                        <path d="M88,334 L89,374 M132,334 L131,374" />
+                        <path d="M83,441 L83,445 M87,441 L87,446 M91,441 L91,446 M95,440 L96,445" />
+                        <path d="M137,441 L137,445 M133,441 L133,446 M129,441 L129,446 M125,440 L124,445" />
+                      </g>
+                      <!-- Male Anterior Hit Zones -->
+                      <g>
+                        <ellipse cx="110" cy="38" rx="18" ry="24" class="body-region" data-region="Anterior Face / Forehead / Cheeks" />
+                        <rect x="98" y="61" width="24" height="16" class="body-region" data-region="Anterior Neck" />
+                        <path d="M62,78 L158,78 L149,126 L71,126 Z" class="body-region" data-region="Anterior Trunk / Chest" />
+                        <path d="M71,126 L149,126 L146,188 L74,188 Z" class="body-region" data-region="Abdomen / Umbilicus / Flanks" />
+                        <path d="M74,188 L146,188 L150,228 L70,228 Z" class="body-region" data-region="Groin / Inguinal / Pubis" />
+                        <polygon points="55,86 71,92 64,155 46,152" class="body-region" data-region="Right Upper Arm (Ant)" />
+                        <polygon points="46,152 64,155 54,204 39,200" class="body-region" data-region="Right Forearm / Antecubital" />
+                        <polygon points="34,200 55,204 54,248 28,244" class="body-region" data-region="Right Hand / Fingers" />
+                        <polygon points="165,86 149,92 156,155 174,152" class="body-region" data-region="Left Upper Arm (Ant)" />
+                        <polygon points="174,152 156,155 166,204 181,200" class="body-region" data-region="Left Forearm / Antecubital" />
+                        <polygon points="186,200 165,204 166,248 192,244" class="body-region" data-region="Left Hand / Fingers" />
+                        <polygon points="68,228 109,228 105,302 76,302" class="body-region" data-region="Right Anterior Thigh" />
+                        <polygon points="76,302 105,302 100,418 85,418" class="body-region" data-region="Right Knee / Anterior Shin" />
+                        <polygon points="82,418 102,418 104,448 75,448" class="body-region" data-region="Right Foot (Dorsum) / Toes" />
+                        <polygon points="152,228 111,228 115,302 144,302" class="body-region" data-region="Left Anterior Thigh" />
+                        <polygon points="144,302 115,302 120,418 135,418" class="body-region" data-region="Left Knee / Anterior Shin" />
+                        <polygon points="138,418 118,418 116,448 145,448" class="body-region" data-region="Left Foot (Dorsum) / Toes" />
+                      </g>
+                    </g>
+
+                    <!-- MALE POSTERIOR (Center X = 330) -->
+                    <g id="malePosterior">
+                      <path d="M310,36 C307,35 306,41 308,46 C309,48 311,48 312,46 Z" class="body-base" />
+                      <path d="M350,36 C353,35 354,41 352,46 C351,48 349,48 348,46 Z" class="body-base" />
+                      <path class="body-base" d="
+                        M312,32 C312,16 348,16 348,32
+                        C349,44 345,56 337,62
+                        C333,65 327,65 323,62
+                        C315,56 311,44 312,32 Z
+                      " />
+                      <path class="body-base" d="
+                        M320,60 L319,76
+                        C305,80 288,82 281,93
+                        C276,101 275,118 272,138
+                        C269,158 265,178 262,198
+                        C259,212 255,221 251,229
+                        C249,233 251,237 253,235
+                        L257,227 L255,243 C255,246 258,246 259,243 L262,230
+                        L261,246 C261,249 264,249 265,245 L267,231
+                        L267,244 C267,247 270,246 270,243 L271,228
+                        L272,238 C273,241 275,240 275,237 L273,218
+                        C273,210 272,204 273,198
+                        C278,179 284,159 287,140
+                        L291,122
+                        C293,138 294,154 293,174
+                        C291,191 288,205 288,224
+                        C288,248 293,275 298,302
+                        C301,318 300,334 301,352
+                        C302,374 307,396 308,416
+                        C308,425 303,434 302,441
+                        C302,445 306,446 311,446
+                        C316,446 320,445 320,441
+                        C320,434 318,425 318,415
+                        C320,394 324,372 324,350
+                        C324,332 323,316 325,300
+                        C327,276 328,252 329,230
+                        L331,230
+                        C332,252 333,276 335,300
+                        C337,316 336,332 336,350
+                        C336,372 340,394 342,415
+                        C342,425 340,434 340,441
+                        C340,445 344,446 349,446
+                        C354,446 358,445 358,441
+                        C357,434 352,425 352,416
+                        C353,396 358,374 359,352
+                        C360,334 359,318 362,302
+                        C367,275 372,248 372,224
+                        C372,205 369,191 367,174
+                        C366,154 367,138 369,122
+                        L373,140
+                        C376,159 382,179 387,198
+                        C388,204 387,210 387,218
+                        L385,237 C385,240 387,241 388,238 L389,228
+                        L390,243 C390,246 393,247 393,244 L393,231
+                        L395,245 C396,249 399,249 399,246 L398,230
+                        L401,243 C402,246 405,246 405,243 L403,227
+                        L407,235 C409,237 411,233 409,229
+                        C405,221 401,212 398,198
+                        C395,178 391,158 388,138
+                        C385,118 384,101 379,93
+                        C372,82 355,80 341,76
+                        L340,60 Z
+                      " />
+                      <path class="body-hair" d="
+                        M312,34 C310,24 313,13 330,12 C347,13 350,24 348,34
+                        C347,43 344,50 341,54 C338,56 334,55 330,55
+                        C326,55 322,56 319,54 C316,50 313,43 312,34 Z
+                      " />
+                      <path class="body-shade" d="M312,224 Q330,231 348,224 L344,232 Q330,236 316,232 Z" />
+                      <g class="anatomical-subtle">
+                        <path d="M304,96 C307,108 311,116 316,120" stroke="#5b2316" stroke-width="1.15" />
+                        <path d="M356,96 C353,108 349,116 344,120" stroke="#5b2316" stroke-width="1.15" />
+                        <path d="M330,118 L330,178" stroke="#7c3f2c" stroke-width="1" />
+                        <path d="M330,192 L330,226" stroke="#5b2316" stroke-width="1.3" />
+                        <path d="M294,218 C306,227 322,228 330,224 C338,228 354,227 366,218" stroke="#5b2316" stroke-width="1.25" />
+                        <path d="M302,304 L318,304 M342,304 L358,304" stroke="#5b2316" stroke-width="1.1" />
+                        <path d="M309,405 L308,434 M314,405 L315,434" />
+                        <path d="M346,405 L345,434 M351,405 L352,434" />
+                      </g>
+                      <!-- Male Posterior Hit Zones -->
+                      <g>
+                        <ellipse cx="330" cy="36" rx="18" ry="22" class="body-region" data-region="Scalp / Occiput" />
+                        <rect x="318" y="58" width="24" height="18" class="body-region" data-region="Posterior Neck / Nape" />
+                        <path d="M282,78 L378,78 L369,134 L291,134 Z" class="body-region" data-region="Posterior Upper Back" />
+                        <path d="M291,134 L369,134 L367,188 L293,188 Z" class="body-region" data-region="Lower Back / Lumbar" />
+                        <path d="M293,188 L367,188 L371,232 L289,232 Z" class="body-region" data-region="Buttocks / Gluteal Cleft" />
+                        <polygon points="275,86 291,92 284,155 266,152" class="body-region" data-region="Left Posterior Upper Arm" />
+                        <polygon points="266,152 284,155 274,204 259,200" class="body-region" data-region="Left Elbow / Posterior Forearm" />
+                        <polygon points="254,200 275,204 274,248 248,244" class="body-region" data-region="Left Dorsum Hand / Nails" />
+                        <polygon points="385,86 369,92 376,155 394,152" class="body-region" data-region="Right Posterior Upper Arm" />
+                        <polygon points="394,152 376,155 386,204 401,200" class="body-region" data-region="Right Elbow / Posterior Forearm" />
+                        <polygon points="406,200 385,204 386,248 412,244" class="body-region" data-region="Right Dorsum Hand / Nails" />
+                        <polygon points="288,232 329,232 325,302 296,302" class="body-region" data-region="Left Posterior Thigh" />
+                        <polygon points="296,302 325,302 320,418 305,418" class="body-region" data-region="Left Popliteal Fossa / Calf" />
+                        <polygon points="301,418 321,418 321,448 301,448" class="body-region" data-region="Left Heel / Plantar Foot" />
+                        <polygon points="372,232 331,232 335,302 364,302" class="body-region" data-region="Right Posterior Thigh" />
+                        <polygon points="364,302 335,302 340,418 355,418" class="body-region" data-region="Right Popliteal Fossa / Calf" />
+                        <polygon points="359,418 339,418 339,448 359,448" class="body-region" data-region="Right Heel / Plantar Foot" />
+                      </g>
+                    </g>
+                  </g>
+
+                  <!-- ==================== FEMALE ANATOMICAL MODEL ==================== -->
+                  <g id="femaleAnatomyGroup" style="display:none;">
+                    <!-- FEMALE ANTERIOR (Center X = 110) -->
+                    <g id="femaleAnterior">
+                      <path d="M92,43 C89,42 88,48 90,52 C91,54 93,54 94,52 Z" class="body-base" />
+                      <path d="M128,43 C131,42 132,48 130,52 C129,54 127,54 126,52 Z" class="body-base" />
+                      <path class="body-base" d="
+                        M94,39 C94,24 126,24 126,39
+                        C127,50 123,61 116,66
+                        C112,69 108,69 104,66
+                        C97,61 93,50 94,39 Z
+                      " />
+                      <path class="body-base" d="
+                        M102,65 L101,81
+                        C89,85 75,87 69,97
+                        C65,105 63,121 60,141
+                        C57,160 54,179 51,198
+                        C48,211 44,220 41,228
+                        C39,232 41,235 43,233
+                        L46,226 L45,241 C45,244 48,244 49,241 L51,229
+                        L51,244 C51,247 54,247 54,243 L56,230
+                        L56,242 C56,245 59,244 59,241 L60,227
+                        L61,236 C62,239 64,238 64,235 L62,217
+                        C62,209 61,203 62,198
+                        C66,180 71,161 74,142
+                        L78,125
+                        C81,138 83,149 80,164
+                        C76,180 71,195 72,216
+                        C73,241 79,270 84,298
+                        C87,315 86,332 87,350
+                        C88,373 92,395 93,416
+                        C93,425 87,434 84,440
+                        C82,443 85,446 88,445
+                        C91,446 94,446 97,446
+                        C100,446 103,446 105,445
+                        C107,444 107,440 105,436
+                        C103,430 102,423 102,415
+                        C104,394 107,372 107,350
+                        C107,332 106,316 108,300
+                        C109,276 109,252 109,230
+                        L111,230
+                        C111,252 111,276 112,300
+                        C114,316 113,332 113,350
+                        C113,372 116,394 118,415
+                        C118,423 117,430 115,436
+                        C113,440 113,444 115,445
+                        C117,446 120,446 123,446
+                        C126,446 129,446 132,445
+                        C135,446 138,443 136,440
+                        C133,434 127,425 127,416
+                        C128,395 132,373 133,350
+                        C134,332 133,315 136,298
+                        C141,270 147,241 148,216
+                        C149,195 144,180 140,164
+                        C137,149 139,138 142,125
+                        L146,142
+                        C149,161 154,180 158,198
+                        C159,203 158,209 158,217
+                        L156,235 C156,238 158,239 159,236 L160,227
+                        L161,241 C161,244 164,245 164,242 L164,230
+                        L166,243 C166,247 169,247 169,244 L169,229
+                        L171,241 C172,244 175,244 175,241 L174,226
+                        L177,233 C179,235 181,232 179,228
+                        C176,220 172,211 169,198
+                        C166,179 163,160 160,141
+                        C157,121 155,105 151,97
+                        C145,87 131,85 119,81
+                        L118,65 Z
+                      " />
+                      <path class="body-shade" d="M103,67 C107,70 113,70 117,67 L117,74 C112,77 108,77 103,74 Z" />
+                      <path class="body-shade" d="M81,123 C86,133 98,134 105,127 C99,136 86,136 81,126 Z" />
+                      <path class="body-shade" d="M139,123 C134,133 122,134 115,127 C121,136 134,136 139,126 Z" />
+                      <path class="body-shade" d="M88,197 L110,226 L132,197 L123,215 L110,228 L97,215 Z" />
+                      <circle cx="110" cy="171" r="4.5" fill="url(#umbilicusGrad)" pointer-events="none" />
+                      <path class="body-hair" d="
+                        M94,41 C91,34 93,22 104,19 C110,17 118,18 123,23
+                        C127,28 128,35 126,41 C125,35 122,31 116,30
+                        C110,29 103,30 98,33 C95,35 94,38 94,41 Z
+                      " />
+                      <g class="anatomical-landmark">
+                        <path d="M97,39 Q101,37 106,39" stroke="#7c3f2c" stroke-width="1.15" />
+                        <path d="M114,39 Q119,37 123,39" stroke="#7c3f2c" stroke-width="1.15" />
+                        <ellipse cx="101.5" cy="42.5" rx="3.1" ry="1.7" fill="#ffffff" stroke="#5b2316" stroke-width="0.85" />
+                        <circle cx="101.5" cy="42.5" r="1.2" fill="#4b6b82" stroke="none" />
+                        <circle cx="101.5" cy="42.5" r="0.55" fill="#1e293b" stroke="none" />
+                        <ellipse cx="118.5" cy="42.5" rx="3.1" ry="1.7" fill="#ffffff" stroke="#5b2316" stroke-width="0.85" />
+                        <circle cx="118.5" cy="42.5" r="1.2" fill="#4b6b82" stroke="none" />
+                        <circle cx="118.5" cy="42.5" r="0.55" fill="#1e293b" stroke="none" />
+                        <path d="M109.5,42 L108.5,49 Q110,50.5 111.5,49" stroke="#7c3f2c" stroke-width="0.95" />
+                        <path d="M105,55 Q108,53.5 110,54.5 Q112,53.5 115,55 Q110,56 105,55 Z" fill="#d98a7c" stroke="#5b2316" stroke-width="0.75" />
+                        <path d="M106,55.5 Q110,58 114,55.5" fill="#e29a8c" stroke="#5b2316" stroke-width="0.75" />
+                      </g>
+                      <g class="anatomical-subtle">
+                        <path d="M84,88 Q97,91 107,87 M136,88 Q123,91 113,87" />
+                        <path d="M81,115 C80,127 93,133 105,126" stroke="#5b2316" stroke-width="1.2" />
+                        <path d="M139,115 C140,127 127,133 115,126" stroke="#5b2316" stroke-width="1.2" />
+                        <circle cx="91" cy="119" r="3" fill="#e09e84" stroke="#b97b5d" stroke-width="0.6" />
+                        <circle cx="91" cy="119" r="1" fill="#b97b5d" stroke="none" />
+                        <circle cx="129" cy="119" r="3" fill="#e09e84" stroke="#b97b5d" stroke-width="0.6" />
+                        <circle cx="129" cy="119" r="1" fill="#b97b5d" stroke="none" />
+                        <path d="M84,193 C92,206 100,216 108,224" stroke="#5b2316" stroke-width="1.15" />
+                        <path d="M136,193 C128,206 120,216 112,224" stroke="#5b2316" stroke-width="1.15" />
+                        <path d="M110,218 L110,228" stroke="#5b2316" stroke-width="1.1" />
+                        <path d="M90,294 Q95,302 92,314 M99,296 Q96,305 98,313" />
+                        <path d="M130,294 Q125,302 128,314 M121,296 Q124,305 122,313" />
+                        <path d="M93,334 L94,374 M127,334 L126,374" />
+                        <path d="M88,441 L88,445 M92,441 L92,446 M96,441 L96,446 M100,440 L101,445" />
+                        <path d="M132,441 L132,445 M128,441 L128,446 M124,441 L124,446 M120,440 L119,445" />
+                      </g>
+                      <!-- Female Anterior Hit Zones -->
+                      <g>
+                        <ellipse cx="110" cy="44" rx="17" ry="23" class="body-region" data-region="Anterior Face / Forehead / Cheeks" />
+                        <rect x="99" y="66" width="22" height="16" class="body-region" data-region="Anterior Neck" />
+                        <path d="M68,82 L152,82 L143,134 L77,134 Z" class="body-region" data-region="Anterior Trunk / Breasts / Inframammary" />
+                        <path d="M77,134 L143,134 L143,188 L77,188 Z" class="body-region" data-region="Abdomen / Waist / Umbilicus" />
+                        <path d="M77,188 L143,188 L148,228 L72,228 Z" class="body-region" data-region="Groin / Inguinal / Pubis" />
+                        <polygon points="62,92 77,98 71,156 54,153" class="body-region" data-region="Right Upper Arm (Ant)" />
+                        <polygon points="54,153 71,156 62,203 48,199" class="body-region" data-region="Right Forearm / Antecubital" />
+                        <polygon points="43,199 63,203 63,246 39,242" class="body-region" data-region="Right Hand / Fingers" />
+                        <polygon points="158,92 143,98 149,156 166,153" class="body-region" data-region="Left Upper Arm (Ant)" />
+                        <polygon points="166,153 149,156 158,203 172,199" class="body-region" data-region="Left Forearm / Antecubital" />
+                        <polygon points="177,199 157,203 157,246 181,242" class="body-region" data-region="Left Hand / Fingers" />
+                        <polygon points="72,228 109,228 107,302 82,302" class="body-region" data-region="Right Anterior Thigh" />
+                        <polygon points="82,302 107,302 102,418 90,418" class="body-region" data-region="Right Knee / Anterior Shin" />
+                        <polygon points="86,418 106,418 107,448 81,448" class="body-region" data-region="Right Foot (Dorsum) / Toes" />
+                        <polygon points="148,228 111,228 113,302 138,302" class="body-region" data-region="Left Anterior Thigh" />
+                        <polygon points="138,302 113,302 118,418 130,418" class="body-region" data-region="Left Knee / Anterior Shin" />
+                        <polygon points="134,418 114,418 113,448 139,448" class="body-region" data-region="Left Foot (Dorsum) / Toes" />
+                      </g>
+                    </g>
+
+                    <!-- FEMALE POSTERIOR (Center X = 330) -->
+                    <g id="femalePosterior">
+                      <path d="M312,43 C309,42 308,48 310,52 C311,54 313,54 314,52 Z" class="body-base" />
+                      <path d="M348,43 C351,42 352,48 350,52 C349,54 347,54 346,52 Z" class="body-base" />
+                      <path class="body-base" d="
+                        M314,39 C314,24 346,24 346,39
+                        C347,50 343,61 336,66
+                        C332,69 328,69 324,66
+                        C317,61 313,50 314,39 Z
+                      " />
+                      <path class="body-base" d="
+                        M322,65 L321,81
+                        C309,85 295,87 289,97
+                        C285,105 283,121 280,141
+                        C277,160 274,179 271,198
+                        C268,211 264,220 261,228
+                        C259,232 261,235 263,233
+                        L266,226 L265,241 C265,244 268,244 269,241 L271,229
+                        L271,244 C271,247 274,247 274,243 L276,230
+                        L276,242 C276,245 279,244 279,241 L280,227
+                        L281,236 C282,239 284,238 284,235 L282,217
+                        C282,209 281,203 282,198
+                        C286,180 291,161 294,142
+                        L298,125
+                        C301,138 303,149 300,164
+                        C296,180 291,195 292,216
+                        C293,241 299,270 304,298
+                        C307,315 306,332 307,350
+                        C308,373 312,395 313,416
+                        C313,425 309,434 308,441
+                        C308,445 311,446 316,446
+                        C320,446 324,445 324,441
+                        C324,434 322,425 322,415
+                        C324,394 327,372 327,350
+                        C327,332 326,316 328,300
+                        C329,276 329,252 329,230
+                        L331,230
+                        C331,252 331,276 332,300
+                        C334,316 333,332 333,350
+                        C333,372 336,394 338,415
+                        C338,425 336,434 336,441
+                        C336,445 340,446 344,446
+                        C349,446 352,445 352,441
+                        C351,434 347,425 347,416
+                        C348,395 352,373 353,350
+                        C354,332 353,315 356,298
+                        C361,270 367,241 368,216
+                        C369,195 364,180 360,164
+                        C357,149 359,138 362,125
+                        L366,142
+                        C369,161 374,180 378,198
+                        C379,203 378,209 378,217
+                        L376,235 C376,238 378,239 379,236 L380,227
+                        L381,241 C381,244 384,245 384,242 L384,230
+                        L386,243 C386,247 389,247 389,244 L389,229
+                        L391,241 C392,244 395,244 395,241 L394,226
+                        L397,233 C399,235 401,232 399,228
+                        C396,220 392,211 389,198
+                        C386,179 383,160 380,141
+                        C377,121 375,105 371,97
+                        C365,87 351,85 339,81
+                        L338,65 Z
+                      " />
+                      <path class="body-hair" d="
+                        M314,41 C312,31 315,20 330,19 C345,20 348,31 346,41
+                        C345,50 342,57 339,61 C336,63 333,62 330,62
+                        C327,62 324,63 321,61 C318,57 315,50 314,41 Z
+                      " />
+                      <path class="body-shade" d="M312,224 Q330,231 348,224 L344,232 Q330,236 316,232 Z" />
+                      <g class="anatomical-subtle">
+                        <path d="M307,99 C310,110 314,117 318,121" stroke="#5b2316" stroke-width="1.1" />
+                        <path d="M353,99 C350,110 346,117 342,121" stroke="#5b2316" stroke-width="1.1" />
+                        <path d="M330,118 L330,178" stroke="#7c3f2c" stroke-width="1" />
+                        <path d="M330,192 L330,226" stroke="#5b2316" stroke-width="1.3" />
+                        <path d="M296,218 C307,227 322,228 330,224 C338,228 353,227 364,218" stroke="#5b2316" stroke-width="1.25" />
+                        <path d="M306,304 L321,304 M339,304 L354,304" stroke="#5b2316" stroke-width="1.1" />
+                        <path d="M314,405 L313,434 M319,405 L320,434" />
+                        <path d="M341,405 L340,434 M346,405 L347,434" />
+                      </g>
+                      <!-- Female Posterior Hit Zones -->
+                      <g>
+                        <ellipse cx="330" cy="42" rx="17" ry="22" class="body-region" data-region="Scalp / Occiput" />
+                        <rect x="319" y="64" width="22" height="18" class="body-region" data-region="Posterior Neck / Nape" />
+                        <path d="M288,82 L372,82 L363,134 L297,134 Z" class="body-region" data-region="Posterior Upper Back" />
+                        <path d="M297,134 L363,134 L363,188 L297,188 Z" class="body-region" data-region="Lower Back / Lumbar" />
+                        <path d="M297,188 L363,188 L369,232 L291,232 Z" class="body-region" data-region="Buttocks / Gluteal Cleft" />
+                        <polygon points="282,92 297,98 291,156 274,153" class="body-region" data-region="Left Posterior Upper Arm" />
+                        <polygon points="274,153 291,156 282,203 268,199" class="body-region" data-region="Left Elbow / Posterior Forearm" />
+                        <polygon points="263,199 283,203 283,246 259,242" class="body-region" data-region="Left Dorsum Hand / Nails" />
+                        <polygon points="378,92 363,98 369,156 386,153" class="body-region" data-region="Right Posterior Upper Arm" />
+                        <polygon points="386,153 369,156 378,203 392,199" class="body-region" data-region="Right Elbow / Posterior Forearm" />
+                        <polygon points="397,199 377,203 377,246 401,242" class="body-region" data-region="Right Dorsum Hand / Nails" />
+                        <polygon points="292,232 329,232 327,302 302,302" class="body-region" data-region="Left Posterior Thigh" />
+                        <polygon points="302,302 327,302 322,418 310,418" class="body-region" data-region="Left Popliteal Fossa / Calf" />
+                        <polygon points="307,418 325,418 325,448 307,448" class="body-region" data-region="Left Heel / Plantar Foot" />
+                        <polygon points="368,232 331,232 333,302 358,302" class="body-region" data-region="Right Posterior Thigh" />
+                        <polygon points="358,302 333,302 338,418 350,418" class="body-region" data-region="Right Popliteal Fossa / Calf" />
+                        <polygon points="353,418 335,418 335,448 353,448" class="body-region" data-region="Right Heel / Plantar Foot" />
+                      </g>
+                    </g>
+                  </g>
+
+                  <!-- Center Divider -->
+                  <line x1="220" y1="14" x2="220" y2="454" stroke="#cbd5e1" stroke-dasharray="4 4" />
+
+                  <!-- Dynamic Lesion Dots Layer -->
+                  <g id="markersLayer"></g>
+                </svg>
+              </div>
+
+              <div class="no-print" style="margin-top:8px; display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                <span style="font-size:11px; color:var(--text-light);">Click anywhere on body to dot &amp; write finding</span>
+                <div style="display:flex; gap:5px;">
+                  <button type="button" class="btn" style="padding:3px 9px; font-size:11.5px; min-height:26px;" onclick="undoLastDot()">↩ Undo</button>
+                  <button type="button" class="btn" style="padding:3px 9px; font-size:11.5px; min-height:26px;" onclick="clearAllDots()">Clear Dots</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Documented Dots List + Rule of 9s BSA Calculator -->
+            <div class="dots-panel">
+              <div class="dots-table-wrap">
+                <div class="dots-table-head">
+                  <span>Documented Anatomical Dots &amp; Clinical Findings (<span id="dotCount">0</span>)</span>
+                  <span class="hint no-print">Click any dot on diagram to edit</span>
+                </div>
+                <div class="dots-list" id="dotsList">
+                  <div style="padding:18px; text-align:center; color:var(--text-light); font-size:12.5px;">
+                    No lesion dots placed yet. Click on the Anterior or Posterior figure to place a numbered dot and record its clinical finding.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Rule of 9s BSA Calculator -->
+              <div class="bsa-card">
+                <div class="group-label" style="border:none; margin-bottom:2px;">
+                  <span>Rule of 9s — Body Surface Area (BSA %) Calculator</span>
+                  <span class="hint">1 adult palm ≈ 1% BSA</span>
+                </div>
+                <div class="bsa-grid" id="bsaInputs">
+                  <label class="bsa-cell"><span>Head/Neck (9%)</span><input type="number" min="0" max="9" step="0.5" value="0" oninput="recalcBSA()" /></label>
+                  <label class="bsa-cell"><span>Ant. Trunk (18%)</span><input type="number" min="0" max="18" step="0.5" value="0" oninput="recalcBSA()" /></label>
+                  <label class="bsa-cell"><span>Post. Trunk (18%)</span><input type="number" min="0" max="18" step="0.5" value="0" oninput="recalcBSA()" /></label>
+                  <label class="bsa-cell"><span>R. Arm (9%)</span><input type="number" min="0" max="9" step="0.5" value="0" oninput="recalcBSA()" /></label>
+                  <label class="bsa-cell"><span>L. Arm (9%)</span><input type="number" min="0" max="9" step="0.5" value="0" oninput="recalcBSA()" /></label>
+                  <label class="bsa-cell"><span>R. Leg (18%)</span><input type="number" min="0" max="18" step="0.5" value="0" oninput="recalcBSA()" /></label>
+                  <label class="bsa-cell"><span>L. Leg (18%)</span><input type="number" min="0" max="18" step="0.5" value="0" oninput="recalcBSA()" /></label>
+                  <label class="bsa-cell"><span>Perineum (1%)</span><input type="number" min="0" max="1" step="0.5" value="0" oninput="recalcBSA()" /></label>
+                </div>
+                <div class="bsa-summary-bar">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <label for="bsaTotal" style="font-size:12.5px; font-weight:700; color:var(--text-main);">Total BSA (%):</label>
+                    <input type="text" id="bsaTotal" style="width:110px; font-weight:700;" placeholder="0%" />
+                  </div>
+                  <span class="severity-pill" id="bsaSeverityBadge">BSA: 0% (Minimal / Localized)</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SECTION 5: Mucocutaneous & Dermatological Examination
+           ====================================================================== -->
+      <section class="card" id="sec-exam">
+        <div class="card-header" onclick="toggleCard('sec-exam')">
+          <div class="card-title">
+            <span class="section-badge">5</span>
+            <span>Mucocutaneous &amp; Dermatological Examination</span>
+          </div>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="card-body">
+          <div class="grid grid-2">
+            <div class="sub-box" style="margin-top:0;">
+              <div class="group-label">Primary Lesions</div>
+              <div class="chip-group" id="primaryLesionChips">
+                <label class="chip"><input type="checkbox" value="Macule (<1cm)" /> Macule (&lt;1cm)</label>
+                <label class="chip"><input type="checkbox" value="Patch (≥1cm)" /> Patch (≥1cm)</label>
+                <label class="chip"><input type="checkbox" value="Papule (<1cm)" /> Papule (&lt;1cm)</label>
+                <label class="chip"><input type="checkbox" value="Plaque (≥1cm)" /> Plaque (≥1cm)</label>
+                <label class="chip"><input type="checkbox" value="Nodule" /> Nodule</label>
+                <label class="chip"><input type="checkbox" value="Tumor" /> Tumor</label>
+                <label class="chip"><input type="checkbox" value="Vesicle (<1cm)" /> Vesicle (&lt;1cm)</label>
+                <label class="chip"><input type="checkbox" value="Bulla (≥1cm)" /> Bulla (≥1cm)</label>
+                <label class="chip"><input type="checkbox" value="Pustule" /> Pustule</label>
+                <label class="chip"><input type="checkbox" value="Wheal" /> Wheal</label>
+                <label class="chip"><input type="checkbox" value="Cyst" /> Cyst</label>
+              </div>
+            </div>
+
+            <div class="sub-box" style="margin-top:0;">
+              <div class="group-label">Secondary Lesions &amp; Pigmentary Changes</div>
+              <div class="chip-group" id="secondaryLesionChips">
+                <label class="chip"><input type="checkbox" value="Scale (Silvery/Greasy/Fine)" /> Scale</label>
+                <label class="chip"><input type="checkbox" value="Crust" /> Crust</label>
+                <label class="chip"><input type="checkbox" value="Erosion" /> Erosion</label>
+                <label class="chip"><input type="checkbox" value="Ulcer" /> Ulcer</label>
+                <label class="chip"><input type="checkbox" value="Fissure" /> Fissure</label>
+                <label class="chip"><input type="checkbox" value="Excoriation" /> Excoriation</label>
+                <label class="chip"><input type="checkbox" value="Lichenification" /> Lichenification</label>
+                <label class="chip"><input type="checkbox" value="Atrophy" /> Atrophy</label>
+                <label class="chip"><input type="checkbox" value="Scar / Keloid" /> Scar / Keloid</label>
+                <label class="chip"><input type="checkbox" value="Hyperpigmentation" /> Hyperpigmentation</label>
+                <label class="chip"><input type="checkbox" value="Hypo/Depigmentation" /> Hypo/Depigmentation</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-3" style="margin-top:14px;">
+            <div class="sub-box" style="margin-top:0;">
+              <div class="group-label">Arrangement / Configuration</div>
+              <div class="chip-group" id="arrangementChips">
+                <label class="chip"><input type="checkbox" value="Discrete" /> Discrete</label>
+                <label class="chip"><input type="checkbox" value="Coalescent" /> Coalescent</label>
+                <label class="chip"><input type="checkbox" value="Annular" /> Annular</label>
+                <label class="chip"><input type="checkbox" value="Linear" /> Linear</label>
+                <label class="chip"><input type="checkbox" value="Dermatomal" /> Dermatomal</label>
+                <label class="chip"><input type="checkbox" value="Grouped / Herpetiform" /> Grouped / Herpetiform</label>
+                <label class="chip"><input type="checkbox" value="Targetoid" /> Targetoid</label>
+                <label class="chip"><input type="checkbox" value="Reticulate" /> Reticulate</label>
+              </div>
+            </div>
+
+            <div class="sub-box" style="margin-top:0;">
+              <div class="group-label">Distribution Pattern</div>
+              <div class="chip-group" id="distributionChips">
+                <label class="chip"><input type="checkbox" value="Localized" /> Localized</label>
+                <label class="chip"><input type="checkbox" value="Generalized" /> Generalized</label>
+                <label class="chip"><input type="checkbox" value="Symmetrical" /> Symmetrical</label>
+                <label class="chip"><input type="checkbox" value="Photo-exposed" /> Photo-exposed</label>
+                <label class="chip"><input type="checkbox" value="Flexural" /> Flexural</label>
+                <label class="chip"><input type="checkbox" value="Extensor" /> Extensor</label>
+                <label class="chip"><input type="checkbox" value="Seborrheic" /> Seborrheic</label>
+                <label class="chip"><input type="checkbox" value="Acral" /> Acral</label>
+              </div>
+            </div>
+
+            <div class="sub-box" style="margin-top:0;">
+              <div class="group-label">Special Bedside Signs &amp; POC Tests</div>
+              <div class="chip-group" id="bedsideChips">
+                <label class="chip"><input type="checkbox" value="Auspitz Sign (+)" /> Auspitz Sign (+)</label>
+                <label class="chip"><input type="checkbox" value="Nikolsky Sign (+)" /> Nikolsky Sign (+)</label>
+                <label class="chip"><input type="checkbox" value="Darier Sign (+)" /> Darier Sign (+)</label>
+                <label class="chip"><input type="checkbox" value="Koebner Phenomenon (+)" /> Koebner (+)</label>
+                <label class="chip"><input type="checkbox" value="Dermographism (+)" /> Dermographism (+)</label>
+                <label class="chip"><input type="checkbox" value="Wood's Lamp Exam" /> Wood's Lamp</label>
+                <label class="chip"><input type="checkbox" value="KOH Prep" /> KOH Prep</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-2" style="margin-top:14px;">
+            <div class="field">
+              <label for="lesionDescNotes">Color, Border, Consistency &amp; Bedside Test Details</label>
+              <input type="text" id="lesionDescNotes" placeholder="e.g., Well-demarcated violaceous-erythematous indurated plaques with silvery scale; Auspitz (+)" />
+            </div>
+            <div class="field">
+              <label for="specialSitesNotes">Special Sites Check (Scalp, Nails, Oral/Genital Mucosa, Palms &amp; Soles, Regional Lymph Nodes)</label>
+              <input type="text" id="specialSitesNotes" placeholder="e.g., Fine nail pitting on 5 fingernails; scalp scaling; oral/genital mucosa intact; no lymphadenopathy" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SECTION 6: Assessment, Differential Diagnosis & Management Plan
+           ====================================================================== -->
+      <section class="card" id="sec-plan">
+        <div class="card-header" onclick="toggleCard('sec-plan')">
+          <div class="card-title">
+            <span class="section-badge">6</span>
+            <span>Assessment, Differential Diagnosis &amp; Management Plan</span>
+          </div>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="card-body">
+          <div class="grid grid-3">
+            <div class="field" style="grid-column: span 2;">
+              <label for="workingDx">Working / Provisional Diagnosis <span style="color:var(--danger);">*</span></label>
+              <input type="text" id="workingDx" placeholder="e.g., Chronic Plaque Psoriasis (Psoriasis Vulgaris), Moderate (BSA ~12%)" />
+            </div>
+            <div class="field">
+              <label for="icdCode">ICD-10 / ICD-11 Code</label>
+              <input type="text" id="icdCode" placeholder="e.g., L40.0" />
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:12px;">
+            <label for="ddxList">Differential Diagnoses</label>
+            <input type="text" id="ddxList" placeholder="1. Nummular (Discoid) Eczema   2. Hypertrophic Lichen Planus   3. Tinea Corporis" />
+          </div>
+
+          <div class="sub-box">
+            <div class="group-label">Investigations Ordered</div>
+            <div class="chip-group" id="investigationChips" style="margin-bottom:8px;">
+              <label class="chip"><input type="checkbox" value="None (Clinical Diagnosis)" /> None (Clinical Dx)</label>
+              <label class="chip"><input type="checkbox" value="KOH Microscopy" /> KOH Microscopy</label>
+              <label class="chip"><input type="checkbox" value="Skin Biopsy / Histopathology" /> Skin Biopsy / Histopathology</label>
+              <label class="chip"><input type="checkbox" value="Bacterial / Fungal Culture" /> Bacterial / Fungal Culture</label>
+              <label class="chip"><input type="checkbox" value="Patch Test" /> Patch Test</label>
+              <label class="chip"><input type="checkbox" value="CBC" /> CBC</label>
+              <label class="chip"><input type="checkbox" value="LFT" /> LFT</label>
+              <label class="chip"><input type="checkbox" value="RFT" /> RFT</label>
+              <label class="chip"><input type="checkbox" value="Serum IgE" /> Serum IgE</label>
+              <label class="chip"><input type="checkbox" value="ANA / Autoimmune Panel" /> ANA / Autoimmune</label>
+              <label class="chip"><input type="checkbox" value="VDRL / HIV / Hepatitis" /> VDRL / HIV / Hepatitis</label>
+            </div>
+            <input type="text" id="investigationNotes" placeholder="Specific lab or biopsy instructions (e.g., 4 mm punch biopsy from active edge if refractory)..." />
+          </div>
+
+          <div class="grid grid-2" style="margin-top:14px;">
+            <div class="field">
+              <label for="topicalPlan">Topical Therapy (Drug, Vehicle, Potency, Site, FTUs &amp; Duration)</label>
+              <textarea id="topicalPlan" placeholder="1. Clobetasol propionate 0.05% ointment — apply thin layer BID to trunk/extensor plaques for 2 weeks, then weekend maintenance.&#10;2. Liberal bland emollient (Petrolatum / Urea 10% cream) BID–TID."></textarea>
+            </div>
+            <div class="field">
+              <label for="systemicPlan">Systemic Therapy &amp; Supportive Medications</label>
+              <textarea id="systemicPlan" placeholder="e.g., Cetirizine 10 mg PO nocte PRN for pruritus; baseline labs ordered prior to considering Methotrexate."></textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-2" style="margin-top:12px;">
+            <div class="field">
+              <label for="counselingNotes">Skin Care, Sun Protection &amp; Trigger Avoidance Counseling</label>
+              <textarea id="counselingNotes" placeholder="Use gentle soap-free cleanser; avoid scratching/trauma (Koebner phenomenon); avoid unsupervised OTC steroid combo creams."></textarea>
+            </div>
+            <div class="field">
+              <label for="followUpNotes">Follow-Up Interval &amp; Return Precautions</label>
+              <textarea id="followUpNotes" placeholder="Review in 4 weeks with lab results. Return urgently if fever, generalized erythroderma, pustulation, or mucosal erosions occur."></textarea>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid grid-3">
+            <div class="field">
+              <label for="physicianName">Evaluating Physician / Dermatologist</label>
+              <input type="text" id="physicianName" placeholder="e.g., Dr. Dawit Mekonnen, MD" />
+            </div>
+            <div class="field">
+              <label for="physicianTitle">Qualification / Registration No.</label>
+              <input type="text" id="physicianTitle" placeholder="Consultant Dermatovenereologist" />
+            </div>
+            <div class="field">
+              <label for="physicianSign">Signature &amp; Stamp</label>
+              <input type="text" id="physicianSign" placeholder="Signed / OPD Stamp" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </form>
+  </main>
+
+  <!-- ========================================================================
+       Anchored Click-to-Dot Finding Popover
+       ======================================================================== -->
+  <div class="dot-popover no-print" id="dotPopover" role="dialog" aria-label="Edit Dot Clinical Finding">
+    <div class="popover-head">
+      <div class="popover-title">
+        <span class="dot-swatch" id="popSwatch" style="background:#dc2626; width:11px; height:11px;"></span>
+        <span id="popTitleText">Dot #1 — Anterior Trunk</span>
+      </div>
+      <button type="button" class="icon-btn" onclick="closeDotPopover()">✕</button>
+    </div>
+
+    <div class="grid grid-2" style="gap:8px; margin-bottom:6px;">
+      <div class="field">
+        <label for="popCategory" style="font-size:11px;">Category</label>
+        <select id="popCategory" style="padding:5px 7px; font-size:12px;" onchange="updateActiveDotField('category', this.value)">
+          <option value="Primary">Primary (Red)</option>
+          <option value="Secondary">Secondary (Amber)</option>
+          <option value="Erosion/Ulcer">Erosion/Ulcer (Purple)</option>
+          <option value="Pigmented">Pigmented (Teal)</option>
+          <option value="Biopsy Site">Biopsy Site (Blue)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="popSize" style="font-size:11px;">Lesion Size</label>
+        <input type="text" id="popSize" style="padding:5px 7px; font-size:12px;" placeholder="e.g., 2×3 cm" oninput="updateActiveDotField('size', this.value)" />
+      </div>
+    </div>
+
+    <div style="font-size:11px; font-weight:600; color:var(--text-muted);">Quick Morphology Tags:</div>
+    <div class="morph-quick-chips">
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Macule')">Macule</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Papule')">Papule</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Plaque')">Plaque</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Patch')">Patch</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Vesicle')">Vesicle</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Bulla')">Bulla</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Pustule')">Pustule</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Nodule')">Nodule</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Scale')">Scale</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Crust')">Crust</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Excoriation')">Excoriation</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Lichenification')">Lichenification</button>
+      <button type="button" class="morph-chip-btn" onclick="appendMorphTag('Hyperpigmented')">Hyperpigmented</button>
+    </div>
+
+    <div class="field">
+      <label for="popFinding" style="font-size:11px;">Clinical Finding <span class="hint">(Enter to save, Esc to close)</span></label>
+      <input type="text" id="popFinding" style="padding:6px 8px; font-size:12.5px;" placeholder="e.g., Well-demarcated erythematous plaque with silvery scale" oninput="updateActiveDotField('finding', this.value)" onkeydown="handlePopoverKey(event)" />
+    </div>
+
+    <div class="popover-actions">
+      <button type="button" class="btn btn-danger" style="padding:4px 9px; font-size:11.5px; min-height:28px;" onclick="deleteActiveDot()">Delete Dot</button>
+      <button type="button" class="btn btn-primary" style="padding:4px 12px; font-size:12px; min-height:28px;" onclick="closeDotPopover()">Done</button>
+    </div>
+  </div>
+
+  <!-- Hover Tooltip for Existing Dots -->
+  <div class="dot-tooltip no-print" id="dotTooltip"></div>
+
+  <!-- ========================================================================
+       EMR SOAP Note Preview Modal & Clear Confirmation Modal
+       ======================================================================== -->
+  <div class="modal-backdrop" id="soapModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📄 Plain-Text EMR Clinical Note (SOAP Format)</h3>
+        <button type="button" class="icon-btn" onclick="closeModal('soapModal')">✕</button>
+      </div>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:8px;">Formatted for direct paste into OpenMRS, Bahmni, or hospital electronic medical records:</p>
+      <textarea id="soapOutput" class="soap-textarea" readonly></textarea>
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeModal('soapModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="copySoapText()">📋 Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="clearModal">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <h3>🗑️ Clear Entire Clerking Form?</h3>
+        <button type="button" class="icon-btn" onclick="closeModal('clearModal')">✕</button>
+      </div>
+      <p style="font-size:13px; color:var(--text-muted);">All patient details, history entries, exam checkboxes, BSA values, and anatomical body map dots will be cleared.</p>
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeModal('clearModal')">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="executeClearForm()">Yes, Clear Form</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ========================================================================
+       Application Logic (Vanilla JS — Zero Dependencies)
+       ======================================================================== -->
+  <script>
+    const CATEGORY_COLORS = {
+      'Primary': '#dc2626',
+      'Secondary': '#d97706',
+      'Erosion/Ulcer': '#7c3aed',
+      'Pigmented': '#0d9488',
+      'Biopsy Site': '#2563eb'
+    };
+
+    let dots = [];
+    let activeDotIndex = null;
+    let currentBodySex = 'Male';
+    let selectedCategory = 'Primary';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initDates();
+      initBodySvgEvents();
+    });
+
+    /* ------------------------------------------------------------------------
+       Date & Calendar Helpers (Gregorian + Approximate Ethiopian Calendar)
+       ------------------------------------------------------------------------ */
+    function initDates() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+
+      const gcInput = document.getElementById('visitDateGC');
+      const timeInput = document.getElementById('visitTime');
+      if (gcInput) gcInput.value = `${yyyy}-${mm}-${dd}`;
+      if (timeInput) timeInput.value = `${hh}:${min}`;
+      syncEthiopianDate();
+    }
+
+    function syncEthiopianDate() {
+      const gcVal = document.getElementById('visitDateGC')?.value;
+      const ecInput = document.getElementById('visitDateEC');
+      if (!gcVal || !ecInput) return;
+
+      const [y, m, d] = gcVal.split('-').map(Number);
+      const gcDate = new Date(Date.UTC(y, m - 1, d));
+      const jdn = Math.floor(gcDate.getTime() / 86400000) + 2440588;
+
+      // Exact JDN -> Ethiopian Calendar conversion
+      const r = (jdn - 1723856) % 1461;
+      const n = (r % 365) + 365 * Math.floor(r / 1460);
+      const ecYear = 4 * Math.floor((jdn - 1723856) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460);
+      const ecMonth = Math.floor(n / 30) + 1;
+      const ecDay = (n % 30) + 1;
+
+      ecInput.value = `${String(ecDay).padStart(2, '0')}/${String(ecMonth).padStart(2, '0')}/${ecYear} E.C.`;
+    }
+
+    /* ------------------------------------------------------------------------
+       UI Controls & Drawers
+       ------------------------------------------------------------------------ */
+    function toggleRefDrawer() {
+      const drawer = document.getElementById('refDrawer');
+      const btn = document.getElementById('btnRefToggle');
+      const open = drawer.classList.toggle('open');
+      btn.classList.toggle('btn-pearl-active', open);
+    }
+
+    function toggleCard(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('collapsed');
+    }
+
+    function updateVasLabel(val) {
+      document.getElementById('vasBadge').textContent = `${val} / 10`;
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    /* ------------------------------------------------------------------------
+       Male / Female Body Map Switching
+       ------------------------------------------------------------------------ */
+    function setBodySex(sex, syncDropdown = true) {
+      currentBodySex = sex === 'Female' ? 'Female' : 'Male';
+      document.getElementById('maleAnatomyGroup').style.display = currentBodySex === 'Male' ? 'inline' : 'none';
+      document.getElementById('femaleAnatomyGroup').style.display = currentBodySex === 'Female' ? 'inline' : 'none';
+      document.getElementById('btnSexMale').classList.toggle('active', currentBodySex === 'Male');
+      document.getElementById('btnSexFemale').classList.toggle('active', currentBodySex === 'Female');
+      document.getElementById('activeSilhouetteLabel').textContent = `ANTERIOR & POSTERIOR [${currentBodySex.toUpperCase()}]`;
+
+      if (syncDropdown) {
+        const sel = document.getElementById('ptSex');
+        if (sel && (sel.value === '' || sel.value === 'Male' || sel.value === 'Female')) {
+          sel.value = currentBodySex;
+        }
+      }
+    }
+
+    function syncSexFromDropdown(val) {
+      if (val === 'Male' || val === 'Female') {
+        setBodySex(val, false);
+      }
+    }
+
+    function selectCategory(btn) {
+      document.querySelectorAll('#categoryBar .legend-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedCategory = btn.getAttribute('data-cat');
+    }
+
+    /* ------------------------------------------------------------------------
+       Interactive Click-to-Dot & Anchored Finding Popover
+       ------------------------------------------------------------------------ */
+    function initBodySvgEvents() {
+      const svg = document.getElementById('bodySvg');
+      if (!svg) return;
+
+      svg.addEventListener('click', (e) => {
+        if (e.target.closest('.dot-marker-group')) return;
+
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+        const region = e.target.getAttribute('data-region') || (svgP.x < 220 ? 'Anterior Trunk / Region' : 'Posterior Trunk / Region');
+        const newDot = {
+          x: Math.round(svgP.x),
+          y: Math.round(svgP.y),
+          region,
+          category: selectedCategory,
+          size: '',
+          finding: ''
+        };
+
+        dots.push(newDot);
+        const newIdx = dots.length - 1;
+        renderDots();
+        openDotPopover(newIdx, e.clientX, e.clientY);
+      });
+    }
+
+    function renderDots() {
+      const layer = document.getElementById('markersLayer');
+      const list = document.getElementById('dotsList');
+      const countEl = document.getElementById('dotCount');
+
+      layer.innerHTML = '';
+      countEl.textContent = dots.length;
+
+      if (dots.length === 0) {
+        list.innerHTML = `
+          <div style="padding:18px; text-align:center; color:var(--text-light); font-size:12.5px;">
+            No lesion dots placed yet. Click on the Anterior or Posterior figure to place a numbered dot and record its clinical finding.
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = '';
+      dots.forEach((d, idx) => {
+        const num = idx + 1;
+        const color = CATEGORY_COLORS[d.category] || '#dc2626';
+
+        // SVG Marker Group
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'dot-marker-group');
+        g.style.cursor = 'pointer';
+
+        if (activeDotIndex === idx) {
+          const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          ring.setAttribute('cx', d.x);
+          ring.setAttribute('cy', d.y);
+          ring.setAttribute('r', '11');
+          ring.setAttribute('class', 'lesion-dot-ring');
+          g.appendChild(ring);
+        }
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', d.x);
+        circle.setAttribute('cy', d.y);
+        circle.setAttribute('r', '7.8');
+        circle.setAttribute('fill', color);
+        circle.setAttribute('class', 'lesion-dot');
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', d.x);
+        label.setAttribute('y', d.y);
+        label.setAttribute('class', 'dot-num');
+        label.textContent = num;
+
+        g.appendChild(circle);
+        g.appendChild(label);
+
+        g.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          hideTooltip();
+          openDotPopover(idx, ev.clientX, ev.clientY);
+        });
+
+        g.addEventListener('mouseenter', (ev) => showTooltip(ev, idx));
+        g.addEventListener('mousemove', (ev) => moveTooltip(ev));
+        g.addEventListener('mouseleave', hideTooltip);
+
+        layer.appendChild(g);
+
+        // Synchronized List Entry
+        const row = document.createElement('div');
+        row.className = 'dot-entry';
+        row.innerHTML = `
+          <span class="dot-num-badge" style="background:${color};">${num}</span>
+          <div>
+            <div class="dot-entry-region">${escapeHtml(d.region)}</div>
+            <div class="dot-entry-meta">
+              <strong>${escapeHtml(d.category)}</strong>${d.size ? ' · Size: ' + escapeHtml(d.size) : ''}
+            </div>
+            ${d.finding ? `<div class="dot-entry-finding">${escapeHtml(d.finding)}</div>` : `<div style="font-size:11.5px; color:var(--text-light); font-style:italic; margin-top:2px;">No finding text entered</div>`}
+          </div>
+          <div class="dot-entry-actions">
+            <button type="button" class="icon-btn" onclick="editDotFromList(${idx})">Edit</button>
+            <button type="button" class="icon-btn del" onclick="deleteDot(${idx})">✕</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function openDotPopover(idx, clientX, clientY) {
+      activeDotIndex = idx;
+      renderDots();
+
+      const d = dots[idx];
+      if (!d) return;
+
+      const pop = document.getElementById('dotPopover');
+      const color = CATEGORY_COLORS[d.category] || '#dc2626';
+      document.getElementById('popSwatch').style.background = color;
+      document.getElementById('popTitleText').textContent = `Dot #${idx + 1} — ${d.region}`;
+      document.getElementById('popCategory').value = d.category;
+      document.getElementById('popSize').value = d.size || '';
+      document.getElementById('popFinding').value = d.finding || '';
+
+      pop.classList.add('open');
+
+      // Position near click on desktop while keeping within viewport
+      if (window.innerWidth > 640 && clientX && clientY) {
+        const popW = 340;
+        const popH = pop.offsetHeight || 245;
+        let left = clientX + 16;
+        let top = clientY - 30;
+        if (left + popW > window.innerWidth - 14) left = clientX - popW - 16;
+        if (left < 14) left = 14;
+        if (top + popH > window.innerHeight - 14) top = window.innerHeight - popH - 14;
+        if (top < 64) top = 64;
+        pop.style.left = `${left}px`;
+        pop.style.top = `${top}px`;
+      }
+
+      setTimeout(() => {
+        const input = document.getElementById('popFinding');
+        if (input) input.focus();
+      }, 20);
+    }
+
+    function editDotFromList(idx) {
+      const svg = document.getElementById('bodySvg');
+      const rect = svg.getBoundingClientRect();
+      const d = dots[idx];
+      const cx = rect.left + (d.x / 440) * rect.width;
+      const cy = rect.top + (d.y / 470) * rect.height;
+      openDotPopover(idx, cx, cy);
+    }
+
+    function closeDotPopover() {
+      activeDotIndex = null;
+      document.getElementById('dotPopover').classList.remove('open');
+      renderDots();
+    }
+
+    function updateActiveDotField(field, value) {
+      if (activeDotIndex === null || !dots[activeDotIndex]) return;
+      dots[activeDotIndex][field] = value;
+      if (field === 'category') {
+        document.getElementById('popSwatch').style.background = CATEGORY_COLORS[value] || '#dc2626';
+      }
+      renderDots();
+    }
+
+    function appendMorphTag(tag) {
+      if (activeDotIndex === null || !dots[activeDotIndex]) return;
+      const input = document.getElementById('popFinding');
+      const cur = input.value.trim();
+      input.value = cur ? `${cur}, ${tag.toLowerCase()}` : tag;
+      dots[activeDotIndex].finding = input.value;
+      renderDots();
+      input.focus();
+    }
+
+    function handlePopoverKey(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        closeDotPopover();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDotPopover();
+      }
+    }
+
+    function deleteActiveDot() {
+      if (activeDotIndex === null) return;
+      const idx = activeDotIndex;
+      closeDotPopover();
+      deleteDot(idx);
+    }
+
+    function deleteDot(idx) {
+      dots.splice(idx, 1);
+      if (activeDotIndex === idx) closeDotPopover();
+      renderDots();
+    }
+
+    function undoLastDot() {
+      if (dots.length === 0) return;
+      dots.pop();
+      closeDotPopover();
+    }
+
+    function clearAllDots() {
+      dots = [];
+      closeDotPopover();
+    }
+
+    /* ------------------------------------------------------------------------
+       Dot Hover Tooltip
+       ------------------------------------------------------------------------ */
+    function showTooltip(ev, idx) {
+      const d = dots[idx];
+      if (!d) return;
+      const tip = document.getElementById('dotTooltip');
+      tip.innerHTML = `
+        <div style="font-weight:700;">#${idx + 1} · ${escapeHtml(d.region)}</div>
+        <div style="font-size:11px; color:#cbd5e1;">${escapeHtml(d.category)}${d.size ? ' (' + escapeHtml(d.size) + ')' : ''}</div>
+        ${d.finding ? `<div style="margin-top:3px;">${escapeHtml(d.finding)}</div>` : ''}
+      `;
+      tip.style.display = 'block';
+      moveTooltip(ev);
+    }
+
+    function moveTooltip(ev) {
+      const tip = document.getElementById('dotTooltip');
+      tip.style.left = `${Math.min(ev.clientX + 14, window.innerWidth - 265)}px`;
+      tip.style.top = `${Math.min(ev.clientY + 14, window.innerHeight - 90)}px`;
+    }
+
+    function hideTooltip() {
+      document.getElementById('dotTooltip').style.display = 'none';
+    }
+
+    /* ------------------------------------------------------------------------
+       Rule of 9s BSA Calculator
+       ------------------------------------------------------------------------ */
+    function recalcBSA() {
+      const inputs = document.querySelectorAll('#bsaInputs input[type="number"]');
+      let total = 0;
+      inputs.forEach(inp => {
+        const v = parseFloat(inp.value);
+        if (!isNaN(v) && v > 0) total += v;
+      });
+      total = Math.round(total * 10) / 10;
+      document.getElementById('bsaTotal').value = total > 0 ? `${total}%` : '';
+
+      const badge = document.getElementById('bsaSeverityBadge');
+      if (total === 0) {
+        badge.textContent = 'BSA: 0% (Minimal / Localized)';
+      } else if (total < 3) {
+        badge.textContent = `BSA: ${total}% (Mild <3%)`;
+      } else if (total <= 10) {
+        badge.textContent = `BSA: ${total}% (Moderate 3–10%)`;
+      } else {
+        badge.textContent = `BSA: ${total}% (Severe >10%)`;
+      }
+    }
+
+    /* ------------------------------------------------------------------------
+       EMR SOAP Note Generator
+       ------------------------------------------------------------------------ */
+    function getChecked(containerId) {
+      const el = document.getElementById(containerId);
+      if (!el) return [];
+      return Array.from(el.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+    }
+
+    function setChecked(containerId, arr) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = arr.includes(cb.value);
+      });
+    }
+
+    function openSoapModal() {
+      const v = (id) => (document.getElementById(id)?.value || '').trim();
+
+      const dotLines = dots.length
+        ? dots.map((d, i) => `  #${i + 1} [${d.category}] ${d.region}${d.size ? ' (' + d.size + ')' : ''}: ${d.finding || 'Noted'}`).join('\n')
+        : '  None pinned';
+
+      const soap = [
+        `====================================================================`,
+        `DERMATOLOGY OPD CONSULTATION NOTE`,
+        `Facility: ${v('facilityName') || 'Dermatology OPD'}`,
+        `Date: ${v('visitDateGC')} (${v('visitDateEC')}) ${v('visitTime')}`,
+        `Patient: ${v('ptName') || 'N/A'} | Age/Sex: ${v('ptAge') || 'N/A'} / ${v('ptSex') || 'N/A'} | MRN: ${v('ptMrn') || 'N/A'}`,
+        `Occupation: ${v('ptOccupation') || 'N/A'} | Residence: ${v('ptResidence') || 'N/A'} | Referral: ${v('ptReferral')}`,
+        `Vitals: Wt ${v('vitalWt') || '-'} kg | Temp ${v('vitalTemp') || '-'} °C | BP ${v('vitalBp') || '-'} | Pulse ${v('vitalPulse') || '-'} bpm`,
+        `====================================================================`,
+        ``,
+        `[S] SUBJECTIVE:`,
+        `• Chief Complaint: ${v('ccText') || 'N/A'} (Duration: ${v('ccDuration') || 'N/A'})`,
+        `• Onset & Spread: ${v('hpiOnsetSpread') || 'N/A'}`,
+        `• Evolution & Course: ${[...getChecked('courseChips'), v('hpiEvolution')].filter(Boolean).join(' — ') || 'N/A'}`,
+        `• Symptoms: Pruritus VAS ${v('pruritusVas')}/10; ${[...getChecked('symptomChips'), v('symptomNotes')].filter(Boolean).join(', ') || 'None'}`,
+        `• Aggravating/Relieving: ${[...getChecked('triggerChips'), v('triggerNotes')].filter(Boolean).join(', ') || 'None identified'}`,
+        `• Previous Treatments: ${[...getChecked('priorTxChips'), v('priorTxNotes')].filter(Boolean).join(', ') || 'None'}`,
+        `• Allergies: ${v('drugAllergies') || 'NKDA'}`,
+        `• Medications (Past 8 Wks): ${v('recentMeds') || 'None'}`,
+        `• Comorbidities / Atopy: ${getChecked('comorbidityChips').join(', ') || 'None'}`,
+        `• Family & Social Hx: Family: ${v('familyHxNotes') || 'Unremarkable'} | Social/Exposure: ${v('socialExposureNotes') || 'N/A'}`,
+        ``,
+        `[O] OBJECTIVE (MUCOCUTANEOUS EXAMINATION):`,
+        `• Primary Lesions: ${getChecked('primaryLesionChips').join(', ') || 'None'}`,
+        `• Secondary Lesions: ${getChecked('secondaryLesionChips').join(', ') || 'None'}`,
+        `• Configuration & Distribution: ${[...getChecked('arrangementChips'), ...getChecked('distributionChips')].join(', ') || 'None'}`,
+        `• Lesion Description & Bedside Signs: ${[...getChecked('bedsideChips'), v('lesionDescNotes')].filter(Boolean).join('; ') || 'N/A'}`,
+        `• Special Sites (Scalp/Nails/Mucosa/Palms-Soles/Nodes): ${v('specialSitesNotes') || 'Normal'}`,
+        `• Estimated BSA: ${v('bsaTotal') || '0%'} (${document.getElementById('bsaSeverityBadge')?.textContent || ''})`,
+        `• Anatomical Body Map Findings (${currentBodySex}):\n${dotLines}`,
+        ``,
+        `[A] ASSESSMENT:`,
+        `• Working Diagnosis: ${v('workingDx') || 'N/A'}${v('icdCode') ? ' [' + v('icdCode') + ']' : ''}`,
+        `• Differential Diagnoses: ${v('ddxList') || 'N/A'}`,
+        ``,
+        `[P] PLAN:`,
+        `• Investigations: ${[...getChecked('investigationChips'), v('investigationNotes')].filter(Boolean).join('; ') || 'None'}`,
+        `• Topical Therapy:\n${v('topicalPlan') || '  None'}`,
+        `• Systemic Therapy:\n${v('systemicPlan') || '  None'}`,
+        `• Counseling & Skin Care: ${v('counselingNotes') || 'N/A'}`,
+        `• Follow-Up: ${v('followUpNotes') || 'N/A'}`,
+        ``,
+        `Evaluating Physician: ${v('physicianName') || '____________________'} (${v('physicianTitle') || ''})`
+      ].join('\n');
+
+      document.getElementById('soapOutput').value = soap;
+      openModal('soapModal');
+    }
+
+    function copySoapText() {
+      const ta = document.getElementById('soapOutput');
+      ta.select();
+      ta.setSelectionRange(0, 99999);
+      try {
+        document.execCommand('copy');
+        showToast('EMR SOAP note copied to clipboard!');
+      } catch (e) {
+        showToast('Press Ctrl+C / Cmd+C to copy the selected text.');
+      }
+    }
+
+    /* ------------------------------------------------------------------------
+       Clear / Reset Form
+       ------------------------------------------------------------------------ */
+    function executeClearForm(silent = false) {
+      document.getElementById('dermaForm').reset();
+      clearAllDots();
+      setBodySex('Male', false);
+      updateVasLabel(0);
+      recalcBSA();
+      initDates();
+      closeModal('clearModal');
+      if (!silent) showToast('Form cleared and dates reset.');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
