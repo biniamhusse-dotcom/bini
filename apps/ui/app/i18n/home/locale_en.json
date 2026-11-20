@@ -56,5 +56,7 @@
     "ACCEPT":"Accept",
     "SELECT_VALUE_FROM_AUTOCOMPLETE_DEFAULT_MESSAGE": "Please select a value from auto complete",
     "LOGIN_LOCATION_PAGE_TITLE_TEXT": "Select login location",
-    "MODULE_LABEL_REGISTER_KEY": "Register"
+    "MODULE_LABEL_REGISTER_KEY": "Register",
+    "MODULE_LABEL_TRIAGE_KEY": "Triage",
+    "MODULE_LABEL_BED_MANAGEMENT_KEY": "Bed Management"
 }
