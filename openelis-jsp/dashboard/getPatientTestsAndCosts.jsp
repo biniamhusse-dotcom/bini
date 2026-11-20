@@ -159,15 +159,44 @@
                 "WHERE s.id = ? " +
                 "ORDER BY dept_name, panel_name, test_name";
 
+            // Pre-load actual panel-to-test relationships from clinlims.panel_item
+            Map<Long, Long> testIdToPanelId = new HashMap<Long, Long>();
+            Map<Long, String> panelIdToName = new HashMap<Long, String>();
+            Map<Long, Double> panelIdToCost = new HashMap<Long, Double>();
+
+            try {
+                PreparedStatement piPs = conn.prepareStatement(
+                    "SELECT pi.panel_id, pi.test_id, p.name as panel_name, COALESCE(tc.cost, 0.00) as panel_cost " +
+                    "FROM clinlims.panel_item pi " +
+                    "JOIN clinlims.panel p ON pi.panel_id = p.id " +
+                    "LEFT JOIN clinlims.test_cost tc ON (tc.item_type = 'PANEL' AND (tc.item_id = p.id OR LOWER(tc.item_name) = LOWER(p.name))) " +
+                    "WHERE pi.panel_id IN (" +
+                    "    SELECT DISTINCT a2.panel_id FROM clinlims.analysis a2 " +
+                    "    JOIN clinlims.sample_item si2 ON a2.sampitem_id = si2.id " +
+                    "    WHERE si2.samp_id = ? AND a2.panel_id IS NOT NULL" +
+                    ")"
+                );
+                piPs.setLong(1, canonicalSampleId);
+                ResultSet piRs = piPs.executeQuery();
+                while (piRs.next()) {
+                    long pId = piRs.getLong("panel_id");
+                    long tId = piRs.getLong("test_id");
+                    testIdToPanelId.put(tId, pId);
+                    panelIdToName.put(pId, piRs.getString("panel_name"));
+                    panelIdToCost.put(pId, piRs.getDouble("panel_cost"));
+                }
+                piRs.close();
+                piPs.close();
+            } catch (Exception px) {}
+
             ps = conn.prepareStatement(sqlTests);
             ps.setLong(1, canonicalSampleId);
             rs = ps.executeQuery();
 
-            // Grouping: Department -> Panels / Standalone Tests
-            // DeptMap: deptName -> { "panels": Map<panelName, PanelObj>, "standalone": List<TestObj> }
-            Map<String, Map<String, Object>> deptMap = new LinkedHashMap<String, Map<String, Object>>();
-            Set<Long> seenPanels = new HashSet<Long>();
-            double totalPayable = 0.0;
+            // Panel grouping: panelId -> { panelId, panelName, panelCost, isPanelPriced, removalStatus, removalRequestId, labGroups: Map<deptName, List<Test>> }
+            Map<Long, JSONObject> globalPanelsMap = new LinkedHashMap<Long, JSONObject>();
+            Map<Long, Map<String, List<JSONObject>>> panelGroupsMap = new LinkedHashMap<Long, Map<String, List<JSONObject>>>();
+            Map<String, List<JSONObject>> globalIndependentMap = new LinkedHashMap<String, List<JSONObject>>();
 
             while (rs.next()) {
                 long analysisId = rs.getLong("analysis_id");
@@ -180,15 +209,14 @@
                 double panelCost = rs.getDouble("panel_cost");
                 String aStatus = rs.getString("analysis_status");
 
-                if (!deptMap.containsKey(deptName)) {
-                    Map<String, Object> dData = new HashMap<String, Object>();
-                    dData.put("panels", new LinkedHashMap<String, JSONObject>());
-                    dData.put("standalone", new ArrayList<JSONObject>());
-                    deptMap.put(deptName, dData);
+                // Use actual database panel-to-test relationships (panel_item) to identify components if panel_id was null
+                if ((panelId <= 0 || panelName.isEmpty()) && testIdToPanelId.containsKey(testId)) {
+                    panelId = testIdToPanelId.get(testId);
+                    panelName = panelIdToName.get(panelId);
+                    if (panelCost <= 0 && panelIdToCost.containsKey(panelId)) {
+                        panelCost = panelIdToCost.get(panelId);
+                    }
                 }
-
-                Map<String, JSONObject> dPanels = (Map<String, JSONObject>) deptMap.get(deptName).get("panels");
-                List<JSONObject> dStandalone = (List<JSONObject>) deptMap.get(deptName).get("standalone");
 
                 // Check removal status for test
                 String testRemovalKey = "TEST_" + testId;
@@ -206,7 +234,7 @@
                     String pRemovalStatus = pRemoval != null ? pRemoval.getString("status") : "NONE";
                     int pRemovalReqId = pRemoval != null ? pRemoval.getInt("id") : 0;
 
-                    JSONObject pObj = dPanels.get(panelName);
+                    JSONObject pObj = globalPanelsMap.get(panelId);
                     if (pObj == null) {
                         pObj = new JSONObject();
                         pObj.put("panelId", panelId);
@@ -215,38 +243,38 @@
                         pObj.put("isPanelPriced", panelCost > 0);
                         pObj.put("removalStatus", pRemovalStatus);
                         pObj.put("removalRequestId", pRemovalReqId);
-                        pObj.put("tests", new JSONArray());
-                        dPanels.put(panelName, pObj);
+                        globalPanelsMap.put(panelId, pObj);
+                        panelGroupsMap.put(panelId, new LinkedHashMap<String, List<JSONObject>>());
+                    }
 
-                        // If panel itself has a price and is NOT removed, add to total
-                        if (panelCost > 0 && !"APPROVED".equals(pRemovalStatus)) {
-                            totalPayable += panelCost;
-                        }
+                    Map<String, List<JSONObject>> grps = panelGroupsMap.get(panelId);
+                    List<JSONObject> tList = grps.get(deptName);
+                    if (tList == null) {
+                        tList = new ArrayList<JSONObject>();
+                        grps.put(deptName, tList);
                     }
 
                     JSONObject childTest = new JSONObject();
                     childTest.put("analysisId", analysisId);
                     childTest.put("testId", testId);
                     childTest.put("testName", testName);
+                    childTest.put("deptName", deptName);
                     childTest.put("cost", testCost);
                     childTest.put("effectiveCost", panelCost > 0 ? 0.00 : testCost);
                     childTest.put("isIncludedInPanel", panelCost > 0);
+                    childTest.put("panelName", panelName);
                     childTest.put("removalStatus", tRemovalStatus);
                     childTest.put("removalRequestId", tRemovalReqId);
                     childTest.put("removalReason", tRemovalReason);
 
-                    pObj.getJSONArray("tests").put(childTest);
-
-                    // If panel has NO separate price (0.00), tests are charged individually
-                    if (panelCost <= 0 && !"APPROVED".equals(tRemovalStatus) && !"APPROVED".equals(pRemovalStatus)) {
-                        totalPayable += testCost;
-                    }
+                    tList.add(childTest);
                 } else {
-                    // Standalone test
+                    // Standalone / independently ordered test
                     JSONObject sTest = new JSONObject();
                     sTest.put("analysisId", analysisId);
                     sTest.put("testId", testId);
                     sTest.put("testName", testName);
+                    sTest.put("deptName", deptName);
                     sTest.put("cost", testCost);
                     sTest.put("effectiveCost", testCost);
                     sTest.put("isIncludedInPanel", false);
@@ -254,53 +282,60 @@
                     sTest.put("removalRequestId", tRemovalReqId);
                     sTest.put("removalReason", tRemovalReason);
 
-                    dStandalone.add(sTest);
-
-                    if (!"APPROVED".equals(tRemovalStatus)) {
-                        totalPayable += testCost;
+                    List<JSONObject> indList = globalIndependentMap.get(deptName);
+                    if (indList == null) {
+                        indList = new ArrayList<JSONObject>();
+                        globalIndependentMap.put(deptName, indList);
                     }
+                    indList.add(sTest);
                 }
             }
             if (rs != null) rs.close();
             if (ps != null) ps.close();
 
-            // Build panels and independentTests for Requirement 2
-            // Global panels map: panelId -> { panelId, panelName, panelCost, isPanelPriced, removalStatus, removalRequestId, groups: Map<deptName, List<Test>> }
-            Map<Long, JSONObject> globalPanelsMap = new LinkedHashMap<Long, JSONObject>();
-            Map<Long, Map<String, List<JSONObject>>> panelGroupsMap = new LinkedHashMap<Long, Map<String, List<JSONObject>>>();
-            Map<String, List<JSONObject>> globalIndependentMap = new LinkedHashMap<String, List<JSONObject>>();
+            // Calculate totalPayable with ZERO duplicate charges:
+            double totalPayable = 0.0;
+            Set<Long> chargedPanels = new HashSet<Long>();
 
-            for (Map.Entry<String, Map<String, Object>> entry : deptMap.entrySet()) {
-                String dName = entry.getKey();
-                Map<String, JSONObject> pMap = (Map<String, JSONObject>) entry.getValue().get("panels");
-                for (JSONObject pItem : pMap.values()) {
-                    long pId = pItem.getLong("panelId");
-                    if (!globalPanelsMap.containsKey(pId)) {
-                        globalPanelsMap.put(pId, pItem);
-                        panelGroupsMap.put(pId, new LinkedHashMap<String, List<JSONObject>>());
-                    }
-                    JSONArray tArr = pItem.optJSONArray("tests");
-                    if (tArr != null) {
-                        List<JSONObject> tList = panelGroupsMap.get(pId).get(dName);
-                        if (tList == null) {
-                            tList = new ArrayList<JSONObject>();
-                            panelGroupsMap.get(pId).put(dName, tList);
-                        }
-                        for (int k = 0; k < tArr.length(); k++) {
-                            tList.add(tArr.getJSONObject(k));
-                        }
-                    }
-                }
-
-                List<JSONObject> sList = (List<JSONObject>) entry.getValue().get("standalone");
-                if (sList != null && !sList.isEmpty()) {
-                    if (!globalIndependentMap.containsKey(dName)) {
-                        globalIndependentMap.put(dName, new ArrayList<JSONObject>());
-                    }
-                    globalIndependentMap.get(dName).addAll(sList);
+            // 1. Unique Panel Costs (counted ONCE per ordered panel)
+            for (JSONObject pObj : globalPanelsMap.values()) {
+                long pId = pObj.getLong("panelId");
+                double pCost = pObj.optDouble("panelCost", 0.0);
+                String pRemStatus = pObj.optString("removalStatus", "NONE");
+                if (pCost > 0 && !"APPROVED".equals(pRemStatus) && !chargedPanels.contains(pId)) {
+                    totalPayable += pCost;
+                    chargedPanels.add(pId);
                 }
             }
 
+            // 2. Tests inside panels with no separate package price (0.00)
+            for (JSONObject pObj : globalPanelsMap.values()) {
+                double pCost = pObj.optDouble("panelCost", 0.0);
+                String pRemStatus = pObj.optString("removalStatus", "NONE");
+                if (pCost <= 0 && !"APPROVED".equals(pRemStatus)) {
+                    Map<String, List<JSONObject>> grps = panelGroupsMap.get(pObj.getLong("panelId"));
+                    if (grps != null) {
+                        for (List<JSONObject> tList : grps.values()) {
+                            for (JSONObject t : tList) {
+                                if (!"APPROVED".equals(t.optString("removalStatus", "NONE"))) {
+                                    totalPayable += t.optDouble("cost", 0.0);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Independently ordered tests (counted ONCE per independent test)
+            for (List<JSONObject> indList : globalIndependentMap.values()) {
+                for (JSONObject it : indList) {
+                    if (!"APPROVED".equals(it.optString("removalStatus", "NONE"))) {
+                        totalPayable += it.optDouble("cost", 0.0);
+                    }
+                }
+            }
+
+            // Build structuredPanels array (each panel displayed ONCE with its lab groups as subheadings)
             JSONArray structuredPanels = new JSONArray();
             for (Map.Entry<Long, JSONObject> pEntry : globalPanelsMap.entrySet()) {
                 long pId = pEntry.getKey();
@@ -323,6 +358,7 @@
                 structuredPanels.put(pObj);
             }
 
+            // Build structuredIndependents array (grouped by laboratory group)
             JSONArray structuredIndependents = new JSONArray();
             for (Map.Entry<String, List<JSONObject>> indEntry : globalIndependentMap.entrySet()) {
                 JSONObject indGrp = new JSONObject();
@@ -335,26 +371,16 @@
                 structuredIndependents.put(indGrp);
             }
 
-            // Build departments array
+            // Build departments array for backwards compatibility
             JSONArray deptsArray = new JSONArray();
-            for (Map.Entry<String, Map<String, Object>> entry : deptMap.entrySet()) {
+            Set<String> allDeptNames = new LinkedHashSet<String>();
+            allDeptNames.addAll(globalIndependentMap.keySet());
+            for (Map<String, List<JSONObject>> grps : panelGroupsMap.values()) {
+                allDeptNames.addAll(grps.keySet());
+            }
+            for (String dName : allDeptNames) {
                 JSONObject dObj = new JSONObject();
-                dObj.put("name", entry.getKey());
-
-                JSONArray panelsArray = new JSONArray();
-                Map<String, JSONObject> pMap = (Map<String, JSONObject>) entry.getValue().get("panels");
-                for (JSONObject pItem : pMap.values()) {
-                    panelsArray.put(pItem);
-                }
-                dObj.put("panels", panelsArray);
-
-                JSONArray standaloneArray = new JSONArray();
-                List<JSONObject> sList = (List<JSONObject>) entry.getValue().get("standalone");
-                for (JSONObject sItem : sList) {
-                    standaloneArray.put(sItem);
-                }
-                dObj.put("standaloneTests", standaloneArray);
-
+                dObj.put("name", dName);
                 deptsArray.put(dObj);
             }
 

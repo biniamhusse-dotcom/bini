@@ -344,6 +344,9 @@ form[name="menuForm"]{position:sticky!important;top:0!important;z-index:50!impor
 .od-grid-container .slick-cell{background:transparent!important}
 .od-grid-container .slick-row.od-row-selected,.od-grid-container .slick-row.od-row-selected.odd,.od-grid-container .slick-row.od-row-selected.even{background:#fed7aa!important;border-left:3px solid #ea580c!important}
 .od-grid-container .slick-row.od-row-selected .slick-cell{background:transparent!important}
+@keyframes odRowSavedGlow{0%{background-color:#fed7aa!important;box-shadow:inset 0 0 0 2px #ea580c,0 0 8px rgba(234,88,12,0.4)}50%{background-color:#ffedd5!important;box-shadow:inset 0 0 0 2px #ea580c,0 0 16px rgba(234,88,12,0.7)}100%{background-color:#fed7aa!important;box-shadow:inset 0 0 0 2px #ea580c,0 0 8px rgba(234,88,12,0.4)}}
+.od-grid-container .slick-row.od-row-saved-highlight,.od-grid-container .slick-row.od-row-saved-highlight.odd,.od-grid-container .slick-row.od-row-saved-highlight.even{animation:odRowSavedGlow 1.5s ease-in-out infinite alternate!important;border-left:4px solid #ea580c!important}
+
 .od-grid-container .slick-cell img{max-height:20px;max-width:20px;vertical-align:middle;display:inline-block!important}
 .od-grid-container .slick-cell a{text-decoration:none;display:inline;vertical-align:middle;white-space:nowrap}
 .od-grid-container .slick-viewport::-webkit-scrollbar{width:6px;height:6px}
@@ -466,6 +469,20 @@ form[name="menuForm"]{position:sticky!important;top:0!important;z-index:50!impor
 .tc-patient-banner-item label{font-size:10px;color:#0d9488;text-transform:uppercase;font-weight:700}
 .tc-patient-banner-item span{font-weight:600;color:#134e4a}
 .tc-modal-body{flex:1;overflow-y:auto;padding:16px 20px;background:#f8fafc}
+
+.tc-panel-card{background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.tc-panel-card-header{background:#f0fdfa;border-bottom:1px solid #ccfbf1;padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
+.tc-panel-title{font-size:13px;font-weight:700;color:#0f766e;letter-spacing:0.2px}
+.tc-panel-price{font-size:13px;font-weight:700;color:#0d9488;white-space:nowrap}
+.tc-independent-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
+.tc-independent-card-header{background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
+.tc-labgroup-subheading{background:#f8fafc;color:#475569;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:6px 16px;border-top:1px solid #e2e8f0;border-bottom:1px solid #f1f5f9;border-left:3px solid #0d9488;display:flex;align-items:center;gap:6px}
+.tc-panel-card-body{padding:0}
+.tc-group-tests-list{padding:4px 16px 8px 16px}
+.tc-child-test{padding:5px 0 5px 8px}
+.tc-bullet{color:#94a3b8;font-size:14px;line-height:1;margin-right:4px}
+.tc-zero-cost{color:#64748b;font-size:12px;font-weight:500}
+.tc-removed-text{text-decoration:line-through;color:#94a3b8}
 .tc-dept-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
 .tc-dept-header{background:#f1f5f9;padding:8px 14px;font-weight:700;font-size:11px;color:#334155;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px}
 .tc-panel-box{background:#f0fdfa;border-left:3px solid #0d9488;margin:8px 12px;border-radius:0 6px 6px 0;border-top:1px solid #e2e8f0;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:8px 12px}
@@ -1036,6 +1053,7 @@ jQuery(document).ready(function(){
 
     jQuery('.od-tab').on('click',function(){
         var idx=parseInt(jQuery(this).data('tab'));
+        window.currentSelectedTab = idx;
         jQuery('.od-tab').removeClass('active');jQuery(this).addClass('active');
         if(idx===-1){showDashboard()}else{showGrid(idx)}
     });
@@ -1043,6 +1061,7 @@ jQuery(document).ready(function(){
     var activeTab=<%= (String)request.getSession().getAttribute("activeTab") %>||0;
     if(activeTab>1)activeTab=0;
     setTimeout(function(){jQuery('.od-tab[data-tab="'+activeTab+'"]').trigger('click')},50);
+    setTimeout(function(){ if(typeof restoreSavedPatient === 'function') restoreSavedPatient(); }, 250);
 
     jQuery("#todaySamplesToCollectListContainer-slick-grid,#backlogSamplesToCollectListContainer-slick-grid")
         .on("click",".label",function(event){
@@ -1580,19 +1599,27 @@ var StockOut={
                             detailMsg = 'Stock-out evaluation saved and sent to Odoo Billing.';
                         }
 
+                        var curTab = window.currentSelectedTab !== undefined ? window.currentSelectedTab : 0;
+                        sessionStorage.setItem('lastSavedPatientId', self.patientId || '');
+                        sessionStorage.setItem('lastSavedSampleId', self.orderId || '');
+                        sessionStorage.setItem('lastSavedTab', curTab);
                         sessionStorage.setItem('pendingToast', JSON.stringify({
                             title: resp.confirmed ? 'Billing Approved & Confirmed ✓' : 'Stock Evaluation Saved & Sent to Billing',
                             message: detailMsg,
                             type: 'success',
                             duration: 4500
                         }));
-                        window.location.href = window.location.pathname + '?_t=' + new Date().getTime();
+                        window.location.href = window.location.pathname + '?savedPatientId=' + encodeURIComponent(self.patientId || '') + '&savedSampleId=' + encodeURIComponent(self.orderId || '') + '&savedTab=' + curTab + '&_t=' + new Date().getTime();
                     }else{
                         window.showAppToast('Save Failed', (resp.error || 'unknown error'), 'error');
                     }
                 }catch(e){
                     self.hidePanel();
-                    window.location.href = window.location.pathname + '?_t=' + new Date().getTime();
+                    var curTab = window.currentSelectedTab !== undefined ? window.currentSelectedTab : 0;
+                    sessionStorage.setItem('lastSavedPatientId', self.patientId || '');
+                    sessionStorage.setItem('lastSavedSampleId', self.orderId || '');
+                    sessionStorage.setItem('lastSavedTab', curTab);
+                    window.location.href = window.location.pathname + '?savedPatientId=' + encodeURIComponent(self.patientId || '') + '&savedSampleId=' + encodeURIComponent(self.orderId || '') + '&savedTab=' + curTab + '&_t=' + new Date().getTime();
                 }
             },
             onFailure:function(xhr){
@@ -1621,13 +1648,17 @@ var StockOut={
                         if (window.confirmedPatientRefs && patientId) {
                             window.confirmedPatientRefs.add(String(patientId).trim());
                         }
+                        var curTab = window.currentSelectedTab !== undefined ? window.currentSelectedTab : 0;
+                        sessionStorage.setItem('lastSavedPatientId', patientId || '');
+                        sessionStorage.setItem('lastSavedSampleId', orderId || '');
+                        sessionStorage.setItem('lastSavedTab', curTab);
                         sessionStorage.setItem('pendingToast', JSON.stringify({
                             title: 'Quotation Confirmed & Approved',
                             message: 'Quotation approved in Odoo! Sample collection unlocked.',
                             type: 'success',
                             duration: 4500
                         }));
-                        window.location.href = window.location.pathname + '?_t=' + new Date().getTime();
+                        window.location.href = window.location.pathname + '?savedPatientId=' + encodeURIComponent(patientId || '') + '&savedSampleId=' + encodeURIComponent(orderId || '') + '&savedTab=' + curTab + '&_t=' + new Date().getTime();
                     } else {
                         window.showAppToast('Confirmation Failed', resp.error || 'Could not confirm quotation in Odoo', 'error');
                         if (btn) { btn.innerHTML = 'Confirm Billing &#10003;'; btn.style.opacity = '1'; btn.disabled = false; }
@@ -1885,123 +1916,147 @@ function renderTestsAndCosts(data) {
         totalAmountEl.textContent = Number(data.totalPayableAmount || 0).toFixed(2) + " " + (data.currency || "ETB");
     }
 
-    var depts = data.departments || [];
-    if (depts.length === 0) {
+    var panels = data.panels || [];
+    var indGroups = data.independentTests || [];
+
+    if (panels.length === 0 && indGroups.length === 0) {
         bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;font-size:13px;">No tests found for this sample order.</div>';
         return;
     }
 
     var html = '';
 
-    for (var i = 0; i < depts.length; i++) {
-        var d = depts[i];
-        html += '<div class="tc-dept-card">';
-        html += '  <div class="tc-dept-header">';
-        html += '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>';
-        html += '    ' + escapeHtml(d.name);
-        html += '  </div>';
-        html += '  <div style="padding:8px 12px;">';
+    // =========================================================================
+    // 1. ORDERED PANELS (Display each ordered panel ONLY ONCE)
+    // =========================================================================
+    for (var p = 0; p < panels.length; p++) {
+        var panel = panels[p];
+        var pRemStatus = panel.removalStatus || 'NONE';
+        var isPApproved = (pRemStatus === 'APPROVED');
+        var isPPending = (pRemStatus === 'PENDING');
 
-        // 1. Panels
-        var panels = d.panels || [];
-        for (var p = 0; p < panels.length; p++) {
-            var panel = panels[p];
-            var pRemStatus = panel.removalStatus || 'NONE';
-            var isPApproved = (pRemStatus === 'APPROVED');
-            var isPPending = (pRemStatus === 'PENDING');
-
-            html += '<div class="tc-panel-box">';
-            html += '  <div class="tc-panel-header">';
-            html += '    <div class="tc-panel-name">';
-            if (!isPApproved && !isPPending && panel.isPanelPriced) {
-                html += '      <input type="checkbox" class="tc-item-chk" data-type="PANEL" data-id="' + panel.panelId + '" data-name="' + escapeHtml(panel.panelName) + '" data-cost="' + panel.panelCost + '" onchange="onRemovalCheckboxChanged()">';
-            }
-            html += '      <span style="' + (isPApproved ? 'text-decoration:line-through;color:#94a3b8;' : '') + '">[' + escapeHtml(panel.panelName) + ']</span>';
-            if (panel.isPanelPriced) {
-                html += '      <span class="tc-panel-badge">PACKAGE PRICE</span>';
-            }
-            if (isPPending) {
-                html += '      <span class="tc-removal-pending">REMOVAL PENDING</span>';
-            } else if (isPApproved) {
-                html += '      <span class="tc-removal-approved">REMOVED (APPROVED)</span>';
-            }
-            html += '    </div>';
-            html += '    <div class="tc-test-price">';
-            if (panel.isPanelPriced) {
-                html += isPApproved ? '<span style="text-decoration:line-through;color:#94a3b8;">' + Number(panel.panelCost).toFixed(2) + ' ETB</span>' : Number(panel.panelCost).toFixed(2) + ' ETB';
-            } else {
-                html += '<span style="font-size:11px;color:#64748b;font-weight:normal;">Sum of Tests</span>';
-            }
-            html += '    </div>';
-            html += '  </div>';
-
-            // Child tests
-            var cTests = panel.tests || [];
-            if (cTests.length > 0) {
-                html += '  <div class="tc-child-tests-list">';
-                for (var t = 0; t < cTests.length; t++) {
-                    var ct = cTests[t];
-                    var tRemStatus = ct.removalStatus || 'NONE';
-                    var isTApproved = (tRemStatus === 'APPROVED') || isPApproved;
-                    var isTPending = (tRemStatus === 'PENDING') || isPPending;
-
-                    html += '    <div class="tc-test-row">';
-                    html += '      <div class="tc-test-name">';
-                    if (!isTApproved && !isTPending && !panel.isPanelPriced) {
-                        html += '        <input type="checkbox" class="tc-item-chk" data-type="TEST" data-id="' + ct.testId + '" data-name="' + escapeHtml(ct.testName) + '" data-cost="' + ct.cost + '" onchange="onRemovalCheckboxChanged()">';
-                    }
-                    html += '        <span style="' + (isTApproved ? 'text-decoration:line-through;color:#94a3b8;' : '') + '">• ' + escapeHtml(ct.testName) + '</span>';
-                    if (ct.isIncludedInPanel) {
-                        html += '        <span class="tc-included-tag">Included in [' + escapeHtml(panel.panelName) + ']</span>';
-                    }
-                    if (isTPending && !isPPending) {
-                        html += '        <span class="tc-removal-pending">REMOVAL PENDING</span>';
-                    } else if (isTApproved && !isPApproved) {
-                        html += '        <span class="tc-removal-approved">REMOVED</span>';
-                    }
-                    html += '      </div>';
-                    html += '      <div class="tc-test-price" style="font-size:11px;' + (ct.isIncludedInPanel ? 'color:#64748b;font-weight:normal;' : '') + '">';
-                    if (ct.isIncludedInPanel) {
-                        html += '0.00 ETB';
-                    } else {
-                        html += isTApproved ? '<span style="text-decoration:line-through;color:#94a3b8;">' + Number(ct.cost).toFixed(2) + ' ETB</span>' : Number(ct.cost).toFixed(2) + ' ETB';
-                    }
-                    html += '      </div>';
-                    html += '    </div>';
-                }
-                html += '  </div>';
-            }
-            html += '</div>';
+        html += '<div class="tc-panel-card">';
+        html += '  <div class="tc-panel-card-header">';
+        html += '    <div class="tc-panel-name">';
+        if (!isPApproved && !isPPending && panel.isPanelPriced) {
+            html += '      <input type="checkbox" class="tc-item-chk" data-type="PANEL" data-id="' + panel.panelId + '" data-name="' + escapeHtml(panel.panelName) + '" data-cost="' + panel.panelCost + '" onchange="onRemovalCheckboxChanged()">';
         }
+        html += '      <span class="tc-panel-title' + (isPApproved ? ' tc-removed-text' : '') + '">[' + escapeHtml(panel.panelName) + ']</span>';
+        if (panel.isPanelPriced) {
+            html += '      <span class="tc-panel-badge">PACKAGE PRICE</span>';
+        }
+        if (isPPending) {
+            html += '      <span class="tc-removal-pending">REMOVAL PENDING</span>';
+        } else if (isPApproved) {
+            html += '      <span class="tc-removal-approved">REMOVED (APPROVED)</span>';
+        }
+        html += '    </div>';
+        html += '    <div class="tc-panel-price">';
+        if (panel.isPanelPriced) {
+            html += isPApproved ? '<span class="tc-removed-text">' + Number(panel.panelCost).toFixed(2) + ' ETB</span>' : Number(panel.panelCost).toFixed(2) + ' ETB';
+        } else {
+            html += '<span style="font-size:11px;color:#64748b;font-weight:normal;">Sum of Tests</span>';
+        }
+        html += '    </div>';
+        html += '  </div>';
 
-        // 2. Standalone tests
-        var sTests = d.standaloneTests || [];
-        if (sTests.length > 0) {
-            html += '<div style="margin:6px 12px;">';
-            for (var s = 0; s < sTests.length; s++) {
-                var st = sTests[s];
+        // Under each panel, display its laboratory groups as subheadings
+        html += '  <div class="tc-panel-card-body">';
+        var labGroups = panel.labGroups || [];
+        for (var g = 0; g < labGroups.length; g++) {
+            var grp = labGroups[g];
+            html += '    <div class="tc-labgroup-subheading">';
+            html += '      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>';
+            html += '      ' + escapeHtml(grp.groupName);
+            html += '    </div>';
+
+            // List individual tests under their correct laboratory groups
+            html += '    <div class="tc-group-tests-list">';
+            var gTests = grp.tests || [];
+            for (var t = 0; t < gTests.length; t++) {
+                var ct = gTests[t];
+                var tRemStatus = ct.removalStatus || 'NONE';
+                var isTApproved = (tRemStatus === 'APPROVED') || isPApproved;
+                var isTPending = (tRemStatus === 'PENDING') || isPPending;
+
+                html += '      <div class="tc-test-row tc-child-test">';
+                html += '        <div class="tc-test-name">';
+                if (!isTApproved && !isTPending && !panel.isPanelPriced) {
+                    html += '          <input type="checkbox" class="tc-item-chk" data-type="TEST" data-id="' + ct.testId + '" data-name="' + escapeHtml(ct.testName) + '" data-cost="' + ct.cost + '" onchange="onRemovalCheckboxChanged()">';
+                }
+                html += '          <span class="tc-bullet">&bull;</span>';
+                html += '          <span class="' + (isTApproved ? 'tc-removed-text' : '') + '">' + escapeHtml(ct.testName) + '</span>';
+                if (ct.isIncludedInPanel) {
+                    html += '          <span class="tc-included-tag">Included in [' + escapeHtml(panel.panelName) + ']</span>';
+                }
+                if (isTPending) {
+                    html += '          <span class="tc-removal-pending">REMOVAL PENDING</span>';
+                } else if (isTApproved) {
+                    html += '          <span class="tc-removal-approved">REMOVED</span>';
+                }
+                html += '        </div>';
+                html += '        <div class="tc-test-price">';
+                if (panel.isPanelPriced) {
+                    // Mark included tests as 0.00 ETB
+                    html += '          <span class="tc-zero-cost">0.00 ETB</span>';
+                } else {
+                    html += isTApproved ? '<span class="tc-removed-text">' + Number(ct.cost).toFixed(2) + ' ETB</span>' : Number(ct.cost).toFixed(2) + ' ETB';
+                }
+                html += '        </div>';
+                html += '      </div>';
+            }
+            html += '    </div>';
+        }
+        html += '  </div>';
+        html += '</div>';
+    }
+
+    // =========================================================================
+    // 2. INDEPENDENTLY ORDERED TESTS (Display with their individual costs)
+    // =========================================================================
+    if (indGroups.length > 0) {
+        html += '<div class="tc-independent-card">';
+        html += '  <div class="tc-independent-card-header">';
+        html += '    <div class="tc-panel-name">';
+        html += '      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
+        html += '      <span class="tc-panel-title">Independently Ordered Tests</span>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="tc-panel-card-body">';
+
+        for (var ig = 0; ig < indGroups.length; ig++) {
+            var indGrp = indGroups[ig];
+            html += '    <div class="tc-labgroup-subheading">';
+            html += '      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>';
+            html += '      ' + escapeHtml(indGrp.groupName);
+            html += '    </div>';
+
+            html += '    <div class="tc-group-tests-list">';
+            var iTests = indGrp.tests || [];
+            for (var it = 0; it < iTests.length; it++) {
+                var st = iTests[it];
                 var sRemStatus = st.removalStatus || 'NONE';
                 var isSApproved = (sRemStatus === 'APPROVED');
                 var isSPending = (sRemStatus === 'PENDING');
 
-                html += '<div class="tc-test-row" style="padding:6px 0;">';
-                html += '  <div class="tc-test-name">';
+                html += '      <div class="tc-test-row">';
+                html += '        <div class="tc-test-name">';
                 if (!isSApproved && !isSPending) {
-                    html += '    <input type="checkbox" class="tc-item-chk" data-type="TEST" data-id="' + st.testId + '" data-name="' + escapeHtml(st.testName) + '" data-cost="' + st.cost + '" onchange="onRemovalCheckboxChanged()">';
+                    html += '          <input type="checkbox" class="tc-item-chk" data-type="TEST" data-id="' + st.testId + '" data-name="' + escapeHtml(st.testName) + '" data-cost="' + st.cost + '" onchange="onRemovalCheckboxChanged()">';
                 }
-                html += '    <span style="' + (isSApproved ? 'text-decoration:line-through;color:#94a3b8;' : '') + '">' + escapeHtml(st.testName) + '</span>';
+                html += '          <span class="' + (isSApproved ? 'tc-removed-text' : '') + '">' + escapeHtml(st.testName) + '</span>';
                 if (isSPending) {
-                    html += '    <span class="tc-removal-pending">REMOVAL PENDING</span>';
+                    html += '          <span class="tc-removal-pending">REMOVAL PENDING</span>';
                 } else if (isSApproved) {
-                    html += '    <span class="tc-removal-approved">REMOVED (APPROVED)</span>';
+                    html += '          <span class="tc-removal-approved">REMOVED (APPROVED)</span>';
                 }
-                html += '  </div>';
-                html += '  <div class="tc-test-price">';
-                html += isSApproved ? '<span style="text-decoration:line-through;color:#94a3b8;">' + Number(st.cost).toFixed(2) + ' ETB</span>' : Number(st.cost).toFixed(2) + ' ETB';
-                html += '  </div>';
-                html += '</div>';
+                html += '        </div>';
+                html += '        <div class="tc-test-price">';
+                html += isSApproved ? '<span class="tc-removed-text">' + Number(st.cost).toFixed(2) + ' ETB</span>' : Number(st.cost).toFixed(2) + ' ETB';
+                html += '        </div>';
+                html += '      </div>';
             }
-            html += '</div>';
+            html += '    </div>';
         }
 
         html += '  </div>';
@@ -2029,6 +2084,103 @@ function renderTestsAndCosts(data) {
     html += '</div>';
 
     bodyEl.innerHTML = html;
+}
+
+// =========================================================================
+// RESTORE SAVED PATIENT AFTER SAVE (Scroll, Highlight, and Open Details)
+// =========================================================================
+function restoreSavedPatient() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var savedPtId = urlParams.get('savedPatientId') || sessionStorage.getItem('lastSavedPatientId');
+    var savedSampleId = urlParams.get('savedSampleId') || sessionStorage.getItem('lastSavedSampleId');
+    var savedTab = urlParams.get('savedTab') || sessionStorage.getItem('lastSavedTab');
+
+    if (!savedPtId && !savedSampleId) return;
+
+    sessionStorage.removeItem('lastSavedPatientId');
+    sessionStorage.removeItem('lastSavedSampleId');
+    sessionStorage.removeItem('lastSavedTab');
+
+    var targetTab = 0;
+    if (savedTab !== null && savedTab !== undefined && savedTab !== '') {
+        var parsed = parseInt(savedTab, 10);
+        if (!isNaN(parsed) && parsed >= 0) targetTab = parsed;
+    }
+
+    setTimeout(function() {
+        var gridsToCheck = [
+            { grid: tGrid, dv: tDV, tab: 0 },
+            { grid: bGrid, dv: bDV, tab: 1 }
+        ];
+        if (targetTab === 1) {
+            gridsToCheck.reverse();
+        }
+
+        var foundRow = -1;
+        var targetGrid = null;
+        var targetDV = null;
+        var finalTab = targetTab;
+
+        for (var i = 0; i < gridsToCheck.length; i++) {
+            var gInfo = gridsToCheck[i];
+            if (!gInfo.dv || !gInfo.grid) continue;
+            var items = gInfo.dv.getItems ? gInfo.dv.getItems() : [];
+            for (var r = 0; r < items.length; r++) {
+                var it = items[r];
+                if (!it) continue;
+                var matchPt = savedPtId && (
+                    (it.stNumber && String(it.stNumber).trim() === String(savedPtId).trim()) ||
+                    (it.patientId && String(it.patientId).trim() === String(savedPtId).trim())
+                );
+                var matchSample = savedSampleId && (
+                    (it.sampleId && String(it.sampleId).trim() === String(savedSampleId).trim()) ||
+                    (it.orderId && String(it.orderId).trim() === String(savedSampleId).trim())
+                );
+                if (matchPt || matchSample) {
+                    foundRow = r;
+                    targetGrid = gInfo.grid;
+                    targetDV = gInfo.dv;
+                    finalTab = gInfo.tab;
+                    break;
+                }
+            }
+            if (foundRow !== -1) break;
+        }
+
+        if (foundRow !== -1 && targetGrid) {
+            jQuery('.od-tab[data-tab="' + finalTab + '"]').trigger('click');
+
+            setTimeout(function() {
+                try {
+                    targetGrid.scrollRowIntoView(foundRow, false);
+                    targetGrid.setSelectedRows([foundRow]);
+
+                    var container = jQuery(targetGrid.getContainerNode());
+                    container.find('.slick-row').removeClass('od-row-selected od-row-saved-highlight');
+
+                    var rowEl = container.find('.slick-row[row="' + foundRow + '"]');
+                    if (!rowEl.length) {
+                        rowEl = container.find('.slick-row').eq(foundRow);
+                    }
+                    if (rowEl.length) {
+                        rowEl.addClass('od-row-selected od-row-saved-highlight');
+                        rowEl.trigger('mouseenter');
+                    }
+
+                    var rowData = targetDV.getItem(foundRow);
+                    if (rowData && typeof onRowSelection === 'function') {
+                        onRowSelection(rowData);
+                    }
+
+                    setTimeout(function() {
+                        rowEl.removeClass('od-row-saved-highlight');
+                    }, 8000);
+                } catch(err) {
+                    console.error('Error highlighting saved patient:', err);
+                }
+            }, 300);
+        }
+    }, 400);
 }
 
 function onRemovalCheckboxChanged() {
