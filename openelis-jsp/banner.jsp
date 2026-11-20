@@ -31,16 +31,19 @@ request.setAttribute("oe_banner_rendered", Boolean.TRUE);
 	languageSwitch = "true".equals(ConfigurationProperties.getInstance().getPropertyValue(Property.allowLanguageChange));
 
 	UserSessionData usd = null;
-	if (request.getSession().getAttribute(IActionConstants.USER_SESSION_DATA) != null) {
-		usd = (UserSessionData) request.getSession().getAttribute(IActionConstants.USER_SESSION_DATA);
+	String reqUri = request.getRequestURI();
+	boolean isAuthPage = reqUri != null && (reqUri.contains("LoginPage") || reqUri.contains("LogoutPage") || reqUri.contains("ValidateLogin"));
+	if (!isAuthPage && session != null && session.getAttribute(IActionConstants.USER_SESSION_DATA) != null) {
+		usd = (UserSessionData) session.getAttribute(IActionConstants.USER_SESSION_DATA);
 	}
-	String elisUser = (usd != null && usd.getElisUserName() != null && !usd.getElisUserName().trim().isEmpty()) ? usd.getElisUserName() : "superman";
 
-	String locName = (String) session.getAttribute("selectedLabLocationName");
+	String locName = (String) (session != null ? session.getAttribute("selectedLabLocationName") : null);
 	if (locName == null || locName.trim().isEmpty()) {
 		locName = "Main Laboratory";
-		session.setAttribute("selectedLabLocationName", locName);
-		session.setAttribute("selectedLabLocationCode", "MAIN_LAB");
+		if (session != null) {
+			session.setAttribute("selectedLabLocationName", locName);
+			session.setAttribute("selectedLabLocationCode", "MAIN_LAB");
+		}
 	}
 %>
 
@@ -200,11 +203,12 @@ request.setAttribute("oe_banner_rendered", Boolean.TRUE);
 
 <div id="oe-banner-wrapper">
     <div id="oe-top-bar">
-        <div class="oe-top-left" onclick="window.location.href='<%=basePath%>LabDashboard.do';">
+        <div class="oe-top-left" onclick="window.location.href='<%= (usd != null) ? basePath + "LabDashboard.do" : basePath + "LoginPage.do" %>';">
             <img src="<%=basePath%>images/openelis_logo.png" title="OpenELIS" alt="OpenELIS" onerror="this.style.display='none'" />
             <span class="oe-top-title"><%=StringUtil.getContextualMessageForKey("title.default")%></span>
         </div>
 
+        <% if (usd != null) { %>
         <div class="oe-top-center">
             <div class="oe-loc-badge">
                 <span>Location: <strong><%= locName %></strong></span>
@@ -216,17 +220,25 @@ request.setAttribute("oe_banner_rendered", Boolean.TRUE);
         <div class="oe-top-right">
             <span>Version: <%= ConfigurationProperties.getInstance().getPropertyValue(Property.releaseNumber)%></span>
             <span>|</span>
-            <span><%= elisUser %></span>
+            <span><%= usd.getElisUserName() != null ? usd.getElisUserName() : "superman" %></span>
             <html:link page="/LogoutPage.do" styleId="log-out-link" titleKey="homePage.menu.logOut.toolTip"><bean:message key="homePage.menu.logOut.toolTip"/></html:link>
         </div>
+        <% } else { %>
+        <div class="oe-top-right">
+            <span>Version: <%= ConfigurationProperties.getInstance().getPropertyValue(Property.releaseNumber)%></span>
+        </div>
+        <% } %>
     </div>
 
+    <% if (usd != null) { %>
     <div id="oe-menu-bar">
         <%= MenuUtil.getMenuAsHTML(path) %>
     </div>
+    <% } %>
 </div>
 <div class="oe-banner-clear"></div>
 
+<% if (usd != null) { %>
 <script type="text/javascript">
 jQuery(function(){
     if (jQuery('ul.nav-menu').length) {
@@ -253,3 +265,4 @@ jQuery(function(){
     }
 });
 </script>
+<% } %>

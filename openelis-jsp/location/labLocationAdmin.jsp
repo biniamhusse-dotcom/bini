@@ -63,7 +63,7 @@
 </div>
 
 <%
-    String dbUrl = "jdbc:postgresql://openelisdb:5432/clinlims";
+    String dbUrl = "jdbc:postgresql://openelisdb:5432/clinlims?currentSchema=clinlims";
     String dbUser = "clinlims";
     String dbPass = "clinlims";
 
@@ -359,11 +359,32 @@
                         dSrc.executeUpdate();
                         mergedCount++;
                     } else {
-                        updStmt.setString(1, targetName);
-                        updStmt.setString(2, targetName);
-                        updStmt.setInt(3, sid);
-                        updStmt.executeUpdate();
-                        matchedCount++;
+                        java.sql.Savepoint sp = maConn.setSavepoint("sp_" + sid);
+                        try {
+                            updStmt.setString(1, targetName);
+                            updStmt.setString(2, targetName);
+                            updStmt.setInt(3, sid);
+                            updStmt.executeUpdate();
+                            matchedCount++;
+                        } catch (java.sql.SQLException sqle) {
+                            maConn.rollback(sp);
+                            PreparedStatement findAny = maConn.prepareStatement("SELECT id FROM sample_source WHERE name = ?");
+                            findAny.setString(1, targetName);
+                            ResultSet anyRs = findAny.executeQuery();
+                            if (anyRs.next()) {
+                                int existingId = anyRs.getInt("id");
+                                uSamp.setInt(1, existingId);
+                                uSamp.setInt(2, sid);
+                                uSamp.executeUpdate();
+                                dRef.setInt(1, sid);
+                                dRef.executeUpdate();
+                                dSrc.setInt(1, sid);
+                                dSrc.executeUpdate();
+                                mergedCount++;
+                            }
+                            anyRs.close();
+                            findAny.close();
+                        }
                     }
                     dupRs.close();
                 }

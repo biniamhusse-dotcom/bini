@@ -11,6 +11,12 @@
 <%@ taglib uri="/tags/struts-logic" prefix="logic" %>
 <%@ taglib uri="/tags/labdev-view" prefix="app" %>
 <%
+    us.mn.state.health.lims.login.valueholder.UserSessionData authUsd = (us.mn.state.health.lims.login.valueholder.UserSessionData) session.getAttribute(IActionConstants.USER_SESSION_DATA);
+    if (authUsd == null) {
+        response.sendRedirect(request.getContextPath() + "/LoginPage.do");
+        return;
+    }
+
     String todayOrderListJson = "[]";
     String todaySampleNotCollectedListJson = "[]";
     String backlogSampleNotCollectedListJson = "[]";
@@ -105,6 +111,62 @@ if (selectedLabLocationName == null) selectedLabLocationName = "";
 <script type="text/javascript" src="<%=basePath%>scripts/slickgrid/slick.autotooltips.js"></script>
 <script type="text/javascript" src="<%=basePath%>scripts/utils.js"></script>
 <script type="text/javascript" src="<%=basePath%>scripts/JsBarcode.all.min.js"></script>
+<script type="text/javascript">
+if (typeof window.Ajax === 'undefined') {
+    window.Ajax = {
+        Request: function(url, options) {
+            options = options || {};
+            var method = (options.method || 'GET').toUpperCase();
+            var reqData = options.parameters || options.postBody;
+            var contentType = options.contentType;
+            if (options.postBody && !contentType) {
+                contentType = 'application/json; charset=UTF-8';
+            }
+            var headers = options.requestHeaders || {};
+
+            jQuery.ajax({
+                url: url,
+                type: method,
+                data: reqData,
+                contentType: contentType || (method === 'POST' ? 'application/x-www-form-urlencoded; charset=UTF-8' : undefined),
+                headers: headers,
+                dataType: 'text',
+                success: function(rawText, statusStr, jqXHR) {
+                    var xmlDoc = null;
+                    try {
+                        if (jqXHR.responseXML) {
+                            xmlDoc = jqXHR.responseXML;
+                        } else if (rawText && rawText.trim().charAt(0) === '<') {
+                            var parser = new DOMParser();
+                            xmlDoc = parser.parseFromString(rawText, "text/xml");
+                        }
+                    } catch(e) {}
+                    var fakeXhr = {
+                        responseText: rawText,
+                        responseXML: xmlDoc,
+                        status: jqXHR.status,
+                        statusText: jqXHR.statusText
+                    };
+                    if (typeof options.onSuccess === 'function') {
+                        options.onSuccess(fakeXhr);
+                    }
+                },
+                error: function(jqXHR, statusStr, err) {
+                    var fakeXhr = {
+                        responseText: jqXHR.responseText,
+                        responseXML: jqXHR.responseXML,
+                        status: jqXHR.status,
+                        statusText: jqXHR.statusText
+                    };
+                    if (typeof options.onFailure === 'function') {
+                        options.onFailure(fakeXhr);
+                    }
+                }
+            });
+        }
+    };
+}
+</script>
 
 <jsp:include page="/pages/common/banner.jsp" />
 
@@ -436,10 +498,14 @@ jQuery(document).ready(function(){
     }
     function filterByLocation(arr){return selectedLabLocationName?arr.filter(matchesLocationFilter):arr}
 
-    var todayOrderList=JSON.parse('<%=todayOrderListJson%>');
-    var todaySampleNotCollectedList=JSON.parse('<%=todaySampleNotCollectedListJson%>');
-    var backlogSampleNotCollectedList=JSON.parse('<%=backlogSampleNotCollectedListJson%>');
-    var backlogOrderList=JSON.parse('<%=backlogOrderListJson%>');
+    var todayOrderList = [];
+    try { todayOrderList = JSON.parse('<%=todayOrderListJson%>') || []; } catch(e) { console.error("Error parsing todayOrderList:", e); }
+    var todaySampleNotCollectedList = [];
+    try { todaySampleNotCollectedList = JSON.parse('<%=todaySampleNotCollectedListJson%>') || []; } catch(e) { console.error("Error parsing todaySampleNotCollectedList:", e); }
+    var backlogSampleNotCollectedList = [];
+    try { backlogSampleNotCollectedList = JSON.parse('<%=backlogSampleNotCollectedListJson%>') || []; } catch(e) { console.error("Error parsing backlogSampleNotCollectedList:", e); }
+    var backlogOrderList = [];
+    try { backlogOrderList = JSON.parse('<%=backlogOrderListJson%>') || []; } catch(e) { console.error("Error parsing backlogOrderList:", e); }
 
     todayOrderList=filterByLocation(todayOrderList);
     todaySampleNotCollectedList=filterByLocation(todaySampleNotCollectedList);
@@ -495,10 +561,19 @@ jQuery(document).ready(function(){
     ];
 
     allGrids.forEach(function(g){
-        if(g.grid&&g.grid.onClick){g.grid.onClick.subscribe(function(e,args){
-            var el=jQuery(args.grid.getContainerNode());el.find('.slick-row').removeClass('od-row-selected');
-            var rn=args.grid.getCellNode(args.row,0);if(rn)jQuery(rn).closest('.slick-row').addClass('od-row-selected');
-        })}
+        if(g.grid&&g.grid.onClick){
+            g.grid.onClick.subscribe(function(e,args){
+                var el=jQuery(args.grid.getContainerNode());
+                el.find('.slick-row').removeClass('od-row-selected');
+                var rn=args.grid.getCellNode(args.row,0);
+                if(rn)jQuery(rn).closest('.slick-row').addClass('od-row-selected');
+
+                var rowData = args.grid.getDataItem(args.row);
+                if(rowData && typeof onRowSelection === 'function') {
+                    onRowSelection(rowData);
+                }
+            });
+        }
     });
 
     function showGrid(index){
@@ -659,14 +734,65 @@ function labelSelected(st,an,cd,j){
     });
 }
 
-var showPatientDetails=function(s,f,m,l,p,v,g,a){var el=document.getElementById('patientDetails');el.classList.add('show');document.getElementById('patientId').textContent=s||'N/A';document.getElementById('name').textContent=f+" "+(m?m+" ":"")+l;document.getElementById('primaryRelative').textContent=p||'N/A';document.getElementById('village').textContent=v||'N/A';document.getElementById('gender').textContent=g;document.getElementById('age').textContent=a}
+var showPatientDetails=function(s,f,m,l,p,v,g,a){
+    var el=document.getElementById('patientDetails');
+    if(!el) return;
+    el.classList.add('show');
+    var pIdEl = document.getElementById('patientId'); if(pIdEl) pIdEl.textContent = s||'N/A';
+    var nameEl = document.getElementById('name'); if(nameEl) nameEl.textContent = (f||"") + ((m&&m.trim()) ? " " + m.trim() : "") + ((l&&l.trim()) ? " " + l.trim() : "");
+    var prEl = document.getElementById('primaryRelative'); if(prEl) prEl.textContent = p||'N/A';
+    var vEl = document.getElementById('village'); if(vEl) vEl.textContent = v||'N/A';
+    var gEl = document.getElementById('gender'); if(gEl) gEl.textContent = g||'-';
+    var aEl = document.getElementById('age'); if(aEl) aEl.textContent = a||'-';
+};
 
 function onRowSelection(r){
-    if(r.stNumber)new Ajax.Request('ajaxQueryXML',{method:'get',parameters:"provider=PatientSearchPopulateProvider&stNumber="+r.stNumber,onSuccess:onRowSelectionSuccess});
+    if (!r) return;
+    window.currentSelectedOrder = r;
+    window.currentSelectedSampleId = r.sampleId || r.orderId;
+    window.currentSelectedPatientId = r.stNumber;
+    window.currentSelectedPatientName = r.name || (r.firstName ? (r.firstName + " " + (r.middleName ? r.middleName + " " : "") + (r.lastName || "")) : "");
+
+    // Immediately display patient details with available row data (zero lag!)
+    showPatientDetails(
+        r.stNumber || 'N/A',
+        r.firstName || '',
+        r.middleName || '',
+        r.lastName || '',
+        r.primaryRelative || 'N/A',
+        r.village || 'N/A',
+        r.gender || '',
+        r.age || ''
+    );
+
+    if (r.testNames) {
+        jQuery("#patientTests").text(r.testNames);
+    } else if (r.totalTestCount) {
+        jQuery("#patientTests").text(r.totalTestCount + " test(s)");
+    } else {
+        jQuery("#patientTests").text("N/A");
+    }
+
+    if(r.stNumber){
+        new Ajax.Request('ajaxQueryXML',{
+            method:'get',
+            parameters:"provider=PatientSearchPopulateProvider&stNumber="+encodeURIComponent(r.stNumber),
+            onSuccess:onRowSelectionSuccess,
+            onFailure:function(){}
+        });
+    }
     if(r.accessionNumber){
-        new Ajax.Request('ajaxQueryXML',{method:'get',parameters:"provider=OrderedTestsPopulateProvider&accessionNumber="+r.accessionNumber,onSuccess:function(xhr){jQuery("#patientTests").text(OpenElis.Utils.getXMLValue(xhr.responseXML,'tests')||"N/A")}});
-    }else{
-        jQuery("#patientTests").text(r.testNames||(r.totalTestCount?r.totalTestCount+" test(s)":"N/A"));
+        new Ajax.Request('ajaxQueryXML',{
+            method:'get',
+            parameters:"provider=OrderedTestsPopulateProvider&accessionNumber="+encodeURIComponent(r.accessionNumber),
+            onSuccess:function(xhr){
+                try {
+                    var val = OpenElis.Utils.getXMLValue(xhr.responseXML,'tests');
+                    if(val) jQuery("#patientTests").text(val);
+                } catch(e) {}
+            },
+            onFailure:function(){}
+        });
     }
 }
 function onRowSelectionSuccess(xhr){

@@ -3,6 +3,12 @@
 <%@ taglib uri="/tags/struts-html" prefix="html" %>
 <%@ page import="java.sql.*, java.util.*, org.json.*, us.mn.state.health.lims.common.action.IActionConstants, us.mn.state.health.lims.login.valueholder.UserSessionData" %>
 <%
+    UserSessionData authUsd = (UserSessionData) session.getAttribute(IActionConstants.USER_SESSION_DATA);
+    if (authUsd == null) {
+        response.sendRedirect(request.getContextPath() + "/LoginPage.do");
+        return;
+    }
+
     String todayOrderListJson = "[]";
     String todaySampleNotCollectedListJson = "[]";
     String backlogSampleNotCollectedListJson = "[]";
