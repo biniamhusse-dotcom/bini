@@ -122,22 +122,16 @@ function displayHelp(){
 			<div id="user-info"><div><%=usd.getElisUserName()%> - <html:link page="/LogoutPage.do" styleId="log-out-link" titleKey="homePage.menu.logOut.toolTip"><bean:message key="homePage.menu.logOut.toolTip"/></html:link></div></div>
 		<%
 			String locName = (String) session.getAttribute("selectedLabLocationName");
-			if (locName != null && !locName.isEmpty()) {
+			if (locName == null || locName.trim().isEmpty()) {
+				locName = "Main Laboratory";
+				session.setAttribute("selectedLabLocationName", locName);
+				session.setAttribute("selectedLabLocationCode", "MAIN_LAB");
+			}
 		%>
 		<div style="background:#27ae60;color:white;padding:2px 8px;border-radius:3px;font-size:11px;display:inline-block;margin-top:2px;">
 			Location: <strong><%= locName %></strong> <a href="LocationSelect.do" style="color:#fff;text-decoration:underline;">(Change)</a>
 			<a href="SampleTransfer.do" style="color:#fff;text-decoration:underline;margin-left:8px;background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:3px;">Transfer Sample</a>
 		</div>
-		<%
-			} else {
-		%>
-		<div style="background:#e67e22;color:white;padding:2px 8px;border-radius:3px;font-size:11px;display:inline-block;margin-top:2px;">
-			No location selected <a href="LocationSelect.do" style="color:#fff;text-decoration:underline;">(Select)</a>
-			<a href="SampleTransfer.do" style="color:#fff;text-decoration:underline;margin-left:8px;background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:3px;">Transfer Sample</a>
-		</div>
-		<%
-			}
-		%>
 			<%
 				}
 			%>

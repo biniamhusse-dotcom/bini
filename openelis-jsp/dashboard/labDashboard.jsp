@@ -2,11 +2,50 @@
 <%@ taglib uri="/tags/struts-bean" prefix="bean" %>
 <%@ taglib uri="/tags/struts-html" prefix="html" %>
 <%@ page import="java.sql.*, java.util.*, org.json.*, us.mn.state.health.lims.common.action.IActionConstants, us.mn.state.health.lims.login.valueholder.UserSessionData" %>
-<bean:define id="formName" value='<%= (String)request.getAttribute(IActionConstants.FORM_NAME) %>' />
-<bean:define id="todayOrderListJson" name="<%=formName%>" property="todayOrderList"/>
-<bean:define id="todaySampleNotCollectedListJson" name="<%=formName%>" property="todaySampleNotCollectedList"/>
-<bean:define id="backlogSampleNotCollectedListJson" name="<%=formName%>" property="backlogSampleNotCollectedList"/>
-<bean:define id="backlogOrderListJson" name="<%=formName%>" property="backlogOrderList"/>
+<%
+    String todayOrderListJson = "[]";
+    String todaySampleNotCollectedListJson = "[]";
+    String backlogSampleNotCollectedListJson = "[]";
+    String backlogOrderListJson = "[]";
+
+    try {
+        Object formObj = request.getAttribute("LabDashboardForm");
+        if (formObj == null) {
+            String fn = (String) request.getAttribute(IActionConstants.FORM_NAME);
+            if (fn != null && !"loginValidateForm".equals(fn) && !"loginForm".equals(fn)) {
+                formObj = request.getAttribute(fn);
+            }
+        }
+        if (formObj != null && formObj instanceof org.apache.struts.action.DynaActionForm) {
+            org.apache.struts.action.DynaActionForm dyna = (org.apache.struts.action.DynaActionForm) formObj;
+            try { Object v = dyna.get("todayOrderList"); if (v != null) todayOrderListJson = (String) v; } catch (Exception ignore) {}
+            try { Object v = dyna.get("todaySampleNotCollectedList"); if (v != null) todaySampleNotCollectedListJson = (String) v; } catch (Exception ignore) {}
+            try { Object v = dyna.get("backlogSampleNotCollectedList"); if (v != null) backlogSampleNotCollectedListJson = (String) v; } catch (Exception ignore) {}
+            try { Object v = dyna.get("backlogOrderList"); if (v != null) backlogOrderListJson = (String) v; } catch (Exception ignore) {}
+        }
+    } catch (Exception ignore) {}
+
+    if (todayOrderListJson == null || todayOrderListJson.trim().isEmpty() || "null".equals(todayOrderListJson) || "[]".equals(todayOrderListJson)) {
+        try {
+            us.mn.state.health.lims.siteinformation.dao.SiteInformationDAO siteInfoDAO = new us.mn.state.health.lims.siteinformation.daoimpl.SiteInformationDAOImpl();
+            us.mn.state.health.lims.siteinformation.valueholder.SiteInformation siteInfo = siteInfoDAO.getSiteInformationByName("accessionStrategy");
+            String accStr = (siteInfo != null) ? siteInfo.getValue() : "";
+            Boolean isGrp = Boolean.valueOf("groupBySample".equals(accStr));
+            us.mn.state.health.lims.dashboard.dao.OrderListDAO orderDAO = new us.mn.state.health.lims.dashboard.daoimpl.OrderListDAOImpl(isGrp);
+
+            com.fasterxml.jackson.databind.ObjectMapper mapper = org.bahmni.feed.openelis.ObjectMapperRepository.objectMapper;
+            todayOrderListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllToday()));
+            todaySampleNotCollectedListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllSampleNotCollectedToday()));
+            backlogSampleNotCollectedListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllSampleNotCollectedPendingBeforeToday()));
+            backlogOrderListJson = org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript(mapper.writeValueAsString(orderDAO.getAllPendingBeforeToday()));
+        } catch (Exception ignore) {
+            todayOrderListJson = "[]";
+            todaySampleNotCollectedListJson = "[]";
+            backlogSampleNotCollectedListJson = "[]";
+            backlogOrderListJson = "[]";
+        }
+    }
+%>
 
 <%
     String currentUserName = "OpenELIS User";
@@ -274,10 +313,14 @@
 </div>
 
 <script>
-var todayOrderList = JSON.parse('<%=todayOrderListJson%>') || [];
-var todaySampleNotCollectedList = JSON.parse('<%=todaySampleNotCollectedListJson%>') || [];
-var backlogSampleNotCollectedList = JSON.parse('<%=backlogSampleNotCollectedListJson%>') || [];
-var backlogOrderList = JSON.parse('<%=backlogOrderListJson%>') || [];
+var todayOrderList = [];
+try { todayOrderList = JSON.parse('<%=todayOrderListJson%>') || []; } catch(e) { todayOrderList = []; }
+var todaySampleNotCollectedList = [];
+try { todaySampleNotCollectedList = JSON.parse('<%=todaySampleNotCollectedListJson%>') || []; } catch(e) { todaySampleNotCollectedList = []; }
+var backlogSampleNotCollectedList = [];
+try { backlogSampleNotCollectedList = JSON.parse('<%=backlogSampleNotCollectedListJson%>') || []; } catch(e) { backlogSampleNotCollectedList = []; }
+var backlogOrderList = [];
+try { backlogOrderList = JSON.parse('<%=backlogOrderListJson%>') || []; } catch(e) { backlogOrderList = []; }
 
 var dbTatList = <%=deptTatList.toString()%>;
 var dbVolumeList = <%=deptVolumeList.toString()%>;
