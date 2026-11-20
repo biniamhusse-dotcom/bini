@@ -19,7 +19,17 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
         var payment_config = appService.getAppDescriptor().getConfigValue("paymentConfig") || {};
         $scope.isPaymentBypassed = !!payment_config["disable checking"];
         var ordersSerialNumberBuilding = appService.getAppDescriptor().getConfigValue("ordersSerialNumberBuilding");
-        $scope.formName = $stateParams.orderType + Bahmni.Common.Constants.fulfillmentFormSuffix;
+        var orderFulfillmentFormMap = {
+            "Radiology Order": "Radiology order fulfillment form",
+            "Pathology Order": "Pathology order fulfillment form",
+            "Ophtha Order": "Ophtha Order fulfillment form",
+            "Procedure Order": "Procedure order fulfillment form",
+            "Lab Order": "Lab order fulfillment form"
+        };
+        $scope.formName = (orderFulfillmentConfig && orderFulfillmentConfig.resolvedFormName) ||
+                          orderFulfillmentFormMap[$stateParams.orderType] ||
+                          ($stateParams.orderType + Bahmni.Common.Constants.fulfillmentFormSuffix);
+        $scope.formUuid = (orderFulfillmentConfig && orderFulfillmentConfig.resolvedFormUuid) || null;
         $scope.fulfillmentConfig = orderFulfillmentConfig;
         $scope.orderType = $stateParams.orderType;
         $scope.nextPageLoading = false;
@@ -109,8 +119,10 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                         return observation.orderUuid === order.orderUuid;
                     }); 
 
-                    if (order.bahmniObservations.length > 0) {
+                    if (order.bahmniObservations.length > 0 && order.paymentStatus) {
                         order.showForm = true;
+                    } else {
+                        order.showForm = false;
                     }
                     getOrderPaymentStatus(order);
                 });
@@ -125,9 +137,15 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
             }
             paymentStatusService.getPaymentStatus(order.orderUuid).then(function (response) {
                 order.paymentStatus = (response.data && response.data.status === "PAID") || response.data === true;
+                if (!order.paymentStatus) {
+                    order.showForm = false;
+                }
             }).catch(function () {
                 paymentStatusService.getPaymentStatus(patientContext.patient.identifier).then(function (res) {
                     order.paymentStatus = (res.data && res.data.status === "PAID") || res.data === true;
+                    if (!order.paymentStatus) {
+                        order.showForm = false;
+                    }
                 }).catch(function () {
                     order.paymentStatus = true;
                 });
@@ -165,6 +183,10 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
         };
         
         $scope.toggleShowOrderForm = function (order) {
+            if (!order.paymentStatus) {
+                messagingService.showMessage('error', 'Order is not paid yet. Cannot enter results for unpaid orders.');
+                return;
+            }
             order.showForm = !order.showForm;
         };
 

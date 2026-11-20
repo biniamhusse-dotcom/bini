@@ -29,10 +29,13 @@
             <tr ng-repeat-start="order in orders" style="color: black;">
                 <td>
                     <div id="{{order.orderUuid}}" style="position: relative">
-                        <div class="concept-set-title" ng-click="toggleShowOrderForm(order)" id="conceptSetTitle">
-                            <i class="fa fa-caret-right" ng-hide="order.showForm"></i>
-                            <i class="fa fa-caret-down" ng-show="order.showForm"></i>
+                        <div class="concept-set-title" ng-click="toggleShowOrderForm(order)" id="conceptSetTitle"
+                             ng-style="!order.paymentStatus && {'cursor': 'not-allowed', 'opacity': '0.7'}"
+                             title="{{!order.paymentStatus ? 'Payment required to enter results' : 'Click to enter results'}}">
+                            <i class="fa fa-caret-right" ng-hide="order.showForm && order.paymentStatus"></i>
+                            <i class="fa fa-caret-down" ng-show="order.showForm && order.paymentStatus"></i>
                             <span>{{order.concept.shortName || order.concept.name}}</span>
+                            <span ng-if="!order.paymentStatus" style="color: #c9302c; font-size: 11px; margin-left: 5px; font-weight: normal;">(Payment Required)</span>
                         </div>
                     </div>
                 </td>
@@ -61,11 +64,11 @@
                     </span>
                 </td>
             </tr>
-            <!-- This row will only show when the order.showForm is true -->
-            <tr ng-repeat-end ng-if="order.showForm" style="color: black;">
+            <!-- This row will only show when the order.showForm is true and order is paid -->
+            <tr ng-repeat-end ng-if="order.showForm && order.paymentStatus" style="color: black;">
                 <td colspan="8">
                     <orders-control patient="patient" order-uuid="order.orderUuid" config="config" message="message" show-title="false"></orders-control>
-                    <concept-set patient="patient" ng-if="order.showForm" concept-set-name="formName" observations="order.bahmniObservations" show-title="false" section-id="order.orderUuid">
+                    <concept-set patient="patient" ng-if="order.showForm && order.paymentStatus" concept-set-name="formName" concept-set-uuid="formUuid" observations="order.bahmniObservations" show-title="false" section-id="order.orderUuid">
                     </concept-set>
                 </td>
             </tr>

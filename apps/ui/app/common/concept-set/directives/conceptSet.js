@@ -329,24 +329,43 @@ angular.module('bahmni.common.conceptSet')
                             return byUuid;
                         }
                     }
+                    var lowerTarget = (targetName || '').toLowerCase().trim();
+                    var matchName = function (c) {
+                        if (!c || !c.name) return false;
+                        var n = (c.name.name || c.name.display || c.name || '').toLowerCase().trim();
+                        return n === lowerTarget;
+                    };
                     return _.find(results, function (c) {
-                        return c.set === true && c.name && c.name.name === targetName;
-                    }) || _.find(results, { set: true }) || _.find(results, function (c) {
-                        return c.name && c.name.name === targetName;
-                    }) || results[0];
+                        return c.set === true && matchName(c);
+                    }) || _.find(results, { set: true }) || _.find(results, matchName) || results[0];
                 };
 
                 var init = function () {
+                    var getConceptByNameWithFallback = function (name) {
+                        return conceptSetService.getConcept({ name: name, v: "bahmni" }).then(function (res) {
+                            if (res.data && res.data.results && res.data.results.length > 0) {
+                                return res;
+                            }
+                            var lower = (name || '').toLowerCase();
+                            if (lower && lower !== name) {
+                                return conceptSetService.getConcept({ name: lower, v: "bahmni" }).then(function (r2) {
+                                    if (r2.data && r2.data.results && r2.data.results.length > 0) {
+                                        return r2;
+                                    }
+                                    return res;
+                                });
+                            }
+                            return res;
+                        });
+                    };
+
                     var conceptPromise = $scope.conceptSetUuid
                         ? conceptSetService.getConceptByUuid($scope.conceptSetUuid, { v: "bahmni" }).then(function (resp) {
                             return { data: { results: resp.data ? [resp.data] : [] } };
                         }, function () {
-                            return conceptSetService.getConcept({ name: conceptSetName, v: "bahmni" });
+                            return getConceptByNameWithFallback(conceptSetName);
                         })
-                        : conceptSetService.getConcept({
-                            name: conceptSetName,
-                            v: "bahmni"
-                        });
+                        : getConceptByNameWithFallback(conceptSetName);
 
                     return conceptPromise.then(function (response) {
                         $scope.conceptSet = pickBestConcept(response.data && response.data.results, conceptSetName);
@@ -354,12 +373,10 @@ angular.module('bahmni.common.conceptSet')
                             autocompleteConcepts().then(function (autocompleteResponse) {
                                 dropdownConcepts().then(function (dropdownResponse) {
                                     requiredConcepts().then(function (requiredResponse) {
-                                        var mergedData = [];
-
-                                        var dropdownData = dropdownResponse.data
-                                        var requiredData = requiredResponse.data
-                                        var autocompleteData = autocompleteResponse.data
-                                        var multiSelectData = multiSelectableResponse.data;
+                                        var dropdownData = Array.isArray(dropdownResponse.data) ? dropdownResponse.data : [];
+                                        var requiredData = Array.isArray(requiredResponse.data) ? requiredResponse.data : [];
+                                        var autocompleteData = Array.isArray(autocompleteResponse.data) ? autocompleteResponse.data : [];
+                                        var multiSelectData = Array.isArray(multiSelectableResponse.data) ? multiSelectableResponse.data : [];
 
                                         // Merged concepts data
                                         var mergedData = [...autocompleteData, ...multiSelectData, ...dropdownData, ...requiredData];
