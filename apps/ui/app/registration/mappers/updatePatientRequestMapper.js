@@ -7,11 +7,11 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
 
     UpdatePatientRequestMapper.prototype.currentDate = undefined;
 
-    // Helper: remove all null/undefined keys from a plain object (shallow)
+    // Helper: remove null/undefined/empty string keys from a plain object
     var stripNulls = function (obj) {
         if (!obj || typeof obj !== 'object') { return obj; }
         Object.keys(obj).forEach(function (k) {
-            if (obj[k] === null || obj[k] === undefined) {
+            if (obj[k] === null || obj[k] === undefined || obj[k] === '') {
                 delete obj[k];
             }
         });
@@ -40,10 +40,16 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
         if (hasAddressContent) {
             addresses = [cleanAddress];
         } else if (openMRSPatient && openMRSPatient.person && openMRSPatient.person.addresses && openMRSPatient.person.addresses.length > 0) {
-            addresses = openMRSPatient.person.addresses;
+            var rawAddresses = openMRSPatient.person.addresses.map(function (addr) {
+                var picked = _.pick(addr, Bahmni.Registration.Constants.allAddressFileds);
+                return stripNulls(picked);
+            });
+            addresses = rawAddresses.filter(function (addr) {
+                return Object.keys(addr).length > 0;
+            });
         }
 
-        // Build name object — omit uuid entirely if not available (undefined serialises as absent in JSON.stringify)
+        // Build name object — omit uuid entirely if not available
         var nameObj = {
             givenName: patient.givenName,
             middleName: patient.middleName,
@@ -55,7 +61,6 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                         openMRSPatient.person.names[0] && openMRSPatient.person.names[0].uuid)
                         ? openMRSPatient.person.names[0].uuid : null;
         if (nameUuid) { nameObj.uuid = nameUuid; }
-        // Strip null/undefined from nameObj to avoid Jackson NPE on setConvertedProperties
         stripNulls(nameObj);
 
         var openMRSPatientProfile = {
@@ -63,7 +68,7 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                 person: {
                     names: [nameObj],
                     birthdate: this.getBirthdate(patient.birthdate, patient.age),
-                    birthdateEstimated: patient.birthdateEstimated,
+                    birthdateEstimated: !!patient.birthdateEstimated,
                     gender: patient.gender,
                     attributes: this.getMrsAttributes(openMRSPatient, patient, patientAttributeTypes),
                     dead: !!patient.dead
@@ -71,9 +76,11 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
             }
         };
 
-        // Only add nullable person fields when they have actual values
+        // Only add nullable person fields when they have actual non-empty values
         if (patient.birthtime && moment(patient.birthtime).isValid()) {
             openMRSPatientProfile.patient.person.birthtime = Bahmni.Common.Util.DateUtil.parseLongDateToServerFormat(patient.birthtime);
+        } else {
+            delete openMRSPatientProfile.patient.person.birthtime;
         }
         if (patient.dead && patient.deathDate) {
             openMRSPatientProfile.patient.person.deathDate = Bahmni.Common.Util.DateUtil.getDateWithoutTime(patient.deathDate);
@@ -82,13 +89,13 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
             openMRSPatientProfile.patient.person.causeOfDeath = patient.causeOfDeath.uuid;
         }
 
-        if (addresses) {
+        if (addresses && addresses.length > 0) {
             openMRSPatientProfile.patient.person.addresses = addresses;
         }
 
         var allIdentifiers = _.concat(patient.extraIdentifiers, patient.primaryIdentifier);
         var nonEmptyIdentifiers = _.filter(allIdentifiers, function (identifier) {
-            return identifier.uuid || identifier.identifier;
+            return identifier && (identifier.uuid || identifier.identifier);
         });
 
         openMRSPatientProfile.patient.identifiers = _.map(nonEmptyIdentifiers, function (identifier) {
@@ -99,9 +106,7 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                 preferred: identifier.preferred !== undefined ? identifier.preferred : true,
                 voided: identifier.voided || false
             };
-            // Only include uuid if it exists — sending null uuid causes server NPE
             if (identifier.uuid) { idObj.uuid = identifier.uuid; }
-            // Ensure no transient properties like identifierPrefix or identifierSourceUuid are sent on update
             delete idObj.identifierPrefix;
             delete idObj.identifierSourceUuid;
             return stripNulls(idObj);
@@ -141,7 +146,6 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                 var patientAttrValue = patient[attributeType.name] !== undefined ? patient[attributeType.name] : patient[savedAttribute.attributeType.display];
                 setAttributeValue(attributeType, attr, patientAttrValue);
                 if (attr.voided) {
-                    // For voiding an existing attribute, retain original value string so Jackson deserializer doesn't fail on null value
                     var origVal = (typeof savedAttribute.value === 'object' && savedAttribute.value) ? savedAttribute.value.uuid : savedAttribute.value;
                     if (origVal) { attr.value = String(origVal); }
                 }
