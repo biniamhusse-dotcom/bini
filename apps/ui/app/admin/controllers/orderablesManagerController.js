@@ -72,13 +72,36 @@ angular.module('admin')
                 autoAttachToSelected: true
             };
 
+            var DATATYPE_UUIDS = {
+                'Text': '8d4a4ab4-c2cc-11de-8d13-0010c6dffd0f',
+                'Numeric': '8d4a4488-c2cc-11de-8d13-0010c6dffd0f',
+                'Date': '8d4a505e-c2cc-11de-8d13-0010c6dffd0f',
+                'Datetime': '8d4a5af4-c2cc-11de-8d13-0010c6dffd0f',
+                'Coded': '8d4a48b6-c2cc-11de-8d13-0010c6dffd0f',
+                'Boolean': '8d4a5cca-c2cc-11de-8d13-0010c6dffd0f',
+                'N/A': '8d4a4c94-c2cc-11de-8d13-0010c6dffd0f',
+                'Complex': '8d4a6242-c2cc-11de-8d13-0010c6dffd0f'
+            };
+
+            var CLASS_UUIDS = {
+                'Misc': '8d492774-c2cc-11de-8d13-0010c6dffd0f',
+                'ConvSet': '8d492594-c2cc-11de-8d13-0010c6dffd0f',
+                'Question': '8d491e50-c2cc-11de-8d13-0010c6dffd0f',
+                'Finding': '8d491a9a-c2cc-11de-8d13-0010c6dffd0f',
+                'Test': '8d4907b2-c2cc-11de-8d13-0010c6dffd0f'
+            };
+
             $scope.editFormModal = {
                 open: false,
                 saving: false,
+                viewMode: 'editor',
                 uuid: '',
                 name: '',
                 shortName: '',
-                fields: []
+                conceptSearchQuery: '',
+                conceptSearchResults: [],
+                searchLoading: false,
+                items: []
             };
 
             $scope.manageFormsModal = {
@@ -87,7 +110,7 @@ angular.module('admin')
 
             // Load all forms from the "Order Result Entry Forms" category store
             $scope.loadAvailableForms = function () {
-                var rep = 'custom:(uuid,name:(display,name),names:(name,conceptNameType),conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),names:(name,conceptNameType),conceptClass:(name),datatype:(name)))';
+                var rep = 'custom:(uuid,name:(display,name),names:(name,conceptNameType),set,conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),names:(name,conceptNameType),set,conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name))))';
                 return $http.get(OPENMRS_BASE + '/concept/' + ORDER_RESULT_ENTRY_FORMS_UUID + '?v=' + rep)
                     .then(function (res) {
                         var members = (res.data && res.data.setMembers) || [];
@@ -95,12 +118,25 @@ angular.module('admin')
                             var shortName = _.find(m.names, { conceptNameType: 'SHORT' });
                             var fullName = _.find(m.names, { conceptNameType: 'FULLY_SPECIFIED' });
                             var formName = (fullName && fullName.name) || (m.name && (m.name.name || m.name.display));
+                            
+                            var totalQuestions = 0;
+                            var totalSections = 0;
+                            (m.setMembers || []).forEach(function (sm) {
+                                if (sm.set === true || (sm.setMembers && sm.setMembers.length > 0)) {
+                                    totalSections++;
+                                    totalQuestions += (sm.setMembers || []).length;
+                                } else {
+                                    totalQuestions++;
+                                }
+                            });
+
                             return {
                                 name: formName,
                                 shortName: shortName ? shortName.name : '',
                                 uuid: m.uuid,
                                 conceptClass: m.conceptClass ? m.conceptClass.name : 'ConvSet',
-                                fieldsCount: (m.setMembers || []).length,
+                                sectionsCount: totalSections,
+                                fieldsCount: totalQuestions,
                                 fields: m.setMembers || []
                             };
                         });
@@ -358,7 +394,7 @@ angular.module('admin')
             };
 
             // ==========================================
-            // EDIT FORM MODAL & ACTIONS
+            // EDIT FORM MODAL & FULL STRUCTURE ACTIONS
             // ==========================================
             $scope.openEditFormModal = function (form) {
                 var targetForm = form || ($scope.selectedOrderable && $scope.selectedOrderable.selectedForm);
@@ -368,7 +404,9 @@ angular.module('admin')
                 }
 
                 $scope.loading = true;
-                $http.get(OPENMRS_BASE + '/concept/' + targetForm.uuid + '?v=custom:(uuid,name:(display,name),names:(name,locale,conceptNameType),setMembers:(uuid,name:(display,name),names:(name,conceptNameType),conceptClass:(name),datatype:(name)))')
+                var rep = 'custom:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,datatype:(name),conceptClass:(name),setMembers:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,datatype:(name),conceptClass:(name),answers:(uuid,name:(display,name)),setMembers:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,datatype:(name),conceptClass:(name),answers:(uuid,name:(display,name)))))';
+
+                $http.get(OPENMRS_BASE + '/concept/' + targetForm.uuid + '?v=' + rep)
                     .then(function (res) {
                         $scope.loading = false;
                         var c = res.data;
@@ -376,26 +414,61 @@ angular.module('admin')
                         var fullObj = _.find(c.names, { conceptNameType: 'FULLY_SPECIFIED' });
                         var formName = (fullObj && fullObj.name) || (c.name && (c.name.name || c.name.display));
 
-                        var fields = (c.setMembers || []).map(function (sm) {
-                            var smFull = _.find(sm.names, { conceptNameType: 'FULLY_SPECIFIED' });
-                            var smName = (smFull && smFull.name) || (sm.name && (sm.name.name || sm.name.display));
-                            var dt = sm.datatype ? sm.datatype.name : 'Text';
-                            if (dt !== 'Numeric' && dt !== 'Date') dt = 'Text';
-                            return {
-                                uuid: sm.uuid,
-                                name: smName,
-                                datatype: dt,
-                                conceptClass: 'Misc'
-                            };
-                        });
+                        var mapConcept = function (m) {
+                            var mFull = _.find(m.names, { conceptNameType: 'FULLY_SPECIFIED' });
+                            var mName = (mFull && mFull.name) || (m.name && (m.name.name || m.name.display));
+                            var dt = (m.datatype && m.datatype.name) || 'Text';
+                            var cls = (m.conceptClass && m.conceptClass.name) || 'Misc';
+                            var answers = (m.answers || []).map(function (a) {
+                                return {
+                                    uuid: a.uuid,
+                                    name: a.name ? (a.name.display || a.name.name) : (a.display || 'Option')
+                                };
+                            });
+
+                            if (m.set === true || (m.setMembers && m.setMembers.length > 0)) {
+                                return {
+                                    uuid: m.uuid,
+                                    name: mName,
+                                    isSet: true,
+                                    datatype: 'N/A',
+                                    conceptClass: cls,
+                                    collapsed: false,
+                                    fields: (m.setMembers || []).map(mapConcept)
+                                };
+                            } else {
+                                return {
+                                    uuid: m.uuid,
+                                    name: mName,
+                                    isSet: false,
+                                    datatype: dt,
+                                    conceptClass: cls,
+                                    answers: answers,
+                                    newAnswerText: ''
+                                };
+                            }
+                        };
+
+                        var items = (c.setMembers || []).map(mapConcept);
 
                         $scope.editFormModal = {
                             open: true,
                             saving: false,
+                            viewMode: 'editor',
                             uuid: c.uuid,
                             name: formName,
                             shortName: shortObj ? shortObj.name : '',
-                            fields: fields.length > 0 ? fields : [{ name: 'Clinical Notes', datatype: 'Text', conceptClass: 'Misc' }]
+                            conceptSearchQuery: '',
+                            conceptSearchResults: [],
+                            searchLoading: false,
+                            items: items.length > 0 ? items : [{
+                                name: 'General Observations',
+                                isSet: true,
+                                datatype: 'N/A',
+                                conceptClass: 'ConvSet',
+                                collapsed: false,
+                                fields: [{ name: 'Clinical Notes', isSet: false, datatype: 'Text', conceptClass: 'Misc', answers: [], newAnswerText: '' }]
+                            }]
                         };
                     }).catch(function (err) {
                         $scope.loading = false;
@@ -407,20 +480,186 @@ angular.module('admin')
                 $scope.editFormModal.open = false;
             };
 
-            $scope.addEditFormField = function () {
-                $scope.editFormModal.fields.push({
-                    name: '',
-                    datatype: 'Text',
-                    conceptClass: 'Misc'
-                });
-            };
-
-            $scope.removeEditFormField = function (index) {
-                if ($scope.editFormModal.fields.length > 1) {
-                    $scope.editFormModal.fields.splice(index, 1);
+            // Add Top-Level Question or Section
+            $scope.addEditFormItem = function (type) {
+                if (type === 'Section') {
+                    $scope.editFormModal.items.push({
+                        name: 'New Section',
+                        isSet: true,
+                        datatype: 'N/A',
+                        conceptClass: 'ConvSet',
+                        collapsed: false,
+                        fields: [
+                            { name: '', isSet: false, datatype: 'Text', conceptClass: 'Misc', answers: [], newAnswerText: '' }
+                        ]
+                    });
+                } else if (type === 'Coded') {
+                    $scope.editFormModal.items.push({
+                        name: '',
+                        isSet: false,
+                        datatype: 'Coded',
+                        conceptClass: 'Question',
+                        answers: [{ name: 'Normal' }, { name: 'Abnormal' }],
+                        newAnswerText: ''
+                    });
+                } else {
+                    $scope.editFormModal.items.push({
+                        name: '',
+                        isSet: false,
+                        datatype: type || 'Text',
+                        conceptClass: 'Misc',
+                        answers: [],
+                        newAnswerText: ''
+                    });
                 }
             };
 
+            // Add Question inside a Section
+            $scope.addFieldToSection = function (section, type) {
+                if (!section.fields) section.fields = [];
+                if (type === 'Coded') {
+                    section.fields.push({
+                        name: '',
+                        isSet: false,
+                        datatype: 'Coded',
+                        conceptClass: 'Question',
+                        answers: [{ name: 'Normal' }, { name: 'Abnormal' }],
+                        newAnswerText: ''
+                    });
+                } else {
+                    section.fields.push({
+                        name: '',
+                        isSet: false,
+                        datatype: type || 'Text',
+                        conceptClass: 'Misc',
+                        answers: [],
+                        newAnswerText: ''
+                    });
+                }
+            };
+
+            // Remove Top-Level Item
+            $scope.removeEditFormItem = function (index) {
+                $scope.editFormModal.items.splice(index, 1);
+            };
+
+            // Remove Question inside Section
+            $scope.removeSectionField = function (section, fieldIndex) {
+                section.fields.splice(fieldIndex, 1);
+            };
+
+            // Add Option/Answer to Coded Field
+            $scope.addAnswerToField = function (field) {
+                if (!field.newAnswerText || !field.newAnswerText.trim()) return;
+                if (!field.answers) field.answers = [];
+                field.answers.push({ name: field.newAnswerText.trim() });
+                field.newAnswerText = '';
+            };
+
+            // Remove Option/Answer from Coded Field
+            $scope.removeAnswerFromField = function (field, index) {
+                field.answers.splice(index, 1);
+            };
+
+            // Move Item up or down in a list
+            $scope.moveItem = function (list, index, delta) {
+                var newIndex = index + delta;
+                if (newIndex < 0 || newIndex >= list.length) return;
+                var item = list.splice(index, 1)[0];
+                list.splice(newIndex, 0, item);
+            };
+
+            // Move Question to Section (or Top Level)
+            $scope.moveFieldToSection = function (field, fromList, fromIndex, targetSection) {
+                fromList.splice(fromIndex, 1);
+                if (targetSection) {
+                    if (!targetSection.fields) targetSection.fields = [];
+                    targetSection.fields.push(field);
+                } else {
+                    $scope.editFormModal.items.push(field);
+                }
+            };
+
+            // Search OpenMRS Concept Dictionary
+            $scope.searchOpenmrsConcepts = function () {
+                var q = ($scope.editFormModal.conceptSearchQuery || '').trim();
+                if (!q || q.length < 2) {
+                    $scope.editFormModal.conceptSearchResults = [];
+                    return;
+                }
+                $scope.editFormModal.searchLoading = true;
+                var rep = 'custom:(uuid,name:(display,name),names:(name,conceptNameType),set,datatype:(name),conceptClass:(name),answers:(uuid,name:(display,name)),setMembers:(uuid,name:(display,name),set,datatype:(name),conceptClass:(name),answers:(uuid,name:(display,name))))';
+                $http.get(OPENMRS_BASE + '/concept?q=' + encodeURIComponent(q) + '&v=' + rep + '&limit=12')
+                    .then(function (res) {
+                        $scope.editFormModal.searchLoading = false;
+                        $scope.editFormModal.conceptSearchResults = res.data.results || [];
+                    }).catch(function () {
+                        $scope.editFormModal.searchLoading = false;
+                    });
+            };
+
+            // Add Searched Concept from OpenMRS Dictionary into Form
+            $scope.addSearchedConceptToForm = function (c, targetSection) {
+                var cFull = _.find(c.names, { conceptNameType: 'FULLY_SPECIFIED' });
+                var cName = (cFull && cFull.name) || (c.name && (c.name.name || c.name.display));
+                var dt = (c.datatype && c.datatype.name) || 'Text';
+                var cls = (c.conceptClass && c.conceptClass.name) || 'Misc';
+                var answers = (c.answers || []).map(function (a) {
+                    return { uuid: a.uuid, name: a.name ? (a.name.display || a.name.name) : (a.display || 'Option') };
+                });
+
+                var newItem;
+                if (c.set === true || (c.setMembers && c.setMembers.length > 0)) {
+                    newItem = {
+                        uuid: c.uuid,
+                        name: cName,
+                        isSet: true,
+                        datatype: 'N/A',
+                        conceptClass: cls,
+                        collapsed: false,
+                        fields: (c.setMembers || []).map(function (sm) {
+                            return {
+                                uuid: sm.uuid,
+                                name: sm.name ? (sm.name.display || sm.name.name) : 'Sub-item',
+                                isSet: false,
+                                datatype: (sm.datatype && sm.datatype.name) || 'Text',
+                                conceptClass: (sm.conceptClass && sm.conceptClass.name) || 'Misc',
+                                answers: (sm.answers || []).map(function (a) { return { uuid: a.uuid, name: a.display }; }),
+                                newAnswerText: ''
+                            };
+                        })
+                    };
+                } else {
+                    newItem = {
+                        uuid: c.uuid,
+                        name: cName,
+                        isSet: false,
+                        datatype: dt,
+                        conceptClass: cls,
+                        answers: answers,
+                        newAnswerText: ''
+                    };
+                }
+
+                if (targetSection) {
+                    if (!targetSection.fields) targetSection.fields = [];
+                    targetSection.fields.push(newItem);
+                } else {
+                    $scope.editFormModal.items.push(newItem);
+                }
+
+                $scope.editFormModal.conceptSearchQuery = '';
+                $scope.editFormModal.conceptSearchResults = [];
+                messagingService.showMessage('info', 'Added concept to form: ' + cName);
+            };
+
+            // Get all sections for dropdown selection
+            $scope.getFormSections = function () {
+                if (!$scope.editFormModal || !$scope.editFormModal.items) return [];
+                return $scope.editFormModal.items.filter(function (it) { return it.isSet; });
+            };
+
+            // Submit Edit Order Form (Full Hierarchy Saving)
             $scope.submitEditOrderForm = function () {
                 var m = $scope.editFormModal;
                 if (!m.name.trim()) {
@@ -430,34 +669,125 @@ angular.module('admin')
 
                 m.saving = true;
 
-                // 1. Resolve or create field concepts
-                var fieldPromises = m.fields.map(function (field) {
+                // 1. Helper to resolve or create a single question concept
+                var resolveQuestionConcept = function (field) {
                     var fName = (field.name || '').trim();
                     if (!fName) fName = 'Notes';
-                    if (field.uuid) return $q.when(field.uuid);
 
-                    return $http.get(OPENMRS_BASE + '/concept?name=' + encodeURIComponent(fName) + '&v=custom:(uuid,name:(display,name))')
-                        .then(function (res) {
-                            var existing = res.data.results && res.data.results[0];
-                            if (existing && existing.uuid) return existing.uuid;
+                    // If existing concept and not coded with answer modifications, reuse UUID
+                    if (field.uuid && field.datatype !== 'Coded') {
+                        return $q.when(field.uuid);
+                    }
 
-                            var fieldPayload = {
-                                names: [{ name: fName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
-                                datatype: field.datatype === 'Numeric' ? '8d4a4488-c2cc-11de-8d13-0010c6dffd0f' :
-                                          (field.datatype === 'Date' ? '8d4a4e92-c2cc-11de-8d13-0010c6dffd0f' : '8d4a4ab4-c2cc-11de-8d13-0010c6dffd0f'),
-                                conceptClass: '8d492774-c2cc-11de-8d13-0010c6dffd0f',
-                                set: false
-                            };
-                            return $http.post(OPENMRS_BASE + '/concept', fieldPayload).then(function (cRes) {
-                                return cRes.data.uuid;
-                            });
-                        }).catch(function () {
-                            return null;
+                    // Helper to resolve answer concept UUIDs for Coded questions
+                    var resolveAnswers = function () {
+                        if (field.datatype !== 'Coded' || !field.answers || field.answers.length === 0) {
+                            return $q.when([]);
+                        }
+                        var ansPromises = field.answers.map(function (a) {
+                            if (a.uuid) return $q.when(a.uuid);
+                            var aName = (a.name || '').trim();
+                            if (!aName) return $q.when(null);
+                            return $http.get(OPENMRS_BASE + '/concept?q=' + encodeURIComponent(aName) + '&limit=3')
+                                .then(function (res) {
+                                    var match = _.find(res.data.results, function (r) {
+                                        return (r.display || '').toLowerCase() === aName.toLowerCase();
+                                    });
+                                    if (match && match.uuid) return match.uuid;
+                                    var aPayload = {
+                                        names: [{ name: aName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
+                                        datatype: DATATYPE_UUIDS['N/A'],
+                                        conceptClass: CLASS_UUIDS['Misc'],
+                                        set: false
+                                    };
+                                    return $http.post(OPENMRS_BASE + '/concept', aPayload).then(function (r) { return r.data.uuid; });
+                                }).catch(function () { return null; });
                         });
-                });
+                        return $q.all(ansPromises).then(function (uList) {
+                            return uList.filter(function (u) { return !!u; });
+                        });
+                    };
 
-                $q.all(fieldPromises).then(function (fieldUuids) {
-                    var cleanFieldUuids = fieldUuids.filter(function (u) { return !!u; });
+                    return resolveAnswers().then(function (answerUuids) {
+                        if (field.uuid) {
+                            // Update answers if coded
+                            if (field.datatype === 'Coded' && answerUuids.length > 0) {
+                                return $http.post(OPENMRS_BASE + '/concept/' + field.uuid, { answers: answerUuids })
+                                    .then(function () { return field.uuid; })
+                                    .catch(function () { return field.uuid; });
+                            }
+                            return field.uuid;
+                        }
+
+                        // Search by name before creating to reuse existing concepts
+                        return $http.get(OPENMRS_BASE + '/concept?q=' + encodeURIComponent(fName) + '&limit=5')
+                            .then(function (res) {
+                                var existing = _.find(res.data.results, function (r) {
+                                    return (r.display || '').toLowerCase() === fName.toLowerCase();
+                                });
+                                if (existing && existing.uuid) {
+                                    return existing.uuid;
+                                }
+
+                                var dtUuid = DATATYPE_UUIDS[field.datatype] || DATATYPE_UUIDS['Text'];
+                                var clsUuid = field.datatype === 'Coded' ? CLASS_UUIDS['Question'] : CLASS_UUIDS['Misc'];
+                                var payload = {
+                                    names: [{ name: fName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
+                                    datatype: dtUuid,
+                                    conceptClass: clsUuid,
+                                    set: false
+                                };
+                                if (answerUuids.length > 0) {
+                                    payload.answers = answerUuids;
+                                }
+                                return $http.post(OPENMRS_BASE + '/concept', payload).then(function (cRes) {
+                                    return cRes.data.uuid;
+                                });
+                            }).catch(function () {
+                                return null;
+                            });
+                    });
+                };
+
+                // 2. Helper to resolve an item (either Section or Top-level field)
+                var resolveItem = function (item) {
+                    if (item.isSet) {
+                        // Section: resolve all child fields first
+                        var childPromises = (item.fields || []).map(resolveQuestionConcept);
+                        return $q.all(childPromises).then(function (childUuids) {
+                            var cleanChildUuids = childUuids.filter(function (u) { return !!u; });
+                            var secName = (item.name || '').trim() || 'Section';
+
+                            if (item.uuid) {
+                                var secPayload = {
+                                    names: [{ name: secName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
+                                    setMembers: cleanChildUuids
+                                };
+                                return $http.post(OPENMRS_BASE + '/concept/' + item.uuid, secPayload)
+                                    .then(function () { return item.uuid; });
+                            } else {
+                                var newSecPayload = {
+                                    names: [{ name: secName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
+                                    datatype: DATATYPE_UUIDS['N/A'],
+                                    conceptClass: CLASS_UUIDS['ConvSet'],
+                                    set: true,
+                                    setMembers: cleanChildUuids
+                                };
+                                return $http.post(OPENMRS_BASE + '/concept', newSecPayload)
+                                    .then(function (res) { return res.data.uuid; });
+                            }
+                        });
+                    } else {
+                        // Top level field
+                        return resolveQuestionConcept(item);
+                    }
+                };
+
+                // 3. Resolve all top-level items
+                var topLevelPromises = m.items.map(resolveItem);
+
+                $q.all(topLevelPromises).then(function (topLevelUuids) {
+                    var cleanTopLevelUuids = topLevelUuids.filter(function (u) { return !!u; });
 
                     var formNames = [
                         { name: m.name.trim(), locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }
@@ -468,14 +798,14 @@ angular.module('admin')
 
                     var formPayload = {
                         names: formNames,
-                        setMembers: cleanFieldUuids
+                        setMembers: cleanTopLevelUuids
                     };
 
                     return $http.post(OPENMRS_BASE + '/concept/' + m.uuid, formPayload);
                 }).then(function () {
                     m.saving = false;
                     m.open = false;
-                    messagingService.showMessage('info', 'Form updated successfully: ' + m.name);
+                    messagingService.showMessage('info', 'Form structure updated successfully: ' + m.name);
                     return $scope.loadAvailableForms();
                 }).catch(function (err) {
                     m.saving = false;
