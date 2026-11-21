@@ -139,72 +139,77 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                 orderUuid: $scope.orderUuid,
                 locationUuids: $rootScope.facilityLocationUuids
             };
-            return orderService.getOrders(params).then(function (response) {
-                var data = response.data || [];
+            return $q.all([
+                orderService.getOrders(params),
+                loadOrderableFormMappings()
+            ]).then(function (results) {
+                var orderResponse = results[0];
+                var formMappings = results[1] || {};
+                var data = (orderResponse && orderResponse.data) || [];
+
+                data.forEach(function (order) {
+                    try {
+                        var conceptUuid = order.concept ? order.concept.uuid : null;
+                        var conceptName = order.concept ? (order.concept.name || order.concept.shortName) : null;
+                        var customForm = (conceptUuid && formMappings[conceptUuid]) ||
+                                         (conceptName && formMappings[conceptName]);
+
+                        if (customForm) {
+                            order.attachedFormName = customForm.formName;
+                            order.attachedFormUuid = customForm.formUuid;
+                        } else {
+                            order.attachedFormName = $scope.formName;
+                            order.attachedFormUuid = $scope.formUuid;
+
+                            // Fallback: query concept custom rep if not found in preloaded map
+                            if (conceptUuid) {
+                                $http.get('/openmrs/ws/rest/v1/concept/' + conceptUuid + '?v=custom:(uuid,descriptions:(description))')
+                                    .then(function (cResp) {
+                                        var descs = (cResp.data && cResp.data.descriptions) || [];
+                                        var descObj = _.find(descs, function (d) {
+                                            return d.description && d.description.indexOf('fulfillmentForm:') !== -1;
+                                        });
+                                        if (descObj) {
+                                            var mName = descObj.description.match(/fulfillmentForm:([^;]+)/);
+                                            var mUuid = descObj.description.match(/formUuid:([^;]+)/);
+                                            if (mName && mName[1]) {
+                                                order.attachedFormName = mName[1].trim();
+                                                order.attachedFormUuid = mUuid ? mUuid[1].trim() : null;
+                                            }
+                                        }
+                                    }).catch(function () {});
+                            }
+                        }
+
+                        if (conceptUuid && ordersSerialNumberBuilding) {
+                            getOrdersSerialNumber(conceptUuid).then(function (serialData) {
+                                if (serialData && serialData.length > 0 && serialData[0]) {
+                                    ordersSerialNumberBuilding.forEach(function (config) {
+                                        if (serialData[0].concept_set === config.concept_id) {
+                                            order.serialNumber = config.prefix + "-" + serialData[0].serialNumber;
+                                        }
+                                    });
+                                }
+                            }).catch(function () {});
+                        }
+                    } catch (err) {
+                        console.warn("Could not determine order serial number or attached form:", err);
+                    }
+                    order.bahmniObservations = ($scope.encounter && $scope.encounter.observations) ?
+                        _.filter($scope.encounter.observations, function (observation) {
+                            return observation.orderUuid === order.orderUuid;
+                        }) : [];
+
+                    if (order.bahmniObservations.length > 0 && order.paymentStatus) {
+                        order.showForm = true;
+                    } else {
+                        order.showForm = false;
+                    }
+                    getOrderPaymentStatus(order);
+                });
+
                 $scope.orders.length = 0;
                 $scope.orders.push.apply($scope.orders, data);
-                return loadOrderableFormMappings().then(function (formMappings) {
-                    $scope.orders.forEach(function (order) {
-                        try {
-                            var conceptUuid = order.concept ? order.concept.uuid : null;
-                            var conceptName = order.concept ? (order.concept.name || order.concept.shortName) : null;
-                            var customForm = (conceptUuid && formMappings[conceptUuid]) ||
-                                             (conceptName && formMappings[conceptName]);
-
-                            if (customForm) {
-                                order.attachedFormName = customForm.formName;
-                                order.attachedFormUuid = customForm.formUuid;
-                            } else {
-                                order.attachedFormName = $scope.formName;
-                                order.attachedFormUuid = $scope.formUuid;
-
-                                // Fallback: query concept custom rep if not found in preloaded map
-                                if (conceptUuid) {
-                                    $http.get('/openmrs/ws/rest/v1/concept/' + conceptUuid + '?v=custom:(uuid,descriptions:(description))')
-                                        .then(function (cResp) {
-                                            var descs = (cResp.data && cResp.data.descriptions) || [];
-                                            var descObj = _.find(descs, function (d) {
-                                                return d.description && d.description.indexOf('fulfillmentForm:') !== -1;
-                                            });
-                                            if (descObj) {
-                                                var mName = descObj.description.match(/fulfillmentForm:([^;]+)/);
-                                                var mUuid = descObj.description.match(/formUuid:([^;]+)/);
-                                                if (mName && mName[1]) {
-                                                    order.attachedFormName = mName[1].trim();
-                                                    order.attachedFormUuid = mUuid ? mUuid[1].trim() : null;
-                                                }
-                                            }
-                                        }).catch(function () {});
-                                }
-                            }
-
-                            if (conceptUuid && ordersSerialNumberBuilding) {
-                                getOrdersSerialNumber(conceptUuid).then(function (serialData) {
-                                    if (serialData && serialData.length > 0 && serialData[0]) {
-                                        ordersSerialNumberBuilding.forEach(function (config) {
-                                            if (serialData[0].concept_set === config.concept_id) {
-                                                order.serialNumber = config.prefix + "-" + serialData[0].serialNumber;
-                                            }
-                                        });
-                                    }
-                                }).catch(function () {});
-                            }
-                        } catch (err) {
-                            console.warn("Could not determine order serial number or attached form:", err);
-                        }
-                        order.bahmniObservations = ($scope.encounter && $scope.encounter.observations) ?
-                            _.filter($scope.encounter.observations, function (observation) {
-                                return observation.orderUuid === order.orderUuid;
-                            }) : [];
-
-                        if (order.bahmniObservations.length > 0 && order.paymentStatus) {
-                            order.showForm = true;
-                        } else {
-                            order.showForm = false;
-                        }
-                        getOrderPaymentStatus(order);
-                    });
-                });
             });
         };
 

@@ -343,7 +343,13 @@ angular.module('bahmni.common.conceptSet')
                 };
 
                 var init = function () {
+                    var targetName = $scope.conceptSetName || conceptSetName;
+                    var targetUuid = $scope.conceptSetUuid;
+
                     var getConceptByNameWithFallback = function (name) {
+                        if (!name || name === 'undefined' || name === 'null') {
+                            return $q.when({ data: { results: [] } });
+                        }
                         return conceptSetService.getConcept({ name: name, v: "bahmni" }).then(function (res) {
                             if (res.data && res.data.results && res.data.results.length > 0) {
                                 return res;
@@ -361,20 +367,20 @@ angular.module('bahmni.common.conceptSet')
                         });
                     };
 
-                    var conceptPromise = $scope.conceptSetUuid
-                        ? conceptSetService.getConceptByUuid($scope.conceptSetUuid, { v: "bahmni" }).then(function (resp) {
+                    var conceptPromise = targetUuid
+                        ? conceptSetService.getConceptByUuid(targetUuid, { v: "bahmni" }).then(function (resp) {
                             return { data: { results: resp.data ? [resp.data] : [] } };
                         }, function () {
-                            return getConceptByNameWithFallback(conceptSetName);
+                            return getConceptByNameWithFallback(targetName);
                         })
-                        : getConceptByNameWithFallback(conceptSetName);
+                        : getConceptByNameWithFallback(targetName);
 
                     return conceptPromise.then(function (response) {
-                        $scope.conceptSet = pickBestConcept(response.data && response.data.results, conceptSetName);
-                        multiSelectableConcepts().then(function (multiSelectableResponse) {
-                            autocompleteConcepts().then(function (autocompleteResponse) {
-                                dropdownConcepts().then(function (dropdownResponse) {
-                                    requiredConcepts().then(function (requiredResponse) {
+                        $scope.conceptSet = pickBestConcept(response.data && response.data.results, targetName);
+                        return multiSelectableConcepts().then(function (multiSelectableResponse) {
+                            return autocompleteConcepts().then(function (autocompleteResponse) {
+                                return dropdownConcepts().then(function (dropdownResponse) {
+                                    return requiredConcepts().then(function (requiredResponse) {
                                         var dropdownData = Array.isArray(dropdownResponse.data) ? dropdownResponse.data : [];
                                         var requiredData = Array.isArray(requiredResponse.data) ? requiredResponse.data : [];
                                         var autocompleteData = Array.isArray(autocompleteResponse.data) ? autocompleteResponse.data : [];
@@ -417,11 +423,12 @@ angular.module('bahmni.common.conceptSet')
                                             }, function () {})
                                         );
 
-                                        $q.all(refreshPromises).then(function () {
+                                        return $q.all(refreshPromises).then(function () {
                                             conceptSetUIConfig = { ...resultObject, ...conceptSetUIConfig };
                                             $scope.rootObservation = $scope.conceptSet ? observationMapper.map($scope.observations, $scope.conceptSet, conceptSetUIConfig) : null;
                                             if ($scope.rootObservation) {
-                                                $scope.rootObservation.conceptSetName = $scope.conceptSetName;
+                                                $scope.showEmptyConceptSetMessage = false;
+                                                $scope.rootObservation.conceptSetName = targetName;
                                                 focusFirstObs();
                                                 updateObservationsOnRootScope();
                                                 var currentTemplateObs = getObservationsOfCurrentTemplate();
@@ -447,7 +454,26 @@ angular.module('bahmni.common.conceptSet')
                         messagingService.showMessage('error', error.message);
                     });
                 };
-                spinner.forPromise(init(), id);
+
+                var runInit = function () {
+                    var currentTarget = $scope.conceptSetUuid || $scope.conceptSetName;
+                    if (!currentTarget || currentTarget === 'undefined') {
+                        return;
+                    }
+                    spinner.forPromise(init(), id);
+                };
+
+                $scope.$watchGroup(['conceptSetName', 'conceptSetUuid'], function (newVals, oldVals) {
+                    if (newVals[0] !== oldVals[0] || newVals[1] !== oldVals[1] || !$scope.rootObservation) {
+                        if ($scope.conceptSetName || $scope.conceptSetUuid) {
+                            runInit();
+                        }
+                    }
+                });
+
+                if ($scope.conceptSetName || $scope.conceptSetUuid) {
+                    runInit();
+                }
 
                 var validateObservationTree = function () {
                     if (typeof $scope.rootObservation === "undefined" || $scope.rootObservation === null) {
