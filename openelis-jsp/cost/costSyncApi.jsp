@@ -421,7 +421,171 @@
         }
 
         // =========================================================================
-        // 5. ACTION: GET SYNC HISTORY / AUDIT LOG
+        // 5. ACTION: SYNC SINGLE ITEM WITH ODOO
+        // =========================================================================
+        if ("syncSingleItem".equals(action)) {
+            String idStr = request.getParameter("id");
+            String costParam = request.getParameter("cost");
+            String dir = request.getParameter("direction"); // TO_ODOO (default), FROM_ODOO
+            String operator = request.getParameter("operator");
+            if (operator == null || operator.trim().isEmpty()) operator = "Administrator";
+
+            if (idStr == null || idStr.trim().isEmpty()) {
+                out.print("{\"success\":false,\"error\":\"id is required\"}");
+                return;
+            }
+            int costId = Integer.parseInt(idStr.trim());
+
+            ps = conn.prepareStatement("SELECT id, item_type, item_name, item_code, cost, odoo_product_id, department FROM clinlims.test_cost WHERE id = ?");
+            ps.setInt(1, costId);
+            rs = ps.executeQuery();
+            if (!rs.next()) {
+                out.print("{\"success\":false,\"error\":\"Item not found\"}");
+                return;
+            }
+
+            String itemType = rs.getString("item_type");
+            String itemName = rs.getString("item_name");
+            double currentCost = rs.getDouble("cost");
+            if (costParam != null && !costParam.trim().isEmpty()) {
+                try {
+                    double parsed = Double.parseDouble(costParam.trim());
+                    if (parsed >= 0) currentCost = parsed;
+                } catch (Exception ignore) {}
+            }
+            int odooProductId = rs.getObject("odoo_product_id") != null ? rs.getInt("odoo_product_id") : 0;
+            int catId = "PANEL".equalsIgnoreCase(itemType) ? 8 : 9;
+            rs.close();
+            ps.close();
+
+            Connection odooConn = null;
+            PreparedStatement ops = null;
+            try {
+                odooConn = DriverManager.getConnection("jdbc:postgresql://odoodb:5432/odoo", "odoo", "odoo");
+
+                if (odooProductId <= 0) {
+                    PreparedStatement findPs = odooConn.prepareStatement(
+                        "SELECT id, list_price FROM product_template WHERE LOWER(TRIM(COALESCE(name->>'en_US', name::text))) = LOWER(TRIM(?)) LIMIT 1"
+                    );
+                    findPs.setString(1, itemName);
+                    ResultSet fors = findPs.executeQuery();
+                    if (fors.next()) {
+                        odooProductId = fors.getInt(1);
+                        double odooPrice = fors.getDouble(2);
+                        if ("FROM_ODOO".equalsIgnoreCase(dir) || (currentCost == 0 && odooPrice > 0)) {
+                            currentCost = odooPrice;
+                        } else {
+                            ops = odooConn.prepareStatement("UPDATE product_template SET list_price = ?, write_date = CURRENT_TIMESTAMP WHERE id = ?");
+                            ops.setDouble(1, currentCost);
+                            ops.setInt(2, odooProductId);
+                            ops.executeUpdate();
+                            ops.close();
+                        }
+                    } else {
+                        PreparedStatement insPtPs = odooConn.prepareStatement(
+                            "INSERT INTO product_template (name, type, detailed_type, categ_id, uom_id, uom_po_id, list_price, " +
+                            "sale_ok, purchase_ok, active, tracking, purchase_line_warn, sale_line_warn, invoice_policy, service_type, " +
+                            "create_uid, write_uid, create_date, write_date) " +
+                            "VALUES (jsonb_build_object('en_US', ?), 'service', 'service', ?, 1, 1, ?, TRUE, FALSE, TRUE, 'none', 'no-message', 'no-message', 'order', 'manual', 1, 1, NOW(), NOW()) RETURNING id"
+                        );
+                        insPtPs.setString(1, itemName);
+                        insPtPs.setInt(2, catId);
+                        insPtPs.setDouble(3, currentCost);
+                        ResultSet ptRs = insPtPs.executeQuery();
+                        if (ptRs.next()) {
+                            odooProductId = ptRs.getInt(1);
+                        }
+                        ptRs.close();
+                        insPtPs.close();
+
+                        if (odooProductId > 0) {
+                            PreparedStatement insPpPs = odooConn.prepareStatement(
+                                "INSERT INTO product_product (product_tmpl_id, active, uuid, create_uid, write_uid, create_date, write_date) " +
+                                "VALUES (?, TRUE, ?, 1, 1, NOW(), NOW())"
+                            );
+                            insPpPs.setInt(1, odooProductId);
+                            insPpPs.setString(2, java.util.UUID.randomUUID().toString());
+                            insPpPs.executeUpdate();
+                            insPpPs.close();
+                        }
+                    }
+                    fors.close();
+                    findPs.close();
+                } else {
+                    if ("FROM_ODOO".equalsIgnoreCase(dir)) {
+                        PreparedStatement getPricePs = odooConn.prepareStatement("SELECT list_price FROM product_template WHERE id = ?");
+                        getPricePs.setInt(1, odooProductId);
+                        ResultSet gprs = getPricePs.executeQuery();
+                        if (gprs.next()) {
+                            currentCost = gprs.getDouble(1);
+                        }
+                        gprs.close();
+                        getPricePs.close();
+                    } else {
+                        ops = odooConn.prepareStatement("UPDATE product_template SET list_price = ?, write_date = CURRENT_TIMESTAMP WHERE id = ?");
+                        ops.setDouble(1, currentCost);
+                        ops.setInt(2, odooProductId);
+                        ops.executeUpdate();
+                        ops.close();
+                    }
+                }
+
+                // Update in OpenELIS
+                ps = conn.prepareStatement(
+                    "UPDATE clinlims.test_cost " +
+                    "SET cost = ?, odoo_product_id = ?, sync_status = 'SYNCED', last_sync_date = CURRENT_TIMESTAMP, error_message = NULL, updated_at = CURRENT_TIMESTAMP " +
+                    "WHERE id = ?"
+                );
+                ps.setDouble(1, currentCost);
+                ps.setInt(2, odooProductId);
+                ps.setInt(3, costId);
+                ps.executeUpdate();
+                ps.close();
+
+                // Fetch updated date
+                ps = conn.prepareStatement("SELECT last_sync_date FROM clinlims.test_cost WHERE id = ?");
+                ps.setInt(1, costId);
+                rs = ps.executeQuery();
+                String lastSyncStr = "";
+                if (rs.next() && rs.getTimestamp(1) != null) {
+                    lastSyncStr = rs.getTimestamp(1).toString().substring(0, 19);
+                }
+                rs.close();
+                ps.close();
+
+                // Log audit history
+                PreparedStatement lps = conn.prepareStatement(
+                    "INSERT INTO clinlims.test_cost_sync_log (sync_type, direction, items_synced, items_failed, details, performed_by) " +
+                    "VALUES ('SINGLE', ?, 1, 0, ?, ?)"
+                );
+                lps.setString(1, "FROM_ODOO".equalsIgnoreCase(dir) ? "ODOO_TO_OPENELIS" : "OPENELIS_TO_ODOO");
+                lps.setString(2, "Synced item '" + itemName + "' (Odoo #" + odooProductId + ") at " + currentCost + " ETB");
+                lps.setString(3, operator);
+                lps.executeUpdate();
+                lps.close();
+
+                JSONObject resp = new JSONObject();
+                resp.put("success", true);
+                resp.put("id", costId);
+                resp.put("cost", currentCost);
+                resp.put("odooProductId", odooProductId);
+                resp.put("syncStatus", "SYNCED");
+                resp.put("lastSyncDate", lastSyncStr);
+                resp.put("message", "Successfully synced '" + itemName + "' with Odoo.");
+                out.print(resp.toString());
+                return;
+
+            } catch (Exception ex) {
+                out.print("{\"success\":false,\"error\":\"" + (ex.getMessage() != null ? ex.getMessage().replace("\"", "\\\"") : "Sync error") + "\"}");
+                return;
+            } finally {
+                if (ops != null) try { ops.close(); } catch (Exception ignore) {}
+                if (odooConn != null) try { odooConn.close(); } catch (Exception ignore) {}
+            }
+        }
+
+        // =========================================================================
+        // 6. ACTION: GET SYNC HISTORY / AUDIT LOG
         // =========================================================================
         if ("getSyncHistory".equals(action)) {
             ps = conn.prepareStatement("SELECT id, sync_type, direction, items_synced, items_failed, details, performed_by, created_at FROM clinlims.test_cost_sync_log ORDER BY created_at DESC LIMIT 50");

@@ -227,6 +227,8 @@
     overflow-y: auto;
     flex: 1;
 }
+@keyframes cost-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.spin-icon { display: inline-block; animation: cost-spin 0.8s linear infinite; }
 </style>
 
 <div class="cost-mgmt-container">
@@ -303,7 +305,7 @@
                     <th style="width:110px">Odoo Product</th>
                     <th style="width:90px">Status</th>
                     <th style="width:140px">Last Synced</th>
-                    <th style="width:70px;text-align:center">Action</th>
+                    <th style="width:125px;text-align:center">Action</th>
                 </tr>
             </thead>
             <tbody id="costTableBody">
@@ -405,8 +407,8 @@ function renderCostTable(items) {
         if (item.odooProductId > 0) syncedOdoo++;
 
         var typeBadge = item.itemType === 'PANEL' ? '<span class="badge-panel">PANEL</span>' : '<span class="badge-test">TEST</span>';
-        var statusBadge = item.syncStatus === 'SYNCED' ? '<span class="badge-synced">✓ SYNCED</span>' : '<span class="badge-pending">PENDING</span>';
-        var odooIdDisplay = item.odooProductId > 0 ? ('<span style="font-weight:600;color:#0f766e">#' + item.odooProductId + '</span>') : '<span style="color:#94a3b8">Unmatched</span>';
+        var statusBadge = item.syncStatus === 'SYNCED' ? ('<span class="badge-synced" id="status_' + item.id + '">✓ SYNCED</span>') : ('<span class="badge-pending" id="status_' + item.id + '">PENDING</span>');
+        var odooIdDisplay = item.odooProductId > 0 ? ('<span style="font-weight:600;color:#0f766e" id="odoo_id_' + item.id + '">#' + item.odooProductId + '</span>') : ('<span style="color:#94a3b8" id="odoo_id_' + item.id + '">Unmatched</span>');
 
         html += '<tr>' +
             '<td>' + typeBadge + '</td>' +
@@ -418,9 +420,12 @@ function renderCostTable(items) {
             '</td>' +
             '<td>' + odooIdDisplay + '</td>' +
             '<td>' + statusBadge + '</td>' +
-            '<td style="font-size:11px;color:#64748b">' + (item.lastSyncDate ? item.lastSyncDate.substring(0, 19) : '-') + '</td>' +
+            '<td style="font-size:11px;color:#64748b" id="sync_date_' + item.id + '">' + (item.lastSyncDate ? item.lastSyncDate.substring(0, 19) : '-') + '</td>' +
             '<td style="text-align:center">' +
-                '<button type="button" class="cost-btn cost-btn-outline" style="padding:3px 8px;font-size:11px" onclick="saveSinglePrice(' + item.id + ')" title="Save & Sync to Odoo">💾</button>' +
+                '<div style="display:inline-flex;gap:4px;align-items:center;justify-content:center;">' +
+                    '<button type="button" class="cost-btn cost-btn-outline" style="padding:4px 7px;font-size:11px" onclick="saveSinglePrice(' + item.id + ')" title="Save Price">💾</button>' +
+                    '<button type="button" class="cost-btn cost-btn-secondary" style="padding:4px 8px;font-size:11px;font-weight:600;gap:3px" id="sync_btn_' + item.id + '" onclick="syncSingleItem(' + item.id + ', this)" title="Sync this test with Odoo">🔄 Sync</button>' +
+                '</div>' +
             '</td>' +
         '</tr>';
     });
