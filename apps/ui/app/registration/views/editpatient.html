@@ -12,12 +12,14 @@
                         <img class="patient-image" ng-src="{{patient.image}}" fallback-src="../images/blank-user.gif">
                  </div>
             </div>
-            <article class="form-field" ng-if="triageLocationDisplay">
-                    <div class="field-attribute">
-                        <label class="control-label" style="font-weight: bold; color: #0369a1;"><i class="fa fa-map-marker"></i> Triaged Location</label>
+            <article class="form-field form-field-horizontal" ng-if="triageLocationDisplay" style="display: flex !important; align-items: center !important; flex-wrap: nowrap !important; width: 100% !important; margin-bottom: 10px !important;">
+                    <div class="field-attribute" style="float: none !important; width: auto !important; min-width: 140px !important; margin: 0 12px 0 0 !important; text-align: right !important; white-space: nowrap !important;">
+                        <label class="control-label" style="float: none !important; width: auto !important; margin: 0 !important; font-weight: bold; color: #0369a1; white-space: nowrap !important; display: inline !important;">
+                            <i class="fa fa-map-marker"></i> {{ (isLocationActive !== false) ? 'Active Location' : 'Triaged Location' }}
+                        </label>
                     </div>
-                    <div class="field-value">
-                        <span class="uneditable-input text-only" style="font-weight: bold; color: #0284c7; font-size: 14px; background: #f0f9ff; padding: 4px 10px; border-radius: 4px; display: inline-block; border: 1px solid #bae6fd;">{{triageLocationDisplay}}</span>
+                    <div class="field-value" style="float: none !important; width: auto !important; max-width: none !important; white-space: nowrap !important; display: inline-block !important;">
+                        <span class="uneditable-input text-only" style="font-weight: bold; color: #0284c7; font-size: 13px; background: #f0f9ff; padding: 4px 12px; border-radius: 4px; display: inline-block !important; border: 1px solid #bae6fd; white-space: nowrap !important; width: auto !important; max-width: none !important; margin: 0 !important;">{{triageLocationDisplay}}</span>
                     </div>
             </article>
             <article class="form-field">

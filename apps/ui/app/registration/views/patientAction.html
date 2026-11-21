@@ -1,6 +1,6 @@
 <div class="submit-btn-container clearfix">
     <div ng-if="triageLocationDisplay || (existedActiveVisits && existedActiveVisits.length > 0)" class="fl" style="margin-top: 8px; font-size: 13px;">
-        <span><i class="fa fa-map-marker"></i> Triaged Location / Active Visit: <b style="color: #0284c7;">{{triageLocationDisplay || existedActiveVisits[0].visitType.name || existedActiveVisits[0].location.name || 'Active Visit'}}</b></span>
+        <span><i class="fa fa-map-marker"></i> {{ (isLocationActive !== false || (existedActiveVisits && existedActiveVisits.length > 0)) ? 'Active Location' : 'Triaged Location' }}: <b style="color: #0284c7;">{{triageLocationDisplay || existedActiveVisits[0].visitType.name || existedActiveVisits[0].location.name || 'Active Visit'}}</b></span>
     </div>
     <span ng-switch="forwardActionKey">
         <span data-ng-switch-when="enterVisitDetails">

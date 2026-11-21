@@ -498,10 +498,11 @@ angular.module('bahmni.registration')
                         }
                         $scope.triageLocationDisplay = loc;
                         $scope.triageInfo = row;
+                        $scope.isLocationActive = (row.is_active === 1 || row.is_active === "1" || row.is_active === true || row.date_stopped == null);
                         $rootScope.currentPatientTriageLocation = loc;
                     }
                 }).catch(function () {
-                    return visitService.search({ patient: patientUuid, includeInactive: false, v: "custom:(uuid,visitType:(name),location:(name))" })
+                    return visitService.search({ patient: patientUuid, includeInactive: false, v: "custom:(uuid,visitType:(name),location:(name),stopDatetime)" })
                         .then(function (vRes) {
                             var visits = (vRes.data && vRes.data.results) ? vRes.data.results : [];
                             if (visits.length > 0) {
@@ -513,6 +514,7 @@ angular.module('bahmni.registration')
                                     disp = disp ? (disp + ' (' + locName + ')') : locName;
                                 }
                                 $scope.triageLocationDisplay = disp;
+                                $scope.isLocationActive = !v.stopDatetime;
                                 $rootScope.currentPatientTriageLocation = disp;
                             }
                         });
