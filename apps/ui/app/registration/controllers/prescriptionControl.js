@@ -958,29 +958,33 @@ angular.module('bahmni.registration')
                 messagingService.showMessage('info', 'REGISTRATION_LABEL_SAVED');
             };
             var closeVisit = function () {
-                if (vm != undefined) {
-                    visitService.getVisitSummary(vm.visitUuid).then(function (response) {
+                if (vm != undefined && vm.visitUuid) {
+                    return visitService.getVisitSummary(vm.visitUuid).then(function (response) {
                         var visitSummary = response.data;
-                        visitService.endVisit(vm.visitUuid).then(function () {
+                        return visitService.endVisit(vm.visitUuid).then(function () {
                             var messageParams = { visitUuid: visitSummary.visitUuid, visitType: visitSummary.visitType };
                             auditLogService.log(patientUuid, 'CLOSE_VISIT', messageParams, 'MODULE_LABEL_REGISTRATION_KEY');
                         });
+                    }).catch(function () {
+                        return $q.when({});
                     });
                 }
-            }
+                return $q.when({});
+            };
 
             $scope.saveConfirmation = function () {
-                closeVisit(); //Close the Visit
-                $scope.visitControl.startVisit($scope.selectedVisitType);
-                var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: visitLocationUuid };
-                visitService.createVisit(visitDetails).then(function (response) {
-                })
-                ngDialog.close();
-                $scope.submit();
-            }
+                closeVisit().finally(function () {
+                    $scope.visitControl.startVisit($scope.selectedVisitType);
+                    var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: visitLocationUuid };
+                    visitService.createVisit(visitDetails).then(function (response) {
+                        ngDialog.close();
+                        $scope.submit();
+                    });
+                });
+            };
             $scope.cancel = function () {
                 ngDialog.close();
-            }
+            };
 
 
             $scope.visitControl = new Bahmni.Common.VisitControl(
@@ -998,13 +1002,13 @@ angular.module('bahmni.registration')
 
                     noOfPatients = await getActivePatients();
                     if (noOfPatients < 35) {
-                        closeVisit(); //Close the Central Triage Visit
+                        try { await closeVisit(); } catch (e) {}
                         $scope.visitControl.startVisit($scope.selectedVisitType);
                         var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: visitLocationUuid };
                         visitService.createVisit(visitDetails).then(function (response) {
-                        })
-                        ngDialog.close();
-                        $scope.submit();
+                            ngDialog.close();
+                            $scope.submit();
+                        });
                     }
                     else {
                         //Pop up when the number exceed

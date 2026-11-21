@@ -440,18 +440,23 @@ angular.module('bahmni.clinical')
                     visitLocationUuid = response.data[0].uuid;
                     getLinkageUuid().then(function (r) {
                         getAllActiveVisits($scope.patient.uuid).then(function (visits) {
+                            var closePromises = [];
                             if (visits && visits.length > 0) {
-                                visits.forEach(visit => {
-                                    visitService.endVisit(visit.uuid);
-                                    messagingService.showMessage('info', 'Patient current visit is closed successfully.');
+                                visits.forEach(function (visit) {
+                                    if (visit && visit.uuid) {
+                                        closePromises.push(visitService.endVisit(visit.uuid).catch(function () { return null; }));
+                                    }
                                 });
                             }
-                            if ($scope.$parent.activeVisit) {
-                                visitService.endVisit($scope.$parent.activeVisit.uuid);
+                            if ($scope.$parent.activeVisit && $scope.$parent.activeVisit.uuid) {
+                                closePromises.push(visitService.endVisit($scope.$parent.activeVisit.uuid).catch(function () { return null; }));
                             }
-                            var intendedVisitDetail = { patient: $scope.patient.uuid, visitType: selectedVisit[0].uuid, location: visitLocationUuid, attributes: [{ value: selectedVisit[0].uuid, attributeType: r.data[0].uuid }] };
-                            visitService.createVisit(intendedVisitDetail)
-                            messagingService.showMessage('info', 'patient linkage is completed successfully.');
+                            $q.all(closePromises).finally(function () {
+                                var intendedVisitDetail = { patient: $scope.patient.uuid, visitType: selectedVisit[0].uuid, location: visitLocationUuid, attributes: [{ value: selectedVisit[0].uuid, attributeType: r.data[0].uuid }] };
+                                visitService.createVisit(intendedVisitDetail).then(function () {
+                                    messagingService.showMessage('info', 'Patient linkage is completed successfully.');
+                                });
+                            });
                         });
                     })
                 })

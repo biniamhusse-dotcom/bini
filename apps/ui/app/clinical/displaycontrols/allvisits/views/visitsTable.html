@@ -15,7 +15,7 @@
                     <a class="visit" ng-click="openVisit(visit)">
                         <span>{{::visit.startDatetime | bahmniDate}}</span>
                         <span ng-if="::!visit.isOneDayVisit()">- {{::visit.stopDatetime | bahmniDate }}</span>
-                        <i class="fa fa-star current-visit-icon" id="currentVisitIcon" ng-if="::visit.isActive()"
+                        <i class="fa fa-star current-visit-icon" id="currentVisitIcon" ng-if="::isVisitActive(visit)"
                            title="Current Visit"></i>
                     </a>
                 </td>

@@ -139,20 +139,22 @@ angular.module('bahmni.registration')
                         $scope.selectedVisitType = $scope.visitControl.visitTypes.filter(function (visitType) {
                             return visitType.name === selectedVisit;
                         })[0];
-                        if ($scope.existedActiveVisits !== undefined && $scope.existedActiveVisits.length > 0) {
-                            visitService.endVisit($scope.existedActiveVisits[0].uuid);
-                        }
+                        var closePromise = ($scope.existedActiveVisits && $scope.existedActiveVisits.length > 0)
+                            ? visitService.closeAllActiveVisits(uuid)
+                            : $q.when({});
 
-                        $scope.visitControl.startVisit($scope.selectedVisitType);
-                        if ($scope.patientRegisterType == "CREATE")
-                            $rootScope.$broadcast("event:createPatient", {});
-                        else if ($scope.patientRegisterType == "SAVETRIAGE") {
-                            $rootScope.$broadcast("event:saveTriage", {});
-                        }
-                        else $rootScope.$broadcast("event:updatePatient", {});
-                        ngDialog.close();
+                        closePromise.finally(function () {
+                            $scope.visitControl.startVisit($scope.selectedVisitType);
+                            if ($scope.patientRegisterType == "CREATE")
+                                $rootScope.$broadcast("event:createPatient", {});
+                            else if ($scope.patientRegisterType == "SAVETRIAGE") {
+                                $rootScope.$broadcast("event:saveTriage", {});
+                            }
+                            else $rootScope.$broadcast("event:updatePatient", {});
+                            ngDialog.close();
+                        });
                     }
-                }
+                };
 
                 $scope.visitControl.onStartVisit = function () {
                     if (conditionallyRequiredPersonAttributes.length === 0) {

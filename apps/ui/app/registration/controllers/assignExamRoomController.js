@@ -54,10 +54,13 @@ angular.module('bahmni.registration')
             $scope.startVisits = function() {
                 if($scope.selectedLocation && $scope.selectedpat){
                     var visitDetails = {patient: $scope.selectedpat.uuid, visitType: $scope.selectedLocation, location: "c1e42932-3f10-11e4-adec-0800271c1b75"}; 
-                    visitService.endVisit($scope.selectedpat.vuuid).then(popul());
-                    visitService.createVisit(visitDetails).then(popul());
-                    messagingService.showMessage('info', 'patient has been moved successfully.');            
-                    
+                    var closePromise = $scope.selectedpat.vuuid ? visitService.endVisit($scope.selectedpat.vuuid) : $q.when({});
+                    closePromise.finally(function () {
+                        visitService.createVisit(visitDetails).then(function () {
+                            popul();
+                            messagingService.showMessage('info', 'patient has been moved successfully.');
+                        });
+                    });
                 }
                 else messagingService.showMessage('error', 'Please select a valid patient and location')
             }

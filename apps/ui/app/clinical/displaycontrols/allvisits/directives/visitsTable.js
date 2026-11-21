@@ -89,9 +89,18 @@ angular.module('bahmni.clinical')
                     return patientVisitHistoryService.getVisitHistory($scope.patientUuid);
                 };
 
+                $scope.isVisitActive = function (visit) {
+                    if (!visit) { return false; }
+                    if ($scope.activeVisit && $scope.activeVisit.uuid) {
+                        return $scope.activeVisit.uuid === visit.uuid;
+                    }
+                    return typeof visit.isActive === 'function' ? visit.isActive() : !visit.stopDatetime;
+                };
+
                 var init = function () {
                     return $q.all([getVisits()]).then(function (results) {
                         $scope.visits = results[0].visits;
+                        $scope.activeVisit = results[0].activeVisit;
                         $scope.patient = {uuid: $scope.patientUuid};
                         if (!$scope.hasVisits()) emitNoDataPresentEvent();
                     });
