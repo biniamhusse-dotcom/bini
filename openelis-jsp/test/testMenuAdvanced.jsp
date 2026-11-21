@@ -791,7 +791,7 @@
             panelTotalPages = (int) Math.ceil((double) panelTotalCount / pageSize);
 
             String pSortCol = "p.name";
-            if ("p.name".equals(sortBy) || "p.openmrs_panel_name".equals(sortBy) || "p.openmrs_short_name".equals(sortBy) || "p.is_active".equals(sortBy)) {
+            if ("p.name".equals(sortBy) || "p.openmrs_panel_name".equals(sortBy) || "p.openmrs_short_name".equals(sortBy) || "p.is_active".equals(sortBy) || "test_count".equals(sortBy)) {
                 pSortCol = sortBy;
             }
             String pListSql = "SELECT p.id, p.name, COALESCE(p.openmrs_panel_name, p.name) as omrs_name, " +
@@ -835,21 +835,27 @@
 
         totalPages = (int) Math.ceil((double) totalCount / pageSize);
 
-        String sql = "SELECT t.id, t.description, t.name, ts.description as section_name, t.test_section_id, " +
-                     "t.is_active, t.is_reportable, t.is_referred_out, t.sort_order, t.method_id, t.uom_id, t.local_abbrev, " +
-                     "t.lab_location_id, ll.name as location_name, t.time_ta_average, t.time_ta_warning, t.time_ta_max, " +
-                     "t.openmrs_test_name, t.openmrs_short_name, t.openmrs_panel_name, t.openmrs_panel_short_name, t.openmrs_sample_category " +
-                     "FROM test t LEFT JOIN test_section ts ON t.test_section_id = ts.id " +
-                     "LEFT JOIN lab_location ll ON t.lab_location_id = ll.id " +
-                     where.toString() + " ORDER BY " + sortBy + " " + sortDir + " LIMIT ? OFFSET ?";
-        stmt = conn.prepareStatement(sql);
-        int paramIdx = 1;
-        for (String p : params) {
-            stmt.setString(paramIdx++, p);
+        if (!"panels".equals(currentView)) {
+            String testSortCol = sortBy;
+            if (testSortCol == null || testSortCol.startsWith("p.") || "test_count".equals(testSortCol)) {
+                testSortCol = "t.description";
+            }
+            String sql = "SELECT t.id, t.description, t.name, ts.description as section_name, t.test_section_id, " +
+                         "t.is_active, t.is_reportable, t.is_referred_out, t.sort_order, t.method_id, t.uom_id, t.local_abbrev, " +
+                         "t.lab_location_id, ll.name as location_name, t.time_ta_average, t.time_ta_warning, t.time_ta_max, " +
+                         "t.openmrs_test_name, t.openmrs_short_name, t.openmrs_panel_name, t.openmrs_panel_short_name, t.openmrs_sample_category " +
+                         "FROM test t LEFT JOIN test_section ts ON t.test_section_id = ts.id " +
+                         "LEFT JOIN lab_location ll ON t.lab_location_id = ll.id " +
+                         where.toString() + " ORDER BY " + testSortCol + " " + sortDir + " LIMIT ? OFFSET ?";
+            stmt = conn.prepareStatement(sql);
+            int paramIdx = 1;
+            for (String p : params) {
+                stmt.setString(paramIdx++, p);
+            }
+            stmt.setInt(paramIdx++, pageSize);
+            stmt.setInt(paramIdx++, offset);
+            rs = stmt.executeQuery();
         }
-        stmt.setInt(paramIdx++, pageSize);
-        stmt.setInt(paramIdx++, offset);
-        rs = stmt.executeQuery();
 
     } catch (Exception e) {
         out.println("<p style='color:red'>Error: " + e.getMessage() + "</p>");
