@@ -20,6 +20,26 @@ Bahmni.Common.skipLogicProcessor = (function () {
         calculationConfigs = calculationConfigs || [];
         configs = configs || (function () { try { return JSON.parse(localStorage.getItem('skipLogicConfigs')) || []; } catch (e) { return []; } })();
 
+        const formConceptNames = new Set();
+        function extractConceptNames(obs) {
+            if (!obs) return;
+            if (obs.concept && obs.concept.name) {
+                formConceptNames.add(obs.concept.name);
+            }
+            if (obs.label) {
+                formConceptNames.add(obs.label);
+            }
+            if (obs.groupMembers && obs.groupMembers.length > 0) {
+                obs.groupMembers.forEach(extractConceptNames);
+            }
+        }
+        if (rootObs) {
+            extractConceptNames(rootObs);
+        }
+        if (observation) {
+            extractConceptNames(observation);
+        }
+
         const hidenFields = (configs[0] && configs[0].logics && configs[0].logics[0] && configs[0].logics[0].hiddenFields) || [];
 
         const nameValueSet = new Set(JSON.parse(localStorage.getItem(SKIP_LOGIC_TRIGGERS_KEY)) || []);
@@ -471,8 +491,28 @@ Bahmni.Common.skipLogicProcessor = (function () {
                 const optionOneShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && safeLogicKeys.includes(logic.logic_key) && logic.action === "show");
                 const optionTwoShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !safeLogicKeys.includes(logic.logic_key) && logic.action === "hide");
                 const optionThreeShowMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !safeLogicKeys.includes(logic.logic_key) && logic.action === "hideThenShow");
-                const optionOneHideMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && !safeLogicKeys.includes(logic.logic_key) && logic.action === "show");
-                const optionTwoHideMatchingConfig = configs.find(logic => logic.dependent === currentConceptName && logic.parent === undefined && logic.parents === undefined && safeLogicKeys.includes(logic.logic_key) && logic.action === "hide");
+                const optionOneHideMatchingConfig = configs.find(logic => {
+                    if (logic.dependent !== currentConceptName || logic.parent !== undefined || logic.parents !== undefined) return false;
+                    if (safeLogicKeys.includes(logic.logic_key) || logic.action !== "show") return false;
+                    if (formConceptNames.size > 0 && Array.isArray(logic.logics)) {
+                        const hasTriggerInForm = logic.logics.some(l => l.trigger && formConceptNames.has(l.trigger));
+                        if (!hasTriggerInForm) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+                const optionTwoHideMatchingConfig = configs.find(logic => {
+                    if (logic.dependent !== currentConceptName || logic.parent !== undefined || logic.parents !== undefined) return false;
+                    if (!safeLogicKeys.includes(logic.logic_key) || logic.action !== "hide") return false;
+                    if (formConceptNames.size > 0 && Array.isArray(logic.logics)) {
+                        const hasTriggerInForm = logic.logics.some(l => l.trigger && formConceptNames.has(l.trigger));
+                        if (!hasTriggerInForm) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
                 const makeRequired = configs.find(logic => logic.dependent === currentConceptName && safeLogicKeys.includes(logic.logic_key) && logic.action === "required");
                 const makeNoneRequired = configs.find(logic => logic.dependent === currentConceptName && safeLogicKeys.includes(logic.logic_key) && logic.action === "noneRequired");
                 if (hidenFields && hidenFields.length > 0) {
