@@ -117,6 +117,23 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                             var conceptName = order.concept ? (order.concept.name || order.concept.shortName) : null;
                             var customForm = (conceptUuid && formMappings[conceptUuid]) ||
                                              (conceptName && formMappings[conceptName]);
+
+                            if (!customForm && order.concept && order.concept.descriptions) {
+                                var descObj = _.find(order.concept.descriptions, function (d) {
+                                    return d.description && d.description.indexOf('fulfillmentForm:') !== -1;
+                                });
+                                if (descObj) {
+                                    var mName = descObj.description.match(/fulfillmentForm:([^;]+)/);
+                                    var mUuid = descObj.description.match(/formUuid:([^;]+)/);
+                                    if (mName && mName[1]) {
+                                        customForm = {
+                                            formName: mName[1],
+                                            formUuid: mUuid ? mUuid[1] : null
+                                        };
+                                    }
+                                }
+                            }
+
                             if (customForm) {
                                 order.attachedFormName = customForm.formName;
                                 order.attachedFormUuid = customForm.formUuid;

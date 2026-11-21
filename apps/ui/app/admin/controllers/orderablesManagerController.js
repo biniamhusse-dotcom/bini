@@ -5,6 +5,7 @@ angular.module('admin')
         function ($scope, $http, $q, messagingService) {
             var OPENMRS_BASE = '/openmrs/ws/rest/v1';
             var ALL_ORDERABLES_UUID = 'd6344fab-5e07-11ef-8f7c-0242ac120002'; // Concept 129
+            var ORDER_RESULT_ENTRY_FORMS_UUID = '5180307b-9dbd-4b68-904f-044cadfbd59c'; // Category store for order result entry forms
 
             $scope.loading = true;
             $scope.saving = false;
@@ -17,15 +18,8 @@ angular.module('admin')
                 { id: 'Ophthalmology Orders', name: 'Ophthalmology', conceptId: 62950 }
             ];
 
-            $scope.availableForms = [
-                { name: 'Radiology order fulfillment form', uuid: '2e820990-e709-4c57-bfa2-ba71b66bd717', department: 'Radiology Orders' },
-                { name: 'Procedure order fulfillment form', uuid: '04681882-d9d2-4fc5-b446-2d1f8af392ca', department: 'Procedure Orders' },
-                { name: 'Ophtha Order fulfillment form', uuid: '7b074f18-8a0d-4058-b835-7ee64ae50717', department: 'Ophthalmology Orders' },
-                { name: 'Spectacle(Ophthalmology) Prescription Form', uuid: 'b8f2d1d6-e554-462d-80cc-e2131f8f90e0', department: 'Ophthalmology Orders' },
-                { name: 'Pathology order fulfillment form', uuid: '96cc07cc-dc44-4389-b9d6-4d45f61a5c23', department: 'Pathology Department' },
-                { name: 'Cervical Cancer Screening and Treatment Intake Form', uuid: 'ee550983-58ba-48ff-ba1b-68c6d7665e45', department: 'Procedure Orders' },
-                { name: 'Diabetes Mellitus and Hypertension intake form', uuid: 'dd751d0c-4e84-4993-89bd-9063cd71d37d', department: 'All' }
-            ];
+            // Category store forms list (loaded dynamically from Order Result Entry Forms concept)
+            $scope.availableForms = [];
 
             $scope.orderableFormsMap = {};
             $scope.allOrderablesList = [];
@@ -60,6 +54,7 @@ angular.module('admin')
                 department: 'Radiology Orders',
                 conceptClass: 'Radiology/Imaging Procedure',
                 datatype: 'N/A',
+                isSet: false,
                 attachedForm: null
             };
 
@@ -79,7 +74,52 @@ angular.module('admin')
                 searchResults: []
             };
 
-            // Load attached forms config
+            // Create Form Modal State
+            $scope.createFormModal = {
+                open: false,
+                saving: false,
+                name: '',
+                shortName: '',
+                department: 'Radiology Orders',
+                description: '',
+                fields: [
+                    { name: 'Summary & Impression', datatype: 'Text', conceptClass: 'Misc' },
+                    { name: 'Detailed Findings', datatype: 'Text', conceptClass: 'Misc' }
+                ],
+                autoAttachToSelected: true
+            };
+
+            // Load all forms from the "Order Result Entry Forms" category store
+            $scope.loadAvailableForms = function () {
+                var rep = 'custom:(uuid,name:(display,name),names:(name,conceptNameType),conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),conceptClass:(name),datatype:(name)))';
+                return $http.get(OPENMRS_BASE + '/concept/' + ORDER_RESULT_ENTRY_FORMS_UUID + '?v=' + rep)
+                    .then(function (res) {
+                        var members = (res.data && res.data.setMembers) || [];
+                        if (members.length > 0) {
+                            $scope.availableForms = members.map(function (m) {
+                                var shortName = _.find(m.names, { conceptNameType: 'SHORT' });
+                                var fullName = _.find(m.names, { conceptNameType: 'FULLY_SPECIFIED' });
+                                var formName = (fullName && fullName.name) || (m.name && (m.name.name || m.name.display));
+                                return {
+                                    name: formName,
+                                    shortName: shortName ? shortName.name : '',
+                                    uuid: m.uuid,
+                                    conceptClass: m.conceptClass ? m.conceptClass.name : 'ConvSet',
+                                    fieldsCount: (m.setMembers || []).length,
+                                    fields: m.setMembers || []
+                                };
+                            });
+                        }
+                        // If selected orderable exists, update its selectedForm reference
+                        if ($scope.selectedOrderable) {
+                            $scope.syncSelectedFormForOrderable($scope.selectedOrderable);
+                        }
+                    }).catch(function (err) {
+                        console.warn('Could not load Order Result Entry Forms set directly, trying fallback', err);
+                    });
+            };
+
+            // Load attached forms config (orderableForms.json)
             var loadFormsConfig = function () {
                 return $http.get('/bahmni_config/openmrs/apps/orders/orderableForms.json?t=' + Date.now())
                     .then(function (res) {
@@ -92,8 +132,8 @@ angular.module('admin')
             // Load All Orderables Hierarchy from OpenMRS
             $scope.loadOrderables = function () {
                 $scope.loading = true;
-                return loadFormsConfig().then(function () {
-                    var rep = 'custom:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,setMembers:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,retired,conceptClass:(name),setMembers:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,retired,conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,retired,conceptClass:(name),datatype:(name)))))';
+                return $q.all([loadFormsConfig(), $scope.loadAvailableForms()]).then(function () {
+                    var rep = 'custom:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,descriptions:(description),setMembers:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,retired,descriptions:(description),conceptClass:(name),setMembers:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,retired,descriptions:(description),conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),names:(name,locale,conceptNameType),set,retired,descriptions:(description),conceptClass:(name),datatype:(name)))))';
                     return $http.get(OPENMRS_BASE + '/concept?name=All+Orderables&v=' + rep);
                 }).then(function (response) {
                     var root = response.data.results && response.data.results[0];
@@ -147,6 +187,23 @@ angular.module('admin')
 
                 var displayName = (shortNameObj && shortNameObj.name) || (fullNameObj && fullNameObj.name) || item.name.display || item.name.name;
                 var attachedForm = $scope.orderableFormsMap[item.uuid] || null;
+
+                // Also check concept description for attached form tag
+                if (!attachedForm && item.descriptions && item.descriptions.length > 0) {
+                    var descObj = _.find(item.descriptions, function (d) {
+                        return d.description && d.description.indexOf('fulfillmentForm:') !== -1;
+                    });
+                    if (descObj) {
+                        var mName = descObj.description.match(/fulfillmentForm:([^;]+)/);
+                        var mUuid = descObj.description.match(/formUuid:([^;]+)/);
+                        if (mName && mName[1]) {
+                            attachedForm = {
+                                formName: mName[1],
+                                formUuid: mUuid ? mUuid[1] : null
+                            };
+                        }
+                    }
+                }
 
                 var orderableObj = {
                     uuid: item.uuid,
@@ -210,8 +267,22 @@ angular.module('admin')
                 });
             };
 
+            $scope.syncSelectedFormForOrderable = function (item) {
+                if (!item) return;
+                if (item.attachedForm && $scope.availableForms && $scope.availableForms.length > 0) {
+                    item.selectedForm = _.find($scope.availableForms, function (f) {
+                        return (item.attachedForm.formUuid && f.uuid === item.attachedForm.formUuid) ||
+                               (item.attachedForm.formName && f.name.toLowerCase() === item.attachedForm.formName.toLowerCase());
+                    });
+                } else {
+                    item.selectedForm = null;
+                }
+            };
+
             $scope.selectOrderable = function (item) {
                 $scope.selectedOrderable = item;
+                $scope.syncSelectedFormForOrderable(item);
+
                 // Fetch full details including child setMembers if panel
                 if (item && item.isPanel) {
                     $http.get(OPENMRS_BASE + '/concept/' + item.uuid + '?v=custom:(uuid,name:(display,name),retired,conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),names,conceptClass:(name),datatype:(name),retired))')
@@ -270,27 +341,189 @@ angular.module('admin')
                     item.attachedForm = null;
                 }
 
-                // Also save concept attribute in OpenMRS
-                var attrPayload = {
-                    attributes: [
+                // Save in OpenMRS concept description for immediate zero-latency propagation
+                var descText = item.attachedForm ?
+                    ('fulfillmentForm:' + item.attachedForm.formName + ';formUuid:' + item.attachedForm.formUuid) : '';
+
+                var descPayload = {
+                    descriptions: [
                         {
-                            attributeType: 'e87192a0-ea50-11ef-8556-0242ac12000c',
-                            value: item.attachedForm ? item.attachedForm.formName : ''
+                            description: descText,
+                            locale: 'en'
                         }
                     ]
                 };
 
-                $http.post(OPENMRS_BASE + '/concept/' + item.uuid, attrPayload).then(function () {
+                $http.post(OPENMRS_BASE + '/concept/' + item.uuid, descPayload).then(function () {
                     $scope.saving = false;
-                    messagingService.showMessage('info', 'Clinical Form association saved for ' + item.displayName);
+                    messagingService.showMessage('info', 'Attached Clinical / Intake Form saved for ' + item.displayName);
                 }).catch(function (err) {
-                    // Even if attribute update has a quirk, local mapping succeeded
                     $scope.saving = false;
-                    messagingService.showMessage('info', 'Clinical Form association saved: ' + item.displayName);
+                    messagingService.showMessage('info', 'Attached Clinical / Intake Form saved: ' + item.displayName);
                 });
             };
 
-            // Open Create Modal
+            // ==========================================
+            // CREATE FORM FOR ORDER RESULT ENTRY
+            // ==========================================
+            $scope.openCreateFormModal = function () {
+                var dept = ($scope.selectedOrderable && $scope.selectedOrderable.department) ||
+                           ($scope.selectedDept !== 'all' ? $scope.selectedDept : 'Radiology Orders');
+                $scope.createFormModal = {
+                    open: true,
+                    saving: false,
+                    name: ($scope.selectedOrderable ? ($scope.selectedOrderable.displayName + ' Fulfillment Form') : ''),
+                    shortName: '',
+                    department: dept,
+                    description: 'Order result entry form for ' + (dept || 'clinical orders'),
+                    fields: [
+                        { name: 'Summary & Impression', datatype: 'Text', conceptClass: 'Misc' },
+                        { name: 'Detailed Findings', datatype: 'Text', conceptClass: 'Misc' }
+                    ],
+                    autoAttachToSelected: !!$scope.selectedOrderable
+                };
+            };
+
+            $scope.closeCreateFormModal = function () {
+                $scope.createFormModal.open = false;
+            };
+
+            $scope.addFieldToNewForm = function () {
+                $scope.createFormModal.fields.push({
+                    name: '',
+                    datatype: 'Text',
+                    conceptClass: 'Misc'
+                });
+            };
+
+            $scope.removeFieldFromNewForm = function (index) {
+                if ($scope.createFormModal.fields.length > 1) {
+                    $scope.createFormModal.fields.splice(index, 1);
+                }
+            };
+
+            $scope.applyFormTemplate = function (templateKey) {
+                if (templateKey === 'diagnostic') {
+                    $scope.createFormModal.fields = [
+                        { name: 'Summary & Impression', datatype: 'Text', conceptClass: 'Misc' },
+                        { name: 'Detailed Findings', datatype: 'Text', conceptClass: 'Misc' },
+                        { name: 'Recommendations & Plan', datatype: 'Text', conceptClass: 'Misc' }
+                    ];
+                } else if (templateKey === 'procedure') {
+                    $scope.createFormModal.fields = [
+                        { name: 'Procedure Notes', datatype: 'Text', conceptClass: 'Misc' },
+                        { name: 'Operative Findings', datatype: 'Text', conceptClass: 'Misc' },
+                        { name: 'Complications', datatype: 'Text', conceptClass: 'Misc' },
+                        { name: 'Post-Procedure Plan', datatype: 'Text', conceptClass: 'Misc' }
+                    ];
+                } else if (templateKey === 'ophthalmology') {
+                    $scope.createFormModal.fields = [
+                        { name: 'Ophthalmic Investigation', datatype: 'Text', conceptClass: 'Misc' },
+                        { name: 'Clinical Examination & Findings', datatype: 'Text', conceptClass: 'Misc' },
+                        { name: 'Specialty Assessment', datatype: 'Text', conceptClass: 'Misc' }
+                    ];
+                } else if (templateKey === 'simple') {
+                    $scope.createFormModal.fields = [
+                        { name: 'Clinical Result / Report', datatype: 'Text', conceptClass: 'Misc' }
+                    ];
+                }
+            };
+
+            $scope.submitCreateOrderForm = function () {
+                var m = $scope.createFormModal;
+                if (!m.name.trim()) {
+                    messagingService.showMessage('error', 'Form name is required');
+                    return;
+                }
+
+                m.saving = true;
+
+                // 1. Resolve or create field concepts
+                var fieldPromises = m.fields.map(function (field) {
+                    var fName = (field.name || '').trim();
+                    if (!fName) fName = 'Notes';
+                    return $http.get(OPENMRS_BASE + '/concept?name=' + encodeURIComponent(fName) + '&v=custom:(uuid,name:(display,name))')
+                        .then(function (res) {
+                            var existing = res.data.results && res.data.results[0];
+                            if (existing && existing.uuid) {
+                                return existing.uuid;
+                            }
+                            // Create field concept
+                            var fieldPayload = {
+                                names: [{ name: fName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
+                                datatype: field.datatype === 'Numeric' ? '8d4a4488-c2cc-11de-8d13-0010c6dffd0f' :
+                                          (field.datatype === 'Date' ? '8d4a4e92-c2cc-11de-8d13-0010c6dffd0f' : '8d4a4ab4-c2cc-11de-8d13-0010c6dffd0f'),
+                                conceptClass: '8d492774-c2cc-11de-8d13-0010c6dffd0f', // Misc
+                                set: false
+                            };
+                            return $http.post(OPENMRS_BASE + '/concept', fieldPayload).then(function (cRes) {
+                                return cRes.data.uuid;
+                            });
+                        }).catch(function () {
+                            return null;
+                        });
+                });
+
+                $q.all(fieldPromises).then(function (fieldUuids) {
+                    var cleanFieldUuids = fieldUuids.filter(function (u) { return !!u; });
+
+                    // 2. Create Form Concept as ConvSet
+                    var formNames = [
+                        { name: m.name.trim(), locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }
+                    ];
+                    if (m.shortName && m.shortName.trim()) {
+                        formNames.push({ name: m.shortName.trim(), locale: 'en', conceptNameType: 'SHORT' });
+                    }
+
+                    var formConceptPayload = {
+                        names: formNames,
+                        datatype: '8d4a4c94-c2cc-11de-8d13-0010c6dffd0f', // N/A
+                        conceptClass: '8d492594-c2cc-11de-8d13-0010c6dffd0f', // ConvSet
+                        set: true,
+                        setMembers: cleanFieldUuids
+                    };
+
+                    return $http.post(OPENMRS_BASE + '/concept', formConceptPayload);
+                }).then(function (formRes) {
+                    var createdForm = formRes.data;
+                    var createdFormUuid = createdForm.uuid;
+
+                    // 3. Add to the "Order Result Entry Forms" category store
+                    return $http.get(OPENMRS_BASE + '/concept/' + ORDER_RESULT_ENTRY_FORMS_UUID + '?v=custom:(uuid,setMembers:(uuid))')
+                        .then(function (storeRes) {
+                            var currentMembers = (storeRes.data && storeRes.data.setMembers || []).map(function (sm) { return sm.uuid; });
+                            if (currentMembers.indexOf(createdFormUuid) === -1) {
+                                currentMembers.push(createdFormUuid);
+                            }
+                            return $http.post(OPENMRS_BASE + '/concept/' + ORDER_RESULT_ENTRY_FORMS_UUID, { setMembers: currentMembers });
+                        }).then(function () {
+                            return createdForm;
+                        });
+                }).then(function (createdForm) {
+                    m.saving = false;
+                    m.open = false;
+                    messagingService.showMessage('info', 'New form created and added to Order Result Entry Forms store: ' + m.name);
+
+                    // 4. Reload available forms
+                    return $scope.loadAvailableForms().then(function () {
+                        // 5. If autoAttachToSelected, select and attach immediately!
+                        if (m.autoAttachToSelected && $scope.selectedOrderable) {
+                            var newFormObj = _.find($scope.availableForms, { uuid: createdForm.uuid });
+                            if (newFormObj) {
+                                $scope.selectedOrderable.selectedForm = newFormObj;
+                                $scope.saveFormAssociation($scope.selectedOrderable);
+                            }
+                        }
+                    });
+                }).catch(function (err) {
+                    m.saving = false;
+                    messagingService.showMessage('error', 'Failed to create form: ' + (err.data && err.data.error ? err.data.error.message : 'Unknown error'));
+                });
+            };
+
+            // ==========================================
+            // CREATE ORDERABLE MODAL
+            // ==========================================
             $scope.openCreateModal = function () {
                 $scope.createModal = {
                     open: true,
@@ -344,9 +577,17 @@ angular.module('admin')
                     set: !!m.isSet
                 };
 
+                if (m.attachedForm) {
+                    conceptPayload.descriptions = [
+                        {
+                            description: 'fulfillmentForm:' + m.attachedForm.name + ';formUuid:' + m.attachedForm.uuid,
+                            locale: 'en'
+                        }
+                    ];
+                }
+
                 $http.post(OPENMRS_BASE + '/concept', conceptPayload).then(function (res) {
                     var newConcept = res.data;
-                    // If attached form selected
                     if (m.attachedForm && newConcept && newConcept.uuid) {
                         $scope.orderableFormsMap[newConcept.uuid] = {
                             formName: m.attachedForm.name,
@@ -371,7 +612,6 @@ angular.module('admin')
             };
 
             var linkToDepartmentSet = function (deptConceptId, newConceptUuid) {
-                // Link via REST
                 $http.get(OPENMRS_BASE + '/concept/' + deptConceptId + '?v=custom:(uuid,setMembers:(uuid))').then(function (res) {
                     if (res.data && res.data.uuid) {
                         var existingMembers = (res.data.setMembers || []).map(function (sm) { return sm.uuid; });
