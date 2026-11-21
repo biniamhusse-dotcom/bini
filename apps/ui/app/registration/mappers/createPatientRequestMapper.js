@@ -42,9 +42,11 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
                 // If no manual identifier and no selectedIdentifierSource.uuid, fallback to default sequential generator source
                 var src = (identifier.identifierType && identifier.identifierType.identifierSources && identifier.identifierType.identifierSources[0])
                     ? identifier.identifierType.identifierSources[0]
-                    : { uuid: "c5cf4b68-6529-43fc-a644-c775ae73745e", prefix: "ABC" };
+                    : { uuid: "c5cf4b68-6529-43fc-a644-c775ae73745e", prefix: "" };
                 idObj.identifierSourceUuid = src.uuid;
-                idObj.identifierPrefix = src.prefix;
+                if (src.prefix) {
+                    idObj.identifierPrefix = src.prefix;
+                }
             }
             // CRITICAL: NEVER send identifierPrefix without identifierSourceUuid!
             // BahmniPatientProfileResource only removes identifierPrefix when identifierSourceUuid is non-null.
