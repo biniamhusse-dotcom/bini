@@ -1337,7 +1337,7 @@ INDEX_TEMPLATE = """
           Logged in: <strong>{{ user.login_name }}</strong>
           <span class="pill-role ms-1">Maintenance Role</span>
         </span>
-        <a href="http://localhost:8052/openelis" target="_blank" class="btn btn-sm btn-outline-light">
+        <a href="https://{{ request.host.split(':')[0] }}/openelis" onclick="this.href='https://'+window.location.hostname+'/openelis';" target="_blank" class="btn btn-sm btn-outline-light">
           <i class="fa-solid fa-flask me-1"></i> OpenELIS
         </a>
         <a href="/logout" class="btn btn-sm btn-danger">
