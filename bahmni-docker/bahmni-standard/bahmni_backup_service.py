@@ -2253,12 +2253,14 @@ def sync_all_lab_items(payload):
 def sync_openmrs_test_info_to_openelis():
     try:
         run_elis_exec("""
+            ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_test_name VARCHAR(255);
             ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_short_name VARCHAR(255);
             ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_sample_category VARCHAR(255);
         """)
         omrs_sql = """
         SELECT 
             c.uuid,
+            cn_full.name as full_name,
             LOWER(TRIM(cn_full.name)) as lower_name,
             COALESCE(cn_short.name, '') as short_name,
             COALESCE(cn_spec.name, '') as sample_category
@@ -2271,22 +2273,24 @@ def sync_openmrs_test_info_to_openelis():
             FROM concept_set cs
             JOIN concept c_set ON cs.concept_set = c_set.concept_id
             JOIN concept_class cc_s ON c_set.class_id = cc_s.concept_class_id AND cc_s.name IN ('Specimen', 'Sample')
-            JOIN concept_name cn_s ON c_set.concept_id = cn_s.concept_id AND cn_s.concept_name_type = 'FULLY_SPECIFIED' AND cn_s.voided = 0
+            JOIN concept_name cn_s ON c_set.concept_id = cn_s.concept_id AND cn_s.concept_name_type = 'FULLY_SPECIFIED' AND cn_s.locale = 'en' AND cn_s.voided = 0
             GROUP BY cs.concept_id
         ) cn_spec ON c.concept_id = cn_spec.concept_id
-        WHERE c.retired = 0;
+        WHERE c.retired = 0
+        ORDER BY FIELD(cn_full.locale, 'en') ASC, cn_full.locale_preferred ASC;
         """
         rows = run_omrs_query(omrs_sql)
         omrs_uuid_map = {}
         omrs_name_map = {}
         for r in rows:
-            if len(r) >= 4:
+            if len(r) >= 5:
                 item = {
-                    "short_name": r[2].strip(),
-                    "sample_category": r[3].strip()
+                    "full_name": r[1].strip(),
+                    "short_name": r[3].strip(),
+                    "sample_category": r[4].strip()
                 }
                 omrs_uuid_map[r[0].strip()] = item
-                omrs_name_map[r[1].strip()] = item
+                omrs_name_map[r[2].strip()] = item
 
         elis_sql = """
         SELECT t.id, t.name, t.description, er.external_id, tos.description as elis_sample
@@ -2311,12 +2315,19 @@ def sync_openmrs_test_info_to_openelis():
                 elis_sample = r[4]
 
                 info = omrs_uuid_map.get(ext_uuid) or omrs_name_map.get(t_name.lower()) or omrs_name_map.get(t_desc.lower())
-                short_name = info["short_name"] if info else ""
-                sample_category = info["sample_category"] if (info and info["sample_category"]) else elis_sample
+                if info:
+                    full_name = info["full_name"]
+                    short_name = info["short_name"]
+                    sample_category = info["sample_category"] if info["sample_category"] else elis_sample
+                else:
+                    full_name = t_desc or t_name
+                    short_name = ""
+                    sample_category = elis_sample
 
+                esc_full = full_name.replace("'", "''")
                 esc_short = short_name.replace("'", "''")
-                esc_sample = sample_category.replace("'", "''")
-                updates.append(f"UPDATE test SET openmrs_short_name = '{esc_short}', openmrs_sample_category = '{esc_sample}' WHERE id = {t_id};")
+                esc_sample = sample_category.replace("'", "''") if sample_category else ""
+                updates.append(f"UPDATE test SET openmrs_test_name = '{esc_full}', openmrs_short_name = '{esc_short}', openmrs_sample_category = '{esc_sample}' WHERE id = {t_id};")
 
         chunk_size = 200
         for i in range(0, len(updates), chunk_size):
