@@ -10,12 +10,19 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
             return priv.name == 'Write Radiology note';
         });
         $scope.$on("event:confirmSuggestion", function (event, uniqueId) {
-
-
+            if (!$scope.orders || !Array.isArray($scope.orders)) return;
             $scope.orders.forEach(function (order) {
-                if (order.bahmniObservations[0] && order.bahmniObservations[0].groupMembers[0].groupMembers[2].uniqueId == uniqueId) order.bahmniObservations[0].groupMembers[0].groupMembers[0].value = (order.bahmniObservations[0].groupMembers[0].groupMembers[1].readOnly || "")
-            })
-        })
+                try {
+                    if (order.bahmniObservations && order.bahmniObservations[0] &&
+                        order.bahmniObservations[0].groupMembers && order.bahmniObservations[0].groupMembers[0] &&
+                        order.bahmniObservations[0].groupMembers[0].groupMembers &&
+                        order.bahmniObservations[0].groupMembers[0].groupMembers[2] &&
+                        order.bahmniObservations[0].groupMembers[0].groupMembers[2].uniqueId == uniqueId) {
+                        order.bahmniObservations[0].groupMembers[0].groupMembers[0].value = (order.bahmniObservations[0].groupMembers[0].groupMembers[1].readOnly || "");
+                    }
+                } catch (e) {}
+            });
+        });
         var payment_config = appService.getAppDescriptor().getConfigValue("paymentConfig") || {};
         $scope.isPaymentBypassed = !!payment_config["disable checking"];
         var ordersSerialNumberBuilding = appService.getAppDescriptor().getConfigValue("ordersSerialNumberBuilding");
@@ -34,10 +41,11 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
         $scope.orderType = $stateParams.orderType;
         $scope.nextPageLoading = false;
         $scope.orders = [];
-        var formData = function (type, patientUui, numberOfVisits, formGroup, patientProgramUuid) {
+        var formData = function (type, patientUuid, numberOfVisits, formGroup, patientProgramUuid) {
             var params = {
                 s: type,
-                patient: patientUui,
+                patient: patientUuid,
+                patientUuid: patientUuid,
                 numberOfVisits: numberOfVisits,
                 v: "full",
                 conceptNames: formGroup || null,
@@ -47,9 +55,11 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
         };
         var testDoc = ["Radiology Notes Suggestion"];
 
-        formData("byPatientUuid", $scope.patient.uuid, 1, testDoc).then(res => {
-            $scope.patient.suggested = res.data.results
-        })
+        formData("byPatientUuid", $scope.patient.uuid, 1, testDoc).then(function (res) {
+            $scope.patient.suggested = (res.data && res.data.results) || [];
+        }).catch(function () {
+            $scope.patient.suggested = [];
+        });
 
 
         var getActiveEncounter = function () {
@@ -231,7 +241,8 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                         order.showForm = false;
                     }
                 }).catch(function () {
-                    order.paymentStatus = true;
+                    order.paymentStatus = false;
+                    order.showForm = false;
                 });
             });
         };
@@ -268,7 +279,7 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
         
         $scope.toggleShowOrderForm = function (order) {
             if (!order.paymentStatus) {
-                messagingService.showMessage('error', 'Order is not paid yet. Cannot enter results for unpaid orders.');
+                messagingService.showMessage('error', 'Payment Required: Order is confirmed NOT PAID in Odoo. Cannot enter results or release fulfillment.');
                 return;
             }
             order.bahmniObservations = order.bahmniObservations || [];
@@ -287,6 +298,13 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
         $anchorScroll();
 
         $scope.isFormValid = function () {
+            var unpaidOrdersWithForms = _.filter($scope.orders, function (order) {
+                return (order.showForm || (order.bahmniObservations && order.bahmniObservations.length > 0)) && !order.paymentStatus;
+            });
+            if (unpaidOrdersWithForms.length > 0) {
+                messagingService.showMessage('error', 'Payment Required: Cannot enter or release results for unpaid orders. Patient must pay in Odoo first.');
+                return false;
+            }
             var contxChange = contextChangeHandler.execute();
             var shouldAllow = contxChange["allow"];
             if (!shouldAllow) {
@@ -302,6 +320,15 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
 
         $scope.$on("event:saveOrderObservations", function () {
             if (!$scope.isFormValid()) {
+                $scope.$parent.$broadcast("event:errorsOnForm");
+                return $q.when({});
+            }
+            // Double-check: ensure only paid orders are saved
+            var unpaidOrders = _.filter($scope.orders, function (o) {
+                return !o.paymentStatus && (o.showForm || (o.bahmniObservations && o.bahmniObservations.length > 0));
+            });
+            if (unpaidOrders.length > 0) {
+                messagingService.showMessage('error', 'Payment Required: Unpaid orders cannot be fulfilled or saved.');
                 $scope.$parent.$broadcast("event:errorsOnForm");
                 return $q.when({});
             }

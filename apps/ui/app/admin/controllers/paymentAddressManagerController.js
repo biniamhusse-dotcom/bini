@@ -502,6 +502,51 @@ angular.module('admin')
                 $scope.billingConfig.clinical.disable_checking = false;
             };
 
+            // Interruption Recovery & Restoration
+            $scope.restoringEnforcement = false;
+            $scope.restoreReport = null;
+            $scope.restoreBillingEnforcement = function () {
+                if (!confirm('Are you sure you want to restore full billing enforcement across Registration, Orders, Clinical, and OpenELIS? Any emergency bypasses will be permanently reset.')) {
+                    return;
+                }
+                $scope.restoringEnforcement = true;
+                $scope.restoreReport = null;
+                $http.post(API_BASE + '/payment-config/restore', {}).then(function (res) {
+                    $scope.restoringEnforcement = false;
+                    $scope.restoreReport = res.data;
+                    $scope.billingConfig.registration.disable_billing = false;
+                    $scope.billingConfig.orders.disable_checking = false;
+                    $scope.billingConfig.clinical.disable_checking = false;
+                    $scope.showBanner('Full billing enforcement restored! Registration, Orders, Clinical, and OpenELIS are strictly enforcing payment.');
+                    $scope.loadBillingConfig();
+                }, function (err) {
+                    $scope.restoringEnforcement = false;
+                    var msg = (err.data && err.data.error) || 'Failed to restore billing enforcement.';
+                    messagingService.showMessage('error', msg);
+                });
+            };
+
+            // Live Odoo Payment Verification & Diagnosis Tool
+            $scope.verifyQuery = '';
+            $scope.verifyingPayment = false;
+            $scope.verificationResult = null;
+            $scope.verifyPaymentStatus = function () {
+                if (!$scope.verifyQuery || !$scope.verifyQuery.trim()) {
+                    messagingService.showMessage('error', 'Please enter a Patient Identifier (e.g. 506165) or Order UUID to test.');
+                    return;
+                }
+                $scope.verifyingPayment = true;
+                $scope.verificationResult = null;
+                $http.post(API_BASE + '/payment-config/verify', { identifier: $scope.verifyQuery.trim() }).then(function (res) {
+                    $scope.verifyingPayment = false;
+                    $scope.verificationResult = res.data;
+                }, function (err) {
+                    $scope.verifyingPayment = false;
+                    var msg = (err.data && err.data.error) || 'Verification request failed.';
+                    messagingService.showMessage('error', msg);
+                });
+            };
+
             // Utilities
             $scope.setTab = function (tab) {
                 $scope.activeTab = tab;

@@ -387,23 +387,6 @@
     "logics": [
       {
         "trigger": "Modality",
-        "orValues": [
-          "X-ray",
-          "CT",
-          "MRI",
-          "US"
-        ],
-        "operator": "OR"
-      }
-    ],
-    "action": "show",
-    "dependent": "Summary",
-    "logic_key": 22
-  },
-  {
-    "logics": [
-      {
-        "trigger": "Modality",
         "value": "US (Gyn)",
         "operator": "="
       }

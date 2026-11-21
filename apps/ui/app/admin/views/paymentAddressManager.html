@@ -412,6 +412,139 @@
                     </label>
                 </div>
             </div>
+
+            <!-- ───────────────────────────────────────────────────────────── -->
+            <!-- RESTORING ACTION: INTERRUPTIONS RECOVERY & FULL ENFORCEMENT -->
+            <!-- ───────────────────────────────────────────────────────────── -->
+            <div style="background: #ebf8ff; border: 2px solid #3182ce; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 2px 6px rgba(49, 130, 206, 0.08);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px;">
+                    <div style="max-width: 780px;">
+                        <h4 style="margin: 0 0 6px 0; font-size: 16px; color: #1a365d; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa fa-life-ring" style="color: #2b6cb0;"></i> Billing &amp; Payment Interruption Recovery &amp; Restoration
+                        </h4>
+                        <p style="margin: 0; color: #2d3748; font-size: 13px; line-height: 1.5;">
+                            If system restarts, network drops, or emergency overrides caused billing checks to be bypassed or unpaid orders to slip through, use this action to restore <strong>100% strict payment enforcement</strong>. This resets all bypass flags across <strong>Patient Registration</strong>, <strong>Orders &amp; Lab Fulfillment</strong>, and <strong>Clinical</strong>, enforces <code>payment.isRestrictive=true</code> in <strong>OpenELIS</strong>, and re-synchronizes live configurations.
+                        </p>
+                    </div>
+                    <div>
+                        <button type="button" ng-click="restoreBillingEnforcement()" ng-disabled="restoringEnforcement"
+                                style="background: #2b6cb0; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                            <i class="fa fa-refresh" ng-class="{'fa-spin': restoringEnforcement}"></i>
+                            {{ restoringEnforcement ? 'Restoring Strict Billing Enforcement...' : '🔄 Restore Full Billing Enforcement & Re-sync All Services' }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Restoration Result Report -->
+                <div ng-if="restoreReport" style="margin-top: 16px; background: #fff; border: 1px solid #bee3f8; border-radius: 6px; padding: 14px 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px; color: #2b6cb0; font-weight: 700; font-size: 14px; margin-bottom: 8px;">
+                        <i class="fa fa-check-circle" style="color: #38a169;"></i>
+                        <span>{{ restoreReport.message }}</span>
+                        <span style="font-size: 12px; color: #718096; margin-left: auto;">Restored at: {{ restoreReport.restored_at }}</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                        <div style="background: #f0fff4; border: 1px solid #c6f6d5; border-radius: 6px; padding: 8px 12px; font-size: 12px;">
+                            <span style="color: #276749; font-weight: 700;">Registration Billing:</span>
+                            <span style="color: #2f855a; float: right; font-weight: 700;">STRICT ENFORCED</span>
+                        </div>
+                        <div style="background: #f0fff4; border: 1px solid #c6f6d5; border-radius: 6px; padding: 8px 12px; font-size: 12px;">
+                            <span style="color: #276749; font-weight: 700;">Orders Fulfillment:</span>
+                            <span style="color: #2f855a; float: right; font-weight: 700;">STRICT ENFORCED</span>
+                        </div>
+                        <div style="background: #f0fff4; border: 1px solid #c6f6d5; border-radius: 6px; padding: 8px 12px; font-size: 12px;">
+                            <span style="color: #276749; font-weight: 700;">OpenELIS Lab Accession:</span>
+                            <span style="color: #2f855a; float: right; font-weight: 700;">RESTRICTIVE (true)</span>
+                        </div>
+                        <div style="background: #f0fff4; border: 1px solid #c6f6d5; border-radius: 6px; padding: 8px 12px; font-size: 12px;">
+                            <span style="color: #276749; font-weight: 700;">Odoo XML-RPC Sync:</span>
+                            <span style="color: #2f855a; float: right; font-weight: 700;">CONNECTED (UID {{ restoreReport.odoo.uid }})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ───────────────────────────────────────────────────────────── -->
+            <!-- LIVE ODOO PAYMENT DIAGNOSTIC TESTER -->
+            <!-- ───────────────────────────────────────────────────────────── -->
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; margin-top: 20px;">
+                <h4 style="margin: 0 0 6px 0; font-size: 16px; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa fa-stethoscope" style="color: #0284c7;"></i> Live Odoo Payment Verification &amp; Diagnostic Tool
+                </h4>
+                <p style="margin: 0 0 14px 0; color: #64748b; font-size: 13px;">
+                    Enter any Patient Identifier (e.g. <code>506165</code>, <code>506166</code>) or Lab Order UUID to test real-time payment status directly against live Odoo ERP.
+                </p>
+
+                <div style="display: flex; gap: 10px; max-width: 650px;">
+                    <input type="text" ng-model="verifyQuery" placeholder="Enter Patient ID (e.g. 506165) or Order UUID..."
+                           ng-keydown="$event.keyCode === 13 && verifyPaymentStatus()"
+                           style="flex: 1; padding: 9px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+                    <button type="button" ng-click="verifyPaymentStatus()" ng-disabled="verifyingPayment"
+                            style="background: #0284c7; color: #fff; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-search" ng-class="{'fa-spin': verifyingPayment}"></i>
+                        {{ verifyingPayment ? 'Checking Odoo...' : 'Verify in Odoo' }}
+                    </button>
+                </div>
+
+                <!-- Verification Result Display -->
+                <div ng-if="verificationResult" style="margin-top: 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: 700; font-size: 14px; color: #1e293b;">Query: {{ verificationResult.query }}</span>
+                            <span style="font-size: 11px; padding: 2px 8px; border-radius: 12px; background: #edf2f7; color: #475569; font-weight: 600;">
+                                {{ verificationResult.is_uuid ? 'Order UUID' : 'Patient Identifier' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span ng-if="verificationResult.status === 'PAID'" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 13px;">
+                                <i class="fa fa-check-circle"></i> CONFIRMED PAID (Released)
+                            </span>
+                            <span ng-if="verificationResult.status === 'UNPAID'" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 13px;">
+                                <i class="fa fa-ban"></i> CONFIRMED UNPAID (Payment Required - Blocked)
+                            </span>
+                            <span ng-if="verificationResult.status === 'NOT_FOUND'" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 13px;">
+                                <i class="fa fa-question-circle"></i> NOT FOUND IN ODOO
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 13px; color: #334155; margin-bottom: 12px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border-left: 3px solid {{ verificationResult.status === 'PAID' ? '#22c55e' : '#ef4444' }};">
+                        <strong>Reason:</strong> {{ verificationResult.reason || verificationResult.message }}
+                    </div>
+
+                    <!-- Details if Order UUID -->
+                    <div ng-if="verificationResult.is_uuid && verificationResult.order" style="font-size: 13px; color: #475569;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;">
+                            <div><strong>Sale Order:</strong> {{ verificationResult.order.name }}</div>
+                            <div><strong>SO State:</strong> {{ verificationResult.order.state }}</div>
+                            <div><strong>Invoice Status:</strong> {{ verificationResult.order.invoice_status }}</div>
+                            <div><strong>Total:</strong> {{ verificationResult.order.total | currency:'ETB ' }}</div>
+                            <div><strong>Customer:</strong> {{ verificationResult.order.partner }}</div>
+                            <div><strong>Line Item:</strong> {{ verificationResult.line.description }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Details if Patient Identifier -->
+                    <div ng-if="!verificationResult.is_uuid && verificationResult.partner" style="font-size: 13px; color: #475569;">
+                        <div style="margin-bottom: 8px;"><strong>Customer Name:</strong> {{ verificationResult.partner.name }} (Odoo Partner ID: {{ verificationResult.partner.id }})</div>
+                        <div ng-if="verificationResult.recent_orders && verificationResult.recent_orders.length > 0" style="margin-top: 8px;">
+                            <strong style="color: #1e293b;">Recent Sale Orders in Odoo:</strong>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                                <span ng-repeat="so in verificationResult.recent_orders" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 4px; font-size: 12px;">
+                                    {{ so.name }} (State: <b>{{ so.state }}</b>, Total: {{ so.amount_total }} ETB)
+                                </span>
+                            </div>
+                        </div>
+                        <div ng-if="verificationResult.recent_invoices && verificationResult.recent_invoices.length > 0" style="margin-top: 8px;">
+                            <strong style="color: #1e293b;">Recent Customer Invoices in Odoo:</strong>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                                <span ng-repeat="inv in verificationResult.recent_invoices" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 4px; font-size: 12px;">
+                                    {{ inv.name }} (State: <b>{{ inv.state }}</b>, Payment: <b>{{ inv.payment_state }}</b>, Residual: <b>{{ inv.amount_residual }} ETB</b>)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

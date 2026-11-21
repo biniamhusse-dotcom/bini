@@ -239,9 +239,13 @@ angular.module('bahmni.common.conceptSet')
                 };
 
                 scope.fetchReadOnly = function (observation) {
-                    var possib = _.filter(scope.patient.suggested, a => a.order != null && a.order.uuid == scope.patient.secid).reduce((max, obs) => max.obsDatetime > obs.obsDatetime ? max : obs)
-                    if (possib) observation.readOnly = possib.value
-                }
+                    if (!scope.patient || !scope.patient.suggested || !Array.isArray(scope.patient.suggested) || !scope.patient.suggested.length) return;
+                    var matches = _.filter(scope.patient.suggested, a => a.order != null && a.order.uuid == scope.patient.secid);
+                    if (matches && matches.length > 0) {
+                        var possib = matches.reduce((max, obs) => (max && max.obsDatetime > obs.obsDatetime) ? max : obs, null);
+                        if (possib) observation.readOnly = possib.value;
+                    }
+                };
 
                 scope.isClone = function (observation, parentObservation) {
                     if (parentObservation && parentObservation.groupMembers) {
