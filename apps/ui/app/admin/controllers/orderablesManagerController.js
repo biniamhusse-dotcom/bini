@@ -80,7 +80,9 @@ angular.module('admin')
                 'Coded': '8d4a48b6-c2cc-11de-8d13-0010c6dffd0f',
                 'Boolean': '8d4a5cca-c2cc-11de-8d13-0010c6dffd0f',
                 'N/A': '8d4a4c94-c2cc-11de-8d13-0010c6dffd0f',
-                'Complex': '8d4a6242-c2cc-11de-8d13-0010c6dffd0f'
+                'Complex': '8d4a6242-c2cc-11de-8d13-0010c6dffd0f',
+                'Image': '8d4a6242-c2cc-11de-8d13-0010c6dffd0f',
+                'Video': '8d4a6242-c2cc-11de-8d13-0010c6dffd0f'
             };
 
             var CLASS_UUIDS = {
@@ -88,7 +90,9 @@ angular.module('admin')
                 'ConvSet': '8d492594-c2cc-11de-8d13-0010c6dffd0f',
                 'Question': '8d491e50-c2cc-11de-8d13-0010c6dffd0f',
                 'Finding': '8d491a9a-c2cc-11de-8d13-0010c6dffd0f',
-                'Test': '8d4907b2-c2cc-11de-8d13-0010c6dffd0f'
+                'Test': '8d4907b2-c2cc-11de-8d13-0010c6dffd0f',
+                'Image': 'd44e27e0-5e07-11ef-8f7c-0242ac120002',
+                'Video': 'd77e84b2-5e07-11ef-8f7c-0242ac120002'
             };
 
             $scope.editFormModal = {
@@ -419,6 +423,16 @@ angular.module('admin')
                             var mName = (mFull && mFull.name) || (m.name && (m.name.name || m.name.display));
                             var dt = (m.datatype && m.datatype.name) || 'Text';
                             var cls = (m.conceptClass && m.conceptClass.name) || 'Misc';
+                            if (cls === 'Image' || dt === 'Complex') {
+                                if (cls === 'Video' || (mName && mName.toLowerCase().indexOf('video') !== -1)) {
+                                    dt = 'Video';
+                                } else {
+                                    dt = 'Image';
+                                }
+                            } else if (cls === 'Video') {
+                                dt = 'Video';
+                            }
+
                             var answers = (m.answers || []).map(function (a) {
                                 return {
                                     uuid: a.uuid,
@@ -502,6 +516,24 @@ angular.module('admin')
                         answers: [{ name: 'Normal' }, { name: 'Abnormal' }],
                         newAnswerText: ''
                     });
+                } else if (type === 'Image') {
+                    $scope.editFormModal.items.push({
+                        name: 'Diagnostic Image',
+                        isSet: false,
+                        datatype: 'Image',
+                        conceptClass: 'Image',
+                        answers: [],
+                        newAnswerText: ''
+                    });
+                } else if (type === 'Video') {
+                    $scope.editFormModal.items.push({
+                        name: 'Procedure / Examination Video',
+                        isSet: false,
+                        datatype: 'Video',
+                        conceptClass: 'Video',
+                        answers: [],
+                        newAnswerText: ''
+                    });
                 } else {
                     $scope.editFormModal.items.push({
                         name: '',
@@ -524,6 +556,24 @@ angular.module('admin')
                         datatype: 'Coded',
                         conceptClass: 'Question',
                         answers: [{ name: 'Normal' }, { name: 'Abnormal' }],
+                        newAnswerText: ''
+                    });
+                } else if (type === 'Image') {
+                    section.fields.push({
+                        name: 'Diagnostic Image',
+                        isSet: false,
+                        datatype: 'Image',
+                        conceptClass: 'Image',
+                        answers: [],
+                        newAnswerText: ''
+                    });
+                } else if (type === 'Video') {
+                    section.fields.push({
+                        name: 'Procedure / Examination Video',
+                        isSet: false,
+                        datatype: 'Video',
+                        conceptClass: 'Video',
+                        answers: [],
                         newAnswerText: ''
                     });
                 } else {
@@ -604,6 +654,15 @@ angular.module('admin')
                 var cName = (cFull && cFull.name) || (c.name && (c.name.name || c.name.display));
                 var dt = (c.datatype && c.datatype.name) || 'Text';
                 var cls = (c.conceptClass && c.conceptClass.name) || 'Misc';
+                if (cls === 'Image' || dt === 'Complex') {
+                    if (cls === 'Video' || (cName && cName.toLowerCase().indexOf('video') !== -1)) {
+                        dt = 'Video';
+                    } else {
+                        dt = 'Image';
+                    }
+                } else if (cls === 'Video') {
+                    dt = 'Video';
+                }
                 var answers = (c.answers || []).map(function (a) {
                     return { uuid: a.uuid, name: a.name ? (a.name.display || a.name.name) : (a.display || 'Option') };
                 });
@@ -618,12 +677,24 @@ angular.module('admin')
                         conceptClass: cls,
                         collapsed: false,
                         fields: (c.setMembers || []).map(function (sm) {
+                            var smName = sm.name ? (sm.name.display || sm.name.name) : 'Sub-item';
+                            var smDt = (sm.datatype && sm.datatype.name) || 'Text';
+                            var smCls = (sm.conceptClass && sm.conceptClass.name) || 'Misc';
+                            if (smCls === 'Image' || smDt === 'Complex') {
+                                if (smCls === 'Video' || (smName && smName.toLowerCase().indexOf('video') !== -1)) {
+                                    smDt = 'Video';
+                                } else {
+                                    smDt = 'Image';
+                                }
+                            } else if (smCls === 'Video') {
+                                smDt = 'Video';
+                            }
                             return {
                                 uuid: sm.uuid,
-                                name: sm.name ? (sm.name.display || sm.name.name) : 'Sub-item',
+                                name: smName,
                                 isSet: false,
-                                datatype: (sm.datatype && sm.datatype.name) || 'Text',
-                                conceptClass: (sm.conceptClass && sm.conceptClass.name) || 'Misc',
+                                datatype: smDt,
+                                conceptClass: smCls,
                                 answers: (sm.answers || []).map(function (a) { return { uuid: a.uuid, name: a.display }; }),
                                 newAnswerText: ''
                             };
@@ -730,7 +801,16 @@ angular.module('admin')
                                 }
 
                                 var dtUuid = DATATYPE_UUIDS[field.datatype] || DATATYPE_UUIDS['Text'];
-                                var clsUuid = field.datatype === 'Coded' ? CLASS_UUIDS['Question'] : CLASS_UUIDS['Misc'];
+                                var clsUuid = CLASS_UUIDS['Misc'];
+                                if (field.datatype === 'Coded') {
+                                    clsUuid = CLASS_UUIDS['Question'];
+                                } else if (field.datatype === 'Image') {
+                                    clsUuid = CLASS_UUIDS['Image'];
+                                    dtUuid = DATATYPE_UUIDS['Complex'];
+                                } else if (field.datatype === 'Video') {
+                                    clsUuid = CLASS_UUIDS['Video'];
+                                    dtUuid = DATATYPE_UUIDS['Complex'];
+                                }
                                 var payload = {
                                     names: [{ name: fName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
                                     datatype: dtUuid,
@@ -937,11 +1017,21 @@ angular.module('admin')
                             if (existing && existing.uuid) {
                                 return existing.uuid;
                             }
+                            var dtUuid = DATATYPE_UUIDS[field.datatype] || DATATYPE_UUIDS['Text'];
+                            var clsUuid = CLASS_UUIDS['Misc'];
+                            if (field.datatype === 'Image') {
+                                clsUuid = CLASS_UUIDS['Image'];
+                                dtUuid = DATATYPE_UUIDS['Complex'];
+                            } else if (field.datatype === 'Video') {
+                                clsUuid = CLASS_UUIDS['Video'];
+                                dtUuid = DATATYPE_UUIDS['Complex'];
+                            } else if (field.datatype === 'Coded') {
+                                clsUuid = CLASS_UUIDS['Question'];
+                            }
                             var fieldPayload = {
                                 names: [{ name: fName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
-                                datatype: field.datatype === 'Numeric' ? '8d4a4488-c2cc-11de-8d13-0010c6dffd0f' :
-                                          (field.datatype === 'Date' ? '8d4a4e92-c2cc-11de-8d13-0010c6dffd0f' : '8d4a4ab4-c2cc-11de-8d13-0010c6dffd0f'),
-                                conceptClass: '8d492774-c2cc-11de-8d13-0010c6dffd0f',
+                                datatype: dtUuid,
+                                conceptClass: clsUuid,
                                 set: false
                             };
                             return $http.post(OPENMRS_BASE + '/concept', fieldPayload).then(function (cRes) {

@@ -423,10 +423,12 @@
                             <input type="text" ng-model="field.name" placeholder="Question / Field Name (e.g. Findings, Impression...)"
                                    style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px;">
                             <select ng-model="field.datatype"
-                                    style="width: 130px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff;">
+                                    style="width: 140px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff;">
                                 <option value="Text">Text / Notes</option>
                                 <option value="Numeric">Numeric</option>
                                 <option value="Date">Date</option>
+                                <option value="Image">Image (Scan / Photo)</option>
+                                <option value="Video">Video (Recording)</option>
                             </select>
                             <button type="button" ng-click="removeFieldFromNewForm($index)" ng-disabled="createFormModal.fields.length <= 1"
                                     style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 4px;">
@@ -736,6 +738,14 @@
                                 style="background: #e6fffa; border: 1px solid #b2f5ea; color: #234e52; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                             <i class="fa fa-toggle-on"></i> Yes / No
                         </button>
+                        <button type="button" ng-click="addEditFormItem('Image')"
+                                style="background: #fdf2f8; border: 1px solid #fbcfe8; color: #9d174d; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa fa-camera"></i> Image
+                        </button>
+                        <button type="button" ng-click="addEditFormItem('Video')"
+                                style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa fa-video-camera"></i> Video
+                        </button>
                         <button type="button" ng-click="addEditFormItem('Section')"
                                 style="background: #2d3748; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                             <i class="fa fa-folder-open"></i> + New Section
@@ -777,8 +787,8 @@
                                     </div>
 
                                     <!-- In-Section Quick Add Buttons & Controls -->
-                                    <div style="display: flex; gap: 6px; align-items: center;">
-                                        <span style="font-size: 11px; color: #718096;">Add to section:</span>
+                                    <div style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap;">
+                                        <span style="font-size: 11px; color: #718096;">Add:</span>
                                         <button type="button" ng-click="addFieldToSection(item, 'Text')" title="Add Text Question"
                                                 style="padding: 3px 6px; background: #fff; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 11px; cursor: pointer;">
                                             + Text
@@ -799,6 +809,14 @@
                                                 style="padding: 3px 6px; background: #fff; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 11px; cursor: pointer;">
                                             + Yes/No
                                         </button>
+                                        <button type="button" ng-click="addFieldToSection(item, 'Image')" title="Add Image Question"
+                                                style="padding: 3px 6px; background: #fdf2f8; border: 1px solid #fbcfe8; color: #9d174d; border-radius: 3px; font-size: 11px; cursor: pointer;">
+                                            <i class="fa fa-camera"></i> Image
+                                        </button>
+                                        <button type="button" ng-click="addFieldToSection(item, 'Video')" title="Add Video Question"
+                                                style="padding: 3px 6px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 3px; font-size: 11px; cursor: pointer;">
+                                            <i class="fa fa-video-camera"></i> Video
+                                        </button>
 
                                         <button type="button" ng-click="moveItem(editFormModal.items, $index, -1)" ng-disabled="$first" title="Move Section Up"
                                                 style="padding: 3px 6px; background: #fff; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 11px; cursor: pointer;">
@@ -818,7 +836,7 @@
                                 <!-- Section Questions List -->
                                 <div ng-if="!item.collapsed" style="padding: 10px 14px; display: flex; flex-direction: column; gap: 8px;">
                                     <div ng-if="item.fields.length === 0" style="padding: 14px; text-align: center; color: #a0aec0; font-size: 12px;">
-                                        No questions inside this section yet. Click '+ Text', '+ Numeric', '+ Dropdown' above to add questions.
+                                        No questions inside this section yet. Click '+ Text', '+ Numeric', '+ Dropdown', '+ Image', '+ Video' above to add questions.
                                     </div>
 
                                     <div ng-repeat="field in item.fields"
@@ -828,15 +846,23 @@
                                             <input type="text" ng-model="field.name" placeholder="Question / Field Name"
                                                    style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px;">
                                             <select ng-model="field.datatype"
-                                                    style="width: 140px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff;">
+                                                    style="width: 155px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff;">
                                                 <option value="Text">Text / Notes</option>
                                                 <option value="Numeric">Numeric</option>
                                                 <option value="Date">Date</option>
                                                 <option value="Datetime">Date & Time</option>
                                                 <option value="Coded">Dropdown (Coded)</option>
                                                 <option value="Boolean">Yes / No</option>
-                                                <option value="Complex">Image / Attachment</option>
+                                                <option value="Image">Image (Diagnostic / Scan)</option>
+                                                <option value="Video">Video (Procedure Clip)</option>
                                             </select>
+
+                                            <span ng-if="field.datatype === 'Image'" style="background: #fce7f3; color: #9d174d; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                                <i class="fa fa-camera"></i> Image
+                                            </span>
+                                            <span ng-if="field.datatype === 'Video'" style="background: #fee2e2; color: #991b1b; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                                <i class="fa fa-video-camera"></i> Video
+                                            </span>
 
                                             <!-- Move between sections or top level -->
                                             <button type="button" ng-click="moveFieldToSection(field, item.fields, $index, null)" title="Move to Top Level"
@@ -891,15 +917,23 @@
                                     <input type="text" ng-model="item.name" placeholder="Question / Field Name"
                                            style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px;">
                                     <select ng-model="item.datatype"
-                                            style="width: 140px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff;">
+                                            style="width: 155px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff;">
                                         <option value="Text">Text / Notes</option>
                                         <option value="Numeric">Numeric</option>
                                         <option value="Date">Date</option>
                                         <option value="Datetime">Date & Time</option>
                                         <option value="Coded">Dropdown (Coded)</option>
                                         <option value="Boolean">Yes / No</option>
-                                        <option value="Complex">Image / Attachment</option>
+                                        <option value="Image">Image (Diagnostic / Scan)</option>
+                                        <option value="Video">Video (Procedure Clip)</option>
                                     </select>
+
+                                    <span ng-if="item.datatype === 'Image'" style="background: #fce7f3; color: #9d174d; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                        <i class="fa fa-camera"></i> Image
+                                    </span>
+                                    <span ng-if="item.datatype === 'Video'" style="background: #fee2e2; color: #991b1b; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                        <i class="fa fa-video-camera"></i> Video
+                                    </span>
 
                                     <!-- Move to Section Dropdown if sections exist -->
                                     <select ng-if="getFormSections().length > 0" ng-change="moveFieldToSection(item, editFormModal.items, $index, targetSec); targetSec = null;" ng-model="targetSec"
@@ -994,8 +1028,27 @@
                                             <label><input type="radio" name="{{field.name + '_' + $index}}" disabled> Yes</label>
                                             <label><input type="radio" name="{{field.name + '_' + $index}}" disabled> No</label>
                                         </div>
-                                        <div ng-if="field.datatype === 'Complex'" style="font-size: 11px; color: #718096; border: 1px dashed #cbd5e0; padding: 10px; border-radius: 4px; text-align: center;">
-                                            <i class="fa fa-camera"></i> Diagnostic Images / Attachments
+
+                                        <!-- Image Preview -->
+                                        <div ng-if="field.datatype === 'Image' || field.datatype === 'Complex' && field.conceptClass === 'Image'"
+                                             style="border: 2px dashed #f472b6; background: #fdf2f8; border-radius: 6px; padding: 12px; text-align: center; color: #9d174d;">
+                                            <i class="fa fa-camera fa-2x" style="color: #ec4899; margin-bottom: 4px;"></i>
+                                            <div style="font-size: 12px; font-weight: 700;">Diagnostic Image / Scan Upload</div>
+                                            <div style="font-size: 10px; color: #be185d;">(DICOM, JPEG, PNG radiology scans, fundus photos, ultrasound snapshots)</div>
+                                            <button type="button" style="margin-top: 6px; background: #db2777; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 10px; font-weight: 700;" disabled>
+                                                <i class="fa fa-upload"></i> Upload Image
+                                            </button>
+                                        </div>
+
+                                        <!-- Video Preview -->
+                                        <div ng-if="field.datatype === 'Video' || field.conceptClass === 'Video'"
+                                             style="border: 2px dashed #f87171; background: #fef2f2; border-radius: 6px; padding: 12px; text-align: center; color: #991b1b;">
+                                            <i class="fa fa-video-camera fa-2x" style="color: #ef4444; margin-bottom: 4px;"></i>
+                                            <div style="font-size: 12px; font-weight: 700;">Procedure Video / Recording Upload</div>
+                                            <div style="font-size: 10px; color: #b91c1c;">(MP4, AVI, WebM endoscopy recordings, laparoscopy, Doppler ultrasound clips)</div>
+                                            <button type="button" style="margin-top: 6px; background: #dc2626; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 10px; font-weight: 700;" disabled>
+                                                <i class="fa fa-upload"></i> Upload Video
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -1022,8 +1075,27 @@
                                     <label><input type="radio" name="{{item.name + '_' + $index}}" disabled> Yes</label>
                                     <label><input type="radio" name="{{item.name + '_' + $index}}" disabled> No</label>
                                 </div>
-                                <div ng-if="item.datatype === 'Complex'" style="font-size: 11px; color: #718096; border: 1px dashed #cbd5e0; padding: 10px; border-radius: 4px; text-align: center;">
-                                    <i class="fa fa-camera"></i> Diagnostic Images / Attachments
+
+                                <!-- Image Preview -->
+                                <div ng-if="item.datatype === 'Image' || item.datatype === 'Complex' && item.conceptClass === 'Image'"
+                                     style="border: 2px dashed #f472b6; background: #fdf2f8; border-radius: 6px; padding: 12px; text-align: center; color: #9d174d;">
+                                    <i class="fa fa-camera fa-2x" style="color: #ec4899; margin-bottom: 4px;"></i>
+                                    <div style="font-size: 12px; font-weight: 700;">Diagnostic Image / Scan Upload</div>
+                                    <div style="font-size: 10px; color: #be185d;">(DICOM, JPEG, PNG radiology scans, fundus photos, ultrasound snapshots)</div>
+                                    <button type="button" style="margin-top: 6px; background: #db2777; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 10px; font-weight: 700;" disabled>
+                                        <i class="fa fa-upload"></i> Upload Image
+                                    </button>
+                                </div>
+
+                                <!-- Video Preview -->
+                                <div ng-if="item.datatype === 'Video' || item.conceptClass === 'Video'"
+                                     style="border: 2px dashed #f87171; background: #fef2f2; border-radius: 6px; padding: 12px; text-align: center; color: #991b1b;">
+                                    <i class="fa fa-video-camera fa-2x" style="color: #ef4444; margin-bottom: 4px;"></i>
+                                    <div style="font-size: 12px; font-weight: 700;">Procedure Video / Recording Upload</div>
+                                    <div style="font-size: 10px; color: #b91c1c;">(MP4, AVI, WebM endoscopy recordings, laparoscopy, Doppler ultrasound clips)</div>
+                                    <button type="button" style="margin-top: 6px; background: #dc2626; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 10px; font-weight: 700;" disabled>
+                                        <i class="fa fa-upload"></i> Upload Video
+                                    </button>
                                 </div>
                             </div>
 
