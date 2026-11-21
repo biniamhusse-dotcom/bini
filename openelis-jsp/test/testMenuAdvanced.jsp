@@ -115,6 +115,8 @@
             String timeAverage = request.getParameter("timeAverage") != null ? request.getParameter("timeAverage").trim() : "";
             String timeWarning = request.getParameter("timeWarning") != null ? request.getParameter("timeWarning").trim() : "";
             String timeMax = request.getParameter("timeMax") != null ? request.getParameter("timeMax").trim() : "";
+            String openmrsShortName = request.getParameter("openmrsShortName") != null ? request.getParameter("openmrsShortName").trim() : "";
+            String openmrsSampleCategory = request.getParameter("openmrsSampleCategory") != null ? request.getParameter("openmrsSampleCategory").trim() : "";
 
             if (testName.isEmpty() || testDesc.isEmpty()) {
                 msgType = "error";
@@ -130,7 +132,7 @@
                         msgText = "A test with this Description already exists.";
                     } else {
                         PreparedStatement ins = actConn.prepareStatement(
-                            "INSERT INTO test (id, name, description, test_section_id, method_id, uom_id, is_active, is_reportable, is_referred_out, sort_order, local_abbrev, lab_location_id, time_ta_average, time_ta_warning, time_ta_max) " +
+                            "INSERT INTO test (id, name, description, test_section_id, method_id, uom_id, is_active, is_reportable, is_referred_out, sort_order, local_abbrev, lab_location_id, time_ta_average, time_ta_warning, time_ta_max, openmrs_short_name, openmrs_sample_category) " +
                             "VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM test), ?, ?, ?::numeric, " +
                             "CASE WHEN ? = '' THEN NULL ELSE ?::numeric END, " +
                             "CASE WHEN ? = '' THEN NULL ELSE ?::numeric END, " +
@@ -138,7 +140,7 @@
                             "CASE WHEN ? = '' THEN NULL ELSE ?::int END, " +
                             "CASE WHEN ? = '' THEN NULL ELSE ?::numeric END, " +
                             "CASE WHEN ? = '' THEN NULL ELSE ?::numeric END, " +
-                            "CASE WHEN ? = '' THEN NULL ELSE ?::numeric END)");
+                            "CASE WHEN ? = '' THEN NULL ELSE ?::numeric END, ?, ?)");
                         ins.setString(1, testName);
                         ins.setString(2, testDesc);
                         ins.setString(3, testSectionId);
@@ -153,6 +155,8 @@
                         ins.setString(15, timeAverage); ins.setString(16, timeAverage);
                         ins.setString(17, timeWarning); ins.setString(18, timeWarning);
                         ins.setString(19, timeMax); ins.setString(20, timeMax);
+                        ins.setString(21, openmrsShortName);
+                        ins.setString(22, openmrsSampleCategory);
                         ins.executeUpdate();
                         ins.close();
                         actConn.commit();
@@ -186,6 +190,7 @@
                             "time_ta_average=CASE WHEN ?='' THEN NULL ELSE ?::numeric END, " +
                             "time_ta_warning=CASE WHEN ?='' THEN NULL ELSE ?::numeric END, " +
                             "time_ta_max=CASE WHEN ?='' THEN NULL ELSE ?::numeric END, " +
+                            "openmrs_short_name=?, openmrs_sample_category=?, " +
                             "lastupdated=NOW() WHERE id=?::numeric");
                         upd.setString(1, testName);
                         upd.setString(2, testDesc);
@@ -201,7 +206,9 @@
                         upd.setString(15, timeAverage); upd.setString(16, timeAverage);
                         upd.setString(17, timeWarning); upd.setString(18, timeWarning);
                         upd.setString(19, timeMax); upd.setString(20, timeMax);
-                        upd.setString(21, editId);
+                        upd.setString(21, openmrsShortName);
+                        upd.setString(22, openmrsSampleCategory);
+                        upd.setString(23, editId);
                         upd.executeUpdate();
                         upd.close();
                             actConn.commit();
@@ -392,7 +399,7 @@
     String sortDir = request.getParameter("sortDir") != null ? request.getParameter("sortDir") : "ASC";
 
     Set<String> validSortCols = new HashSet<String>(Arrays.asList(
-        "t.description", "t.name", "ts.description", "t.is_active", "t.is_reportable", "t.is_referred_out", "t.sort_order"
+        "t.description", "t.name", "ts.description", "t.is_active", "t.is_reportable", "t.is_referred_out", "t.sort_order", "t.openmrs_short_name", "t.openmrs_sample_category"
     ));
     if (!validSortCols.contains(sortBy)) sortBy = "t.description";
     if (!"ASC".equalsIgnoreCase(sortDir) && !"DESC".equalsIgnoreCase(sortDir)) sortDir = "ASC";
@@ -417,7 +424,9 @@
         params.add(filterReferredOut);
     }
     if (searchName != null && !searchName.isEmpty()) {
-        where.append(" AND (t.description ILIKE ? OR t.name ILIKE ?)");
+        where.append(" AND (t.description ILIKE ? OR t.name ILIKE ? OR t.openmrs_short_name ILIKE ? OR t.openmrs_sample_category ILIKE ?)");
+        params.add("%" + searchName + "%");
+        params.add("%" + searchName + "%");
         params.add("%" + searchName + "%");
         params.add("%" + searchName + "%");
     }
@@ -499,7 +508,8 @@
 
         String sql = "SELECT t.id, t.description, t.name, ts.description as section_name, t.test_section_id, " +
                      "t.is_active, t.is_reportable, t.is_referred_out, t.sort_order, t.method_id, t.uom_id, t.local_abbrev, " +
-                     "t.lab_location_id, ll.name as location_name, t.time_ta_average, t.time_ta_warning, t.time_ta_max " +
+                     "t.lab_location_id, ll.name as location_name, t.time_ta_average, t.time_ta_warning, t.time_ta_max, " +
+                     "t.openmrs_short_name, t.openmrs_sample_category " +
                      "FROM test t LEFT JOIN test_section ts ON t.test_section_id = ts.id " +
                      "LEFT JOIN lab_location ll ON t.lab_location_id = ll.id " +
                      where.toString() + " ORDER BY " + sortBy + " " + sortDir + " LIMIT ? OFFSET ?";
@@ -572,6 +582,7 @@
 <div class="tm-action-bar">
     <span class="tm-count">Showing <%= totalCount > 0 ? ((currentPage - 1) * pageSize + 1) : 0 %>-<%= Math.min(currentPage * pageSize, totalCount) %> of <%= totalCount %> tests</span>
     <button class="tm-btn tm-btn-success" onclick="tmOpenAddForm()">+ Add Test</button>
+    <button class="tm-btn tm-btn-primary" onclick="tmSyncOpenmrs()" title="Sync Short Names and Sample Categories from OpenMRS">&#8635; Sync from OpenMRS</button>
     <button class="tm-btn" onclick="tmSelectAll()">Select All</button>
     <button class="tm-btn" onclick="tmDeselectAll()">Deselect All</button>
     <button class="tm-btn tm-btn-success" onclick="tmBulkActivate()" title="Activate all selected tests">Activate Selected</button>
@@ -586,6 +597,8 @@
             <th onclick="tmSort('ts.description')">Test Section <%= "ts.description".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.description')">Test Description <%= "t.description".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.name')">Test Name <%= "t.name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
+            <th onclick="tmSort('t.openmrs_short_name')">OpenMRS Short Name <%= "t.openmrs_short_name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
+            <th onclick="tmSort('t.openmrs_sample_category')">OpenMRS Sample Category <%= "t.openmrs_sample_category".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.is_active')" style="width:80px;">Active <%= "t.is_active".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.is_reportable')" style="width:90px;">Reportable <%= "t.is_reportable".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.is_referred_out')" style="width:90px;">Referred Out <%= "t.is_referred_out".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
@@ -616,6 +629,8 @@
                     String timeAvg = rs.getString("time_ta_average");
                     String timeWarn = rs.getString("time_ta_warning");
                     String timeMax = rs.getString("time_ta_max");
+                    String openmrsShortName = rs.getString("openmrs_short_name");
+                    String openmrsSampleCategory = rs.getString("openmrs_sample_category");
                     String tatDisplay = (timeAvg != null ? timeAvg : "-") + " / " + (timeMax != null ? timeMax : "-");
 
                     String activeStr = (active != null && "Y".equalsIgnoreCase(active.trim())) ? "Y" : "N";
@@ -634,6 +649,8 @@
             data-referred="<%= referredOut %>"
             data-sort="<%= sortOrder != null ? sortOrder : "2147483647" %>"
             data-abbrev="<%= (localAbbrev != null ? localAbbrev.replace("\"", "&quot;") : "") %>"
+            data-openmrs-short="<%= (openmrsShortName != null ? openmrsShortName.replace("\"", "&quot;") : "") %>"
+            data-openmrs-sample="<%= (openmrsSampleCategory != null ? openmrsSampleCategory.replace("\"", "&quot;") : "") %>"
             data-location="<%= locationId != null ? locationId : "" %>"
             data-time-avg="<%= timeAvg != null ? timeAvg : "" %>"
             data-time-warn="<%= timeWarn != null ? timeWarn : "" %>"
@@ -642,6 +659,20 @@
             <td><%= section != null ? section : "" %></td>
             <td><%= desc != null ? desc : "" %></td>
             <td><%= name != null ? name : "" %></td>
+            <td>
+                <% if (openmrsShortName != null && !openmrsShortName.trim().isEmpty()) { %>
+                    <span style="background:#e8f0fe;color:#1967d2;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;"><%= openmrsShortName %></span>
+                <% } else { %>
+                    <span style="color:#bbb;">-</span>
+                <% } %>
+            </td>
+            <td>
+                <% if (openmrsSampleCategory != null && !openmrsSampleCategory.trim().isEmpty()) { %>
+                    <span style="background:#e6f4ea;color:#137333;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;"><%= openmrsSampleCategory %></span>
+                <% } else { %>
+                    <span style="color:#bbb;">-</span>
+                <% } %>
+            </td>
             <td class="<%= activeClass %>"><%= activeStr %></td>
             <td class="<%= reportableClass %>"><%= reportable != null ? reportable : "" %></td>
             <td class="<%= referredClass %>"><%= referredOut ? "Y" : "N" %></td>
@@ -765,6 +796,14 @@
                 <input type="text" name="localAbbrev" id="tmFormLocalAbbrev">
             </div>
             <div class="tm-form-row">
+                <label>OpenMRS Short Name:</label>
+                <input type="text" name="openmrsShortName" id="tmFormOpenmrsShort" placeholder="e.g. CBC, ESR">
+            </div>
+            <div class="tm-form-row">
+                <label>OpenMRS Sample Category:</label>
+                <input type="text" name="openmrsSampleCategory" id="tmFormOpenmrsSample" placeholder="e.g. Blood Specimen, Serum, Urine">
+            </div>
+            <div class="tm-form-row">
                 <label>Lab Location:</label>
                 <select name="labLocationId" id="tmFormLocation">
                     <option value="">All Locations</option>
@@ -850,6 +889,8 @@ function tmOpenAddForm() {
     document.getElementById('tmFormTimeWarn').value = '';
     document.getElementById('tmFormTimeMax').value = '';
     document.getElementById('tmFormLocalAbbrev').value = '';
+    document.getElementById('tmFormOpenmrsShort').value = '';
+    document.getElementById('tmFormOpenmrsSample').value = '';
     document.getElementById('tmFormLocation').value = '';
     document.getElementById('tmFormSubmitBtn').textContent = 'Add Test';
     document.getElementById('tmFormOverlay').style.display = 'flex';
@@ -870,6 +911,8 @@ function tmEditRow(el) {
         tr.getAttribute('data-referred'),
         tr.getAttribute('data-sort'),
         tr.getAttribute('data-abbrev'),
+        tr.getAttribute('data-openmrs-short'),
+        tr.getAttribute('data-openmrs-sample'),
         tr.getAttribute('data-location'),
         tr.getAttribute('data-time-avg'),
         tr.getAttribute('data-time-warn'),
@@ -877,7 +920,7 @@ function tmEditRow(el) {
     );
 }
 
-function tmOpenEditForm(id, name, desc, sectionId, methodId, uomId, active, reportable, referredOut, sortOrder, localAbbrev, locationId, timeAvg, timeWarn, timeMax) {
+function tmOpenEditForm(id, name, desc, sectionId, methodId, uomId, active, reportable, referredOut, sortOrder, localAbbrev, openmrsShort, openmrsSample, locationId, timeAvg, timeWarn, timeMax) {
     document.getElementById('tmFormTitle').textContent = 'Edit Test';
     document.getElementById('tmFormAction').value = 'update';
     document.getElementById('tmFormEditId').value = id;
@@ -894,9 +937,32 @@ function tmOpenEditForm(id, name, desc, sectionId, methodId, uomId, active, repo
     document.getElementById('tmFormTimeWarn').value = timeWarn || '';
     document.getElementById('tmFormTimeMax').value = timeMax || '';
     document.getElementById('tmFormLocalAbbrev').value = localAbbrev;
+    document.getElementById('tmFormOpenmrsShort').value = openmrsShort || '';
+    document.getElementById('tmFormOpenmrsSample').value = openmrsSample || '';
     document.getElementById('tmFormLocation').value = locationId;
     document.getElementById('tmFormSubmitBtn').textContent = 'Update Test';
     document.getElementById('tmFormOverlay').style.display = 'flex';
+}
+
+function tmSyncOpenmrs() {
+    if (!confirm('Sync OpenMRS Short Names and Sample Categories for all tests now?')) return;
+    var btn = event.target;
+    var origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Syncing...';
+    fetch('/backup-api/harmonization/sync-openmrs-test-info', { method: 'POST' })
+        .then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
+        .then(function(data) {
+            alert('Successfully synced ' + (data.updated_count || 'all') + ' tests from OpenMRS!');
+            location.reload();
+        })
+        .catch(function(err) {
+            alert('Sync completed: ' + err.message);
+            location.reload();
+        });
 }
 
 function tmCloseForm() {

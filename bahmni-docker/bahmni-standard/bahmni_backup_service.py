@@ -2250,6 +2250,84 @@ def sync_all_lab_items(payload):
 
     return {"success": True, "results": {"created": created, "updated_names": updated_names, "linked": linked}}
 
+def sync_openmrs_test_info_to_openelis():
+    try:
+        run_elis_exec("""
+            ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_short_name VARCHAR(255);
+            ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_sample_category VARCHAR(255);
+        """)
+        omrs_sql = """
+        SELECT 
+            c.uuid,
+            LOWER(TRIM(cn_full.name)) as lower_name,
+            COALESCE(cn_short.name, '') as short_name,
+            COALESCE(cn_spec.name, '') as sample_category
+        FROM concept c
+        JOIN concept_class cc ON c.class_id = cc.concept_class_id AND cc.name IN ('Test', 'LabSet', 'Misc')
+        JOIN concept_name cn_full ON c.concept_id = cn_full.concept_id AND cn_full.concept_name_type = 'FULLY_SPECIFIED' AND cn_full.voided = 0
+        LEFT JOIN concept_name cn_short ON c.concept_id = cn_short.concept_id AND cn_short.concept_name_type = 'SHORT' AND cn_short.voided = 0
+        LEFT JOIN (
+            SELECT cs.concept_id, GROUP_CONCAT(DISTINCT cn_s.name ORDER BY cn_s.name SEPARATOR ', ') as name
+            FROM concept_set cs
+            JOIN concept c_set ON cs.concept_set = c_set.concept_id
+            JOIN concept_class cc_s ON c_set.class_id = cc_s.concept_class_id AND cc_s.name IN ('Specimen', 'Sample')
+            JOIN concept_name cn_s ON c_set.concept_id = cn_s.concept_id AND cn_s.concept_name_type = 'FULLY_SPECIFIED' AND cn_s.voided = 0
+            GROUP BY cs.concept_id
+        ) cn_spec ON c.concept_id = cn_spec.concept_id
+        WHERE c.retired = 0;
+        """
+        rows = run_omrs_query(omrs_sql)
+        omrs_uuid_map = {}
+        omrs_name_map = {}
+        for r in rows:
+            if len(r) >= 4:
+                item = {
+                    "short_name": r[2].strip(),
+                    "sample_category": r[3].strip()
+                }
+                omrs_uuid_map[r[0].strip()] = item
+                omrs_name_map[r[1].strip()] = item
+
+        elis_sql = """
+        SELECT t.id, t.name, t.description, er.external_id, tos.description as elis_sample
+        FROM test t
+        LEFT JOIN external_reference er ON t.id = er.item_id AND er.type = 'Test'
+        LEFT JOIN sampletype_test stt ON t.id = stt.test_id
+        LEFT JOIN type_of_sample tos ON stt.sample_type_id = tos.id
+        ORDER BY t.id;
+        """
+        lines = run_elis_query(elis_sql)
+        updates = []
+        seen_ids = set()
+        for r in lines:
+            if len(r) >= 5 and r[0].isdigit():
+                t_id = r[0]
+                if t_id in seen_ids:
+                    continue
+                seen_ids.add(t_id)
+                t_name = r[1]
+                t_desc = r[2]
+                ext_uuid = r[3]
+                elis_sample = r[4]
+
+                info = omrs_uuid_map.get(ext_uuid) or omrs_name_map.get(t_name.lower()) or omrs_name_map.get(t_desc.lower())
+                short_name = info["short_name"] if info else ""
+                sample_category = info["sample_category"] if (info and info["sample_category"]) else elis_sample
+
+                esc_short = short_name.replace("'", "''")
+                esc_sample = sample_category.replace("'", "''")
+                updates.append(f"UPDATE test SET openmrs_short_name = '{esc_short}', openmrs_sample_category = '{esc_sample}' WHERE id = {t_id};")
+
+        chunk_size = 200
+        for i in range(0, len(updates), chunk_size):
+            chunk_sql = "\n".join(updates[i:i + chunk_size])
+            run_elis_exec(chunk_sql)
+
+        return {"success": True, "updated_count": len(updates)}
+    except Exception as e:
+        log(f"Error syncing openmrs test info: {e}")
+        return {"success": False, "error": str(e)}
+
 
 # ── HTTP Server Request Handler ──────────────────────────────────────────────
 
@@ -3838,6 +3916,14 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, result)
             except Exception as e:
                 log(f"Error reclassifying lab items: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/harmonization/sync-openmrs-test-info", "/harmonization/sync-openmrs-test-info"):
+            try:
+                result = sync_openmrs_test_info_to_openelis()
+                self._send_json(200, result)
+            except Exception as e:
+                log(f"Error syncing openmrs test info: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/master/payment-methods/item", "/master/payment-methods/item"):
