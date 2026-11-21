@@ -73,7 +73,7 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
             middleName: patient.middleName,
             familyName: patient.familyName,
             display: patient.givenName + (patient.familyName ? " " + patient.familyName : ""),
-            "preferred": false
+            "preferred": true
         };
         stripNulls(nameObj);
 
@@ -81,7 +81,6 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
             patient: {
                 person: {
                     names: [nameObj],
-                    addresses: Object.keys(cleanAddress).length > 0 ? [cleanAddress] : [],
                     birthdate: this.getBirthdate(patient.birthdate, patient.age),
                     birthdateEstimated: patient.birthdateEstimated,
                     gender: patient.gender,
@@ -89,10 +88,19 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
                     attributes: new Bahmni.Common.Domain.AttributeFormatter().getMrsAttributes(patient, patientAttributeTypes),
                     dead: !!patient.dead
                 },
-                identifiers: identifiers,
-                uuid: patient.uuid
+                identifiers: identifiers
             }
         };
+
+        // Only include addresses when address data is present; sending empty array [] triggers
+        // OpenMRS setConvertedProperties ConversionException: "Unable to convert object into response content" (HTTP 400)
+        if (Object.keys(cleanAddress).length > 0) {
+            openMRSPatient.patient.person.addresses = [cleanAddress];
+        }
+
+        if (patient.uuid) {
+            openMRSPatient.patient.uuid = patient.uuid;
+        }
 
         // Only add nullable person fields when they have actual values — sending null causes server NPE
         if (patient.birthtime && moment(patient.birthtime).isValid()) {
