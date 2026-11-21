@@ -390,7 +390,10 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuids: [uuid], target_class: 'Misc' })
         })
-        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
         .then(function(res) {
             if (res.success) {
                 alert('Successfully removed "' + name + '" from Test/Lab category (reclassified to Misc in OpenMRS).');
@@ -421,7 +424,10 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuids: keys, target_class: 'Misc' })
         })
-        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
         .then(function(res) {
             if (res.success) {
                 alert('Batch removal completed!\nSuccessfully removed ' + res.reclassified_count + ' items from the Test category in OpenMRS (reclassified to Misc).');
@@ -480,7 +486,10 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuids: keys })
         })
-        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
         .then(function(res) {
             if (res.success) {
                 alert('Batch deletion completed!\nSuccessfully processed ' + res.deleted_count + ' items across OpenMRS, OpenELIS & Odoo.');

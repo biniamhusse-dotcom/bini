@@ -2080,14 +2080,40 @@ def delete_single_lab_item(payload):
 
 def delete_batch_lab_items(payload):
     uuids = payload.get("uuids", [])
-    count = 0
-    for u in uuids:
-        try:
-            delete_single_lab_item({"uuid": u})
-            count += 1
-        except Exception as e:
-            log(f"Error deleting {u}: {e}")
-    return {"success": True, "deleted_count": count}
+    if not uuids:
+        return {"success": True, "deleted_count": 0}
+    
+    chunk_size = 300
+    total_deleted = 0
+    for i in range(0, len(uuids), chunk_size):
+        chunk = uuids[i:i + chunk_size]
+        quoted_uuids = ", ".join("'" + u.replace("'", "''") + "'" for u in chunk)
+        
+        # 1. OpenMRS
+        run_omrs_exec(f"UPDATE concept SET retired = 1 WHERE uuid IN ({quoted_uuids});")
+        
+        # 2. OpenELIS & Odoo
+        name_rows = run_omrs_query(f"SELECT DISTINCT cn.name FROM concept_name cn JOIN concept c ON cn.concept_id = c.concept_id WHERE c.uuid IN ({quoted_uuids}) AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0;")
+        if name_rows:
+            names = [r[0].strip() for r in name_rows if r and r[0].strip()]
+            if names:
+                quoted_names = ", ".join("'" + n.replace("'", "''") + "'" for n in names)
+                try:
+                    run_elis_exec(f"""
+                        UPDATE test SET is_active = 'N' WHERE name IN ({quoted_names});
+                        DELETE FROM panel_item WHERE panel_id IN (SELECT id FROM panel WHERE name IN ({quoted_names}));
+                        DELETE FROM sampletype_panel WHERE panel_id IN (SELECT id FROM panel WHERE name IN ({quoted_names}));
+                        DELETE FROM panel WHERE name IN ({quoted_names});
+                    """)
+                except Exception as ex:
+                    log(f"Warning deleting from OpenELIS: {ex}")
+                try:
+                    run_odoo_exec(f"UPDATE product_template SET active = false WHERE COALESCE(name->>'en_US', name::text) IN ({quoted_names});")
+                except Exception as ex:
+                    log(f"Warning deactivating in Odoo: {ex}")
+        total_deleted += len(chunk)
+        
+    return {"success": True, "deleted_count": total_deleted}
 
 def reclassify_batch_lab_items(payload):
     uuids = payload.get("uuids", [])
@@ -2101,22 +2127,29 @@ def reclassify_batch_lab_items(payload):
         class_rows = run_omrs_query("SELECT concept_class_id FROM concept_class WHERE name = 'Misc' LIMIT 1;")
     target_class_id = class_rows[0][0]
 
-    count = 0
-    for u in uuids:
+    chunk_size = 300
+    total_reclassified = 0
+    for i in range(0, len(uuids), chunk_size):
+        chunk = uuids[i:i + chunk_size]
+        quoted_uuids = ", ".join("'" + u.replace("'", "''") + "'" for u in chunk)
+        
+        # 1. Update concept class in OpenMRS to target_class in a single statement
+        run_omrs_exec(f"UPDATE concept SET class_id = {target_class_id} WHERE uuid IN ({quoted_uuids});")
+        
+        # 2. Deactivate in OpenELIS if present
         try:
-            esc_u = u.replace("'", "''")
-            # 1. Update concept class in OpenMRS to target_class (e.g. Misc)
-            run_omrs_exec(f"UPDATE concept SET class_id = {target_class_id} WHERE uuid = '{esc_u}';")
-            
-            # 2. If it was active in OpenELIS, deactivate it so it no longer appears in OpenELIS tests
-            name_rows = run_omrs_query(f"SELECT cn.name FROM concept_name cn JOIN concept c ON cn.concept_id = c.concept_id WHERE c.uuid = '{esc_u}' AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1;")
-            if name_rows and len(name_rows[0]) >= 1:
-                name = name_rows[0][0].strip().replace("'", "''")
-                run_elis_exec(f"UPDATE test SET is_active = 'N' WHERE name = '{name}';")
-            count += 1
-        except Exception as e:
-            log(f"Error reclassifying {u}: {e}")
-    return {"success": True, "reclassified_count": count, "target_class": target_class}
+            name_rows = run_omrs_query(f"SELECT DISTINCT cn.name FROM concept_name cn JOIN concept c ON cn.concept_id = c.concept_id WHERE c.uuid IN ({quoted_uuids}) AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0;")
+            if name_rows:
+                names = [r[0].strip() for r in name_rows if r and r[0].strip()]
+                if names:
+                    quoted_names = ", ".join("'" + n.replace("'", "''") + "'" for n in names)
+                    run_elis_exec(f"UPDATE test SET is_active = 'N' WHERE name IN ({quoted_names});")
+        except Exception as ex:
+            log(f"Warning deactivating in OpenELIS: {ex}")
+
+        total_reclassified += len(chunk)
+
+    return {"success": True, "reclassified_count": total_reclassified, "target_class": target_class}
 
 def sync_single_lab_item(payload):
     uuid = payload.get("uuid", "").strip()
