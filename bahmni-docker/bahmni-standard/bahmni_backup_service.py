@@ -1923,7 +1923,12 @@ def run_odoo_exec(sql):
 
 def get_lab_harmonization_comparison():
     omrs_sql = """
-    SELECT c.uuid, cn.name, cc.name as class_name, c.is_set
+    SELECT c.uuid, cn.name, cc.name as class_name, c.is_set,
+           (SELECT cn_s.name FROM concept_name cn_s 
+            WHERE cn_s.concept_id = c.concept_id 
+              AND cn_s.concept_name_type = 'SHORT' 
+              AND cn_s.voided = 0 
+            ORDER BY (cn_s.locale = 'en') DESC, cn_s.concept_name_id ASC LIMIT 1) as short_name
     FROM concept c
     JOIN concept_name cn ON c.concept_id = cn.concept_id 
          AND cn.concept_name_type = 'FULLY_SPECIFIED' 
@@ -1970,6 +1975,7 @@ def get_lab_harmonization_comparison():
         if len(row) < 3:
             continue
         uuid, name, cls_name, is_set = row[0], row[1].strip(), row[2], row[3]
+        short_name = row[4].strip() if len(row) > 4 and row[4] and row[4] != 'NULL' else ""
         if uuid in seen_uuids:
             continue
         seen_uuids.add(uuid)
@@ -2008,6 +2014,7 @@ def get_lab_harmonization_comparison():
         items.append({
             "uuid": uuid,
             "openmrs_name": name,
+            "short_name": short_name,
             "type": item_type,
             "member_count": member_count,
             "openelis_id": elis_id,

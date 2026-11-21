@@ -147,6 +147,7 @@
                         <th style="width:40px;">#</th>
                         <th style="width:75px;">Type</th>
                         <th>OpenMRS Concept Name</th>
+                        <th style="width:140px;">Short Name</th>
                         <th>OpenMRS Concept UUID</th>
                         <th>OpenELIS Name &amp; ID</th>
                         <th>Odoo Product Name &amp; ID</th>
@@ -156,7 +157,7 @@
                 </thead>
                 <tbody id="harmTbody">
                     <tr>
-                        <td colspan="9" style="text-align:center; padding:30px; color:#666;">
+                        <td colspan="10" style="text-align:center; padding:30px; color:#666;">
                             Loading comparison data...
                         </td>
                     </tr>
@@ -179,7 +180,7 @@
 
     function loadComparisonData() {
         var tbody = document.getElementById('harmTbody');
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:#666;">Loading comparison data across OpenMRS, OpenELIS & Odoo...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:#666;">Loading comparison data across OpenMRS, OpenELIS & Odoo...</td></tr>';
         selectedUuids = {};
         updateDeleteSelectedBtn();
 
@@ -202,7 +203,7 @@
                 filterRows();
             })
             .catch(function(err) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:#c0392b;">' +
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:#c0392b;">' +
                     '<strong>Error connecting to sync service:</strong> ' + err.message + '<br>' +
                     '<small>Make sure the Bahmni backup and harmonization service is running on port 5055.</small>' +
                     '</td></tr>';
@@ -239,12 +240,13 @@
 
             if (q) {
                 var omrs = (item.openmrs_name || '').toLowerCase();
+                var shortName = (item.short_name || '').toLowerCase();
                 var elis = (item.openelis_name || '').toLowerCase();
                 var odoo = (item.odoo_name || '').toLowerCase();
                 var u = (item.uuid || '').toLowerCase();
                 var elisId = String(item.openelis_id || '');
                 var odooId = String(item.odoo_id || '');
-                if (omrs.indexOf(q) === -1 && elis.indexOf(q) === -1 && odoo.indexOf(q) === -1 &&
+                if (omrs.indexOf(q) === -1 && shortName.indexOf(q) === -1 && elis.indexOf(q) === -1 && odoo.indexOf(q) === -1 &&
                     u.indexOf(q) === -1 && elisId.indexOf(q) === -1 && odooId.indexOf(q) === -1) {
                     return false;
                 }
@@ -253,7 +255,7 @@
         });
 
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:#888;">No matching tests or panels found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:#888;">No matching tests or panels found.</td></tr>';
             document.getElementById('footerText').innerText = 'Showing 0 of ' + allItems.length + ' items';
             return;
         }
@@ -270,12 +272,16 @@
                 ? '<span class="type-pill-panel">📋 Panel' + (item.member_count ? ' (' + item.member_count + ')' : '') + '</span>'
                 : '<span class="type-pill-test">🧪 Test</span>';
 
+            var shortNameDisplay = (item.short_name && item.short_name.trim() !== '' && item.short_name !== 'NULL')
+                ? '<span style="background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:4px; font-weight:600; font-size:11px; display:inline-block; border:1px solid #bae6fd;">' + escapeHtml(item.short_name) + '</span>'
+                : '<span style="color:#cbd5e1; font-size:11px;">—</span>';
+
             var elisDisplay = item.openelis_name 
-                ? item.openelis_name + ' <span style="background:#eef; padding:1px 5px; border-radius:3px; font-weight:bold; font-size:10px;">#' + item.openelis_id + '</span>'
+                ? escapeHtml(item.openelis_name) + ' <span style="background:#eef; padding:1px 5px; border-radius:3px; font-weight:bold; font-size:10px;">#' + item.openelis_id + '</span>'
                 : '<span style="color:#c0392b; font-style:italic;">— Not in OpenELIS —</span>';
 
             var odooDisplay = item.odoo_name 
-                ? item.odoo_name + ' <span style="background:#eef; padding:1px 5px; border-radius:3px; font-weight:bold; font-size:10px;">#' + item.odoo_id + '</span>'
+                ? escapeHtml(item.odoo_name) + ' <span style="background:#eef; padding:1px 5px; border-radius:3px; font-weight:bold; font-size:10px;">#' + item.odoo_id + '</span>'
                 : '<span style="color:#888; font-style:italic;">— Not in Odoo —</span>';
 
             var isChecked = selectedUuids[item.uuid] ? 'checked' : '';
@@ -286,14 +292,15 @@
             } else if (item.status === 'NAME_MISMATCH') {
                 actions += '<button class="harm-btn harm-btn-warning harm-btn-sm" onclick="syncSingle(\'' + item.uuid + '\', \'' + item.type + '\', \'fix_name\', this)">Fix Name</button>';
             }
-            actions += '<button class="harm-btn harm-btn-danger harm-btn-sm" title="Delete from OpenMRS, OpenELIS & Odoo" onclick="deleteSingle(\'' + item.uuid + '\', \'' + item.openmrs_name.replace(/'/g, "\\'") + '\', \'' + item.type + '\')">🗑️ Delete</button>';
+            actions += '<button class="harm-btn harm-btn-danger harm-btn-sm" title="Delete from OpenMRS, OpenELIS & Odoo" onclick="deleteSingle(\'' + item.uuid + '\', \'' + (item.openmrs_name || '').replace(/'/g, "\\'") + '\', \'' + item.type + '\')">🗑️ Delete</button>';
             actions += '</div>';
 
             html += '<tr>' +
                 '<td style="text-align:center;"><input type="checkbox" class="row-checkbox" data-uuid="' + item.uuid + '" ' + isChecked + ' onchange="toggleSelectRow(\'' + item.uuid + '\', this)"></td>' +
                 '<td style="color:#888;">' + (i + 1) + '</td>' +
                 '<td>' + typePill + '</td>' +
-                '<td><strong>' + item.openmrs_name + '</strong></td>' +
+                '<td><strong>' + escapeHtml(item.openmrs_name) + '</strong></td>' +
+                '<td>' + shortNameDisplay + '</td>' +
                 '<td><span class="mono">' + item.uuid + '</span></td>' +
                 '<td>' + elisDisplay + '</td>' +
                 '<td>' + odooDisplay + '</td>' +
@@ -449,6 +456,11 @@
             btn.disabled = false;
             btn.innerText = old;
         });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     document.addEventListener('DOMContentLoaded', function() {
