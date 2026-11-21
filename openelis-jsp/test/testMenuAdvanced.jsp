@@ -144,6 +144,28 @@
         border-radius: 10px;
         font-weight: 600;
     }
+    .tm-view-tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 14px; }
+    .tm-view-tab {
+        padding: 8px 20px;
+        font-size: 14px;
+        font-weight: 700;
+        border: 2px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .tm-view-tab:hover {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+    }
+    .tm-view-tab.active {
+        background: #486086;
+        color: #ffffff;
+        border-color: #486086;
+        box-shadow: 0 2px 6px rgba(72,96,134,0.3);
+    }
 
     .tm-filter-bar { margin: 12px 0; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
     .tm-filter-bar label { font-weight: bold; font-size: 13px; }
@@ -528,6 +550,8 @@
     String filterSampleCategory = request.getParameter("filterSampleCategory") != null ? request.getParameter("filterSampleCategory").trim() : "";
     String filterShortName = request.getParameter("filterShortName") != null ? request.getParameter("filterShortName").trim() : "";
     String filterLocation = request.getParameter("filterLocation") != null ? request.getParameter("filterLocation").trim() : "";
+    String filterPanel = request.getParameter("filterPanel") != null ? request.getParameter("filterPanel").trim() : "";
+    String currentView = request.getParameter("view") != null ? request.getParameter("view").trim() : "tests";
     String searchField = request.getParameter("searchField") != null ? request.getParameter("searchField").trim() : "all";
     String searchName = request.getParameter("searchName") != null ? request.getParameter("searchName").trim() : "";
     String sortBy = request.getParameter("sortBy") != null ? request.getParameter("sortBy") : "t.description";
@@ -543,9 +567,11 @@
     }
 
     Set<String> validSortCols = new HashSet<String>(Arrays.asList(
-        "t.description", "t.name", "t.openmrs_test_name", "ts.description", "t.is_active", "t.is_reportable", "t.is_referred_out", "t.sort_order", "t.openmrs_short_name", "t.openmrs_sample_category"
+        "t.description", "t.name", "t.openmrs_test_name", "ts.description", "t.is_active", "t.is_reportable", "t.is_referred_out",
+        "t.sort_order", "t.openmrs_short_name", "t.openmrs_sample_category", "t.openmrs_panel_name", "t.openmrs_panel_short_name",
+        "p.name", "p.openmrs_panel_name", "p.openmrs_short_name", "test_count"
     ));
-    if (!validSortCols.contains(sortBy)) sortBy = "t.description";
+    if (!validSortCols.contains(sortBy)) sortBy = "panels".equals(currentView) ? "p.name" : "t.description";
     if (!"ASC".equalsIgnoreCase(sortDir) && !"DESC".equalsIgnoreCase(sortDir)) sortDir = "ASC";
 
     StringBuilder where = new StringBuilder("WHERE 1=1");
@@ -589,6 +615,19 @@
         }
     }
 
+    // Advanced Filter: Panel
+    if (filterPanel != null && !filterPanel.isEmpty()) {
+        if ("__NONE__".equalsIgnoreCase(filterPanel)) {
+            where.append(" AND (t.openmrs_panel_name IS NULL OR TRIM(t.openmrs_panel_name) = '')");
+        } else if ("__HAS__".equalsIgnoreCase(filterPanel)) {
+            where.append(" AND (t.openmrs_panel_name IS NOT NULL AND TRIM(t.openmrs_panel_name) != '')");
+        } else {
+            where.append(" AND (t.openmrs_panel_name ILIKE ? OR t.openmrs_panel_short_name ILIKE ?)");
+            params.add("%" + filterPanel + "%");
+            params.add("%" + filterPanel + "%");
+        }
+    }
+
     // Advanced Filter: Search Query with Field Selection
     if (searchName != null && !searchName.isEmpty()) {
         String sTerm = "%" + searchName + "%";
@@ -602,11 +641,17 @@
         } else if ("short".equalsIgnoreCase(searchField)) {
             where.append(" AND t.openmrs_short_name ILIKE ?");
             params.add(sTerm);
+        } else if ("panel".equalsIgnoreCase(searchField)) {
+            where.append(" AND (t.openmrs_panel_name ILIKE ? OR t.openmrs_panel_short_name ILIKE ?)");
+            params.add(sTerm);
+            params.add(sTerm);
         } else if ("sample".equalsIgnoreCase(searchField)) {
             where.append(" AND t.openmrs_sample_category ILIKE ?");
             params.add(sTerm);
         } else {
-            where.append(" AND (t.description ILIKE ? OR t.name ILIKE ? OR t.openmrs_test_name ILIKE ? OR t.openmrs_short_name ILIKE ? OR t.openmrs_sample_category ILIKE ? OR ts.description ILIKE ?)");
+            where.append(" AND (t.description ILIKE ? OR t.name ILIKE ? OR t.openmrs_test_name ILIKE ? OR t.openmrs_short_name ILIKE ? OR t.openmrs_panel_name ILIKE ? OR t.openmrs_panel_short_name ILIKE ? OR t.openmrs_sample_category ILIKE ? OR ts.description ILIKE ?)");
+            params.add(sTerm);
+            params.add(sTerm);
             params.add(sTerm);
             params.add(sTerm);
             params.add(sTerm);
@@ -639,6 +684,10 @@
     ResultSet countRs = null;
     int totalCount = 0;
     int totalPages = 0;
+    int totalPanelCount = 0;
+    int panelTotalCount = 0;
+    int panelTotalPages = 1;
+    List<String[]> panelDisplayList = new ArrayList<String[]>();
 
     List<String[]> sections = new ArrayList<String[]>();
     List<String[]> methods = new ArrayList<String[]>();
@@ -699,6 +748,81 @@
         } catch (Exception e) {}
         pageContext.setAttribute("distinctCategories", distinctCategories);
 
+        List<String[]> panelList = new ArrayList<String[]>();
+        try {
+            PreparedStatement pStmt = conn.prepareStatement(
+                "SELECT name, COALESCE(openmrs_panel_name, name) as omrs_name, COALESCE(openmrs_short_name, '') as short_name FROM panel ORDER BY name");
+            ResultSet pRs = pStmt.executeQuery();
+            while (pRs.next()) {
+                panelList.add(new String[]{pRs.getString("name"), pRs.getString("omrs_name"), pRs.getString("short_name")});
+            }
+            pRs.close();
+            pStmt.close();
+        } catch (Exception e) {}
+        pageContext.setAttribute("panelList", panelList);
+
+        try {
+            PreparedStatement pCountStmt = conn.prepareStatement("SELECT COUNT(*) FROM panel");
+            ResultSet pCountRs = pCountStmt.executeQuery();
+            if (pCountRs.next()) totalPanelCount = pCountRs.getInt(1);
+            pCountRs.close(); pCountStmt.close();
+        } catch (Exception e) {}
+        pageContext.setAttribute("totalPanelCount", totalPanelCount);
+
+        if ("panels".equals(currentView)) {
+            StringBuilder pWhere = new StringBuilder("WHERE 1=1");
+            List<String> pParams = new ArrayList<String>();
+            if (searchName != null && !searchName.isEmpty()) {
+                pWhere.append(" AND (p.name ILIKE ? OR p.openmrs_panel_name ILIKE ? OR p.openmrs_short_name ILIKE ?)");
+                pParams.add("%" + searchName + "%");
+                pParams.add("%" + searchName + "%");
+                pParams.add("%" + searchName + "%");
+            }
+            if (filterActive != null && !filterActive.isEmpty()) {
+                pWhere.append(" AND p.is_active = ?");
+                pParams.add(filterActive);
+            }
+            String pCountSql = "SELECT COUNT(*) FROM panel p " + pWhere.toString();
+            PreparedStatement pCountPs = conn.prepareStatement(pCountSql);
+            for (int i = 0; i < pParams.size(); i++) pCountPs.setString(i + 1, pParams.get(i));
+            ResultSet pCountRs2 = pCountPs.executeQuery();
+            if (pCountRs2.next()) panelTotalCount = pCountRs2.getInt(1);
+            pCountRs2.close(); pCountPs.close();
+            panelTotalPages = (int) Math.ceil((double) panelTotalCount / pageSize);
+
+            String pSortCol = "p.name";
+            if ("p.name".equals(sortBy) || "p.openmrs_panel_name".equals(sortBy) || "p.openmrs_short_name".equals(sortBy) || "p.is_active".equals(sortBy)) {
+                pSortCol = sortBy;
+            }
+            String pListSql = "SELECT p.id, p.name, COALESCE(p.openmrs_panel_name, p.name) as omrs_name, " +
+                              "COALESCE(p.openmrs_short_name, '') as short_name, p.is_active, p.sort_order, " +
+                              "COUNT(pi.test_id) as test_count " +
+                              "FROM panel p LEFT JOIN panel_item pi ON p.id = pi.panel_id " +
+                              pWhere.toString() + " GROUP BY p.id, p.name, p.openmrs_panel_name, p.openmrs_short_name, p.is_active, p.sort_order " +
+                              "ORDER BY " + pSortCol + " " + sortDir + " LIMIT ? OFFSET ?";
+            PreparedStatement pListPs = conn.prepareStatement(pListSql);
+            int pIdx = 1;
+            for (String pp : pParams) pListPs.setString(pIdx++, pp);
+            pListPs.setInt(pIdx++, pageSize);
+            pListPs.setInt(pIdx++, offset);
+            ResultSet pListRs = pListPs.executeQuery();
+            while (pListRs.next()) {
+                panelDisplayList.add(new String[]{
+                    pListRs.getString("id"),
+                    pListRs.getString("name"),
+                    pListRs.getString("omrs_name"),
+                    pListRs.getString("short_name"),
+                    pListRs.getString("test_count"),
+                    pListRs.getString("is_active"),
+                    pListRs.getString("sort_order")
+                });
+            }
+            pListRs.close(); pListPs.close();
+        }
+        pageContext.setAttribute("panelDisplayList", panelDisplayList);
+        pageContext.setAttribute("panelTotalCount", panelTotalCount);
+        pageContext.setAttribute("panelTotalPages", panelTotalPages);
+
         String countSql = "SELECT COUNT(*) FROM test t LEFT JOIN test_section ts ON t.test_section_id = ts.id " + where.toString();
         countStmt = conn.prepareStatement(countSql);
         for (int i = 0; i < params.size(); i++) {
@@ -714,7 +838,7 @@
         String sql = "SELECT t.id, t.description, t.name, ts.description as section_name, t.test_section_id, " +
                      "t.is_active, t.is_reportable, t.is_referred_out, t.sort_order, t.method_id, t.uom_id, t.local_abbrev, " +
                      "t.lab_location_id, ll.name as location_name, t.time_ta_average, t.time_ta_warning, t.time_ta_max, " +
-                     "t.openmrs_test_name, t.openmrs_short_name, t.openmrs_sample_category " +
+                     "t.openmrs_test_name, t.openmrs_short_name, t.openmrs_panel_name, t.openmrs_panel_short_name, t.openmrs_sample_category " +
                      "FROM test t LEFT JOIN test_section ts ON t.test_section_id = ts.id " +
                      "LEFT JOIN lab_location ll ON t.lab_location_id = ll.id " +
                      where.toString() + " ORDER BY " + sortBy + " " + sortDir + " LIMIT ? OFFSET ?";
@@ -732,6 +856,7 @@
     }
 
     String baseUrl = "TestMenuAdvanced.do?page=__PAGE__&sortBy=" + java.net.URLEncoder.encode(sortBy, "UTF-8") + "&sortDir=" + sortDir;
+    if (!"tests".equals(currentView)) baseUrl += "&view=" + java.net.URLEncoder.encode(currentView, "UTF-8");
     if (pageSize != 20) baseUrl += "&pageSize=" + pageSize;
     if (filterSection != null && !filterSection.isEmpty()) baseUrl += "&filterSection=" + java.net.URLEncoder.encode(filterSection, "UTF-8");
     if (filterActive != null && !filterActive.isEmpty()) baseUrl += "&filterActive=" + java.net.URLEncoder.encode(filterActive, "UTF-8");
@@ -739,20 +864,30 @@
     if (filterReferredOut != null && !filterReferredOut.isEmpty()) baseUrl += "&filterReferredOut=" + java.net.URLEncoder.encode(filterReferredOut, "UTF-8");
     if (filterSampleCategory != null && !filterSampleCategory.isEmpty()) baseUrl += "&filterSampleCategory=" + java.net.URLEncoder.encode(filterSampleCategory, "UTF-8");
     if (filterShortName != null && !filterShortName.isEmpty()) baseUrl += "&filterShortName=" + java.net.URLEncoder.encode(filterShortName, "UTF-8");
+    if (filterPanel != null && !filterPanel.isEmpty()) baseUrl += "&filterPanel=" + java.net.URLEncoder.encode(filterPanel, "UTF-8");
     if (filterLocation != null && !filterLocation.isEmpty()) baseUrl += "&filterLocation=" + java.net.URLEncoder.encode(filterLocation, "UTF-8");
     if (searchField != null && !searchField.isEmpty() && !"all".equals(searchField)) baseUrl += "&searchField=" + java.net.URLEncoder.encode(searchField, "UTF-8");
     if (searchName != null && !searchName.isEmpty()) baseUrl += "&searchName=" + java.net.URLEncoder.encode(searchName, "UTF-8");
 
     boolean hasFilters = !searchName.isEmpty() || !filterSection.isEmpty() || !filterActive.isEmpty() ||
                          !filterReportable.isEmpty() || !filterReferredOut.isEmpty() ||
-                         !filterSampleCategory.isEmpty() || !filterShortName.isEmpty() || !filterLocation.isEmpty();
+                         !filterSampleCategory.isEmpty() || !filterShortName.isEmpty() || !filterLocation.isEmpty() || !filterPanel.isEmpty();
 %>
 
 <% if (!msgText.isEmpty()) { %>
 <div class="tm-msg tm-msg-<%= msgType %>"><%= msgText %></div>
 <% } %>
 
-<h2 style="text-align:center;margin-bottom:6px;">Test Management</h2>
+<h2 style="text-align:center;margin-bottom:10px;">Laboratory Test & Panel Management</h2>
+
+<div class="tm-view-tabs" style="display:flex;gap:10px;justify-content:center;margin-bottom:14px;">
+    <button type="button" class="tm-view-tab <%= !"panels".equals(currentView) ? "active" : "" %>" onclick="tmSwitchView('tests')">
+        &#128300; Tests (<%= totalCount %>)
+    </button>
+    <button type="button" class="tm-view-tab <%= "panels".equals(currentView) ? "active" : "" %>" onclick="tmSwitchView('panels')">
+        &#128203; Panels (<%= totalPanelCount %>)
+    </button>
+</div>
 
 <!-- Advanced Search & Filter Card -->
 <div class="tm-filter-card">
@@ -761,7 +896,7 @@
         <div class="tm-search-input-wrap">
             <span class="tm-search-icon">&#128269;</span>
             <input type="text" id="tmSearchName" value="<%= searchName %>" 
-                   placeholder="Search test name, description, short name, sample category, section..." 
+                   placeholder="Search test name, description, short name, panel name, sample category..." 
                    autocomplete="off"
                    oninput="tmOnSearchInput()"
                    onkeydown="if(event.key==='Enter'){event.preventDefault();tmOnSearchEnter();}">
@@ -772,6 +907,7 @@
             <option value="name" <%= "name".equals(searchField) ? "selected" : "" %>>OpenELIS Name / Desc</option>
             <option value="omrsname" <%= "omrsname".equals(searchField) ? "selected" : "" %>>OpenMRS Test Name</option>
             <option value="short" <%= "short".equals(searchField) ? "selected" : "" %>>OpenMRS Short Name</option>
+            <option value="panel" <%= "panel".equals(searchField) ? "selected" : "" %>>Panel Name / Short Name</option>
             <option value="sample" <%= "sample".equals(searchField) ? "selected" : "" %>>Sample Category</option>
         </select>
         <button class="tm-btn tm-btn-primary" onclick="tmApplyFilters(true)">Search</button>
@@ -866,6 +1002,27 @@
         </div>
 
         <div class="tm-filter-item">
+            <label>Panel</label>
+            <select id="tmFilterPanel" onchange="tmApplyFilters()">
+                <option value="">All Tests (Any)</option>
+                <option value="__HAS__" <%= "__HAS__".equals(filterPanel) ? "selected" : "" %>>&#10003; In a Panel</option>
+                <option value="__NONE__" <%= "__NONE__".equals(filterPanel) ? "selected" : "" %>>&#9888; Standalone (No Panel)</option>
+                <optgroup label="Specific Panels">
+                    <%
+                        List<String[]> pListRef = (List<String[]>) pageContext.getAttribute("panelList");
+                        if (pListRef != null) {
+                            for (String[] pan : pListRef) {
+                                String label = pan[0] + (pan[2] != null && !pan[2].isEmpty() ? " (" + pan[2] + ")" : "");
+                                String selected = pan[0].equals(filterPanel) ? "selected" : "";
+                                out.println("<option value='" + pan[0].replace("'", "&#39;") + "' " + selected + ">" + label + "</option>");
+                            }
+                        }
+                    %>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="tm-filter-item">
             <label>Items Per Page</label>
             <select id="tmPageSize" onchange="tmApplyFilters()">
                 <option value="20" <%= pageSize == 20 ? "selected" : "" %>>20 per page</option>
@@ -882,11 +1039,12 @@
         <span style="font-size:11px;font-weight:700;color:#64748b;margin-right:4px;text-transform:uppercase;">Quick Presets:</span>
         <button type="button" class="tm-preset-chip <%= !hasFilters ? "active" : "" %>" onclick="tmApplyPreset('all')">All Tests</button>
         <button type="button" class="tm-preset-chip <%= "Y".equals(filterActive) && !hasFilters ? "active" : "" %>" onclick="tmApplyPreset('active')">Active Tests</button>
+        <button type="button" class="tm-preset-chip <%= "__HAS__".equals(filterPanel) ? "active" : "" %>" onclick="tmApplyPreset('inPanel')">&#128203; In a Panel</button>
         <button type="button" class="tm-preset-chip <%= "Blood".equals(filterSampleCategory) ? "active" : "" %>" onclick="tmApplyPreset('blood')">Blood / Serum</button>
         <button type="button" class="tm-preset-chip <%= "Urine".equals(filterSampleCategory) ? "active" : "" %>" onclick="tmApplyPreset('urine')">Urine Tests</button>
         <button type="button" class="tm-preset-chip <%= "has".equals(filterShortName) ? "active" : "" %>" onclick="tmApplyPreset('hasShort')">Has Short Name</button>
         <button type="button" class="tm-preset-chip <%= "none".equals(filterShortName) ? "active" : "" %>" onclick="tmApplyPreset('missingShort')">&#9888; Missing Short Name</button>
-        <button type="button" class="tm-preset-chip <%= "__NONE__".equals(filterSampleCategory) ? "active" : "" %>" onclick="tmApplyPreset('unmapped')">&#9888; Unmapped Category</button>
+        <button type="button" class="tm-preset-chip <%= "__NONE__".equals(filterPanel) ? "active" : "" %>" onclick="tmApplyPreset('noPanel')">Standalone Tests</button>
         <button type="button" class="tm-preset-chip <%= "N".equals(filterActive) ? "active" : "" %>" onclick="tmApplyPreset('inactive')">Inactive Tests</button>
 
         <% if (hasFilters) { %>
@@ -899,10 +1057,89 @@
 </div>
 
 <div id="tmResultsContainer">
+<% if ("panels".equals(currentView)) { %>
+<div class="tm-action-bar">
+    <span class="tm-count">Showing <%= panelTotalCount > 0 ? ((currentPage - 1) * pageSize + 1) : 0 %>-<%= Math.min(currentPage * pageSize, panelTotalCount) %> of <%= panelTotalCount %> panels</span>
+    <button class="tm-btn tm-btn-primary" onclick="tmSyncOpenmrs()" title="Sync Panel & Test info from OpenMRS">&#8635; Sync from OpenMRS</button>
+</div>
+
+<table id="tmTable">
+    <thead>
+        <tr>
+            <th style="width:40px;">#</th>
+            <th onclick="tmSort('p.name')">OpenELIS Panel Name <%= "p.name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
+            <th onclick="tmSort('p.openmrs_panel_name')">OpenMRS Concept Name <%= "p.openmrs_panel_name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
+            <th onclick="tmSort('p.openmrs_short_name')">OpenMRS Short Name <%= "p.openmrs_short_name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
+            <th onclick="tmSort('test_count')" style="width:130px;">Tests in Panel <%= "test_count".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
+            <th onclick="tmSort('p.is_active')" style="width:80px;">Active <%= "p.is_active".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
+            <th style="width:130px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <%
+            if (panelDisplayList != null && !panelDisplayList.isEmpty()) {
+                int rowIdx = (currentPage - 1) * pageSize + 1;
+                for (String[] pRow : panelDisplayList) {
+                    String pId = pRow[0];
+                    String pName = pRow[1];
+                    String pOmrsName = pRow[2];
+                    String pShortName = pRow[3];
+                    String pCount = pRow[4];
+                    String pActive = pRow[5];
+                    String pActiveStr = (pActive != null && "Y".equalsIgnoreCase(pActive.trim())) ? "Y" : "N";
+                    String pActiveClass = "Y".equals(pActiveStr) ? "tm-status-y" : "tm-status-n";
+        %>
+        <tr data-id="<%= pId %>"
+            data-name="<%= (pName != null ? pName.replace("\"", "&quot;") : "") %>"
+            data-openmrs-name="<%= (pOmrsName != null ? pOmrsName.replace("\"", "&quot;") : "") %>"
+            data-openmrs-short="<%= (pShortName != null ? pShortName.replace("\"", "&quot;") : "") %>">
+            <td><%= rowIdx++ %></td>
+            <td style="font-weight:600;"><%= pName %></td>
+            <td><%= (pOmrsName != null && !pOmrsName.trim().isEmpty()) ? pOmrsName : "-" %></td>
+            <td>
+                <% if (pShortName != null && !pShortName.trim().isEmpty()) { %>
+                    <span style="background:#e8f0fe;color:#1967d2;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;"><%= pShortName %></span>
+                <% } else { %>
+                    <span style="color:#bbb;">-</span>
+                <% } %>
+            </td>
+            <td>
+                <a href="javascript:void(0)" onclick="tmFilterByPanel('<%= pName.replace("'", "\\'") %>')" style="color:#1967d2;font-weight:bold;text-decoration:none;">
+                    &#128300; <%= pCount %> tests
+                </a>
+            </td>
+            <td class="<%= pActiveClass %>"><%= pActiveStr %></td>
+            <td>
+                <button type="button" class="tm-btn tm-btn-sm tm-btn-primary" onclick="tmFilterByPanel('<%= pName.replace("'", "\\'") %>')">View Tests</button>
+            </td>
+        </tr>
+        <%
+                }
+            } else {
+        %>
+        <tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">No panels found matching criteria.</td></tr>
+        <%  } %>
+    </tbody>
+</table>
+
+<div class="tm-pagination">
+    <% if (currentPage > 1) { %>
+        <button type="button" class="tm-btn" onclick="tmGoToPage(1)">&laquo; First</button>
+        <button type="button" class="tm-btn" onclick="tmGoToPage(<%= currentPage - 1 %>)">&lsaquo; Prev</button>
+    <% } %>
+    <span>Page <%= currentPage %> of <%= panelTotalPages %></span>
+    <% if (currentPage < panelTotalPages) { %>
+        <button type="button" class="tm-btn" onclick="tmGoToPage(<%= currentPage + 1 %>)">Next &rsaquo;</button>
+        <button type="button" class="tm-btn" onclick="tmGoToPage(<%= panelTotalPages %>)">Last &raquo;</button>
+    <% } %>
+</div>
+
+<% } else { /* TESTS VIEW */ %>
+
 <div class="tm-action-bar">
     <span class="tm-count">Showing <%= totalCount > 0 ? ((currentPage - 1) * pageSize + 1) : 0 %>-<%= Math.min(currentPage * pageSize, totalCount) %> of <%= totalCount %> tests</span>
     <button class="tm-btn tm-btn-success" onclick="tmOpenAddForm()">+ Add Test</button>
-    <button class="tm-btn tm-btn-primary" onclick="tmSyncOpenmrs()" title="Sync Test Names, Short Names and Sample Categories from OpenMRS">&#8635; Sync from OpenMRS</button>
+    <button class="tm-btn tm-btn-primary" onclick="tmSyncOpenmrs()" title="Sync Test Names, Short Names, Panels and Sample Categories from OpenMRS">&#8635; Sync from OpenMRS</button>
     <button class="tm-btn" onclick="tmSelectAll()">Select All</button>
     <button class="tm-btn" onclick="tmDeselectAll()">Deselect All</button>
     <button class="tm-btn tm-btn-success" onclick="tmBulkActivate()" title="Activate all selected tests">Activate Selected</button>
@@ -919,6 +1156,7 @@
             <th onclick="tmSort('t.name')">Test Name <%= "t.name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.openmrs_test_name')">OpenMRS Test Name <%= "t.openmrs_test_name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.openmrs_short_name')">OpenMRS Short Name <%= "t.openmrs_short_name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
+            <th onclick="tmSort('t.openmrs_panel_name')">Panel Name (OpenMRS Short Name) <%= "t.openmrs_panel_name".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.openmrs_sample_category')">OpenMRS Sample Category <%= "t.openmrs_sample_category".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.is_active')" style="width:80px;">Active <%= "t.is_active".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
             <th onclick="tmSort('t.is_reportable')" style="width:90px;">Reportable <%= "t.is_reportable".equals(sortBy) ? ("<span class='tm-sort-indicator'>" + ("ASC".equals(sortDir) ? "&#9650;" : "&#9660;") + "</span>") : "" %></th>
@@ -952,6 +1190,8 @@
                     String timeMax = rs.getString("time_ta_max");
                     String openmrsTestName = rs.getString("openmrs_test_name");
                     String openmrsShortName = rs.getString("openmrs_short_name");
+                    String openmrsPanelName = rs.getString("openmrs_panel_name");
+                    String openmrsPanelShortName = rs.getString("openmrs_panel_short_name");
                     String openmrsSampleCategory = rs.getString("openmrs_sample_category");
                     String tatDisplay = (timeAvg != null ? timeAvg : "-") + " / " + (timeMax != null ? timeMax : "-");
 
@@ -973,6 +1213,8 @@
             data-abbrev="<%= (localAbbrev != null ? localAbbrev.replace("\"", "&quot;") : "") %>"
             data-openmrs-name="<%= (openmrsTestName != null ? openmrsTestName.replace("\"", "&quot;") : "") %>"
             data-openmrs-short="<%= (openmrsShortName != null ? openmrsShortName.replace("\"", "&quot;") : "") %>"
+            data-openmrs-panel="<%= (openmrsPanelName != null ? openmrsPanelName.replace("\"", "&quot;") : "") %>"
+            data-openmrs-panel-short="<%= (openmrsPanelShortName != null ? openmrsPanelShortName.replace("\"", "&quot;") : "") %>"
             data-openmrs-sample="<%= (openmrsSampleCategory != null ? openmrsSampleCategory.replace("\"", "&quot;") : "") %>"
             data-location="<%= locationId != null ? locationId : "" %>"
             data-time-avg="<%= timeAvg != null ? timeAvg : "" %>"
@@ -992,6 +1234,16 @@
             <td>
                 <% if (openmrsShortName != null && !openmrsShortName.trim().isEmpty()) { %>
                     <span style="background:#e8f0fe;color:#1967d2;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;"><%= openmrsShortName %></span>
+                <% } else { %>
+                    <span style="color:#bbb;">-</span>
+                <% } %>
+            </td>
+            <td>
+                <% if (openmrsPanelName != null && !openmrsPanelName.trim().isEmpty()) { %>
+                    <span style="font-weight:600;color:#1e293b;"><%= openmrsPanelName %></span>
+                    <% if (openmrsPanelShortName != null && !openmrsPanelShortName.trim().isEmpty()) { %>
+                        <span style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;padding:1px 6px;border-radius:8px;font-size:11px;font-weight:600;margin-left:4px;"><%= openmrsPanelShortName %></span>
+                    <% } %>
                 <% } else { %>
                     <span style="color:#bbb;">-</span>
                 <% } %>
@@ -1038,6 +1290,8 @@
         <button type="button" class="tm-btn" onclick="tmGoToPage(<%= totalPages %>)">Last &raquo;</button>
     <% } %>
 </div>
+
+<% } /* end if panels/tests */ %>
 </div> <!-- /tmResultsContainer -->
 
 <!-- Add/Edit Modal -->
@@ -1166,7 +1420,29 @@ var tmSearchTimer = null;
 var tmCurrentSortBy = '<%= sortBy %>';
 var tmCurrentSortDir = '<%= sortDir %>';
 var tmCurrentPage = <%= currentPage %>;
+var tmCurrentView = '<%= currentView %>';
 var tmFetchController = null;
+
+function tmSwitchView(v) {
+    tmCurrentView = v;
+    tmCurrentPage = 1;
+    tmCurrentSortBy = (v === 'panels') ? 'p.name' : 't.description';
+    tmCurrentSortDir = 'ASC';
+    tmApplyFilters(false);
+}
+
+function tmFilterByPanel(pName) {
+    tmCurrentView = 'tests';
+    tmCurrentPage = 1;
+    tmCurrentSortBy = 't.description';
+    tmCurrentSortDir = 'ASC';
+    if (document.getElementById('tmFilterPanel')) {
+        document.getElementById('tmFilterPanel').value = pName;
+    }
+    var searchInput = document.getElementById('tmSearchName');
+    if (searchInput) searchInput.value = '';
+    tmApplyFilters(false);
+}
 
 function tmOnSearchInput() {
     var searchInput = document.getElementById('tmSearchName');
@@ -1194,6 +1470,10 @@ function tmOnSearchInput() {
             } else if (searchField === 'short') {
                 var omrsShort = (row.getAttribute('data-openmrs-short') || '').toLowerCase();
                 match = (omrsShort.indexOf(val) !== -1);
+            } else if (searchField === 'panel') {
+                var panelName = (row.getAttribute('data-openmrs-panel') || '').toLowerCase();
+                var panelShort = (row.getAttribute('data-openmrs-panel-short') || '').toLowerCase();
+                match = (panelName.indexOf(val) !== -1 || panelShort.indexOf(val) !== -1);
             } else if (searchField === 'sample') {
                 var omrsSample = (row.getAttribute('data-openmrs-sample') || '').toLowerCase();
                 match = (omrsSample.indexOf(val) !== -1);
@@ -1238,12 +1518,14 @@ function tmApplyFilters(useAjax) {
     var referredOut = document.getElementById('tmFilterReferredOut') ? document.getElementById('tmFilterReferredOut').value : '';
     var sampleCat = document.getElementById('tmFilterSampleCategory') ? document.getElementById('tmFilterSampleCategory').value : '';
     var shortName = document.getElementById('tmFilterShortName') ? document.getElementById('tmFilterShortName').value : '';
+    var panel = document.getElementById('tmFilterPanel') ? document.getElementById('tmFilterPanel').value : '';
     var loc = document.getElementById('tmFilterLocation') ? document.getElementById('tmFilterLocation').value : '';
     var pageSize = document.getElementById('tmPageSize') ? document.getElementById('tmPageSize').value : '20';
     var searchField = document.getElementById('tmSearchField') ? document.getElementById('tmSearchField').value : 'all';
     var search = document.getElementById('tmSearchName') ? document.getElementById('tmSearchName').value.trim() : '';
 
     var url = 'TestMenuAdvanced.do?page=' + tmCurrentPage + '&sortBy=' + encodeURIComponent(tmCurrentSortBy) + '&sortDir=' + tmCurrentSortDir;
+    if (tmCurrentView && tmCurrentView !== 'tests') url += '&view=' + encodeURIComponent(tmCurrentView);
     if (pageSize && pageSize !== '20') url += '&pageSize=' + encodeURIComponent(pageSize);
     if (section) url += '&filterSection=' + encodeURIComponent(section);
     if (active) url += '&filterActive=' + encodeURIComponent(active);
@@ -1251,6 +1533,7 @@ function tmApplyFilters(useAjax) {
     if (referredOut) url += '&filterReferredOut=' + encodeURIComponent(referredOut);
     if (sampleCat) url += '&filterSampleCategory=' + encodeURIComponent(sampleCat);
     if (shortName) url += '&filterShortName=' + encodeURIComponent(shortName);
+    if (panel) url += '&filterPanel=' + encodeURIComponent(panel);
     if (loc) url += '&filterLocation=' + encodeURIComponent(loc);
     if (searchField && searchField !== 'all') url += '&searchField=' + encodeURIComponent(searchField);
     if (search) url += '&searchName=' + encodeURIComponent(search);
@@ -1309,12 +1592,13 @@ function tmClearFilters() {
     if (document.getElementById('tmFilterReferredOut')) document.getElementById('tmFilterReferredOut').value = '';
     if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = '';
     if (document.getElementById('tmFilterShortName')) document.getElementById('tmFilterShortName').value = '';
+    if (document.getElementById('tmFilterPanel')) document.getElementById('tmFilterPanel').value = '';
     if (document.getElementById('tmFilterLocation')) document.getElementById('tmFilterLocation').value = '';
     if (document.getElementById('tmSearchField')) document.getElementById('tmSearchField').value = 'all';
     if (document.getElementById('tmPageSize')) document.getElementById('tmPageSize').value = '20';
 
     tmCurrentPage = 1;
-    tmCurrentSortBy = 't.description';
+    tmCurrentSortBy = (tmCurrentView === 'panels') ? 'p.name' : 't.description';
     tmCurrentSortDir = 'ASC';
     tmApplyFilters(true);
 }
@@ -1330,10 +1614,13 @@ function tmApplyPreset(preset) {
     if (document.getElementById('tmFilterReferredOut')) document.getElementById('tmFilterReferredOut').value = '';
     if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = '';
     if (document.getElementById('tmFilterShortName')) document.getElementById('tmFilterShortName').value = '';
+    if (document.getElementById('tmFilterPanel')) document.getElementById('tmFilterPanel').value = '';
     if (document.getElementById('tmFilterLocation')) document.getElementById('tmFilterLocation').value = '';
 
     if (preset === 'active') {
         if (document.getElementById('tmFilterActive')) document.getElementById('tmFilterActive').value = 'Y';
+    } else if (preset === 'inPanel') {
+        if (document.getElementById('tmFilterPanel')) document.getElementById('tmFilterPanel').value = '__HAS__';
     } else if (preset === 'blood') {
         if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = 'Blood';
     } else if (preset === 'urine') {
@@ -1342,8 +1629,8 @@ function tmApplyPreset(preset) {
         if (document.getElementById('tmFilterShortName')) document.getElementById('tmFilterShortName').value = 'has';
     } else if (preset === 'missingShort') {
         if (document.getElementById('tmFilterShortName')) document.getElementById('tmFilterShortName').value = 'none';
-    } else if (preset === 'unmapped') {
-        if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = '__NONE__';
+    } else if (preset === 'noPanel') {
+        if (document.getElementById('tmFilterPanel')) document.getElementById('tmFilterPanel').value = '__NONE__';
     } else if (preset === 'inactive') {
         if (document.getElementById('tmFilterActive')) document.getElementById('tmFilterActive').value = 'N';
     }
@@ -1474,10 +1761,12 @@ function addCurrentFilters(f) {
     if (document.getElementById('tmFilterReferredOut')) addHiddenField(f, 'filterReferredOut', document.getElementById('tmFilterReferredOut').value);
     if (document.getElementById('tmFilterSampleCategory')) addHiddenField(f, 'filterSampleCategory', document.getElementById('tmFilterSampleCategory').value);
     if (document.getElementById('tmFilterShortName')) addHiddenField(f, 'filterShortName', document.getElementById('tmFilterShortName').value);
+    if (document.getElementById('tmFilterPanel')) addHiddenField(f, 'filterPanel', document.getElementById('tmFilterPanel').value);
     if (document.getElementById('tmFilterLocation')) addHiddenField(f, 'filterLocation', document.getElementById('tmFilterLocation').value);
     if (document.getElementById('tmPageSize')) addHiddenField(f, 'pageSize', document.getElementById('tmPageSize').value);
     if (document.getElementById('tmSearchField')) addHiddenField(f, 'searchField', document.getElementById('tmSearchField').value);
     if (document.getElementById('tmSearchName')) addHiddenField(f, 'searchName', document.getElementById('tmSearchName').value);
+    addHiddenField(f, 'view', tmCurrentView);
     addHiddenField(f, 'sortBy', '<%= sortBy %>');
     addHiddenField(f, 'sortDir', '<%= sortDir %>');
     addHiddenField(f, 'page', '<%= currentPage %>');

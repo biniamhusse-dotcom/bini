@@ -2256,6 +2256,10 @@ def sync_openmrs_test_info_to_openelis():
             ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_test_name VARCHAR(255);
             ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_short_name VARCHAR(255);
             ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_sample_category VARCHAR(255);
+            ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_panel_name VARCHAR(500);
+            ALTER TABLE test ADD COLUMN IF NOT EXISTS openmrs_panel_short_name VARCHAR(255);
+            ALTER TABLE panel ADD COLUMN IF NOT EXISTS openmrs_panel_name VARCHAR(255);
+            ALTER TABLE panel ADD COLUMN IF NOT EXISTS openmrs_short_name VARCHAR(255);
         """)
         omrs_sql = """
         SELECT 
@@ -2265,7 +2269,7 @@ def sync_openmrs_test_info_to_openelis():
             COALESCE(cn_short.name, '') as short_name,
             COALESCE(cn_spec.name, '') as sample_category
         FROM concept c
-        JOIN concept_class cc ON c.class_id = cc.concept_class_id AND cc.name IN ('Test', 'LabSet', 'Misc')
+        JOIN concept_class cc ON c.class_id = cc.concept_class_id AND cc.name IN ('Test', 'LabSet', 'Misc', 'ConvSet')
         JOIN concept_name cn_full ON c.concept_id = cn_full.concept_id AND cn_full.concept_name_type = 'FULLY_SPECIFIED' AND cn_full.voided = 0
         LEFT JOIN concept_name cn_short ON c.concept_id = cn_short.concept_id AND cn_short.concept_name_type = 'SHORT' AND cn_short.voided = 0
         LEFT JOIN (
@@ -2292,6 +2296,32 @@ def sync_openmrs_test_info_to_openelis():
                 omrs_uuid_map[r[0].strip()] = item
                 omrs_name_map[r[2].strip()] = item
 
+        # 1. Sync Panels
+        elis_panel_sql = """
+        SELECT p.id, p.name, p.description, er.external_id
+        FROM panel p
+        LEFT JOIN external_reference er ON p.id = er.item_id AND er.type = 'Panel'
+        ORDER BY p.id;
+        """
+        panel_lines = run_elis_query(elis_panel_sql)
+        panel_updates = []
+        for r in panel_lines:
+            if len(r) >= 4 and r[0].isdigit():
+                p_id = r[0]
+                p_name = r[1]
+                p_desc = r[2]
+                ext_uuid = r[3]
+                p_info = omrs_uuid_map.get(ext_uuid) or omrs_name_map.get(p_name.lower()) or omrs_name_map.get(p_desc.lower())
+                p_full = p_info["full_name"] if p_info else (p_name or p_desc)
+                p_short = p_info["short_name"] if p_info else ""
+                esc_p_full = p_full.replace("'", "''")
+                esc_p_short = p_short.replace("'", "''")
+                panel_updates.append(f"UPDATE panel SET openmrs_panel_name = '{esc_p_full}', openmrs_short_name = '{esc_p_short}' WHERE id = {p_id};")
+
+        for i in range(0, len(panel_updates), 100):
+            run_elis_exec("\n".join(panel_updates[i:i + 100]))
+
+        # 2. Sync Tests
         elis_sql = """
         SELECT t.id, t.name, t.description, er.external_id, tos.description as elis_sample
         FROM test t
@@ -2334,7 +2364,27 @@ def sync_openmrs_test_info_to_openelis():
             chunk_sql = "\n".join(updates[i:i + chunk_size])
             run_elis_exec(chunk_sql)
 
-        return {"success": True, "updated_count": len(updates)}
+        # 3. Aggregate Panel Names & Short Names onto Tests
+        agg_sql = """
+        WITH pan_agg AS (
+            SELECT 
+                pi.test_id,
+                STRING_AGG(DISTINCT COALESCE(p.openmrs_panel_name, p.name), ', ') as panel_names,
+                STRING_AGG(DISTINCT NULLIF(TRIM(p.openmrs_short_name), ''), ', ') as panel_shorts
+            FROM panel_item pi
+            JOIN panel p ON pi.panel_id = p.id
+            GROUP BY pi.test_id
+        )
+        UPDATE test t
+        SET 
+            openmrs_panel_name = COALESCE(pa.panel_names, ''),
+            openmrs_panel_short_name = COALESCE(pa.panel_shorts, '')
+        FROM pan_agg pa
+        WHERE t.id = pa.test_id;
+        """
+        run_elis_exec(agg_sql)
+
+        return {"success": True, "updated_count": len(updates), "panel_count": len(panel_updates)}
     except Exception as e:
         log(f"Error syncing openmrs test info: {e}")
         return {"success": False, "error": str(e)}
