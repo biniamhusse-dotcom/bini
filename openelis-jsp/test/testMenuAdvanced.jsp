@@ -13,10 +13,138 @@
     #tmTable tr:hover { background: #e8f0fe; }
     .tm-btn { padding: 6px 14px; cursor: pointer; border: 1px solid #999; background: #f0f0f0; margin: 2px; font-size: 13px; }
     .tm-btn-primary { background: #486086; color: white; border: none; }
+    .tm-btn-secondary { background: #6c757d; color: white; border: none; }
     .tm-btn-danger { background: #c0392b; color: white; border: none; }
     .tm-btn-success { background: #27ae60; color: white; border: none; }
     .tm-btn-warning { background: #e67e22; color: white; border: none; }
     .tm-btn-sm { padding: 3px 8px; font-size: 11px; }
+
+    /* Advanced Filter Card Styling */
+    .tm-filter-card {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 12px 0 16px 0;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .tm-search-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+    .tm-search-input-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 280px;
+        display: flex;
+        align-items: center;
+    }
+    .tm-search-input-wrap input {
+        width: 100%;
+        padding: 8px 30px 8px 34px;
+        font-size: 13px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .tm-search-input-wrap input:focus {
+        border-color: #486086;
+        box-shadow: 0 0 0 3px rgba(72,96,134,0.15);
+    }
+    .tm-search-icon {
+        position: absolute;
+        left: 10px;
+        color: #8c9ba5;
+        font-size: 14px;
+        pointer-events: none;
+    }
+    .tm-search-clear-btn {
+        position: absolute;
+        right: 8px;
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #999;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+    }
+    .tm-search-clear-btn:hover { color: #333; }
+    .tm-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 10px 14px;
+        margin-bottom: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #eef2f6;
+    }
+    .tm-filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .tm-filter-item label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #475569;
+    }
+    .tm-filter-item select {
+        padding: 6px 8px;
+        font-size: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        background: white;
+        outline: none;
+    }
+    .tm-filter-item select:focus {
+        border-color: #486086;
+    }
+    .tm-preset-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding-top: 10px;
+        border-top: 1px solid #eef2f6;
+    }
+    .tm-preset-chip {
+        padding: 4px 10px;
+        border-radius: 14px;
+        border: 1px solid #d0d7de;
+        background: #ffffff;
+        color: #486086;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .tm-preset-chip:hover {
+        background: #e8f0fe;
+        border-color: #486086;
+    }
+    .tm-preset-chip.active {
+        background: #486086;
+        color: #ffffff;
+        border-color: #486086;
+    }
+    .tm-active-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #e8f0fe;
+        color: #1967d2;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
     .tm-filter-bar { margin: 12px 0; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
     .tm-filter-bar label { font-weight: bold; font-size: 13px; }
     .tm-filter-bar select, .tm-filter-bar input[type="text"] { padding: 5px 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 3px; }
@@ -394,9 +522,22 @@
     String filterActive = request.getParameter("filterActive") != null ? request.getParameter("filterActive") : "";
     String filterReportable = request.getParameter("filterReportable") != null ? request.getParameter("filterReportable") : "";
     String filterReferredOut = request.getParameter("filterReferredOut") != null ? request.getParameter("filterReferredOut") : "";
-    String searchName = request.getParameter("searchName") != null ? request.getParameter("searchName") : "";
+    String filterSampleCategory = request.getParameter("filterSampleCategory") != null ? request.getParameter("filterSampleCategory").trim() : "";
+    String filterShortName = request.getParameter("filterShortName") != null ? request.getParameter("filterShortName").trim() : "";
+    String filterLocation = request.getParameter("filterLocation") != null ? request.getParameter("filterLocation").trim() : "";
+    String searchField = request.getParameter("searchField") != null ? request.getParameter("searchField").trim() : "all";
+    String searchName = request.getParameter("searchName") != null ? request.getParameter("searchName").trim() : "";
     String sortBy = request.getParameter("sortBy") != null ? request.getParameter("sortBy") : "t.description";
     String sortDir = request.getParameter("sortDir") != null ? request.getParameter("sortDir") : "ASC";
+    String pageSizeParam = request.getParameter("pageSize");
+    int pageSize = 20;
+    if (pageSizeParam != null && !pageSizeParam.trim().isEmpty()) {
+        try {
+            pageSize = Integer.parseInt(pageSizeParam.trim());
+            if (pageSize <= 0) pageSize = 20;
+            if (pageSize > 1000) pageSize = 1000;
+        } catch (Exception e) { pageSize = 20; }
+    }
 
     Set<String> validSortCols = new HashSet<String>(Arrays.asList(
         "t.description", "t.name", "ts.description", "t.is_active", "t.is_reportable", "t.is_referred_out", "t.sort_order", "t.openmrs_short_name", "t.openmrs_sample_category"
@@ -423,21 +564,60 @@
         where.append(" AND t.is_referred_out = ?::boolean");
         params.add(filterReferredOut);
     }
-    if (searchName != null && !searchName.isEmpty()) {
-        where.append(" AND (t.description ILIKE ? OR t.name ILIKE ? OR t.openmrs_short_name ILIKE ? OR t.openmrs_sample_category ILIKE ?)");
-        params.add("%" + searchName + "%");
-        params.add("%" + searchName + "%");
-        params.add("%" + searchName + "%");
-        params.add("%" + searchName + "%");
+
+    // Advanced Filter: Sample Category
+    if (filterSampleCategory != null && !filterSampleCategory.isEmpty()) {
+        if ("__NONE__".equalsIgnoreCase(filterSampleCategory)) {
+            where.append(" AND (t.openmrs_sample_category IS NULL OR TRIM(t.openmrs_sample_category) = '')");
+        } else if ("__HAS__".equalsIgnoreCase(filterSampleCategory)) {
+            where.append(" AND (t.openmrs_sample_category IS NOT NULL AND TRIM(t.openmrs_sample_category) != '')");
+        } else {
+            where.append(" AND t.openmrs_sample_category ILIKE ?");
+            params.add("%" + filterSampleCategory + "%");
+        }
     }
 
-    // Location filtering: non-admin users see only tests for their location
-    if (!isLocationAdmin && selectedLocationId != null && !selectedLocationId.isEmpty()) {
+    // Advanced Filter: Short Name
+    if (filterShortName != null && !filterShortName.isEmpty()) {
+        if ("none".equalsIgnoreCase(filterShortName)) {
+            where.append(" AND (t.openmrs_short_name IS NULL OR TRIM(t.openmrs_short_name) = '')");
+        } else if ("has".equalsIgnoreCase(filterShortName)) {
+            where.append(" AND (t.openmrs_short_name IS NOT NULL AND TRIM(t.openmrs_short_name) != '')");
+        }
+    }
+
+    // Advanced Filter: Search Query with Field Selection
+    if (searchName != null && !searchName.isEmpty()) {
+        String sTerm = "%" + searchName + "%";
+        if ("name".equalsIgnoreCase(searchField)) {
+            where.append(" AND (t.description ILIKE ? OR t.name ILIKE ?)");
+            params.add(sTerm);
+            params.add(sTerm);
+        } else if ("short".equalsIgnoreCase(searchField)) {
+            where.append(" AND t.openmrs_short_name ILIKE ?");
+            params.add(sTerm);
+        } else if ("sample".equalsIgnoreCase(searchField)) {
+            where.append(" AND t.openmrs_sample_category ILIKE ?");
+            params.add(sTerm);
+        } else {
+            where.append(" AND (t.description ILIKE ? OR t.name ILIKE ? OR t.openmrs_short_name ILIKE ? OR t.openmrs_sample_category ILIKE ? OR ts.description ILIKE ?)");
+            params.add(sTerm);
+            params.add(sTerm);
+            params.add(sTerm);
+            params.add(sTerm);
+            params.add(sTerm);
+        }
+    }
+
+    // Location filtering
+    if (filterLocation != null && !filterLocation.isEmpty()) {
+        where.append(" AND t.lab_location_id = ?::int");
+        params.add(filterLocation);
+    } else if (!isLocationAdmin && selectedLocationId != null && !selectedLocationId.isEmpty()) {
         where.append(" AND (t.lab_location_id = ?::int OR t.lab_location_id IS NULL)");
         params.add(selectedLocationId);
     }
 
-    int pageSize = 20;
     int currentPage = 1;
     String pageParam = request.getParameter("page");
     if (pageParam != null) {
@@ -494,6 +674,24 @@
         locRs.close(); locStmt.close();
         pageContext.setAttribute("locList", locList);
 
+        List<String> distinctCategories = new ArrayList<String>();
+        try {
+            PreparedStatement catStmt = conn.prepareStatement(
+                "SELECT DISTINCT openmrs_sample_category FROM test " +
+                "WHERE openmrs_sample_category IS NOT NULL AND TRIM(openmrs_sample_category) != '' " +
+                "ORDER BY openmrs_sample_category");
+            ResultSet catRs = catStmt.executeQuery();
+            while (catRs.next()) {
+                String c = catRs.getString(1);
+                if (c != null && !c.trim().isEmpty()) {
+                    distinctCategories.add(c.trim());
+                }
+            }
+            catRs.close();
+            catStmt.close();
+        } catch (Exception e) {}
+        pageContext.setAttribute("distinctCategories", distinctCategories);
+
         String countSql = "SELECT COUNT(*) FROM test t LEFT JOIN test_section ts ON t.test_section_id = ts.id " + where.toString();
         countStmt = conn.prepareStatement(countSql);
         for (int i = 0; i < params.size(); i++) {
@@ -527,56 +725,169 @@
     }
 
     String baseUrl = "TestMenuAdvanced.do?page=__PAGE__&sortBy=" + java.net.URLEncoder.encode(sortBy, "UTF-8") + "&sortDir=" + sortDir;
+    if (pageSize != 20) baseUrl += "&pageSize=" + pageSize;
     if (filterSection != null && !filterSection.isEmpty()) baseUrl += "&filterSection=" + java.net.URLEncoder.encode(filterSection, "UTF-8");
     if (filterActive != null && !filterActive.isEmpty()) baseUrl += "&filterActive=" + java.net.URLEncoder.encode(filterActive, "UTF-8");
     if (filterReportable != null && !filterReportable.isEmpty()) baseUrl += "&filterReportable=" + java.net.URLEncoder.encode(filterReportable, "UTF-8");
     if (filterReferredOut != null && !filterReferredOut.isEmpty()) baseUrl += "&filterReferredOut=" + java.net.URLEncoder.encode(filterReferredOut, "UTF-8");
+    if (filterSampleCategory != null && !filterSampleCategory.isEmpty()) baseUrl += "&filterSampleCategory=" + java.net.URLEncoder.encode(filterSampleCategory, "UTF-8");
+    if (filterShortName != null && !filterShortName.isEmpty()) baseUrl += "&filterShortName=" + java.net.URLEncoder.encode(filterShortName, "UTF-8");
+    if (filterLocation != null && !filterLocation.isEmpty()) baseUrl += "&filterLocation=" + java.net.URLEncoder.encode(filterLocation, "UTF-8");
+    if (searchField != null && !searchField.isEmpty() && !"all".equals(searchField)) baseUrl += "&searchField=" + java.net.URLEncoder.encode(searchField, "UTF-8");
     if (searchName != null && !searchName.isEmpty()) baseUrl += "&searchName=" + java.net.URLEncoder.encode(searchName, "UTF-8");
+
+    boolean hasFilters = !searchName.isEmpty() || !filterSection.isEmpty() || !filterActive.isEmpty() ||
+                         !filterReportable.isEmpty() || !filterReferredOut.isEmpty() ||
+                         !filterSampleCategory.isEmpty() || !filterShortName.isEmpty() || !filterLocation.isEmpty();
 %>
 
 <% if (!msgText.isEmpty()) { %>
 <div class="tm-msg tm-msg-<%= msgType %>"><%= msgText %></div>
 <% } %>
 
-<h2 style="text-align:center;">Test</h2>
+<h2 style="text-align:center;margin-bottom:6px;">Test Management</h2>
 
-<div class="tm-filter-bar">
-    <label>Test Section:</label>
-    <select id="tmFilterSection" onchange="tmApplyFilters()">
-        <option value="">All Sections</option>
-        <%
-            for (String[] sec : sections) {
-                String selected = sec[0].equals(filterSection) ? "selected" : "";
-                out.println("<option value='" + sec[0] + "' " + selected + ">" + sec[1] + "</option>");
-            }
-        %>
-    </select>
+<!-- Advanced Search & Filter Card -->
+<div class="tm-filter-card">
+    <!-- Main Search Bar -->
+    <div class="tm-search-row">
+        <div class="tm-search-input-wrap">
+            <span class="tm-search-icon">&#128269;</span>
+            <input type="text" id="tmSearchName" value="<%= searchName %>" 
+                   placeholder="Search test name, description, short name, sample category, section..." 
+                   onkeyup="if(event.key==='Enter') tmApplyFilters()">
+            <% if (!searchName.isEmpty()) { %>
+                <button type="button" class="tm-search-clear-btn" onclick="document.getElementById('tmSearchName').value=''; tmApplyFilters();" title="Clear search">&times;</button>
+            <% } %>
+        </div>
+        <select id="tmSearchField" onchange="tmApplyFilters()" style="padding:8px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;background:white;">
+            <option value="all" <%= "all".equals(searchField) ? "selected" : "" %>>All Fields</option>
+            <option value="name" <%= "name".equals(searchField) ? "selected" : "" %>>Name / Description</option>
+            <option value="short" <%= "short".equals(searchField) ? "selected" : "" %>>OpenMRS Short Name</option>
+            <option value="sample" <%= "sample".equals(searchField) ? "selected" : "" %>>Sample Category</option>
+        </select>
+        <button class="tm-btn tm-btn-primary" onclick="tmApplyFilters()">Search</button>
+        <button class="tm-btn" onclick="tmClearFilters()">Reset All</button>
+    </div>
 
-    <label>Status:</label>
-    <select id="tmFilterActive" onchange="tmApplyFilters()">
-        <option value="">All</option>
-        <option value="Y" <%= "Y".equals(filterActive) ? "selected" : "" %>>Active (Y)</option>
-        <option value="N" <%= "N".equals(filterActive) ? "selected" : "" %>>Inactive (N)</option>
-    </select>
+    <!-- Filter Grid -->
+    <div class="tm-filter-grid">
+        <div class="tm-filter-item">
+            <label>Test Section</label>
+            <select id="tmFilterSection" onchange="tmApplyFilters()">
+                <option value="">All Sections</option>
+                <%
+                    for (String[] sec : sections) {
+                        String selected = sec[0].equals(filterSection) ? "selected" : "";
+                        out.println("<option value='" + sec[0] + "' " + selected + ">" + sec[1] + "</option>");
+                    }
+                %>
+            </select>
+        </div>
 
-    <label>Reportable:</label>
-    <select id="tmFilterReportable" onchange="tmApplyFilters()">
-        <option value="">All</option>
-        <option value="Y" <%= "Y".equals(filterReportable) ? "selected" : "" %>>Yes (Y)</option>
-        <option value="N" <%= "N".equals(filterReportable) ? "selected" : "" %>>No (N)</option>
-    </select>
+        <div class="tm-filter-item">
+            <label>Sample Category</label>
+            <select id="tmFilterSampleCategory" onchange="tmApplyFilters()">
+                <option value="">All Categories</option>
+                <option value="__HAS__" <%= "__HAS__".equals(filterSampleCategory) ? "selected" : "" %>>&#10003; Has Category (Mapped)</option>
+                <option value="__NONE__" <%= "__NONE__".equals(filterSampleCategory) ? "selected" : "" %>>&#9888; No Category (Unmapped)</option>
+                <optgroup label="Specific Categories">
+                    <%
+                        List<String> dCats = (List<String>) pageContext.getAttribute("distinctCategories");
+                        if (dCats != null) {
+                            for (String dc : dCats) {
+                                String selected = dc.equals(filterSampleCategory) ? "selected" : "";
+                                out.println("<option value='" + dc.replace("'", "&#39;") + "' " + selected + ">" + dc + "</option>");
+                            }
+                        }
+                    %>
+                </optgroup>
+            </select>
+        </div>
 
-    <label>Referred Out:</label>
-    <select id="tmFilterReferredOut" onchange="tmApplyFilters()">
-        <option value="">All</option>
-        <option value="true" <%= "true".equals(filterReferredOut) ? "selected" : "" %>>Yes</option>
-        <option value="false" <%= "false".equals(filterReferredOut) ? "selected" : "" %>>No</option>
-    </select>
+        <div class="tm-filter-item">
+            <label>Short Name</label>
+            <select id="tmFilterShortName" onchange="tmApplyFilters()">
+                <option value="">All</option>
+                <option value="has" <%= "has".equals(filterShortName) ? "selected" : "" %>>&#10003; Has Short Name</option>
+                <option value="none" <%= "none".equals(filterShortName) ? "selected" : "" %>>&#9888; Missing Short Name</option>
+            </select>
+        </div>
 
-    <label>Search:</label>
-    <input type="text" id="tmSearchName" value="<%= searchName %>" placeholder="Test name or description..." onkeyup="if(event.key==='Enter') tmApplyFilters()">
-    <button class="tm-btn tm-btn-primary" onclick="tmApplyFilters()">Search</button>
-    <button class="tm-btn" onclick="tmClearFilters()">Clear</button>
+        <div class="tm-filter-item">
+            <label>Status</label>
+            <select id="tmFilterActive" onchange="tmApplyFilters()">
+                <option value="">All Statuses</option>
+                <option value="Y" <%= "Y".equals(filterActive) ? "selected" : "" %>>Active (Y)</option>
+                <option value="N" <%= "N".equals(filterActive) ? "selected" : "" %>>Inactive (N)</option>
+            </select>
+        </div>
+
+        <div class="tm-filter-item">
+            <label>Reportable</label>
+            <select id="tmFilterReportable" onchange="tmApplyFilters()">
+                <option value="">All</option>
+                <option value="Y" <%= "Y".equals(filterReportable) ? "selected" : "" %>>Yes (Y)</option>
+                <option value="N" <%= "N".equals(filterReportable) ? "selected" : "" %>>No (N)</option>
+            </select>
+        </div>
+
+        <div class="tm-filter-item">
+            <label>Referred Out</label>
+            <select id="tmFilterReferredOut" onchange="tmApplyFilters()">
+                <option value="">All</option>
+                <option value="false" <%= "false".equals(filterReferredOut) ? "selected" : "" %>>In-House (No)</option>
+                <option value="true" <%= "true".equals(filterReferredOut) ? "selected" : "" %>>Referred Out (Yes)</option>
+            </select>
+        </div>
+
+        <div class="tm-filter-item">
+            <label>Lab Location</label>
+            <select id="tmFilterLocation" onchange="tmApplyFilters()">
+                <option value="">All Locations</option>
+                <%
+                    List<String[]> locListRef = (List<String[]>) pageContext.getAttribute("locList");
+                    if (locListRef != null) {
+                        for (String[] loc : locListRef) {
+                            String selected = loc[0].equals(filterLocation) ? "selected" : "";
+                            out.println("<option value='" + loc[0] + "' " + selected + ">" + loc[1] + "</option>");
+                        }
+                    }
+                %>
+            </select>
+        </div>
+
+        <div class="tm-filter-item">
+            <label>Items Per Page</label>
+            <select id="tmPageSize" onchange="tmApplyFilters()">
+                <option value="20" <%= pageSize == 20 ? "selected" : "" %>>20 per page</option>
+                <option value="50" <%= pageSize == 50 ? "selected" : "" %>>50 per page</option>
+                <option value="100" <%= pageSize == 100 ? "selected" : "" %>>100 per page</option>
+                <option value="500" <%= pageSize == 500 ? "selected" : "" %>>500 per page</option>
+                <option value="1000" <%= pageSize == 1000 ? "selected" : "" %>>All (up to 1,000)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Quick Filter Presets -->
+    <div class="tm-preset-row">
+        <span style="font-size:11px;font-weight:700;color:#64748b;margin-right:4px;text-transform:uppercase;">Quick Presets:</span>
+        <button type="button" class="tm-preset-chip <%= !hasFilters ? "active" : "" %>" onclick="tmApplyPreset('all')">All Tests</button>
+        <button type="button" class="tm-preset-chip <%= "Y".equals(filterActive) && !hasFilters ? "active" : "" %>" onclick="tmApplyPreset('active')">Active Tests</button>
+        <button type="button" class="tm-preset-chip <%= "Blood".equals(filterSampleCategory) ? "active" : "" %>" onclick="tmApplyPreset('blood')">Blood / Serum</button>
+        <button type="button" class="tm-preset-chip <%= "Urine".equals(filterSampleCategory) ? "active" : "" %>" onclick="tmApplyPreset('urine')">Urine Tests</button>
+        <button type="button" class="tm-preset-chip <%= "has".equals(filterShortName) ? "active" : "" %>" onclick="tmApplyPreset('hasShort')">Has Short Name</button>
+        <button type="button" class="tm-preset-chip <%= "none".equals(filterShortName) ? "active" : "" %>" onclick="tmApplyPreset('missingShort')">&#9888; Missing Short Name</button>
+        <button type="button" class="tm-preset-chip <%= "__NONE__".equals(filterSampleCategory) ? "active" : "" %>" onclick="tmApplyPreset('unmapped')">&#9888; Unmapped Category</button>
+        <button type="button" class="tm-preset-chip <%= "N".equals(filterActive) ? "active" : "" %>" onclick="tmApplyPreset('inactive')">Inactive Tests</button>
+
+        <% if (hasFilters) { %>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+                <span class="tm-active-badge">&#9679; Filters Active</span>
+                <a href="javascript:void(0)" onclick="tmClearFilters()" style="color:#c0392b;font-size:12px;font-weight:600;text-decoration:none;">Clear Filters</a>
+            </div>
+        <% } %>
+    </div>
 </div>
 
 <div class="tm-action-bar">
@@ -828,16 +1139,27 @@
 
 <script>
 function tmApplyFilters() {
-    var section = document.getElementById('tmFilterSection').value;
-    var active = document.getElementById('tmFilterActive').value;
-    var reportable = document.getElementById('tmFilterReportable').value;
-    var referredOut = document.getElementById('tmFilterReferredOut').value;
-    var search = document.getElementById('tmSearchName').value;
+    var section = document.getElementById('tmFilterSection') ? document.getElementById('tmFilterSection').value : '';
+    var active = document.getElementById('tmFilterActive') ? document.getElementById('tmFilterActive').value : '';
+    var reportable = document.getElementById('tmFilterReportable') ? document.getElementById('tmFilterReportable').value : '';
+    var referredOut = document.getElementById('tmFilterReferredOut') ? document.getElementById('tmFilterReferredOut').value : '';
+    var sampleCat = document.getElementById('tmFilterSampleCategory') ? document.getElementById('tmFilterSampleCategory').value : '';
+    var shortName = document.getElementById('tmFilterShortName') ? document.getElementById('tmFilterShortName').value : '';
+    var loc = document.getElementById('tmFilterLocation') ? document.getElementById('tmFilterLocation').value : '';
+    var pageSize = document.getElementById('tmPageSize') ? document.getElementById('tmPageSize').value : '20';
+    var searchField = document.getElementById('tmSearchField') ? document.getElementById('tmSearchField').value : 'all';
+    var search = document.getElementById('tmSearchName') ? document.getElementById('tmSearchName').value.trim() : '';
+
     var url = 'TestMenuAdvanced.do?page=1&sortBy=<%= sortBy %>&sortDir=<%= sortDir %>';
+    if (pageSize && pageSize !== '20') url += '&pageSize=' + encodeURIComponent(pageSize);
     if (section) url += '&filterSection=' + encodeURIComponent(section);
     if (active) url += '&filterActive=' + encodeURIComponent(active);
     if (reportable) url += '&filterReportable=' + encodeURIComponent(reportable);
     if (referredOut) url += '&filterReferredOut=' + encodeURIComponent(referredOut);
+    if (sampleCat) url += '&filterSampleCategory=' + encodeURIComponent(sampleCat);
+    if (shortName) url += '&filterShortName=' + encodeURIComponent(shortName);
+    if (loc) url += '&filterLocation=' + encodeURIComponent(loc);
+    if (searchField && searchField !== 'all') url += '&searchField=' + encodeURIComponent(searchField);
     if (search) url += '&searchName=' + encodeURIComponent(search);
     location.href = url;
 }
@@ -846,20 +1168,51 @@ function tmClearFilters() {
     location.href = 'TestMenuAdvanced.do?page=1&sortBy=t.description&sortDir=ASC';
 }
 
+function tmApplyPreset(preset) {
+    if (preset === 'all') {
+        tmClearFilters();
+    } else if (preset === 'active') {
+        location.href = 'TestMenuAdvanced.do?page=1&filterActive=Y';
+    } else if (preset === 'blood') {
+        location.href = 'TestMenuAdvanced.do?page=1&filterSampleCategory=Blood';
+    } else if (preset === 'urine') {
+        location.href = 'TestMenuAdvanced.do?page=1&filterSampleCategory=Urine';
+    } else if (preset === 'hasShort') {
+        location.href = 'TestMenuAdvanced.do?page=1&filterShortName=has';
+    } else if (preset === 'missingShort') {
+        location.href = 'TestMenuAdvanced.do?page=1&filterShortName=none';
+    } else if (preset === 'unmapped') {
+        location.href = 'TestMenuAdvanced.do?page=1&filterSampleCategory=__NONE__';
+    } else if (preset === 'inactive') {
+        location.href = 'TestMenuAdvanced.do?page=1&filterActive=N';
+    }
+}
+
 function tmSort(col) {
     var currentSort = '<%= sortBy %>';
     var currentDir = '<%= sortDir %>';
     var newDir = (col === currentSort && currentDir === 'ASC') ? 'DESC' : 'ASC';
     var url = 'TestMenuAdvanced.do?page=1&sortBy=' + col + '&sortDir=' + newDir;
-    var section = document.getElementById('tmFilterSection').value;
-    var active = document.getElementById('tmFilterActive').value;
-    var reportable = document.getElementById('tmFilterReportable').value;
-    var referredOut = document.getElementById('tmFilterReferredOut').value;
-    var search = document.getElementById('tmSearchName').value;
+    var section = document.getElementById('tmFilterSection') ? document.getElementById('tmFilterSection').value : '';
+    var active = document.getElementById('tmFilterActive') ? document.getElementById('tmFilterActive').value : '';
+    var reportable = document.getElementById('tmFilterReportable') ? document.getElementById('tmFilterReportable').value : '';
+    var referredOut = document.getElementById('tmFilterReferredOut') ? document.getElementById('tmFilterReferredOut').value : '';
+    var sampleCat = document.getElementById('tmFilterSampleCategory') ? document.getElementById('tmFilterSampleCategory').value : '';
+    var shortName = document.getElementById('tmFilterShortName') ? document.getElementById('tmFilterShortName').value : '';
+    var loc = document.getElementById('tmFilterLocation') ? document.getElementById('tmFilterLocation').value : '';
+    var pageSize = document.getElementById('tmPageSize') ? document.getElementById('tmPageSize').value : '20';
+    var searchField = document.getElementById('tmSearchField') ? document.getElementById('tmSearchField').value : 'all';
+    var search = document.getElementById('tmSearchName') ? document.getElementById('tmSearchName').value.trim() : '';
+
+    if (pageSize && pageSize !== '20') url += '&pageSize=' + encodeURIComponent(pageSize);
     if (section) url += '&filterSection=' + encodeURIComponent(section);
     if (active) url += '&filterActive=' + encodeURIComponent(active);
     if (reportable) url += '&filterReportable=' + encodeURIComponent(reportable);
     if (referredOut) url += '&filterReferredOut=' + encodeURIComponent(referredOut);
+    if (sampleCat) url += '&filterSampleCategory=' + encodeURIComponent(sampleCat);
+    if (shortName) url += '&filterShortName=' + encodeURIComponent(shortName);
+    if (loc) url += '&filterLocation=' + encodeURIComponent(loc);
+    if (searchField && searchField !== 'all') url += '&searchField=' + encodeURIComponent(searchField);
     if (search) url += '&searchName=' + encodeURIComponent(search);
     location.href = url;
 }
@@ -969,6 +1322,22 @@ function tmCloseForm() {
     document.getElementById('tmFormOverlay').style.display = 'none';
 }
 
+function addCurrentFilters(f) {
+    if (document.getElementById('tmFilterSection')) addHiddenField(f, 'filterSection', document.getElementById('tmFilterSection').value);
+    if (document.getElementById('tmFilterActive')) addHiddenField(f, 'filterActive', document.getElementById('tmFilterActive').value);
+    if (document.getElementById('tmFilterReportable')) addHiddenField(f, 'filterReportable', document.getElementById('tmFilterReportable').value);
+    if (document.getElementById('tmFilterReferredOut')) addHiddenField(f, 'filterReferredOut', document.getElementById('tmFilterReferredOut').value);
+    if (document.getElementById('tmFilterSampleCategory')) addHiddenField(f, 'filterSampleCategory', document.getElementById('tmFilterSampleCategory').value);
+    if (document.getElementById('tmFilterShortName')) addHiddenField(f, 'filterShortName', document.getElementById('tmFilterShortName').value);
+    if (document.getElementById('tmFilterLocation')) addHiddenField(f, 'filterLocation', document.getElementById('tmFilterLocation').value);
+    if (document.getElementById('tmPageSize')) addHiddenField(f, 'pageSize', document.getElementById('tmPageSize').value);
+    if (document.getElementById('tmSearchField')) addHiddenField(f, 'searchField', document.getElementById('tmSearchField').value);
+    if (document.getElementById('tmSearchName')) addHiddenField(f, 'searchName', document.getElementById('tmSearchName').value);
+    addHiddenField(f, 'sortBy', '<%= sortBy %>');
+    addHiddenField(f, 'sortDir', '<%= sortDir %>');
+    addHiddenField(f, 'page', '<%= currentPage %>');
+}
+
 function tmDelete(id) {
     if (confirm('Are you sure you want to delete test #' + id + '?')) {
         var f = document.createElement('form');
@@ -976,15 +1345,7 @@ function tmDelete(id) {
         f.action = 'TestMenuAdvanced.do';
         var a = document.createElement('input'); a.type='hidden'; a.name='action'; a.value='delete'; f.appendChild(a);
         var d = document.createElement('input'); d.type='hidden'; d.name='delId'; d.value=id; f.appendChild(d);
-        // carry over current filters
-        addHiddenField(f, 'filterSection', document.getElementById('tmFilterSection').value);
-        addHiddenField(f, 'filterActive', document.getElementById('tmFilterActive').value);
-        addHiddenField(f, 'filterReportable', document.getElementById('tmFilterReportable').value);
-        addHiddenField(f, 'filterReferredOut', document.getElementById('tmFilterReferredOut').value);
-        addHiddenField(f, 'searchName', document.getElementById('tmSearchName').value);
-        addHiddenField(f, 'sortBy', '<%= sortBy %>');
-        addHiddenField(f, 'sortDir', '<%= sortDir %>');
-        addHiddenField(f, 'page', '<%= currentPage %>');
+        addCurrentFilters(f);
         document.body.appendChild(f);
         f.submit();
     }
@@ -996,14 +1357,7 @@ function tmToggleActive(id) {
     f.action = 'TestMenuAdvanced.do';
     var a = document.createElement('input'); a.type='hidden'; a.name='action'; a.value='toggleactive'; f.appendChild(a);
     var d = document.createElement('input'); d.type='hidden'; d.name='toggleId'; d.value=id; f.appendChild(d);
-    addHiddenField(f, 'filterSection', document.getElementById('tmFilterSection').value);
-    addHiddenField(f, 'filterActive', document.getElementById('tmFilterActive').value);
-    addHiddenField(f, 'filterReportable', document.getElementById('tmFilterReportable').value);
-    addHiddenField(f, 'filterReferredOut', document.getElementById('tmFilterReferredOut').value);
-    addHiddenField(f, 'searchName', document.getElementById('tmSearchName').value);
-    addHiddenField(f, 'sortBy', '<%= sortBy %>');
-    addHiddenField(f, 'sortDir', '<%= sortDir %>');
-    addHiddenField(f, 'page', '<%= currentPage %>');
+    addCurrentFilters(f);
     document.body.appendChild(f);
     f.submit();
 }
@@ -1023,14 +1377,7 @@ function tmBulkActivate() {
         var inp = document.createElement('input'); inp.type='hidden'; inp.name='selectedIDs'; inp.value=cb.value;
         f.appendChild(inp);
     });
-    addHiddenField(f, 'filterSection', document.getElementById('tmFilterSection').value);
-    addHiddenField(f, 'filterActive', document.getElementById('tmFilterActive').value);
-    addHiddenField(f, 'filterReportable', document.getElementById('tmFilterReportable').value);
-    addHiddenField(f, 'filterReferredOut', document.getElementById('tmFilterReferredOut').value);
-    addHiddenField(f, 'searchName', document.getElementById('tmSearchName').value);
-    addHiddenField(f, 'sortBy', '<%= sortBy %>');
-    addHiddenField(f, 'sortDir', '<%= sortDir %>');
-    addHiddenField(f, 'page', '<%= currentPage %>');
+    addCurrentFilters(f);
     document.body.appendChild(f);
     f.submit();
 }
@@ -1050,14 +1397,7 @@ function tmBulkDeactivate() {
         var inp = document.createElement('input'); inp.type='hidden'; inp.name='selectedIDs'; inp.value=cb.value;
         f.appendChild(inp);
     });
-    addHiddenField(f, 'filterSection', document.getElementById('tmFilterSection').value);
-    addHiddenField(f, 'filterActive', document.getElementById('tmFilterActive').value);
-    addHiddenField(f, 'filterReportable', document.getElementById('tmFilterReportable').value);
-    addHiddenField(f, 'filterReferredOut', document.getElementById('tmFilterReferredOut').value);
-    addHiddenField(f, 'searchName', document.getElementById('tmSearchName').value);
-    addHiddenField(f, 'sortBy', '<%= sortBy %>');
-    addHiddenField(f, 'sortDir', '<%= sortDir %>');
-    addHiddenField(f, 'page', '<%= currentPage %>');
+    addCurrentFilters(f);
     document.body.appendChild(f);
     f.submit();
 }
@@ -1077,14 +1417,7 @@ function tmBulkDelete() {
         var inp = document.createElement('input'); inp.type='hidden'; inp.name='selectedIDs'; inp.value=cb.value;
         f.appendChild(inp);
     });
-    addHiddenField(f, 'filterSection', document.getElementById('tmFilterSection').value);
-    addHiddenField(f, 'filterActive', document.getElementById('tmFilterActive').value);
-    addHiddenField(f, 'filterReportable', document.getElementById('tmFilterReportable').value);
-    addHiddenField(f, 'filterReferredOut', document.getElementById('tmFilterReferredOut').value);
-    addHiddenField(f, 'searchName', document.getElementById('tmSearchName').value);
-    addHiddenField(f, 'sortBy', '<%= sortBy %>');
-    addHiddenField(f, 'sortDir', '<%= sortDir %>');
-    addHiddenField(f, 'page', '<%= currentPage %>');
+    addCurrentFilters(f);
     document.body.appendChild(f);
     f.submit();
 }
