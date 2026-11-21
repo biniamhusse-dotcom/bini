@@ -22,12 +22,13 @@
             String typeFilter = request.getParameter("type"); // ALL, TEST, PANEL
             String statusFilter = request.getParameter("status"); // ALL, SYNCED, PENDING, ERROR
 
-            StringBuilder sql = new StringBuilder("SELECT id, item_type, item_id, item_name, item_code, department, cost, odoo_product_id, sync_status, last_sync_date, error_message FROM clinlims.test_cost WHERE 1=1 ");
+            StringBuilder sql = new StringBuilder("SELECT id, item_type, item_id, item_name, item_code, short_name, department, cost, odoo_product_id, sync_status, last_sync_date, error_message FROM clinlims.test_cost WHERE 1=1 ");
             List<Object> params = new ArrayList<Object>();
 
             if (search != null && !search.trim().isEmpty()) {
-                sql.append("AND (item_name ILIKE ? OR item_code ILIKE ? OR department ILIKE ?) ");
+                sql.append("AND (item_name ILIKE ? OR item_code ILIKE ? OR short_name ILIKE ? OR department ILIKE ?) ");
                 String kw = "%" + search.trim() + "%";
+                params.add(kw);
                 params.add(kw);
                 params.add(kw);
                 params.add(kw);
@@ -57,6 +58,7 @@
                 o.put("itemId", rs.getLong("item_id"));
                 o.put("itemName", rs.getString("item_name"));
                 o.put("itemCode", rs.getString("item_code") != null ? rs.getString("item_code") : "");
+                o.put("shortName", rs.getString("short_name") != null ? rs.getString("short_name") : "");
                 o.put("department", rs.getString("department") != null ? rs.getString("department") : "");
                 o.put("cost", rs.getDouble("cost"));
                 o.put("odooProductId", rs.getObject("odoo_product_id") != null ? rs.getInt("odoo_product_id") : 0);

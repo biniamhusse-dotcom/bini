@@ -1924,11 +1924,21 @@ def run_odoo_exec(sql):
 def get_lab_harmonization_comparison():
     omrs_sql = """
     SELECT c.uuid, cn.name, cc.name as class_name, c.is_set,
-           (SELECT cn_s.name FROM concept_name cn_s 
-            WHERE cn_s.concept_id = c.concept_id 
-              AND cn_s.concept_name_type = 'SHORT' 
-              AND cn_s.voided = 0 
-            ORDER BY (cn_s.locale = 'en') DESC, cn_s.concept_name_id ASC LIMIT 1) as short_name
+           COALESCE(
+               (SELECT cn_s.name FROM concept_name cn_s 
+                WHERE cn_s.concept_id = c.concept_id 
+                  AND cn_s.concept_name_type = 'SHORT' 
+                  AND cn_s.voided = 0 
+                ORDER BY (cn_s.locale = 'en') DESC, cn_s.concept_name_id ASC LIMIT 1),
+               (SELECT cn_syn.name FROM concept_name cn_syn 
+                WHERE cn_syn.concept_id = c.concept_id 
+                  AND cn_syn.concept_name_type IS NULL 
+                  AND cn_syn.locale = 'en'
+                  AND LENGTH(cn_syn.name) <= 12 
+                  AND cn_syn.name NOT LIKE '$%' 
+                  AND cn_syn.voided = 0 
+                ORDER BY LENGTH(cn_syn.name) ASC, cn_syn.concept_name_id ASC LIMIT 1)
+           ) as short_name
     FROM concept c
     JOIN concept_name cn ON c.concept_id = cn.concept_id 
          AND cn.concept_name_type = 'FULLY_SPECIFIED' 

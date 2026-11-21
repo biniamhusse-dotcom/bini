@@ -147,7 +147,7 @@
                         <th style="width:40px;">#</th>
                         <th style="width:75px;">Type</th>
                         <th>OpenMRS Concept Name</th>
-                        <th style="width:140px;">Short Name</th>
+                        <th style="width:150px;">OpenMRS Short Name</th>
                         <th>OpenMRS Concept UUID</th>
                         <th>OpenELIS Name &amp; ID</th>
                         <th>Odoo Product Name &amp; ID</th>

@@ -299,6 +299,7 @@
                 <tr>
                     <th style="width:75px">Type</th>
                     <th>Name</th>
+                    <th style="width:125px">Short Name</th>
                     <th style="width:130px">Code / LOINC</th>
                     <th style="width:180px">Department</th>
                     <th style="width:140px;text-align:right">Cost (ETB)</th>
@@ -309,7 +310,7 @@
                 </tr>
             </thead>
             <tbody id="costTableBody">
-                <tr><td colspan="9" style="text-align:center;padding:30px;color:#64748b">Loading tests and panel costs...</td></tr>
+                <tr><td colspan="10" style="text-align:center;padding:30px;color:#64748b">Loading tests and panel costs...</td></tr>
             </tbody>
         </table>
     </div>
@@ -378,7 +379,7 @@ function loadCostList() {
     fetchApi(query)
         .then(function(data) {
             if (!data.success) {
-                document.getElementById('costTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#dc2626">Error: ' + escapeHtml(data.error || 'Failed to load costs') + '</td></tr>';
+                document.getElementById('costTableBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#dc2626">Error: ' + escapeHtml(data.error || 'Failed to load costs') + '</td></tr>';
                 document.getElementById('costShowingCount').textContent = 'Error loading items';
                 return;
             }
@@ -386,7 +387,7 @@ function loadCostList() {
         })
         .catch(function(err) {
             console.error(err);
-            document.getElementById('costTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#dc2626">Network error loading costs: ' + escapeHtml(err.message || err) + '</td></tr>';
+            document.getElementById('costTableBody').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#dc2626">Network error loading costs: ' + escapeHtml(err.message || err) + '</td></tr>';
             document.getElementById('costShowingCount').textContent = 'Connection error';
         });
 }
@@ -394,7 +395,7 @@ function loadCostList() {
 function renderCostTable(items) {
     var tbody = document.getElementById('costTableBody');
     if (!items || items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#64748b">No matching test or panel items found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#64748b">No matching test or panel items found.</td></tr>';
         document.getElementById('costShowingCount').textContent = 'Showing 0 items';
         return;
     }
@@ -410,9 +411,14 @@ function renderCostTable(items) {
         var statusBadge = item.syncStatus === 'SYNCED' ? ('<span class="badge-synced" id="status_' + item.id + '">✓ SYNCED</span>') : ('<span class="badge-pending" id="status_' + item.id + '">PENDING</span>');
         var odooIdDisplay = item.odooProductId > 0 ? ('<span style="font-weight:600;color:#0f766e" id="odoo_id_' + item.id + '">#' + item.odooProductId + '</span>') : ('<span style="color:#94a3b8" id="odoo_id_' + item.id + '">Unmatched</span>');
 
+        var shortNameDisplay = (item.shortName && item.shortName.trim() !== '' && item.shortName !== 'null')
+            ? '<span style="background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:4px; font-weight:600; font-size:11px; display:inline-block; border:1px solid #bae6fd;">' + escapeHtml(item.shortName) + '</span>'
+            : '<span style="color:#cbd5e1; font-size:11px;">—</span>';
+
         html += '<tr>' +
             '<td>' + typeBadge + '</td>' +
             '<td style="font-weight:600;color:#0f172a">' + escapeHtml(item.itemName) + '</td>' +
+            '<td>' + shortNameDisplay + '</td>' +
             '<td style="color:#64748b;font-family:monospace">' + escapeHtml(item.itemCode || '-') + '</td>' +
             '<td>' + escapeHtml(item.department || 'General') + '</td>' +
             '<td style="text-align:right">' +
