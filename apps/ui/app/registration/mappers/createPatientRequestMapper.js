@@ -21,6 +21,16 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
                 voided: identifier.voided
             };
         });
+        var cleanAddress = _.pick(patient.address || {}, constants.allAddressFileds);
+        if (!cleanAddress.uuid) {
+            delete cleanAddress.uuid;
+        }
+        Object.keys(cleanAddress).forEach(function (k) {
+            if (cleanAddress[k] === null || cleanAddress[k] === undefined || cleanAddress[k] === '') {
+                delete cleanAddress[k];
+            }
+        });
+
         var openMRSPatient = {
             patient: {
                 person: {
@@ -33,7 +43,7 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
                             "preferred": false
                         }
                     ],
-                    addresses: [(_.pick(patient.address || {}, constants.allAddressFileds)) || {}],
+                    addresses: Object.keys(cleanAddress).length > 0 ? [cleanAddress] : [],
                     birthdate: this.getBirthdate(patient.birthdate, patient.age),
                     birthdateEstimated: patient.birthdateEstimated,
                     gender: patient.gender,

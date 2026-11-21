@@ -14,6 +14,23 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                 cleanAddress.uuid = openMRSPatient.person.addresses[0].uuid;
             }
         }
+        if (!cleanAddress.uuid) {
+            delete cleanAddress.uuid;
+        }
+        // Remove empty or null fields so Jackson doesn't fail deserialization
+        Object.keys(cleanAddress).forEach(function (k) {
+            if (cleanAddress[k] === null || cleanAddress[k] === undefined || cleanAddress[k] === '') {
+                delete cleanAddress[k];
+            }
+        });
+
+        var hasAddressContent = Object.keys(cleanAddress).length > 0;
+        var addresses = undefined;
+        if (hasAddressContent) {
+            addresses = [cleanAddress];
+        } else if (openMRSPatient && openMRSPatient.person && openMRSPatient.person.addresses && openMRSPatient.person.addresses.length > 0) {
+            addresses = openMRSPatient.person.addresses;
+        }
 
         var openMRSPatientProfile = {
             patient: {
@@ -28,7 +45,6 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                             "preferred": true
                         }
                     ],
-                    addresses: [cleanAddress || {}],
                     birthdate: this.getBirthdate(patient.birthdate, patient.age),
                     birthdateEstimated: patient.birthdateEstimated,
                     birthtime: (patient.birthtime && moment(patient.birthtime).isValid()) ? Bahmni.Common.Util.DateUtil.parseLongDateToServerFormat(patient.birthtime) : null,
@@ -40,6 +56,10 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                 }
             }
         };
+
+        if (addresses) {
+            openMRSPatientProfile.patient.person.addresses = addresses;
+        }
 
         var allIdentifiers = _.concat(patient.extraIdentifiers, patient.primaryIdentifier);
         var nonEmptyIdentifiers = _.filter(allIdentifiers, function (identifier) {
