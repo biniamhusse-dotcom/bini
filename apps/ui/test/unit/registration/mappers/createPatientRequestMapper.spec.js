@@ -160,9 +160,9 @@ describe('CreatePatientRequestMapper', function () {
 
         expect(openmrsPatient.patient.person.dead).toBe(true);
 
-        expect(openmrsPatient.patient.person.deathDate).toBe(null);
-
-        expect(openmrsPatient.patient.person.causeOfDeath).toBe('');
+        // Nullable fields are omitted from the payload when they have no value
+        expect(openmrsPatient.patient.person.deathDate).toBeUndefined();
+        expect(openmrsPatient.patient.person.causeOfDeath).toBeUndefined();
 
         expect(openmrsPatient.patient.identifiers.length).toBe(2);
 

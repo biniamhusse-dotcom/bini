@@ -5,6 +5,19 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
         this.currentDate = currentDate;
     }
 
+    // Helper: remove all null/undefined keys from a plain object (shallow)
+    // Prevents OpenMRS/Jackson NPE in setConvertedProperties (HashMap.putMapEntries(null))
+    // when null fields like birthtime/deathDate/causeOfDeath/identifier uuid are sent.
+    var stripNulls = function (obj) {
+        if (!obj || typeof obj !== 'object') { return obj; }
+        Object.keys(obj).forEach(function (k) {
+            if (obj[k] === null || obj[k] === undefined) {
+                delete obj[k];
+            }
+        });
+        return obj;
+    };
+
     CreatePatientRequestMapper.prototype.mapFromPatient = function (patientAttributeTypes, patient) {
         var constants = Bahmni.Registration.Constants;
         var allIdentifiers = _.concat(patient.extraIdentifiers, patient.primaryIdentifier);
@@ -12,14 +25,20 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
             return !_.isEmpty(identifier.selectedIdentifierSource) || (identifier.identifier !== undefined);
         });
         identifiers = _.map(identifiers, function (identifier) {
-            return {
+            var idObj = {
                 identifier: identifier.identifier,
-                identifierSourceUuid: identifier.selectedIdentifierSource ? identifier.selectedIdentifierSource.uuid : undefined,
-                identifierPrefix: identifier.selectedIdentifierSource ? identifier.selectedIdentifierSource.prefix : undefined,
                 identifierType: identifier.identifierType.uuid,
                 preferred: identifier.preferred,
                 voided: identifier.voided
             };
+            // Only include source info when present
+            if (identifier.selectedIdentifierSource) {
+                idObj.identifierSourceUuid = identifier.selectedIdentifierSource.uuid;
+                idObj.identifierPrefix = identifier.selectedIdentifierSource.prefix;
+            }
+            // Only include uuid when truthy — sending null uuid causes server NPE
+            if (identifier.uuid) { idObj.uuid = identifier.uuid; }
+            return stripNulls(idObj);
         });
         var cleanAddress = _.pick(patient.address || {}, constants.allAddressFileds);
         if (!cleanAddress.uuid) {
@@ -31,34 +50,43 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
             }
         });
 
+        // Build name object — omit null/undefined keys to avoid Jackson NPE on setConvertedProperties
+        var nameObj = {
+            givenName: patient.givenName,
+            middleName: patient.middleName,
+            familyName: patient.familyName,
+            display: patient.givenName + (patient.familyName ? " " + patient.familyName : ""),
+            "preferred": false
+        };
+        stripNulls(nameObj);
+
         var openMRSPatient = {
             patient: {
                 person: {
-                    names: [
-                        {
-                            givenName: patient.givenName,
-                            middleName: patient.middleName,
-                            familyName: patient.familyName,
-                            display: patient.givenName + (patient.familyName ? " " + patient.familyName : ""),
-                            "preferred": false
-                        }
-                    ],
+                    names: [nameObj],
                     addresses: Object.keys(cleanAddress).length > 0 ? [cleanAddress] : [],
                     birthdate: this.getBirthdate(patient.birthdate, patient.age),
                     birthdateEstimated: patient.birthdateEstimated,
                     gender: patient.gender,
-                    birthtime: (patient.birthtime && moment(patient.birthtime).isValid()) ? Bahmni.Common.Util.DateUtil.parseLongDateToServerFormat(patient.birthtime) : null,
                     personDateCreated: patient.registrationDate,
                     attributes: new Bahmni.Common.Domain.AttributeFormatter().getMrsAttributes(patient, patientAttributeTypes),
-                    dead: !!patient.dead,
-                    deathDate: (patient.dead && patient.deathDate) ? Bahmni.Common.Util.DateUtil.getDateWithoutTime(patient.deathDate) : null,
-                    causeOfDeath: (patient.dead && patient.causeOfDeath && patient.causeOfDeath.uuid) ? patient.causeOfDeath.uuid : null,
-                    uuid: patient.uuid
+                    dead: !!patient.dead
                 },
                 identifiers: identifiers,
                 uuid: patient.uuid
             }
         };
+
+        // Only add nullable person fields when they have actual values — sending null causes server NPE
+        if (patient.birthtime && moment(patient.birthtime).isValid()) {
+            openMRSPatient.patient.person.birthtime = Bahmni.Common.Util.DateUtil.parseLongDateToServerFormat(patient.birthtime);
+        }
+        if (patient.dead && patient.deathDate) {
+            openMRSPatient.patient.person.deathDate = Bahmni.Common.Util.DateUtil.getDateWithoutTime(patient.deathDate);
+        }
+        if (patient.dead && patient.causeOfDeath && patient.causeOfDeath.uuid) {
+            openMRSPatient.patient.person.causeOfDeath = patient.causeOfDeath.uuid;
+        }
 
         this.setImage(patient, openMRSPatient);
         openMRSPatient.relationships = _.filter(patient.relationships || [], function (rel) {
