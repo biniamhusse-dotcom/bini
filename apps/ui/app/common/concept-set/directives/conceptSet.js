@@ -11,6 +11,7 @@ angular.module('bahmni.common.conceptSet')
                 var validationHandler = $scope.validationHandler() || contextChangeHandler;
                 var id = "#" + $scope.sectionId;
 
+                $scope.observations = $scope.observations || [];
                 $scope.atLeastOneValueIsSet = $scope.atLeastOneValueIsSet || false;
                 $scope.conceptSetRequired = false;
                 $scope.showTitleValue = $scope.showTitle();
@@ -18,7 +19,7 @@ angular.module('bahmni.common.conceptSet')
                 $scope.hideAbnormalButton = conceptSetUIConfig[conceptSetName] && conceptSetUIConfig[conceptSetName].hideAbnormalButton;
 
                 var focusFirstObs = function () {
-                    if ($scope.conceptSetFocused && $scope.rootObservation.groupMembers && $scope.rootObservation.groupMembers.length > 0) {
+                    if ($scope.conceptSetFocused && $scope.rootObservation && $scope.rootObservation.groupMembers && $scope.rootObservation.groupMembers.length > 0) {
                         var firstObs = _.find($scope.rootObservation.groupMembers, function (obs) {
                             return obs.isFormElement && obs.isFormElement();
                         });
@@ -30,6 +31,7 @@ angular.module('bahmni.common.conceptSet')
 
                 var updateObservationsOnRootScope = function () {
                     if ($scope.rootObservation) {
+                        $scope.observations = $scope.observations || [];
                         for (var i = 0; i < $scope.observations.length; i++) {
                             if ($scope.observations[i].concept.uuid === $scope.rootObservation.concept.uuid) {
                                 $scope.observations[i] = $scope.rootObservation;
@@ -41,7 +43,7 @@ angular.module('bahmni.common.conceptSet')
                 };
 
                 var getObservationsOfCurrentTemplate = function () {
-                    return _.filter($scope.observations, function (observation) {
+                    return _.filter($scope.observations || [], function (observation) {
                         return _.toLower(observation.conceptSetName) === _.toLower($scope.rootObservation.concept.name);
                     });
                 };

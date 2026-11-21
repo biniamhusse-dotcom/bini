@@ -54,13 +54,21 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
 
         var getActiveEncounter = function () {
             var currentProviderUuid = $rootScope.currentProvider ? $rootScope.currentProvider.uuid : null;
-            return encounterService.find({
+            var loginLoc = (sessionService && sessionService.getLoginLocationUuid) ? sessionService.getLoginLocationUuid() : null;
+            var params = {
                 patientUuid: $scope.patient.uuid,
                 providerUuids: !_.isEmpty(currentProviderUuid) ? [currentProviderUuid] : null,
-                includeAll: Bahmni.Common.Constants.includeAllObservations,
-                locationUuid: sessionService.getLoginLocationUuid()
-            }).then(function (encounterTransactionResponse) {
-                $scope.encounter = encounterTransactionResponse.data;
+                includeAll: Bahmni.Common.Constants.includeAllObservations
+            };
+            if (loginLoc) {
+                params.locationUuid = loginLoc;
+            }
+            return encounterService.find(params).then(function (encounterTransactionResponse) {
+                $scope.encounter = (encounterTransactionResponse && encounterTransactionResponse.data) || { observations: [] };
+                return $scope.encounter;
+            }).catch(function (err) {
+                console.warn("Could not find active encounter (using empty encounter observations):", err);
+                $scope.encounter = { observations: [] };
                 return $scope.encounter;
             });
         };
@@ -89,6 +97,30 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                 return (res.data && res.data.orderableForms) || {};
             }).catch(function () {
                 return {};
+            }).then(function (formMappings) {
+                // Dynamically fetch attached forms saved from Admin Orderables Manager
+                return $http.get('/openmrs/ws/rest/v1/bahmnicore/sql', {
+                    params: { q: 'emrapi.sqlSearch.orderableAttachedForms' },
+                    withCredentials: true
+                }).then(function (sqlRes) {
+                    var rows = sqlRes.data || [];
+                    rows.forEach(function (row) {
+                        if (row.concept_uuid && row.form_desc) {
+                            var mName = row.form_desc.match(/fulfillmentForm:([^;]+)/);
+                            var mUuid = row.form_desc.match(/formUuid:([^;]+)/);
+                            if (mName && mName[1]) {
+                                formMappings[row.concept_uuid] = {
+                                    formName: mName[1],
+                                    formUuid: mUuid ? mUuid[1] : null
+                                };
+                            }
+                        }
+                    });
+                    return formMappings;
+                }).catch(function (err) {
+                    console.warn("Could not load dynamic attached forms from DB:", err);
+                    return formMappings;
+                });
             });
         };
 
@@ -108,51 +140,62 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                 locationUuids: $rootScope.facilityLocationUuids
             };
             return orderService.getOrders(params).then(function (response) {
-                var data = response.data;
+                var data = response.data || [];
+                $scope.orders.length = 0;
                 $scope.orders.push.apply($scope.orders, data);
                 return loadOrderableFormMappings().then(function (formMappings) {
-                    $scope.orders.forEach(async function (order) {
+                    $scope.orders.forEach(function (order) {
                         try {
                             var conceptUuid = order.concept ? order.concept.uuid : null;
                             var conceptName = order.concept ? (order.concept.name || order.concept.shortName) : null;
                             var customForm = (conceptUuid && formMappings[conceptUuid]) ||
                                              (conceptName && formMappings[conceptName]);
 
-                            if (!customForm && order.concept && order.concept.descriptions) {
-                                var descObj = _.find(order.concept.descriptions, function (d) {
-                                    return d.description && d.description.indexOf('fulfillmentForm:') !== -1;
-                                });
-                                if (descObj) {
-                                    var mName = descObj.description.match(/fulfillmentForm:([^;]+)/);
-                                    var mUuid = descObj.description.match(/formUuid:([^;]+)/);
-                                    if (mName && mName[1]) {
-                                        customForm = {
-                                            formName: mName[1],
-                                            formUuid: mUuid ? mUuid[1] : null
-                                        };
-                                    }
-                                }
-                            }
-
                             if (customForm) {
                                 order.attachedFormName = customForm.formName;
                                 order.attachedFormUuid = customForm.formUuid;
+                            } else {
+                                order.attachedFormName = $scope.formName;
+                                order.attachedFormUuid = $scope.formUuid;
+
+                                // Fallback: query concept custom rep if not found in preloaded map
+                                if (conceptUuid) {
+                                    $http.get('/openmrs/ws/rest/v1/concept/' + conceptUuid + '?v=custom:(uuid,descriptions:(description))')
+                                        .then(function (cResp) {
+                                            var descs = (cResp.data && cResp.data.descriptions) || [];
+                                            var descObj = _.find(descs, function (d) {
+                                                return d.description && d.description.indexOf('fulfillmentForm:') !== -1;
+                                            });
+                                            if (descObj) {
+                                                var mName = descObj.description.match(/fulfillmentForm:([^;]+)/);
+                                                var mUuid = descObj.description.match(/formUuid:([^;]+)/);
+                                                if (mName && mName[1]) {
+                                                    order.attachedFormName = mName[1].trim();
+                                                    order.attachedFormUuid = mUuid ? mUuid[1].trim() : null;
+                                                }
+                                            }
+                                        }).catch(function () {});
+                                }
                             }
 
-                            var serialData = await getOrdersSerialNumber(order.concept.uuid);
-                            if (serialData && serialData.length > 0 && serialData[0] && ordersSerialNumberBuilding) {
-                                ordersSerialNumberBuilding.forEach(config => {
-                                    if (serialData[0].concept_set === config.concept_id) {
-                                        order.serialNumber = config.prefix + "-" + serialData[0].serialNumber;
+                            if (conceptUuid && ordersSerialNumberBuilding) {
+                                getOrdersSerialNumber(conceptUuid).then(function (serialData) {
+                                    if (serialData && serialData.length > 0 && serialData[0]) {
+                                        ordersSerialNumberBuilding.forEach(function (config) {
+                                            if (serialData[0].concept_set === config.concept_id) {
+                                                order.serialNumber = config.prefix + "-" + serialData[0].serialNumber;
+                                            }
+                                        });
                                     }
-                                });
+                                }).catch(function () {});
                             }
                         } catch (err) {
                             console.warn("Could not determine order serial number or attached form:", err);
                         }
-                        order.bahmniObservations = _.filter($scope.encounter.observations, function (observation) {
-                            return observation.orderUuid === order.orderUuid;
-                        }); 
+                        order.bahmniObservations = ($scope.encounter && $scope.encounter.observations) ?
+                            _.filter($scope.encounter.observations, function (observation) {
+                                return observation.orderUuid === order.orderUuid;
+                            }) : [];
 
                         if (order.bahmniObservations.length > 0 && order.paymentStatus) {
                             order.showForm = true;
@@ -223,11 +266,15 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                 messagingService.showMessage('error', 'Order is not paid yet. Cannot enter results for unpaid orders.');
                 return;
             }
+            order.bahmniObservations = order.bahmniObservations || [];
             order.showForm = !order.showForm;
         };
 
         var init = function () {
-            return getActiveEncounter().then($scope.getOrders);
+            return getActiveEncounter().catch(function () {
+                $scope.encounter = { observations: [] };
+                return $scope.encounter;
+            }).then($scope.getOrders);
         };
 
         spinner.forPromise(init());
@@ -253,7 +300,11 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
                 $scope.$parent.$broadcast("event:errorsOnForm");
                 return $q.when({});
             }
-            var savePromise = orderObservationService.save($scope.orders, $scope.patient, sessionService.getLoginLocationUuid());
+            var locUuid = (sessionService && sessionService.getLoginLocationUuid) ? sessionService.getLoginLocationUuid() : null;
+            if (!locUuid && $rootScope.facilityLocationUuids && $rootScope.facilityLocationUuids.length > 0) {
+                locUuid = $rootScope.facilityLocationUuids[0];
+            }
+            var savePromise = orderObservationService.save($scope.orders, $scope.patient, locUuid);
             spinner.forPromise(savePromise.then(function () {
                 $state.transitionTo($state.current, $state.params, {
                     reload: true,
