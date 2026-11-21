@@ -56,7 +56,7 @@
                 ✨ Match All Names from OpenMRS
             </button>
         </form>
-        <a href="http://localhost:8000" target="_blank" class="loc-btn loc-btn-success" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:bold;">
+        <a href="http://<%= request.getServerName() %>:8000" target="_blank" class="loc-btn loc-btn-success" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:bold;" onclick="this.href='http://' + window.location.hostname + ':8000';">
             <span>⚡ Port 8000: Result Sync Service</span>
         </a>
     </div>

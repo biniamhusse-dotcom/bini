@@ -281,7 +281,7 @@
             <a href="LabDashboard.do" class="pg-btn pg-btn-primary">
                 📊 Open Lab Dashboard
             </a>
-            <a href="http://localhost:8000" target="_blank" class="pg-btn pg-btn-success">
+            <a href="http://<%= request.getServerName() %>:8000" target="_blank" class="pg-btn pg-btn-success" onclick="this.href='http://' + window.location.hostname + ':8000';">
                 ⚡ Port 8000: Sync Service
             </a>
         </div>
