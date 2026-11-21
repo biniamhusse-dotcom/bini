@@ -5,10 +5,30 @@
                 <div class="icd11-global-filter" style="display:none;"></div>
 
                 <div style="background:#fff8f0;border:2px solid #f5a623;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
-                    <h3 style="margin:0 0 8px 0;font-size:14px;color:#333;font-weight:600;">
-                        <i class="fa fa-star" style="color:#f5a623;margin-right:6px;"></i>Main Diagnosis
-                        <span style="font-weight:normal;font-size:12px;color:#888;margin-left:8px;">(Only ONE per encounter)</span>
-                    </h3>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+                        <h3 style="margin:0;font-size:14px;color:#333;font-weight:600;">
+                            <i class="fa fa-star" style="color:#f5a623;margin-right:6px;"></i>Main Diagnosis
+                            <span style="font-weight:normal;font-size:12px;color:#888;margin-left:8px;">(Only ONE per encounter)</span>
+                        </h3>
+                        <div style="display:inline-flex;align-items:center;gap:6px;">
+                            <span style="font-size:12px;color:#666;font-weight:600;"><i class="fa fa-filter"></i> Code Filter:</span>
+                            <button type="button" ng-click="setCodeFilter('')" 
+                                style="padding:3px 10px;font-size:11px;border-radius:12px;border:1px solid #ccc;cursor:pointer;line-height:16px;"
+                                ng-style="!selectedCodeFilter ? {'background':'#0284c7','color':'white','border-color':'#0284c7','font-weight':'600'} : {'background':'#fff','color':'#555'}">
+                                All
+                            </button>
+                            <button type="button" ng-click="setCodeFilter('ICD-11')" 
+                                style="padding:3px 10px;font-size:11px;border-radius:12px;border:1px solid #ccc;cursor:pointer;line-height:16px;"
+                                ng-style="selectedCodeFilter === 'ICD-11' ? {'background':'#f5a623','color':'white','border-color':'#f5a623','font-weight':'600'} : {'background':'#fff','color':'#555'}">
+                                ICD-11
+                            </button>
+                            <button type="button" ng-click="setCodeFilter('ICD-10')" 
+                                style="padding:3px 10px;font-size:11px;border-radius:12px;border:1px solid #ccc;cursor:pointer;line-height:16px;"
+                                ng-style="selectedCodeFilter === 'ICD-10' ? {'background':'#10b981','color':'white','border-color':'#10b981','font-weight':'600'} : {'background':'#fff','color':'#555'}">
+                                ICD-10
+                            </button>
+                        </div>
+                    </div>
                     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                         <div style="flex:2;min-width:280px;">
                             <input ng-model="consultation.mainDiagnosis.name" type="text" name="mainDiagnosisName"
@@ -16,7 +36,7 @@
                                 response-map="cleanOutDiagnosisList"
                                 on-select="onMainDiagnosisSelect()"
                                 ng-change="onMainDiagnosisChange()"
-                                placeholder="Search and select coded diagnosis..."
+                                placeholder="Search by diagnosis name or code (e.g. CA40, J18, Pneumonia)..."
                                 style="width:100%;height:38px !important;line-height:24px !important;padding:6px 12px !important;font-size:13px !important;border:1px solid #ccc !important;border-radius:4px !important;box-sizing:border-box !important;margin:0 !important;float:none !important;">
                         </div>
                         <div style="flex:0 0 auto;min-width:150px;max-width:190px;">
@@ -73,6 +93,7 @@
                                     <input ng-model="diagnosis.codedAnswer.name" type="text" name="name"
                                         id="name-{{$index}}" bahmni-autocomplete source="getDiagnosis"
                                         response-map="cleanOutDiagnosisList"
+                                        placeholder="Search by name or code (e.g. CA40, J18)..."
                                         on-select="getAddNewDiagnosisMethod(diagnosis)" ng-class="{
                                                 illegalValue: (diagnosis.codedAnswer.name && !diagnosis.codedAnswer.uuid &&
                                                     !diagnosis.isNonCodedAnswer && allowOnlyCodedDiagnosis) || diagnosis.duplicate,

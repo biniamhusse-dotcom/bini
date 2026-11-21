@@ -50,8 +50,13 @@ angular.module('bahmni.clinical')
                 return key;
             };
 
+            $scope.selectedCodeFilter = '';
+            $scope.setCodeFilter = function (filter) {
+                $scope.selectedCodeFilter = filter;
+            };
+
             $scope.getDiagnosis = function (params) {
-                return diagnosisService.getAllFor(params.term, $rootScope.currentUser.userProperties.defaultLocale).then(mapConcept);
+                return diagnosisService.getAllFor(params.term, $rootScope.currentUser.userProperties.defaultLocale, $scope.selectedCodeFilter).then(mapConcept);
             };
 
             var icd11Data = [];
@@ -104,15 +109,19 @@ angular.module('bahmni.clinical')
                     if (!item) return;
                     var concept = item.lookup || item.concept || item;
                     $scope.consultation.mainDiagnosis = $scope.consultation.mainDiagnosis || {};
-                    $scope.consultation.mainDiagnosis.name = concept.name || (item.value ? item.value.split(' (')[0].split(' => ')[0] : '');
-                    $scope.consultation.mainDiagnosis.selectedName = $scope.consultation.mainDiagnosis.name;
+                    var cleanName = concept.name || (item.value ? item.value.split(' (')[0].split(' => ')[0] : '');
+                    $scope.consultation.mainDiagnosis.name = cleanName;
+                    $scope.consultation.mainDiagnosis.selectedName = cleanName;
                     $scope.consultation.mainDiagnosis.uuid = concept.uuid || '';
                     $scope.consultation.mainDiagnosis.isNonCoded = false;
                     $scope.consultation.mainDiagnosis.conceptSystem = concept.conceptSystem || '';
-                    var icd11Match = lookupIcd11ByName($scope.consultation.mainDiagnosis.name);
+                    var icd11Match = lookupIcd11ByName(cleanName);
                     if (icd11Match) {
                         $scope.consultation.mainDiagnosis.icd11Code = icd11Match.code;
                         $scope.consultation.mainDiagnosis.icd11Name = icd11Match.name;
+                    } else if (concept.code || (item.concept && item.concept.code)) {
+                        $scope.consultation.mainDiagnosis.icd11Code = concept.code || item.concept.code;
+                        $scope.consultation.mainDiagnosis.icd11Name = cleanName;
                     } else {
                         $scope.consultation.mainDiagnosis.icd11Code = '';
                         $scope.consultation.mainDiagnosis.icd11Name = '';
@@ -180,16 +189,25 @@ angular.module('bahmni.clinical')
 
             $scope.getAddNewDiagnosisMethod = function (diagnosisAtIndex) {
                 return function (item) {
-                    var concept = item.lookup;
+                    var concept = item.lookup || item.concept || item;
                     var index = $scope.consultation.newlyAddedDiagnoses.indexOf(diagnosisAtIndex);
                     var diagnosisBeingEdited = $scope.consultation.newlyAddedDiagnoses[index];
-                    var diagnosis = new Bahmni.Common.Domain.Diagnosis(concept, diagnosisBeingEdited.order,
+                    var cleanConcept = {
+                        name: concept.name || (item.value ? item.value.split(' (')[0].split(' => ')[0] : ''),
+                        uuid: concept.uuid,
+                        conceptSystem: concept.conceptSystem || '',
+                        code: concept.code || ''
+                    };
+                    var diagnosis = new Bahmni.Common.Domain.Diagnosis(cleanConcept, diagnosisBeingEdited.order,
                         diagnosisBeingEdited.certainty, diagnosisBeingEdited.existingObs);
                     
-                    var icd11Match = lookupIcd11ByName(concept.name);
+                    var icd11Match = lookupIcd11ByName(cleanConcept.name);
                     if (icd11Match) {
                         diagnosis.icd11Code = icd11Match.code;
                         diagnosis.icd11Name = icd11Match.name;
+                    } else if (cleanConcept.code) {
+                        diagnosis.icd11Code = cleanConcept.code;
+                        diagnosis.icd11Name = cleanConcept.name;
                     }
                     
                     if (_canAdd(diagnosis)) {
@@ -460,25 +478,26 @@ angular.module('bahmni.clinical')
 
             var mapConcept = function (result) {
                 return _.map(result.data, function (concept) {
+                    var codePart = concept.code ? (" (" + concept.code + (concept.conceptSystem ? " - " + concept.conceptSystem : "") + ")") : "";
+                    var displayName = concept.conceptName || concept.matchedName || '';
                     var response = {
-                        value: concept.matchedName || concept.conceptName,
+                        value: displayName + codePart,
                         concept: {
-                            name: concept.conceptName,
+                            name: displayName,
                             uuid: concept.conceptUuid,
-                            conceptSystem: concept.conceptSystem
+                            conceptSystem: concept.conceptSystem || '',
+                            code: concept.code || ''
                         },
                         lookup: {
-                            name: concept.matchedName || concept.conceptName,
+                            name: displayName,
                             uuid: concept.conceptUuid,
-                            conceptSystem: concept.conceptSystem
+                            conceptSystem: concept.conceptSystem || '',
+                            code: concept.code || ''
                         }
                     };
 
                     if (concept.matchedName && concept.matchedName !== concept.conceptName) {
-                        response.value = response.value + " => " + concept.conceptName;
-                    }
-                    if (concept.code) {
-                        response.value = response.value + " (" + concept.code + ")";
+                        response.value = concept.matchedName + " => " + displayName + codePart;
                     }
                     return response;
                 });
@@ -598,9 +617,26 @@ angular.module('bahmni.clinical')
             };
 
             $scope.cleanOutDiagnosisList = function (allDiagnoses) {
-                return allDiagnoses ? allDiagnoses.filter(function (diagnosis) {
-                    return !alreadyAddedToDiagnosis(diagnosis);
-                }) : [];
+                if (!allDiagnoses) return [];
+                return allDiagnoses.filter(function (item) {
+                    if (alreadyAddedToDiagnosis(item)) return false;
+                    if ($scope.selectedCodeFilter === 'ICD-11') {
+                        var c = item.concept || item.lookup || item;
+                        var code = c.code || item.code || '';
+                        var sys = c.conceptSystem || item.conceptSystem || '';
+                        var val = item.value || '';
+                        var hasIcd11 = (sys.indexOf('ICD-11') !== -1) || (val.indexOf('ICD-11') !== -1) || lookupIcd11ByName(c.name || val);
+                        return !!hasIcd11;
+                    }
+                    if ($scope.selectedCodeFilter === 'ICD-10') {
+                        var c = item.concept || item.lookup || item;
+                        var code = c.code || item.code || '';
+                        var sys = c.conceptSystem || item.conceptSystem || '';
+                        var val = item.value || '';
+                        return (sys.indexOf('ICD-10') !== -1) || (val.indexOf('ICD-10') !== -1) || /^[A-Z][0-9]{2}/i.test(code);
+                    }
+                    return true;
+                });
             };
 
             $scope.dirtyCheck = function (diagnosis) {
