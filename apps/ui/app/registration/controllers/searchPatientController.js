@@ -46,28 +46,47 @@ angular.module('bahmni.registration')
             };
 
             $scope.triageQueue = function () {
-                var searchbyid = getQueue().then(queue => queue.data.map(idno => {
-                    patientService.search(undefined, idno.identifier, $scope.addressSearchConfig.field,
-                        undefined, undefined, undefined, $scope.customAttributesSearchConfig.fields,
-                        $scope.programAttributesSearchConfig.field, $scope.searchParameters.programAttributeFieldValue,
-                        $scope.addressSearchResultsConfig.fields, $scope.personSearchResultsConfig.fields,
-                        $scope.isExtraIdentifierConfigured())
-                        .then(function (data) {
-                            mapExtraIdentifiers(data);
-                            mapCustomAttributesSearchResults(data);
-                            mapAddressAttributesSearchResults(data);
-                            mapProgramAttributesSearchResults(data);
-                            if (idno.started == 1) {
+                $scope.results = [];
+                $scope.noResultsMessage = null;
+                $scope.searchParameters = {};
+                var searchbyid = getQueue().then(function (queue) {
+                    if (!queue || !queue.data || queue.data.length === 0) {
+                        $scope.noResultsMessage = "REGISTRATION_LABEL_NO_RESULTS";
+                        return;
+                    }
+                    var pendingPatients = queue.data.filter(function (item) {
+                        return item.started == 1;
+                    });
+                    var targetList = pendingPatients.length > 0 ? pendingPatients : queue.data;
+                    targetList.map(function (idno) {
+                        patientService.search(undefined, idno.identifier, $scope.addressSearchConfig.field,
+                            undefined, undefined, undefined, $scope.customAttributesSearchConfig.fields,
+                            $scope.programAttributesSearchConfig.field, $scope.searchParameters.programAttributeFieldValue,
+                            $scope.addressSearchResultsConfig.fields, $scope.personSearchResultsConfig.fields,
+                            $scope.isExtraIdentifierConfigured())
+                            .then(function (data) {
+                                mapExtraIdentifiers(data);
+                                mapCustomAttributesSearchResults(data);
+                                mapAddressAttributesSearchResults(data);
+                                mapProgramAttributesSearchResults(data);
                                 angular.forEach(data.pageOfResults, function (result) {
                                     result.row_number = idno.row_number;
                                     result["background-color"] = idno.emergency_color;
+                                    result.triageLocation = idno.triage_location;
+                                    result.triageType = idno.triage_type;
+                                    result.triageStarted = idno.started;
+                                    if (idno.triage_location) {
+                                        result.lastVisit = idno.triage_location;
+                                    }
                                     $scope.results.push(result);
                                 });
-                            }
-                            $scope.results.sort((a, b) => a.row_number - b.row_number);
-                        })
-                }))
-            }
+                                $scope.results.sort(function (a, b) {
+                                    return a.row_number - b.row_number;
+                                });
+                            });
+                    });
+                });
+            };
 
             var hasSearchParameters = function () {
                 return ($scope.searchParameters.name && $scope.searchParameters.name.trim().length > 0) ||

@@ -4,6 +4,9 @@
         <div class="box-container box-container-default">
             <legend class="registraion_legend first-registraion_legend" ng-class="{'removeLegend': patient.primaryIdentifier == undefined}">
                 <span class="mylegend"><strong>{{patient.primaryIdentifier.identifierType.name}}: <span id="patientIdentifierValue">{{patient.primaryIdentifier.identifier}}</span></strong></span>
+                <span ng-if="triageLocationDisplay" style="margin-left: 15px; font-size: 13px; font-weight: bold; background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 12px; border: 1px solid #7dd3fc; display: inline-block;">
+                    <i class="fa fa-map-marker"></i> Triaged Location: {{triageLocationDisplay}}
+                </span>
                 <span ng-show= "isDigitized" class="right"><strong>{{::'REGISTRATION_LABEL_SCANNED' | translate}}</strong></span>
             </legend>
             <div class="photo-container-wrapper" ng-if="!disablePhotoCapture">
@@ -12,6 +15,14 @@
                         <img class="patient-image" ng-src="{{patient.image}}" fallback-src="../images/blank-user.gif">
                  </div>
             </div>
+            <article class="form-field" ng-if="triageLocationDisplay">
+                    <div class="field-attribute">
+                        <label class="control-label" style="font-weight: bold; color: #0369a1;"><i class="fa fa-map-marker"></i> Triaged Location</label>
+                    </div>
+                    <div class="field-value">
+                        <span class="uneditable-input text-only" style="font-weight: bold; color: #0284c7; font-size: 14px; background: #f0f9ff; padding: 4px 10px; border-radius: 4px; display: inline-block; border: 1px solid #bae6fd;">{{triageLocationDisplay}}</span>
+                    </div>
+            </article>
             <article class="form-field">
                     <div class="field-attribute">
                     <label class="control-label">{{::'REGISTRATION_LABEL_REGISTRATION_DATE' | translate}}</label>

@@ -98,7 +98,10 @@
                 <td>{{::result.age}}</td>
                 <td ng-repeat = "field in ::addressSearchResultsConfig.fields">{{::result.addressFieldValue[field] || ""}}</td>
                 <td>{{::result.dateCreated | bahmniDate}}</td>
-                <td>{{::result.lastVisit}}</td>
+                <td>
+                    <span ng-if="result.triageLocation" style="font-weight: bold; color: #0284c7;" title="{{result.triageType || 'Triage'}}"><i class="fa fa-map-marker"></i> {{result.triageLocation}}</span>
+                    <span ng-if="!result.triageLocation">{{::result.lastVisit}}</span>
+                </td>
             </tr> 
             </tbody>
         </table>

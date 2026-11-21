@@ -2,9 +2,9 @@
 
 angular.module('bahmni.registration')
     .controller('EditPatientController', ['$scope', 'patientService', 'encounterService', '$stateParams', 'openmrsPatientMapper',
-        '$window', '$q', 'spinner', 'appService', 'messagingService', '$rootScope', 'auditLogService',
+        '$window', '$q', 'spinner', 'appService', 'messagingService', '$rootScope', 'auditLogService', 'visitService', '$http',
         function ($scope, patientService, encounterService, $stateParams, openmrsPatientMapper, $window, $q, spinner,
-                  appService, messagingService, $rootScope, auditLogService) {
+                  appService, messagingService, $rootScope, auditLogService, visitService, $http) {
             var dateUtil = Bahmni.Common.Util.DateUtil;
             var uuid = $stateParams.patientUuid;
             $scope.patient = {};
@@ -78,7 +78,43 @@ angular.module('bahmni.registration')
                     $scope.isDigitized = encountersWithObservations.length > 0;
                 });
 
-                spinner.forPromise($q.all([getPatientPromise, isDigitized, identifiers]));
+                var triageLocPromise = $http.get('/openmrs/ws/rest/v1/bahmnicore/sql', {
+                    method: "GET",
+                    params: {
+                        q: "emrapi.sqlsearch.patientTriageLocation",
+                        patientUuid: uuid
+                    },
+                    withCredentials: true
+                }).then(function (res) {
+                    if (res.data && res.data.length > 0) {
+                        var row = res.data[0];
+                        var loc = row.visit_type;
+                        if (row.location_name && row.location_name !== row.visit_type) {
+                            loc = loc ? (loc + ' (' + row.location_name + ')') : row.location_name;
+                        }
+                        $scope.triageLocationDisplay = loc;
+                        $scope.triageInfo = row;
+                        $rootScope.currentPatientTriageLocation = loc;
+                    }
+                }).catch(function () {
+                    visitService.search({ patient: uuid, includeInactive: false, v: "custom:(uuid,visitType:(name),location:(name))" })
+                        .then(function (vRes) {
+                            var visits = (vRes.data && vRes.data.results) ? vRes.data.results : [];
+                            if (visits.length > 0) {
+                                var v = visits[0];
+                                var vtName = v.visitType ? v.visitType.name : '';
+                                var locName = v.location ? v.location.name : '';
+                                var disp = vtName;
+                                if (locName && locName !== vtName) {
+                                    disp = disp ? (disp + ' (' + locName + ')') : locName;
+                                }
+                                $scope.triageLocationDisplay = disp;
+                                $rootScope.currentPatientTriageLocation = disp;
+                            }
+                        });
+                });
+
+                spinner.forPromise($q.all([getPatientPromise, isDigitized, identifiers, triageLocPromise]));
             })();
 
             $scope.submit = function() {

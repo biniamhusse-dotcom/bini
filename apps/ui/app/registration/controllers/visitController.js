@@ -478,7 +478,48 @@ angular.module('bahmni.registration')
                 }
             };
 
-            spinner.forPromise($q.all([getPatient(), getActiveEncounter(), searchActiveVisitsPromise()])
+            var fetchTriageLocation = function () {
+                if ($rootScope.currentPatientTriageLocation) {
+                    $scope.triageLocationDisplay = $rootScope.currentPatientTriageLocation;
+                }
+                return $http.get('/openmrs/ws/rest/v1/bahmnicore/sql', {
+                    method: "GET",
+                    params: {
+                        q: "emrapi.sqlsearch.patientTriageLocation",
+                        patientUuid: patientUuid
+                    },
+                    withCredentials: true
+                }).then(function (res) {
+                    if (res.data && res.data.length > 0) {
+                        var row = res.data[0];
+                        var loc = row.visit_type;
+                        if (row.location_name && row.location_name !== row.visit_type) {
+                            loc = loc ? (loc + ' (' + row.location_name + ')') : row.location_name;
+                        }
+                        $scope.triageLocationDisplay = loc;
+                        $scope.triageInfo = row;
+                        $rootScope.currentPatientTriageLocation = loc;
+                    }
+                }).catch(function () {
+                    return visitService.search({ patient: patientUuid, includeInactive: false, v: "custom:(uuid,visitType:(name),location:(name))" })
+                        .then(function (vRes) {
+                            var visits = (vRes.data && vRes.data.results) ? vRes.data.results : [];
+                            if (visits.length > 0) {
+                                var v = visits[0];
+                                var vtName = v.visitType ? v.visitType.name : '';
+                                var locName = v.location ? v.location.name : '';
+                                var disp = vtName;
+                                if (locName && locName !== vtName) {
+                                    disp = disp ? (disp + ' (' + locName + ')') : locName;
+                                }
+                                $scope.triageLocationDisplay = disp;
+                                $rootScope.currentPatientTriageLocation = disp;
+                            }
+                        });
+                });
+            };
+
+            spinner.forPromise($q.all([getPatient(), getActiveEncounter(), searchActiveVisitsPromise(), fetchTriageLocation()])
                 .then(function () {
                     getAllForms().then(function () {
                         getConceptSet();
