@@ -44,21 +44,21 @@ Bahmni.Common.Domain.AttributeFormatter = (function () {
 
     var setAttributeValue = function setAttributeValue (attributeType, attr, value) {
         var isConcept = attributeType.format === "org.openmrs.Concept";
-        var isConceptEmpty = isConcept && (!value || (typeof value === 'object' && !value.conceptUuid));
+        var isConceptEmpty = isConcept && (!value || (typeof value === 'object' && !value.conceptUuid && !value.uuid));
         if (value === "" || value === null || value === undefined || isConceptEmpty) {
             attr.voided = true;
-            attr.value = null;
-            attr.hydratedObject = null;
+            delete attr.value;
+            delete attr.hydratedObject;
         } else if (isConcept) {
-            var cUuid = (typeof value === 'object') ? value.conceptUuid : value;
+            var cUuid = (typeof value === 'object') ? (value.conceptUuid || value.uuid) : value;
             if (cUuid === 'fd08aa37-e18d-415d-be41-f8bbbc81bea3') {
                 cUuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b';
                 if (typeof value === 'object' && value) {
                     value.conceptUuid = cUuid;
                 }
             }
-            attr.value = cUuid;
-            attr.hydratedObject = cUuid;
+            attr.value = String(cUuid);
+            delete attr.hydratedObject;
         } else if (attributeType.format == "org.openmrs.util.AttributableDate" || attributeType.format == "org.openmrs.customdatatype.datatype.DateDatatype") {
             var mnt = moment(value);
             attr.value = mnt.format('YYYY-MM-DD');

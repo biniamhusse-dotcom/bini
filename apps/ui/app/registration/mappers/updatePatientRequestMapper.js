@@ -92,15 +92,19 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
         });
 
         openMRSPatientProfile.patient.identifiers = _.map(nonEmptyIdentifiers, function (identifier) {
+            var typeUuid = identifier.identifierType ? (identifier.identifierType.uuid || identifier.identifierType) : undefined;
             var idObj = {
                 identifier: identifier.identifier,
-                identifierType: identifier.identifierType.uuid,
-                preferred: identifier.preferred,
-                voided: identifier.voided
+                identifierType: typeUuid,
+                preferred: identifier.preferred !== undefined ? identifier.preferred : true,
+                voided: identifier.voided || false
             };
             // Only include uuid if it exists — sending null uuid causes server NPE
             if (identifier.uuid) { idObj.uuid = identifier.uuid; }
-            return idObj;
+            // Ensure no transient properties like identifierPrefix or identifierSourceUuid are sent on update
+            delete idObj.identifierPrefix;
+            delete idObj.identifierSourceUuid;
+            return stripNulls(idObj);
         });
 
         this.setImage(patient, openMRSPatientProfile);
@@ -121,7 +125,7 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
 
     UpdatePatientRequestMapper.prototype.getMrsAttributes = function (openMRSPatient, patient, patientAttributeTypes) {
         var attributes = [];
-        patientAttributeTypes.forEach(function (attributeType) {
+        (patientAttributeTypes || []).forEach(function (attributeType) {
             var attr = {
                 attributeType: {
                     uuid: attributeType.uuid
@@ -136,10 +140,17 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
                 attr.uuid = savedAttribute.uuid;
                 var patientAttrValue = patient[attributeType.name] !== undefined ? patient[attributeType.name] : patient[savedAttribute.attributeType.display];
                 setAttributeValue(attributeType, attr, patientAttrValue);
+                if (attr.voided) {
+                    // For voiding an existing attribute, retain original value string so Jackson deserializer doesn't fail on null value
+                    var origVal = (typeof savedAttribute.value === 'object' && savedAttribute.value) ? savedAttribute.value.uuid : savedAttribute.value;
+                    if (origVal) { attr.value = String(origVal); }
+                }
+                stripNulls(attr);
                 attributes.push(attr);
             } else if (patient[attributeType.name] !== undefined && patient[attributeType.name] !== null && patient[attributeType.name] !== "") {
                 setAttributeValue(attributeType, attr, patient[attributeType.name]);
                 if (!attr.voided && attr.value) {
+                    stripNulls(attr);
                     attributes.push(attr);
                 }
             }
@@ -149,23 +160,25 @@ Bahmni.Registration.UpdatePatientRequestMapper = (function () {
 
     var setAttributeValue = function (attributeType, attr, value) {
         var isConcept = attributeType.format === "org.openmrs.Concept";
-        var isConceptEmpty = isConcept && (!value || (typeof value === 'object' && !value.conceptUuid));
+        var isConceptEmpty = isConcept && (!value || (typeof value === 'object' && !value.conceptUuid && !value.uuid));
         if (value === "" || value === null || value === undefined || isConceptEmpty) {
             attr.voided = true;
-            attr.value = null;
-            attr.hydratedObject = null;
+            delete attr.value;
+            delete attr.hydratedObject;
         } else if (isConcept) {
-            var conceptUuid = (typeof value === 'object') ? value.conceptUuid : value;
+            var conceptUuid = (typeof value === 'object') ? (value.conceptUuid || value.uuid) : value;
             if (conceptUuid === 'fd08aa37-e18d-415d-be41-f8bbbc81bea3') {
                 conceptUuid = '8cf89033-94c2-4c03-b454-bc6ff20b1b4b';
             }
-            attr.value = conceptUuid;
-            attr.hydratedObject = conceptUuid;
+            attr.value = String(conceptUuid);
+            delete attr.hydratedObject;
         } else if (attributeType.format === "org.openmrs.util.AttributableDate" || attributeType.format === "org.openmrs.customdatatype.datatype.DateDatatype") {
             var mnt = moment(value);
             attr.value = mnt.isValid() ? mnt.format('YYYY-MM-DDTHH:mm:ss.SSSZZ') : null;
+            delete attr.hydratedObject;
         } else {
             attr.value = value.toString();
+            delete attr.hydratedObject;
         }
     };
 

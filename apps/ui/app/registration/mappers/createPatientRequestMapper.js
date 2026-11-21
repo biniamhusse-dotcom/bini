@@ -22,19 +22,36 @@ Bahmni.Registration.CreatePatientRequestMapper = (function () {
         var constants = Bahmni.Registration.Constants;
         var allIdentifiers = _.concat(patient.extraIdentifiers, patient.primaryIdentifier);
         var identifiers = _.filter(allIdentifiers, function (identifier) {
-            return !_.isEmpty(identifier.selectedIdentifierSource) || (identifier.identifier !== undefined);
+            return identifier && (!_.isEmpty(identifier.selectedIdentifierSource) || (identifier.identifier !== undefined) || (identifier.hasIdentifierSources && identifier.hasIdentifierSources()));
         });
         identifiers = _.map(identifiers, function (identifier) {
+            var typeUuid = identifier.identifierType ? (identifier.identifierType.uuid || identifier.identifierType) : undefined;
             var idObj = {
                 identifier: identifier.identifier,
-                identifierType: identifier.identifierType.uuid,
-                preferred: identifier.preferred,
-                voided: identifier.voided
+                identifierType: typeUuid,
+                preferred: identifier.preferred !== undefined ? identifier.preferred : true,
+                voided: identifier.voided || false
             };
-            // Only include source info when present
-            if (identifier.selectedIdentifierSource) {
+            // Only include source info when present and valid
+            if (identifier.selectedIdentifierSource && identifier.selectedIdentifierSource.uuid) {
                 idObj.identifierSourceUuid = identifier.selectedIdentifierSource.uuid;
-                idObj.identifierPrefix = identifier.selectedIdentifierSource.prefix;
+                if (identifier.selectedIdentifierSource.prefix) {
+                    idObj.identifierPrefix = identifier.selectedIdentifierSource.prefix;
+                }
+            } else if (!idObj.identifier) {
+                // If no manual identifier and no selectedIdentifierSource.uuid, fallback to default sequential generator source
+                var src = (identifier.identifierType && identifier.identifierType.identifierSources && identifier.identifierType.identifierSources[0])
+                    ? identifier.identifierType.identifierSources[0]
+                    : { uuid: "c5cf4b68-6529-43fc-a644-c775ae73745e", prefix: "ABC" };
+                idObj.identifierSourceUuid = src.uuid;
+                idObj.identifierPrefix = src.prefix;
+            }
+            // CRITICAL: NEVER send identifierPrefix without identifierSourceUuid!
+            // BahmniPatientProfileResource only removes identifierPrefix when identifierSourceUuid is non-null.
+            // If identifierPrefix is sent without identifierSourceUuid, OpenMRS throws ConversionException:
+            // "Unable to convert object into response content" (HTTP 400).
+            if (!idObj.identifierSourceUuid) {
+                delete idObj.identifierPrefix;
             }
             // Only include uuid when truthy — sending null uuid causes server NPE
             if (identifier.uuid) { idObj.uuid = identifier.uuid; }
