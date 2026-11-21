@@ -17,6 +17,10 @@
         </div>
 
         <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn" ng-click="openManageFormsModal()"
+                    style="background: #4a5568; color: #fff; border: none; font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 6px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <i class="fa fa-list-alt"></i> Manage Forms ({{ availableForms.length }})
+            </button>
             <button type="button" class="btn btn-primary" ng-click="openCreateFormModal()"
                     style="background: #319795; color: #fff; border: none; font-weight: 700; font-size: 13px; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                 <i class="fa fa-wpforms"></i> Create Order Form
@@ -240,7 +244,11 @@
                                 When clinical staff place this order, opening it in the Home Page Order App will automatically render this form for fulfillment.
                             </span>
                         </div>
-                        <div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn" ng-click="openManageFormsModal()"
+                                    style="background: #edf2f7; border: 1px solid #cbd5e0; color: #4a5568; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa fa-list-alt"></i> Manage Forms ({{ availableForms.length }})
+                            </button>
                             <button type="button" class="btn" ng-click="openCreateFormModal()"
                                     style="background: #319795; color: #ffffff; border: none; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                                 <i class="fa fa-plus"></i> Create Form for Orders
@@ -248,7 +256,7 @@
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
                         <div style="flex: 1 1 320px;">
                             <label style="display: block; font-size: 12px; font-weight: 700; color: #4a5568; margin-bottom: 5px;">
                                 Select Form to Attach (from Order Result Entry Forms):
@@ -259,10 +267,20 @@
                                 <option value="">-- None / Use Default Order Type Form --</option>
                             </select>
                         </div>
-                        <div style="margin-top: 22px; display: flex; gap: 8px;">
+                        <div style="display: flex; gap: 8px;">
                             <button type="button" class="btn" ng-click="saveFormAssociation(selectedOrderable)" ng-disabled="saving"
                                     style="background: #2b6cb0; color: #fff; border: none; font-weight: 700; font-size: 13px; padding: 8px 18px; border-radius: 6px; cursor: pointer;">
                                 <i class="fa fa-save"></i> Save Form Association
+                            </button>
+                            <button type="button" class="btn" ng-if="selectedOrderable.selectedForm" ng-click="openEditFormModal(selectedOrderable.selectedForm)"
+                                    title="Edit Form definition and questions"
+                                    style="background: #edf2f7; border: 1px solid #cbd5e0; color: #2d3748; font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                <i class="fa fa-pencil" style="color: #3182ce;"></i> Edit Form
+                            </button>
+                            <button type="button" class="btn" ng-if="selectedOrderable.selectedForm" ng-click="removeOrderForm(selectedOrderable.selectedForm)"
+                                    title="Remove this form from category store"
+                                    style="background: #fff5f5; border: 1px solid #feb2b2; color: #c53030; font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                <i class="fa fa-trash"></i> Remove Form
                             </button>
                         </div>
                     </div>
@@ -274,10 +292,16 @@
                             <strong style="color: #234e52; font-size: 13px;">{{ selectedOrderable.attachedForm.formName }}</strong>
                             <div style="font-size: 11px; color: #285e61;">Stored in Category: <strong>Order Result Entry Forms</strong> &bull; UUID: {{ selectedOrderable.attachedForm.formUuid }}</div>
                         </div>
-                        <button type="button" ng-click="selectedOrderable.selectedForm = null; saveFormAssociation(selectedOrderable)"
-                                style="background: none; border: 1px solid #feb2b2; color: #c53030; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
-                            <i class="fa fa-times"></i> Detach
-                        </button>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" ng-click="openEditFormModal(selectedOrderable.attachedForm)"
+                                    style="background: #fff; border: 1px solid #bee3f8; color: #2b6cb0; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <i class="fa fa-pencil"></i> Edit Form
+                            </button>
+                            <button type="button" ng-click="selectedOrderable.selectedForm = null; saveFormAssociation(selectedOrderable)"
+                                    style="background: none; border: 1px solid #feb2b2; color: #c53030; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                <i class="fa fa-times"></i> Detach
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -506,6 +530,157 @@
                         style="background: #2b6cb0; color: #fff; border: none; font-weight: 700; font-size: 13px; padding: 8px 18px; border-radius: 6px; cursor: pointer;">
                     <i class="fa fa-spinner fa-spin" ng-if="createModal.saving"></i>
                     {{ createModal.saving ? 'Creating...' : 'Create Orderable' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Order Result Entry Forms Modal -->
+    <div ng-if="manageFormsModal.open" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.55); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; border-radius: 8px; width: 750px; max-width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #2d3748; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa fa-list-alt" style="color: #3182ce;"></i> Order Result Entry Forms ({{ availableForms.length }})
+                    </h3>
+                    <div style="font-size: 12px; color: #718096; margin-top: 3px;">
+                        Stored in Category: <strong style="color: #2b6cb0;">Order Result Entry Forms</strong> &bull; These forms appear in the Attached Form dropdown for fulfillment
+                    </div>
+                </div>
+                <i class="fa fa-times" ng-click="closeManageFormsModal()" style="cursor: pointer; color: #a0aec0; font-size: 18px;"></i>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 13px; color: #4a5568; font-weight: 600;">Available Result Entry Forms:</span>
+                <button type="button" class="btn" ng-click="closeManageFormsModal(); openCreateFormModal();"
+                        style="background: #319795; color: #fff; border: none; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-plus"></i> Create New Form
+                </button>
+            </div>
+
+            <div style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 16px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background: #edf2f7; text-align: left; color: #4a5568; border-bottom: 2px solid #cbd5e0;">
+                            <th style="padding: 10px 12px;">#</th>
+                            <th style="padding: 10px 12px;">Form Name</th>
+                            <th style="padding: 10px 12px;">Fields Count</th>
+                            <th style="padding: 10px 12px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-if="availableForms.length === 0">
+                            <td colspan="4" style="padding: 24px; text-align: center; color: #a0aec0;">
+                                No forms currently in Order Result Entry Forms store.
+                            </td>
+                        </tr>
+                        <tr ng-repeat="f in availableForms" style="border-bottom: 1px solid #edf2f7;">
+                            <td style="padding: 10px 12px; color: #a0aec0;">{{ $index + 1 }}</td>
+                            <td style="padding: 10px 12px;">
+                                <div style="font-weight: 700; color: #2d3748; font-size: 13px;">{{ f.name }}</div>
+                                <div style="font-size: 11px; color: #a0aec0; margin-top: 2px;">UUID: {{ f.uuid }}</div>
+                            </td>
+                            <td style="padding: 10px 12px;">
+                                <span style="background: #edf2f7; color: #4a5568; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">
+                                    {{ f.fieldsCount || 0 }} questions
+                                </span>
+                            </td>
+                            <td style="padding: 10px 12px; text-align: right;">
+                                <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                                    <button type="button" class="btn" ng-click="openEditFormModal(f)"
+                                            style="background: #ebf8ff; border: 1px solid #bee3f8; color: #2b6cb0; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                        <i class="fa fa-pencil"></i> Edit
+                                    </button>
+                                    <button type="button" class="btn" ng-click="removeOrderForm(f)"
+                                            style="background: #fff5f5; border: 1px solid #feb2b2; color: #c53030; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                        <i class="fa fa-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                <button type="button" class="btn" ng-click="closeManageFormsModal()"
+                        style="background: #edf2f7; border: 1px solid #cbd5e0; color: #4a5568; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form Modal -->
+    <div ng-if="editFormModal.open" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.55); z-index: 10001; display: flex; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; border-radius: 8px; width: 640px; max-width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #2b6cb0; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa fa-pencil-square-o" style="color: #3182ce;"></i> Edit Order Result Entry Form
+                    </h3>
+                    <div style="font-size: 11px; color: #718096; margin-top: 3px;">
+                        UUID: <code style="font-size: 11px; background: #edf2f7; padding: 2px 6px; border-radius: 4px;">{{ editFormModal.uuid }}</code>
+                    </div>
+                </div>
+                <i class="fa fa-times" ng-click="closeEditFormModal()" style="cursor: pointer; color: #a0aec0; font-size: 18px;"></i>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: #4a5568; margin-bottom: 4px;">Form Name (Fully Specified) *</label>
+                    <input type="text" ng-model="editFormModal.name" placeholder="Form Name..."
+                           style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: #4a5568; margin-bottom: 4px;">Short Name (Optional)</label>
+                    <input type="text" ng-model="editFormModal.shortName" placeholder="Short Name..."
+                           style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                </div>
+
+                <!-- Form Fields / Questions Builder -->
+                <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; background: #f8fafc;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12px; font-weight: 700; color: #2d3748;">
+                            Form Questions & Fields ({{ editFormModal.fields.length }})
+                        </span>
+                        <button type="button" ng-click="addEditFormField()"
+                                style="background: #edf2f7; border: 1px solid #cbd5e0; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                            <i class="fa fa-plus"></i> Add Question
+                        </button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div ng-repeat="field in editFormModal.fields" style="display: flex; gap: 8px; align-items: center;">
+                            <span style="color: #a0aec0; font-size: 11px; width: 18px; text-align: center;">{{ $index + 1 }}.</span>
+                            <input type="text" ng-model="field.name" placeholder="Question / Field Name"
+                                   style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px;">
+                            <select ng-model="field.datatype"
+                                    style="width: 130px; padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; background: #fff;">
+                                <option value="Text">Text / Notes</option>
+                                <option value="Numeric">Numeric</option>
+                                <option value="Date">Date</option>
+                            </select>
+                            <button type="button" ng-click="removeEditFormField($index)" ng-disabled="editFormModal.fields.length <= 1"
+                                    style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 4px;" title="Remove Question">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                <button type="button" class="btn" ng-click="closeEditFormModal()"
+                        style="background: #edf2f7; border: 1px solid #cbd5e0; color: #4a5568; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-primary" ng-click="submitEditOrderForm()" ng-disabled="editFormModal.saving"
+                        style="background: #2b6cb0; color: #fff; border: none; font-weight: 700; font-size: 13px; padding: 8px 20px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-spinner fa-spin" ng-if="editFormModal.saving"></i>
+                    <i class="fa fa-check" ng-if="!editFormModal.saving"></i>
+                    {{ editFormModal.saving ? 'Saving Changes...' : 'Save Form Changes' }}
                 </button>
             </div>
         </div>

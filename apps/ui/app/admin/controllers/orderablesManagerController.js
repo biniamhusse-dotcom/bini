@@ -58,23 +58,6 @@ angular.module('admin')
                 attachedForm: null
             };
 
-            $scope.editModal = {
-                open: false,
-                saving: false,
-                conceptUuid: '',
-                name: '',
-                shortName: '',
-                description: ''
-            };
-
-            $scope.memberModal = {
-                open: false,
-                saving: false,
-                query: '',
-                searchResults: []
-            };
-
-            // Create Form Modal State
             $scope.createFormModal = {
                 open: false,
                 saving: false,
@@ -89,27 +72,38 @@ angular.module('admin')
                 autoAttachToSelected: true
             };
 
+            $scope.editFormModal = {
+                open: false,
+                saving: false,
+                uuid: '',
+                name: '',
+                shortName: '',
+                fields: []
+            };
+
+            $scope.manageFormsModal = {
+                open: false
+            };
+
             // Load all forms from the "Order Result Entry Forms" category store
             $scope.loadAvailableForms = function () {
-                var rep = 'custom:(uuid,name:(display,name),names:(name,conceptNameType),conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),conceptClass:(name),datatype:(name)))';
+                var rep = 'custom:(uuid,name:(display,name),names:(name,conceptNameType),conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),names:(name,conceptNameType),conceptClass:(name),datatype:(name)))';
                 return $http.get(OPENMRS_BASE + '/concept/' + ORDER_RESULT_ENTRY_FORMS_UUID + '?v=' + rep)
                     .then(function (res) {
                         var members = (res.data && res.data.setMembers) || [];
-                        if (members.length > 0) {
-                            $scope.availableForms = members.map(function (m) {
-                                var shortName = _.find(m.names, { conceptNameType: 'SHORT' });
-                                var fullName = _.find(m.names, { conceptNameType: 'FULLY_SPECIFIED' });
-                                var formName = (fullName && fullName.name) || (m.name && (m.name.name || m.name.display));
-                                return {
-                                    name: formName,
-                                    shortName: shortName ? shortName.name : '',
-                                    uuid: m.uuid,
-                                    conceptClass: m.conceptClass ? m.conceptClass.name : 'ConvSet',
-                                    fieldsCount: (m.setMembers || []).length,
-                                    fields: m.setMembers || []
-                                };
-                            });
-                        }
+                        $scope.availableForms = members.map(function (m) {
+                            var shortName = _.find(m.names, { conceptNameType: 'SHORT' });
+                            var fullName = _.find(m.names, { conceptNameType: 'FULLY_SPECIFIED' });
+                            var formName = (fullName && fullName.name) || (m.name && (m.name.name || m.name.display));
+                            return {
+                                name: formName,
+                                shortName: shortName ? shortName.name : '',
+                                uuid: m.uuid,
+                                conceptClass: m.conceptClass ? m.conceptClass.name : 'ConvSet',
+                                fieldsCount: (m.setMembers || []).length,
+                                fields: m.setMembers || []
+                            };
+                        });
                         // If selected orderable exists, update its selectedForm reference
                         if ($scope.selectedOrderable) {
                             $scope.syncSelectedFormForOrderable($scope.selectedOrderable);
@@ -243,18 +237,12 @@ angular.module('admin')
                 var status = $scope.selectedStatus;
 
                 $scope.filteredOrderables = $scope.allOrderablesList.filter(function (item) {
-                    // Department
                     if (dept !== 'all' && item.department !== dept && item.cleanDepartment !== dept) return false;
-
-                    // Type
                     if (type === 'panel' && !item.isPanel) return false;
                     if (type === 'individual' && item.isPanel) return false;
-
-                    // Status
                     if (status === 'active' && item.retired) return false;
                     if (status === 'inactive' && !item.retired) return false;
 
-                    // Search Query
                     if (q) {
                         var matchName = item.name.toLowerCase().indexOf(q) !== -1;
                         var matchShort = item.shortName.toLowerCase().indexOf(q) !== -1;
@@ -283,7 +271,6 @@ angular.module('admin')
                 $scope.selectedOrderable = item;
                 $scope.syncSelectedFormForOrderable(item);
 
-                // Fetch full details including child setMembers if panel
                 if (item && item.isPanel) {
                     $http.get(OPENMRS_BASE + '/concept/' + item.uuid + '?v=custom:(uuid,name:(display,name),retired,conceptClass:(name),datatype:(name),setMembers:(uuid,name:(display,name),names,conceptClass:(name),datatype:(name),retired))')
                         .then(function (res) {
@@ -300,7 +287,6 @@ angular.module('admin')
                 $scope.saving = true;
 
                 if (item.retired) {
-                    // Activate (unretire)
                     $http.post(OPENMRS_BASE + '/concept/' + item.uuid, { retired: false })
                         .then(function () {
                             item.retired = false;
@@ -311,7 +297,6 @@ angular.module('admin')
                             messagingService.showMessage('error', 'Failed to activate orderable');
                         });
                 } else {
-                    // Deactivate (retire)
                     $http.delete(OPENMRS_BASE + '/concept/' + item.uuid + '?purge=false')
                         .then(function () {
                             item.retired = true;
@@ -329,7 +314,6 @@ angular.module('admin')
                 if (!item) return;
                 $scope.saving = true;
 
-                // Update in-memory mapping
                 if (item.selectedForm) {
                     $scope.orderableFormsMap[item.uuid] = {
                         formName: item.selectedForm.name,
@@ -341,7 +325,6 @@ angular.module('admin')
                     item.attachedForm = null;
                 }
 
-                // Save in OpenMRS concept description for immediate zero-latency propagation
                 var descText = item.attachedForm ?
                     ('fulfillmentForm:' + item.attachedForm.formName + ';formUuid:' + item.attachedForm.formUuid) : '';
 
@@ -361,6 +344,182 @@ angular.module('admin')
                     $scope.saving = false;
                     messagingService.showMessage('info', 'Attached Clinical / Intake Form saved: ' + item.displayName);
                 });
+            };
+
+            // ==========================================
+            // MANAGE FORMS MODAL
+            // ==========================================
+            $scope.openManageFormsModal = function () {
+                $scope.manageFormsModal.open = true;
+            };
+
+            $scope.closeManageFormsModal = function () {
+                $scope.manageFormsModal.open = false;
+            };
+
+            // ==========================================
+            // EDIT FORM MODAL & ACTIONS
+            // ==========================================
+            $scope.openEditFormModal = function (form) {
+                var targetForm = form || ($scope.selectedOrderable && $scope.selectedOrderable.selectedForm);
+                if (!targetForm) {
+                    messagingService.showMessage('error', 'Please select a form to edit');
+                    return;
+                }
+
+                $scope.loading = true;
+                $http.get(OPENMRS_BASE + '/concept/' + targetForm.uuid + '?v=custom:(uuid,name:(display,name),names:(name,locale,conceptNameType),setMembers:(uuid,name:(display,name),names:(name,conceptNameType),conceptClass:(name),datatype:(name)))')
+                    .then(function (res) {
+                        $scope.loading = false;
+                        var c = res.data;
+                        var shortObj = _.find(c.names, { conceptNameType: 'SHORT' });
+                        var fullObj = _.find(c.names, { conceptNameType: 'FULLY_SPECIFIED' });
+                        var formName = (fullObj && fullObj.name) || (c.name && (c.name.name || c.name.display));
+
+                        var fields = (c.setMembers || []).map(function (sm) {
+                            var smFull = _.find(sm.names, { conceptNameType: 'FULLY_SPECIFIED' });
+                            var smName = (smFull && smFull.name) || (sm.name && (sm.name.name || sm.name.display));
+                            var dt = sm.datatype ? sm.datatype.name : 'Text';
+                            if (dt !== 'Numeric' && dt !== 'Date') dt = 'Text';
+                            return {
+                                uuid: sm.uuid,
+                                name: smName,
+                                datatype: dt,
+                                conceptClass: 'Misc'
+                            };
+                        });
+
+                        $scope.editFormModal = {
+                            open: true,
+                            saving: false,
+                            uuid: c.uuid,
+                            name: formName,
+                            shortName: shortObj ? shortObj.name : '',
+                            fields: fields.length > 0 ? fields : [{ name: 'Clinical Notes', datatype: 'Text', conceptClass: 'Misc' }]
+                        };
+                    }).catch(function (err) {
+                        $scope.loading = false;
+                        messagingService.showMessage('error', 'Failed to load form details for editing');
+                    });
+            };
+
+            $scope.closeEditFormModal = function () {
+                $scope.editFormModal.open = false;
+            };
+
+            $scope.addEditFormField = function () {
+                $scope.editFormModal.fields.push({
+                    name: '',
+                    datatype: 'Text',
+                    conceptClass: 'Misc'
+                });
+            };
+
+            $scope.removeEditFormField = function (index) {
+                if ($scope.editFormModal.fields.length > 1) {
+                    $scope.editFormModal.fields.splice(index, 1);
+                }
+            };
+
+            $scope.submitEditOrderForm = function () {
+                var m = $scope.editFormModal;
+                if (!m.name.trim()) {
+                    messagingService.showMessage('error', 'Form name is required');
+                    return;
+                }
+
+                m.saving = true;
+
+                // 1. Resolve or create field concepts
+                var fieldPromises = m.fields.map(function (field) {
+                    var fName = (field.name || '').trim();
+                    if (!fName) fName = 'Notes';
+                    if (field.uuid) return $q.when(field.uuid);
+
+                    return $http.get(OPENMRS_BASE + '/concept?name=' + encodeURIComponent(fName) + '&v=custom:(uuid,name:(display,name))')
+                        .then(function (res) {
+                            var existing = res.data.results && res.data.results[0];
+                            if (existing && existing.uuid) return existing.uuid;
+
+                            var fieldPayload = {
+                                names: [{ name: fName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
+                                datatype: field.datatype === 'Numeric' ? '8d4a4488-c2cc-11de-8d13-0010c6dffd0f' :
+                                          (field.datatype === 'Date' ? '8d4a4e92-c2cc-11de-8d13-0010c6dffd0f' : '8d4a4ab4-c2cc-11de-8d13-0010c6dffd0f'),
+                                conceptClass: '8d492774-c2cc-11de-8d13-0010c6dffd0f',
+                                set: false
+                            };
+                            return $http.post(OPENMRS_BASE + '/concept', fieldPayload).then(function (cRes) {
+                                return cRes.data.uuid;
+                            });
+                        }).catch(function () {
+                            return null;
+                        });
+                });
+
+                $q.all(fieldPromises).then(function (fieldUuids) {
+                    var cleanFieldUuids = fieldUuids.filter(function (u) { return !!u; });
+
+                    var formNames = [
+                        { name: m.name.trim(), locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }
+                    ];
+                    if (m.shortName && m.shortName.trim()) {
+                        formNames.push({ name: m.shortName.trim(), locale: 'en', conceptNameType: 'SHORT' });
+                    }
+
+                    var formPayload = {
+                        names: formNames,
+                        setMembers: cleanFieldUuids
+                    };
+
+                    return $http.post(OPENMRS_BASE + '/concept/' + m.uuid, formPayload);
+                }).then(function () {
+                    m.saving = false;
+                    m.open = false;
+                    messagingService.showMessage('info', 'Form updated successfully: ' + m.name);
+                    return $scope.loadAvailableForms();
+                }).catch(function (err) {
+                    m.saving = false;
+                    messagingService.showMessage('error', 'Failed to update form: ' + (err.data && err.data.error ? err.data.error.message : 'Unknown error'));
+                });
+            };
+
+            // ==========================================
+            // REMOVE FORM FROM CATEGORY STORE
+            // ==========================================
+            $scope.removeOrderForm = function (form) {
+                var targetForm = form || ($scope.selectedOrderable && $scope.selectedOrderable.selectedForm);
+                if (!targetForm) {
+                    messagingService.showMessage('error', 'Please select a form to remove');
+                    return;
+                }
+
+                var confirmed = window.confirm('Are you sure you want to remove the form "' + targetForm.name + '" from the Order Result Entry Forms category store?');
+                if (!confirmed) return;
+
+                $scope.saving = true;
+
+                // 1. Get current store members
+                $http.get(OPENMRS_BASE + '/concept/' + ORDER_RESULT_ENTRY_FORMS_UUID + '?v=custom:(uuid,setMembers:(uuid))')
+                    .then(function (res) {
+                        var currentMembers = (res.data && res.data.setMembers || []).map(function (sm) { return sm.uuid; });
+                        var filteredMembers = currentMembers.filter(function (u) { return u !== targetForm.uuid; });
+
+                        // 2. Update store
+                        return $http.post(OPENMRS_BASE + '/concept/' + ORDER_RESULT_ENTRY_FORMS_UUID, { setMembers: filteredMembers });
+                    }).then(function () {
+                        // 3. Detach from selected orderable if attached
+                        if ($scope.selectedOrderable && $scope.selectedOrderable.selectedForm && $scope.selectedOrderable.selectedForm.uuid === targetForm.uuid) {
+                            $scope.selectedOrderable.selectedForm = null;
+                            $scope.saveFormAssociation($scope.selectedOrderable);
+                        }
+
+                        $scope.saving = false;
+                        messagingService.showMessage('info', 'Form removed from category store: ' + targetForm.name);
+                        return $scope.loadAvailableForms();
+                    }).catch(function (err) {
+                        $scope.saving = false;
+                        messagingService.showMessage('error', 'Failed to remove form from category store');
+                    });
             };
 
             // ==========================================
@@ -448,12 +607,11 @@ angular.module('admin')
                             if (existing && existing.uuid) {
                                 return existing.uuid;
                             }
-                            // Create field concept
                             var fieldPayload = {
                                 names: [{ name: fName, locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }],
                                 datatype: field.datatype === 'Numeric' ? '8d4a4488-c2cc-11de-8d13-0010c6dffd0f' :
                                           (field.datatype === 'Date' ? '8d4a4e92-c2cc-11de-8d13-0010c6dffd0f' : '8d4a4ab4-c2cc-11de-8d13-0010c6dffd0f'),
-                                conceptClass: '8d492774-c2cc-11de-8d13-0010c6dffd0f', // Misc
+                                conceptClass: '8d492774-c2cc-11de-8d13-0010c6dffd0f',
                                 set: false
                             };
                             return $http.post(OPENMRS_BASE + '/concept', fieldPayload).then(function (cRes) {
@@ -467,7 +625,6 @@ angular.module('admin')
                 $q.all(fieldPromises).then(function (fieldUuids) {
                     var cleanFieldUuids = fieldUuids.filter(function (u) { return !!u; });
 
-                    // 2. Create Form Concept as ConvSet
                     var formNames = [
                         { name: m.name.trim(), locale: 'en', conceptNameType: 'FULLY_SPECIFIED' }
                     ];
@@ -477,8 +634,8 @@ angular.module('admin')
 
                     var formConceptPayload = {
                         names: formNames,
-                        datatype: '8d4a4c94-c2cc-11de-8d13-0010c6dffd0f', // N/A
-                        conceptClass: '8d492594-c2cc-11de-8d13-0010c6dffd0f', // ConvSet
+                        datatype: '8d4a4c94-c2cc-11de-8d13-0010c6dffd0f',
+                        conceptClass: '8d492594-c2cc-11de-8d13-0010c6dffd0f',
                         set: true,
                         setMembers: cleanFieldUuids
                     };
@@ -488,7 +645,6 @@ angular.module('admin')
                     var createdForm = formRes.data;
                     var createdFormUuid = createdForm.uuid;
 
-                    // 3. Add to the "Order Result Entry Forms" category store
                     return $http.get(OPENMRS_BASE + '/concept/' + ORDER_RESULT_ENTRY_FORMS_UUID + '?v=custom:(uuid,setMembers:(uuid))')
                         .then(function (storeRes) {
                             var currentMembers = (storeRes.data && storeRes.data.setMembers || []).map(function (sm) { return sm.uuid; });
@@ -504,9 +660,7 @@ angular.module('admin')
                     m.open = false;
                     messagingService.showMessage('info', 'New form created and added to Order Result Entry Forms store: ' + m.name);
 
-                    // 4. Reload available forms
                     return $scope.loadAvailableForms().then(function () {
-                        // 5. If autoAttachToSelected, select and attach immediately!
                         if (m.autoAttachToSelected && $scope.selectedOrderable) {
                             var newFormObj = _.find($scope.availableForms, { uuid: createdForm.uuid });
                             if (newFormObj) {
