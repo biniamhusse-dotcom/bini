@@ -762,19 +762,19 @@
             <span class="tm-search-icon">&#128269;</span>
             <input type="text" id="tmSearchName" value="<%= searchName %>" 
                    placeholder="Search test name, description, short name, sample category, section..." 
-                   onkeyup="if(event.key==='Enter') tmApplyFilters()">
-            <% if (!searchName.isEmpty()) { %>
-                <button type="button" class="tm-search-clear-btn" onclick="document.getElementById('tmSearchName').value=''; tmApplyFilters();" title="Clear search">&times;</button>
-            <% } %>
+                   autocomplete="off"
+                   oninput="tmOnSearchInput()"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();tmOnSearchEnter();}">
+            <button type="button" id="tmSearchClearBtn" class="tm-search-clear-btn" onclick="tmClearSearchInput()" title="Clear search" style="<%= searchName.isEmpty() ? "display:none;" : "" %>">&times;</button>
         </div>
-        <select id="tmSearchField" onchange="tmApplyFilters()" style="padding:8px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;background:white;">
+        <select id="tmSearchField" onchange="tmApplyFilters(true)" style="padding:8px 10px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;background:white;">
             <option value="all" <%= "all".equals(searchField) ? "selected" : "" %>>All Fields</option>
             <option value="name" <%= "name".equals(searchField) ? "selected" : "" %>>OpenELIS Name / Desc</option>
             <option value="omrsname" <%= "omrsname".equals(searchField) ? "selected" : "" %>>OpenMRS Test Name</option>
             <option value="short" <%= "short".equals(searchField) ? "selected" : "" %>>OpenMRS Short Name</option>
             <option value="sample" <%= "sample".equals(searchField) ? "selected" : "" %>>Sample Category</option>
         </select>
-        <button class="tm-btn tm-btn-primary" onclick="tmApplyFilters()">Search</button>
+        <button class="tm-btn tm-btn-primary" onclick="tmApplyFilters(true)">Search</button>
         <button class="tm-btn" onclick="tmClearFilters()">Reset All</button>
     </div>
 
@@ -878,7 +878,7 @@
     </div>
 
     <!-- Quick Filter Presets -->
-    <div class="tm-preset-row">
+    <div class="tm-preset-row" id="tmPresetRow">
         <span style="font-size:11px;font-weight:700;color:#64748b;margin-right:4px;text-transform:uppercase;">Quick Presets:</span>
         <button type="button" class="tm-preset-chip <%= !hasFilters ? "active" : "" %>" onclick="tmApplyPreset('all')">All Tests</button>
         <button type="button" class="tm-preset-chip <%= "Y".equals(filterActive) && !hasFilters ? "active" : "" %>" onclick="tmApplyPreset('active')">Active Tests</button>
@@ -898,6 +898,7 @@
     </div>
 </div>
 
+<div id="tmResultsContainer">
 <div class="tm-action-bar">
     <span class="tm-count">Showing <%= totalCount > 0 ? ((currentPage - 1) * pageSize + 1) : 0 %>-<%= Math.min(currentPage * pageSize, totalCount) %> of <%= totalCount %> tests</span>
     <button class="tm-btn tm-btn-success" onclick="tmOpenAddForm()">+ Add Test</button>
@@ -1028,15 +1029,16 @@
 
 <div class="tm-pagination">
     <% if (currentPage > 1) { %>
-        <button class="tm-btn" onclick="location.href='<%= baseUrl.replace("__PAGE__", "1") %>'">&laquo; First</button>
-        <button class="tm-btn" onclick="location.href='<%= baseUrl.replace("__PAGE__", String.valueOf(currentPage - 1)) %>'">&lsaquo; Prev</button>
+        <button type="button" class="tm-btn" onclick="tmGoToPage(1)">&laquo; First</button>
+        <button type="button" class="tm-btn" onclick="tmGoToPage(<%= currentPage - 1 %>)">&lsaquo; Prev</button>
     <% } %>
     <span>Page <%= currentPage %> of <%= totalPages %></span>
     <% if (currentPage < totalPages) { %>
-        <button class="tm-btn" onclick="location.href='<%= baseUrl.replace("__PAGE__", String.valueOf(currentPage + 1)) %>'">Next &rsaquo;</button>
-        <button class="tm-btn" onclick="location.href='<%= baseUrl.replace("__PAGE__", String.valueOf(totalPages)) %>'">Last &raquo;</button>
+        <button type="button" class="tm-btn" onclick="tmGoToPage(<%= currentPage + 1 %>)">Next &rsaquo;</button>
+        <button type="button" class="tm-btn" onclick="tmGoToPage(<%= totalPages %>)">Last &raquo;</button>
     <% } %>
 </div>
+</div> <!-- /tmResultsContainer -->
 
 <!-- Add/Edit Modal -->
 <div id="tmFormOverlay" class="tm-overlay" style="display:none;" onclick="if(event.target===this) tmCloseForm()">
@@ -1160,7 +1162,76 @@
 </div>
 
 <script>
-function tmApplyFilters() {
+var tmSearchTimer = null;
+var tmCurrentSortBy = '<%= sortBy %>';
+var tmCurrentSortDir = '<%= sortDir %>';
+var tmCurrentPage = <%= currentPage %>;
+var tmFetchController = null;
+
+function tmOnSearchInput() {
+    var searchInput = document.getElementById('tmSearchName');
+    var val = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    var clearBtn = document.getElementById('tmSearchClearBtn');
+    if (clearBtn) {
+        clearBtn.style.display = val ? 'inline-block' : 'none';
+    }
+
+    // Instant client-side row filtering on current rows (0ms response)
+    var searchField = document.getElementById('tmSearchField') ? document.getElementById('tmSearchField').value : 'all';
+    var rows = document.querySelectorAll('#tmTable tbody tr');
+    rows.forEach(function(row) {
+        var match = false;
+        if (!val) {
+            match = true;
+        } else {
+            if (searchField === 'name') {
+                var desc = (row.getAttribute('data-desc') || '').toLowerCase();
+                var name = (row.getAttribute('data-name') || '').toLowerCase();
+                match = (desc.indexOf(val) !== -1 || name.indexOf(val) !== -1);
+            } else if (searchField === 'omrsname') {
+                var omrsName = (row.getAttribute('data-openmrs-name') || '').toLowerCase();
+                match = (omrsName.indexOf(val) !== -1);
+            } else if (searchField === 'short') {
+                var omrsShort = (row.getAttribute('data-openmrs-short') || '').toLowerCase();
+                match = (omrsShort.indexOf(val) !== -1);
+            } else if (searchField === 'sample') {
+                var omrsSample = (row.getAttribute('data-openmrs-sample') || '').toLowerCase();
+                match = (omrsSample.indexOf(val) !== -1);
+            } else {
+                var fullText = row.innerText.toLowerCase();
+                match = (fullText.indexOf(val) !== -1);
+            }
+        }
+        row.style.display = match ? '' : 'none';
+    });
+
+    // Debounced server search across the full tests database
+    clearTimeout(tmSearchTimer);
+    tmSearchTimer = setTimeout(function() {
+        tmCurrentPage = 1;
+        tmApplyFilters(true);
+    }, 280);
+}
+
+function tmOnSearchEnter() {
+    clearTimeout(tmSearchTimer);
+    tmCurrentPage = 1;
+    tmApplyFilters(true);
+}
+
+function tmClearSearchInput() {
+    var searchInput = document.getElementById('tmSearchName');
+    if (searchInput) searchInput.value = '';
+    tmOnSearchInput();
+}
+
+function tmGoToPage(p) {
+    tmCurrentPage = p;
+    tmApplyFilters(true);
+}
+
+function tmApplyFilters(useAjax) {
+    if (useAjax === undefined) useAjax = true;
     var section = document.getElementById('tmFilterSection') ? document.getElementById('tmFilterSection').value : '';
     var active = document.getElementById('tmFilterActive') ? document.getElementById('tmFilterActive').value : '';
     var reportable = document.getElementById('tmFilterReportable') ? document.getElementById('tmFilterReportable').value : '';
@@ -1172,7 +1243,7 @@ function tmApplyFilters() {
     var searchField = document.getElementById('tmSearchField') ? document.getElementById('tmSearchField').value : 'all';
     var search = document.getElementById('tmSearchName') ? document.getElementById('tmSearchName').value.trim() : '';
 
-    var url = 'TestMenuAdvanced.do?page=1&sortBy=<%= sortBy %>&sortDir=<%= sortDir %>';
+    var url = 'TestMenuAdvanced.do?page=' + tmCurrentPage + '&sortBy=' + encodeURIComponent(tmCurrentSortBy) + '&sortDir=' + tmCurrentSortDir;
     if (pageSize && pageSize !== '20') url += '&pageSize=' + encodeURIComponent(pageSize);
     if (section) url += '&filterSection=' + encodeURIComponent(section);
     if (active) url += '&filterActive=' + encodeURIComponent(active);
@@ -1183,60 +1254,109 @@ function tmApplyFilters() {
     if (loc) url += '&filterLocation=' + encodeURIComponent(loc);
     if (searchField && searchField !== 'all') url += '&searchField=' + encodeURIComponent(searchField);
     if (search) url += '&searchName=' + encodeURIComponent(search);
-    location.href = url;
+
+    if (!useAjax || !window.fetch) {
+        location.href = url;
+        return;
+    }
+
+    if (window.AbortController) {
+        if (tmFetchController) tmFetchController.abort();
+        tmFetchController = new AbortController();
+    }
+    var signal = tmFetchController ? tmFetchController.signal : null;
+
+    fetch(url, { signal: signal })
+        .then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.text();
+        })
+        .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+
+            var newContainer = doc.getElementById('tmResultsContainer');
+            var curContainer = document.getElementById('tmResultsContainer');
+            if (newContainer && curContainer) {
+                curContainer.innerHTML = newContainer.innerHTML;
+            }
+
+            var newPreset = doc.getElementById('tmPresetRow');
+            var curPreset = document.getElementById('tmPresetRow');
+            if (newPreset && curPreset) {
+                curPreset.innerHTML = newPreset.innerHTML;
+            }
+
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({}, '', url);
+            }
+        })
+        .catch(function(err) {
+            if (err.name === 'AbortError') return;
+            location.href = url;
+        });
 }
 
 function tmClearFilters() {
-    location.href = 'TestMenuAdvanced.do?page=1&sortBy=t.description&sortDir=ASC';
+    var searchInput = document.getElementById('tmSearchName');
+    if (searchInput) searchInput.value = '';
+    var clearBtn = document.getElementById('tmSearchClearBtn');
+    if (clearBtn) clearBtn.style.display = 'none';
+
+    if (document.getElementById('tmFilterSection')) document.getElementById('tmFilterSection').value = '';
+    if (document.getElementById('tmFilterActive')) document.getElementById('tmFilterActive').value = '';
+    if (document.getElementById('tmFilterReportable')) document.getElementById('tmFilterReportable').value = '';
+    if (document.getElementById('tmFilterReferredOut')) document.getElementById('tmFilterReferredOut').value = '';
+    if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = '';
+    if (document.getElementById('tmFilterShortName')) document.getElementById('tmFilterShortName').value = '';
+    if (document.getElementById('tmFilterLocation')) document.getElementById('tmFilterLocation').value = '';
+    if (document.getElementById('tmSearchField')) document.getElementById('tmSearchField').value = 'all';
+    if (document.getElementById('tmPageSize')) document.getElementById('tmPageSize').value = '20';
+
+    tmCurrentPage = 1;
+    tmCurrentSortBy = 't.description';
+    tmCurrentSortDir = 'ASC';
+    tmApplyFilters(true);
 }
 
 function tmApplyPreset(preset) {
     if (preset === 'all') {
         tmClearFilters();
-    } else if (preset === 'active') {
-        location.href = 'TestMenuAdvanced.do?page=1&filterActive=Y';
-    } else if (preset === 'blood') {
-        location.href = 'TestMenuAdvanced.do?page=1&filterSampleCategory=Blood';
-    } else if (preset === 'urine') {
-        location.href = 'TestMenuAdvanced.do?page=1&filterSampleCategory=Urine';
-    } else if (preset === 'hasShort') {
-        location.href = 'TestMenuAdvanced.do?page=1&filterShortName=has';
-    } else if (preset === 'missingShort') {
-        location.href = 'TestMenuAdvanced.do?page=1&filterShortName=none';
-    } else if (preset === 'unmapped') {
-        location.href = 'TestMenuAdvanced.do?page=1&filterSampleCategory=__NONE__';
-    } else if (preset === 'inactive') {
-        location.href = 'TestMenuAdvanced.do?page=1&filterActive=N';
+        return;
     }
+    if (document.getElementById('tmFilterSection')) document.getElementById('tmFilterSection').value = '';
+    if (document.getElementById('tmFilterActive')) document.getElementById('tmFilterActive').value = '';
+    if (document.getElementById('tmFilterReportable')) document.getElementById('tmFilterReportable').value = '';
+    if (document.getElementById('tmFilterReferredOut')) document.getElementById('tmFilterReferredOut').value = '';
+    if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = '';
+    if (document.getElementById('tmFilterShortName')) document.getElementById('tmFilterShortName').value = '';
+    if (document.getElementById('tmFilterLocation')) document.getElementById('tmFilterLocation').value = '';
+
+    if (preset === 'active') {
+        if (document.getElementById('tmFilterActive')) document.getElementById('tmFilterActive').value = 'Y';
+    } else if (preset === 'blood') {
+        if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = 'Blood';
+    } else if (preset === 'urine') {
+        if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = 'Urine';
+    } else if (preset === 'hasShort') {
+        if (document.getElementById('tmFilterShortName')) document.getElementById('tmFilterShortName').value = 'has';
+    } else if (preset === 'missingShort') {
+        if (document.getElementById('tmFilterShortName')) document.getElementById('tmFilterShortName').value = 'none';
+    } else if (preset === 'unmapped') {
+        if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = '__NONE__';
+    } else if (preset === 'inactive') {
+        if (document.getElementById('tmFilterActive')) document.getElementById('tmFilterActive').value = 'N';
+    }
+    tmCurrentPage = 1;
+    tmApplyFilters(true);
 }
 
 function tmSort(col) {
-    var currentSort = '<%= sortBy %>';
-    var currentDir = '<%= sortDir %>';
-    var newDir = (col === currentSort && currentDir === 'ASC') ? 'DESC' : 'ASC';
-    var url = 'TestMenuAdvanced.do?page=1&sortBy=' + col + '&sortDir=' + newDir;
-    var section = document.getElementById('tmFilterSection') ? document.getElementById('tmFilterSection').value : '';
-    var active = document.getElementById('tmFilterActive') ? document.getElementById('tmFilterActive').value : '';
-    var reportable = document.getElementById('tmFilterReportable') ? document.getElementById('tmFilterReportable').value : '';
-    var referredOut = document.getElementById('tmFilterReferredOut') ? document.getElementById('tmFilterReferredOut').value : '';
-    var sampleCat = document.getElementById('tmFilterSampleCategory') ? document.getElementById('tmFilterSampleCategory').value : '';
-    var shortName = document.getElementById('tmFilterShortName') ? document.getElementById('tmFilterShortName').value : '';
-    var loc = document.getElementById('tmFilterLocation') ? document.getElementById('tmFilterLocation').value : '';
-    var pageSize = document.getElementById('tmPageSize') ? document.getElementById('tmPageSize').value : '20';
-    var searchField = document.getElementById('tmSearchField') ? document.getElementById('tmSearchField').value : 'all';
-    var search = document.getElementById('tmSearchName') ? document.getElementById('tmSearchName').value.trim() : '';
-
-    if (pageSize && pageSize !== '20') url += '&pageSize=' + encodeURIComponent(pageSize);
-    if (section) url += '&filterSection=' + encodeURIComponent(section);
-    if (active) url += '&filterActive=' + encodeURIComponent(active);
-    if (reportable) url += '&filterReportable=' + encodeURIComponent(reportable);
-    if (referredOut) url += '&filterReferredOut=' + encodeURIComponent(referredOut);
-    if (sampleCat) url += '&filterSampleCategory=' + encodeURIComponent(sampleCat);
-    if (shortName) url += '&filterShortName=' + encodeURIComponent(shortName);
-    if (loc) url += '&filterLocation=' + encodeURIComponent(loc);
-    if (searchField && searchField !== 'all') url += '&searchField=' + encodeURIComponent(searchField);
-    if (search) url += '&searchName=' + encodeURIComponent(search);
-    location.href = url;
+    var newDir = (col === tmCurrentSortBy && tmCurrentSortDir === 'ASC') ? 'DESC' : 'ASC';
+    tmCurrentSortBy = col;
+    tmCurrentSortDir = newDir;
+    tmCurrentPage = 1;
+    tmApplyFilters(true);
 }
 
 function tmSelectAll() {
