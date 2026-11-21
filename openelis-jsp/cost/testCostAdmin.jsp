@@ -458,6 +458,71 @@ function saveSinglePrice(id) {
         });
 }
 
+function syncSingleItem(id, btn) {
+    if (!btn) btn = document.getElementById('sync_btn_' + id);
+    var origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin-icon">⏳</span> Syncing...';
+    }
+
+    var inp = document.getElementById('price_' + id);
+    var extraCostParam = '';
+    if (inp && !isNaN(parseFloat(inp.value))) {
+        extraCostParam = '&cost=' + encodeURIComponent(parseFloat(inp.value));
+    }
+
+    fetchApi('action=syncSingleItem&id=' + id + extraCostParam)
+        .then(function(data) {
+            if (btn) {
+                btn.disabled = false;
+                if (data.success) {
+                    btn.innerHTML = '✓ Synced';
+                    btn.style.background = '#16a34a';
+                    btn.style.color = '#fff';
+                    setTimeout(function() {
+                        btn.innerHTML = origHtml || '🔄 Sync';
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }, 1800);
+                } else {
+                    btn.innerHTML = origHtml || '🔄 Sync';
+                }
+            }
+
+            if (data.success) {
+                if (data.odooProductId > 0) {
+                    var odooEl = document.getElementById('odoo_id_' + id);
+                    if (odooEl) {
+                        odooEl.outerHTML = '<span style="font-weight:600;color:#0f766e" id="odoo_id_' + id + '">#' + data.odooProductId + '</span>';
+                    }
+                }
+                var statusEl = document.getElementById('status_' + id);
+                if (statusEl) {
+                    statusEl.outerHTML = '<span class="badge-synced" id="status_' + id + '">✓ SYNCED</span>';
+                }
+                var syncDateEl = document.getElementById('sync_date_' + id);
+                if (syncDateEl && data.lastSyncDate) {
+                    syncDateEl.textContent = data.lastSyncDate;
+                }
+                if (inp && typeof data.cost === 'number') {
+                    inp.value = data.cost.toFixed(2);
+                    inp.style.borderColor = '#16a34a';
+                    setTimeout(function() { inp.style.borderColor = '#cbd5e1'; }, 1200);
+                }
+            } else {
+                alert('Sync failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(function(err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml || '🔄 Sync';
+            }
+            alert('Sync error: ' + (err.message || err));
+        });
+}
+
 function syncOdooToOpenELIS() {
     var btn = document.getElementById('btnSyncOdoo');
     btn.disabled = true;
