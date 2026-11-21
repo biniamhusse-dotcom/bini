@@ -118,19 +118,84 @@
                 "LabSet",
                 "LabTest"
             ],
+            "Laboratory": [
+                "Test",
+                "LabSet",
+                "LabTest"
+            ],
             "Radiology Orders": [
                 "Radiology",
-                "Radiology/Imaging Procedure"
+                "Radiology/Imaging Procedure",
+                "Procedure",
+                "Misc",
+                "ConvSet"
+            ],
+            "Radiology": [
+                "Radiology",
+                "Radiology/Imaging Procedure",
+                "Procedure",
+                "Misc",
+                "ConvSet"
             ],
             "Procedure Orders": [
-                "Procedure"
+                "Procedure",
+                "Radiology/Imaging Procedure",
+                "Misc",
+                "Anatomy",
+                "ConvSet",
+                "Test",
+                "Finding"
+            ],
+            "Procedures": [
+                "Procedure",
+                "Radiology/Imaging Procedure",
+                "Misc",
+                "Anatomy",
+                "ConvSet",
+                "Test",
+                "Finding"
+            ],
+            "Pathology Department": [
+                "Pathology",
+                "Specimen",
+                "LabSet",
+                "Misc",
+                "Test",
+                "ConvSet"
             ],
             "Pathology Orders": [
                 "Pathology",
-                "Specimen"
+                "Specimen",
+                "LabSet",
+                "Misc",
+                "Test",
+                "ConvSet"
+            ],
+            "Pathology": [
+                "Pathology",
+                "Specimen",
+                "LabSet",
+                "Misc",
+                "Test",
+                "ConvSet"
+            ],
+            "Ophthalmology Orders": [
+                "Ophthalmology",
+                "Procedure",
+                "Misc",
+                "ConvSet"
             ],
             "Ophthalmology and Optometry Orders": [
-                "Ophthalmology"
+                "Ophthalmology",
+                "Procedure",
+                "Misc",
+                "ConvSet"
+            ],
+            "Ophthalmology": [
+                "Ophthalmology",
+                "Procedure",
+                "Misc",
+                "ConvSet"
             ]
         },
         "otherInvestigationsMap": {

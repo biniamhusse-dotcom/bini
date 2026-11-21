@@ -84,6 +84,14 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
             });
         };
 
+        var loadOrderableFormMappings = function () {
+            return $http.get('/bahmni_config/openmrs/apps/orders/orderableForms.json?t=' + Date.now()).then(function (res) {
+                return (res.data && res.data.orderableForms) || {};
+            }).catch(function () {
+                return {};
+            });
+        };
+
         $scope.getOrders = function () {
             var patientUuid = patientContext.patient.uuid;
             $scope.orderTypeUuid = orderTypeService.getOrderTypeUuid($stateParams.orderType);
@@ -102,29 +110,40 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
             return orderService.getOrders(params).then(function (response) {
                 var data = response.data;
                 $scope.orders.push.apply($scope.orders, data);
-                $scope.orders.forEach(async function (order) {
-                    try {
-                        var serialData = await getOrdersSerialNumber(order.concept.uuid);
-                        if (serialData && serialData.length > 0 && serialData[0] && ordersSerialNumberBuilding) {
-                            ordersSerialNumberBuilding.forEach(config => {
-                                if (serialData[0].concept_set === config.concept_id) {
-                                    order.serialNumber = config.prefix + "-" + serialData[0].serialNumber;
-                                }
-                            });
-                        }
-                    } catch (err) {
-                        console.warn("Could not determine order serial number:", err);
-                    }
-                    order.bahmniObservations = _.filter($scope.encounter.observations, function (observation) {
-                        return observation.orderUuid === order.orderUuid;
-                    }); 
+                return loadOrderableFormMappings().then(function (formMappings) {
+                    $scope.orders.forEach(async function (order) {
+                        try {
+                            var conceptUuid = order.concept ? order.concept.uuid : null;
+                            var conceptName = order.concept ? (order.concept.name || order.concept.shortName) : null;
+                            var customForm = (conceptUuid && formMappings[conceptUuid]) ||
+                                             (conceptName && formMappings[conceptName]);
+                            if (customForm) {
+                                order.attachedFormName = customForm.formName;
+                                order.attachedFormUuid = customForm.formUuid;
+                            }
 
-                    if (order.bahmniObservations.length > 0 && order.paymentStatus) {
-                        order.showForm = true;
-                    } else {
-                        order.showForm = false;
-                    }
-                    getOrderPaymentStatus(order);
+                            var serialData = await getOrdersSerialNumber(order.concept.uuid);
+                            if (serialData && serialData.length > 0 && serialData[0] && ordersSerialNumberBuilding) {
+                                ordersSerialNumberBuilding.forEach(config => {
+                                    if (serialData[0].concept_set === config.concept_id) {
+                                        order.serialNumber = config.prefix + "-" + serialData[0].serialNumber;
+                                    }
+                                });
+                            }
+                        } catch (err) {
+                            console.warn("Could not determine order serial number or attached form:", err);
+                        }
+                        order.bahmniObservations = _.filter($scope.encounter.observations, function (observation) {
+                            return observation.orderUuid === order.orderUuid;
+                        }); 
+
+                        if (order.bahmniObservations.length > 0 && order.paymentStatus) {
+                            order.showForm = true;
+                        } else {
+                            order.showForm = false;
+                        }
+                        getOrderPaymentStatus(order);
+                    });
                 });
             });
         };

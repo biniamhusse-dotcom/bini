@@ -342,14 +342,20 @@
 
         <!-- Right: Test Grid -->
         <div class="order-test-area">
-            <div class="order-test-area__empty" ng-if="!activeTab.leftCategory">
+            <div class="order-test-area__empty" ng-if="!activeTab.leftCategory && !tab.leftCategory">
                 <i class="fa fa-arrow-left"></i> Select a category from the left panel to view tests
             </div>
 
-            <!-- Type Tabs: Panels / Lab Tests / Others -->
-            <div class="order-type-tabs" ng-if="tab.leftCategory">
+            <!-- Type Tabs: All / Panels / Lab Tests / Others -->
+            <div class="order-type-tabs" ng-if="activeTab.leftCategory || tab.leftCategory">
                 <div class="order-type-tab"
-                     ng-class="{'active': !activeTypeFilter || activeTypeFilter === 'panels'}"
+                     ng-class="{'active': activeTypeFilter === 'all' || !activeTypeFilter}"
+                     ng-click="setTypeFilter('all')">
+                    <i class="fa fa-th-large"></i> All
+                    <span class="order-type-tab__badge">{{getTypeCount('all')}}</span>
+                </div>
+                <div class="order-type-tab"
+                     ng-class="{'active': activeTypeFilter === 'panels'}"
                      ng-click="setTypeFilter('panels')">
                     <i class="fa fa-layer-group"></i> Panels
                     <span class="order-type-tab__badge">{{getTypeCount('panels')}}</span>
@@ -370,14 +376,14 @@
 
             <!-- Scrollable test content -->
             <div class="order-test-scroll">
-                <section class="order-test-group" ng-repeat="group in tab.leftCategory.groups" ng-if="tab.leftCategory">
+                <section class="order-test-group" ng-repeat="group in (activeTab.leftCategory.groups || tab.leftCategory.groups)" ng-if="activeTab.leftCategory || tab.leftCategory">
                     <div class="order-test-group__header" ng-show="hasVisibleTestsInGroup(group.name)">
-                        <h4 class="order-test-group__title">{{group.description}}</h4>
+                        <h4 class="order-test-group__title">{{group.description || group.name}}</h4>
                         <span class="order-test-group__badge">{{getVisibleTestCount(group.name)}}</span>
                     </div>
                     <div class="order-test-grid" ng-show="hasVisibleTestsInGroup(group.name)">
                         <div class="order-test-card"
-                             ng-repeat="test in (tab.leftCategory.setMembers | filter:filterByGroupAndClass(group) | filter:filterBySearchString)"
+                             ng-repeat="test in ((activeTab.leftCategory.setMembers || tab.leftCategory.setMembers) | filter:filterByGroupAndClass(group) | filter:filterBySearchString)"
                              ng-click="toggleOrderSelection(test)"
                              ng-class="{
                                 'active': (isActiveOrderPresent(test) || isReferralOrderPresent(test)),

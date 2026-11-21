@@ -136,10 +136,13 @@ angular.module('bahmni.clinical')
 
             var showFirstLeftCategoryByDefault = function () {
                 if (!$scope.activeTab.leftCategory) {
-                    var allLeftCategories = $scope.getOrderTemplate($scope.activeTab.name).setMembers;
+                    var template = $scope.getOrderTemplate($scope.activeTab.name);
+                    var allLeftCategories = template ? (template.setMembers || []) : [];
                     if (allLeftCategories.length > 0) {
                         $scope.showLeftCategoryTests(allLeftCategories[0]);
                     }
+                } else {
+                    $scope.showLeftCategoryTests($scope.activeTab.leftCategory);
                 }
             };
 
@@ -191,11 +194,29 @@ angular.module('bahmni.clinical')
                 }
             };
 
+            var buildAllCategories = function () {
+                var classes = {};
+                var template = $scope.activeTab ? $scope.getOrderTemplate($scope.activeTab.name) : null;
+                if (template && template.setMembers) {
+                    _.forEach(template.setMembers, function (cat) {
+                        _.forEach(cat.setMembers || [], function (test) {
+                            if (test.conceptClass && test.conceptClass.name) {
+                                classes[test.conceptClass.name] = test.conceptClass.description || test.conceptClass.name;
+                            }
+                        });
+                    });
+                }
+                $scope.allCategories = _.sortBy(_.map(Object.keys(classes), function (name) {
+                    return {name: name, description: classes[name]};
+                }), 'name');
+            };
+
             var initTestConceptToParentsMapping = function () {
-                var allLeftCategories = $scope.getOrderTemplate($scope.activeTab.name).setMembers;
+                var template = $scope.activeTab ? $scope.getOrderTemplate($scope.activeTab.name) : null;
+                var allLeftCategories = template ? (template.setMembers || []) : [];
                 _.each(allLeftCategories, function (leftCategory) {
-                    _.each(leftCategory.setMembers, function (member) {
-                        if (member.setMembers.length !== 0) {
+                    _.each(leftCategory.setMembers || [], function (member) {
+                        if (member.setMembers && member.setMembers.length !== 0) {
                             _.each(member.setMembers, function (child) {
                                 if (testConceptToParentsMapping[child.uuid] === undefined) {
                                     testConceptToParentsMapping[child.uuid] = [];
@@ -209,16 +230,27 @@ angular.module('bahmni.clinical')
 
             var init = function () {
                 $scope.tabs = [];
+                var seenTabNames = {};
                 _.forEach($scope.allOrdersTemplates, function (item) {
+                    if (!item) return;
                     var conceptName = $scope.getName(item);
-                    var tabName = conceptName || item.name.name;
+                    var fullName = item.name ? (item.name.name || item.name.display) : '';
+                    var tabName = conceptName || fullName || 'Orders';
+                    if (seenTabNames[tabName]) return;
+                    seenTabNames[tabName] = true;
+
                     var key = '\'' + tabName + '\'';
-                    $scope.allOrdersTemplates[key] = $scope.filterOrderTemplateByClassMap(item);
-                    $scope.tabs.push({name: tabName, topLevelConcept: item.name.name});
+                    var filtered = $scope.filterOrderTemplateByClassMap(item);
+                    $scope.allOrdersTemplates[key] = filtered;
+                    $scope.allOrdersTemplates[tabName] = filtered;
+                    if (fullName) {
+                        $scope.allOrdersTemplates['\'' + fullName + '\''] = filtered;
+                        $scope.allOrdersTemplates[fullName] = filtered;
+                    }
+                    $scope.tabs.push({name: tabName, topLevelConcept: fullName || tabName});
                 });
-                if ($scope.tabs) {
+                if ($scope.tabs && $scope.tabs.length > 0) {
                     $scope.activateTab($scope.tabs[0]);
-                    initTestConceptToParentsMapping();
                 }
             };
 
@@ -227,15 +259,18 @@ angular.module('bahmni.clinical')
             };
 
             $scope.activateTab = function (tab) {
+                if (!tab) return;
                 fetchInactiveTests();
-                if (tab.klass === "active") {
+                if ($scope.activeTab === tab && tab.klass === "active") {
                     tab.klass = "";
                     $scope.activeTab = undefined;
                 } else {
                     collapseExistingActiveSection($scope.activeTab);
                     $scope.activeTab = tab;
                     $scope.activeTab.klass = "active";
+                    tab.klass = "active";
                     $scope.activeFilterCategory = null;
+                    $scope.activeTypeFilter = 'all';
                     $scope.updateSelectedOrdersForActiveTab();
                     initTestConceptToParentsMapping();
                     showFirstLeftCategoryByDefault();
@@ -273,24 +308,29 @@ angular.module('bahmni.clinical')
             });
 
             $scope.getOrderTemplate = function (templateName) {
+                if (!templateName) return null;
                 var key = '\'' + templateName + '\'';
-                return $scope.allOrdersTemplates[key];
+                return $scope.allOrdersTemplates[key] || $scope.allOrdersTemplates[templateName];
             };
 
             $scope.filterOrderTemplateByClassMap = function (orderTemplate) {
+                if (!orderTemplate) return orderTemplate;
                 var orderTypeClassMapConfig = appService.getAppDescriptor().getConfig("orderTypeClassMap");
                 var orderTypeClassMap = orderTypeClassMapConfig ? orderTypeClassMapConfig.value : {};
                 var orderTypeName = $scope.getNameInDefaultLocale(orderTemplate);
+                var shortName = $scope.getName(orderTemplate);
 
-                if (orderTypeClassMap[orderTypeName]) {
-                    var orderClasses = orderTypeClassMap[orderTypeName];
+                var orderClasses = orderTypeClassMap[orderTypeName] || orderTypeClassMap[shortName];
+                if (orderClasses && orderClasses.length > 0) {
                     var filteredOrderTemplate = angular.copy(orderTemplate);
 
-                    filteredOrderTemplate.setMembers = filteredOrderTemplate.setMembers
+                    filteredOrderTemplate.setMembers = (filteredOrderTemplate.setMembers || [])
                         .map(function (category) {
-                            category.setMembers = category.setMembers.filter(function (test) {
-                                return orderClasses.includes(test.conceptClass.name);
-                            });
+                            if (category.setMembers) {
+                                category.setMembers = category.setMembers.filter(function (test) {
+                                    return test.conceptClass && orderClasses.includes(test.conceptClass.name);
+                                });
+                            }
                             return category;
                         });
 
@@ -301,10 +341,21 @@ angular.module('bahmni.clinical')
             };
 
             $scope.showLeftCategoryTests = function (leftCategory) {
-                collapseExistingActiveSection($scope.activeTab.leftCategory);
-                $scope.activeTab.leftCategory = leftCategory;
-                $scope.activeTab.leftCategory.klass = "active";
-                $scope.activeTab.leftCategory.groups = $scope.getConceptClassesInSet(leftCategory);
+                if (!leftCategory) return;
+                if ($scope.activeTab && $scope.activeTab.leftCategory) {
+                    collapseExistingActiveSection($scope.activeTab.leftCategory);
+                }
+                leftCategory.klass = "active";
+                leftCategory.groups = $scope.getConceptClassesInSet(leftCategory);
+                if ($scope.activeTab) {
+                    $scope.activeTab.leftCategory = leftCategory;
+                }
+                var activeTabObj = _.find($scope.tabs, function (t) {
+                    return $scope.activeTab && t.name === $scope.activeTab.name;
+                });
+                if (activeTabObj) {
+                    activeTabObj.leftCategory = leftCategory;
+                }
             };
 
             $scope.getConceptClassesInSet = function (conceptSet) {
@@ -328,7 +379,7 @@ angular.module('bahmni.clinical')
             $scope.search.string = '';
             $scope.advancedFilterVisible = false;
             $scope.activeFilterCategory = null;
-            $scope.activeTypeFilter = 'panels';
+            $scope.activeTypeFilter = 'all';
             $scope.allCategories = [];
 
             $scope.resetSearchString = function () {
@@ -367,19 +418,19 @@ angular.module('bahmni.clinical')
             };
 
             $scope.setTypeFilter = function (type) {
-                $scope.activeTypeFilter = ($scope.activeTypeFilter === type) ? type : type;
+                $scope.activeTypeFilter = type;
             };
 
             var isPanel = function (test) {
-                return test.conceptClass.name === 'LabSet' || test.conceptClass.name === 'Set';
+                return test.conceptClass && (test.conceptClass.name === 'LabSet' || test.conceptClass.name === 'Set' || test.conceptClass.name === 'ConvSet');
             };
 
             var isLabTest = function (test) {
-                return test.conceptClass.name === 'Test' || test.conceptClass.name === 'LabTest';
+                return test.conceptClass && (test.conceptClass.name === 'Test' || test.conceptClass.name === 'LabTest');
             };
 
             $scope.matchesTypeFilter = function (test) {
-                if (!$scope.activeTypeFilter) return true;
+                if (!$scope.activeTypeFilter || $scope.activeTypeFilter === 'all') return true;
                 if ($scope.activeTypeFilter === 'panels') return isPanel(test);
                 if ($scope.activeTypeFilter === 'labtest') return isLabTest(test);
                 if ($scope.activeTypeFilter === 'other') return !isPanel(test) && !isLabTest(test);
@@ -387,12 +438,13 @@ angular.module('bahmni.clinical')
             };
 
             $scope.getTypeCount = function (type) {
-                var template = $scope.getOrderTemplate($scope.activeTab.name);
+                var template = $scope.activeTab ? $scope.getOrderTemplate($scope.activeTab.name) : null;
                 if (!template || !template.setMembers) return 0;
                 var count = 0;
                 _.forEach(template.setMembers, function (cat) {
                     _.forEach(cat.setMembers || [], function (test) {
-                        if (type === 'panels' && isPanel(test)) count++;
+                        if (type === 'all') count++;
+                        else if (type === 'panels' && isPanel(test)) count++;
                         else if (type === 'labtest' && isLabTest(test)) count++;
                         else if (type === 'other' && !isPanel(test) && !isLabTest(test)) count++;
                     });
@@ -796,22 +848,7 @@ angular.module('bahmni.clinical')
                 }, 500);
             };
 
-            var buildAllCategories = function () {
-                var classes = {};
-                var template = $scope.getOrderTemplate($scope.activeTab.name);
-                if (template && template.setMembers) {
-                    _.forEach(template.setMembers, function (cat) {
-                        _.forEach(cat.setMembers || [], function (test) {
-                            if (test.conceptClass && test.conceptClass.name) {
-                                classes[test.conceptClass.name] = test.conceptClass.description || test.conceptClass.name;
-                            }
-                        });
-                    });
-                }
-                $scope.allCategories = _.sortBy(_.map(Object.keys(classes), function (name) {
-                    return {name: name, description: classes[name]};
-                }), 'name');
-            };
+// buildAllCategories hoisted above
 
             $scope.toggleOrderSelection = function (test) {
                 $scope.resetSearchString();

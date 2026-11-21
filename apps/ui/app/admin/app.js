@@ -118,6 +118,13 @@ angular.module('admin')
                 data: {
                     backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
                 }
+            }).state('admin.orderablesManager', {
+                url: '/orderablesManager',
+                templateUrl: 'views/orderablesManager.html?v=20261121d',
+                controller: 'OrderablesManagerController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
             }).state('admin.drugManagement', {
                 url: '/drugManagement',
                 templateUrl: 'views/drugManagement.html?v=2.0',

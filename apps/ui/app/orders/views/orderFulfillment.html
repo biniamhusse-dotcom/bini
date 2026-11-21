@@ -68,7 +68,7 @@
             <tr ng-repeat-end ng-if="order.showForm && order.paymentStatus" style="color: black;">
                 <td colspan="8">
                     <orders-control patient="patient" order-uuid="order.orderUuid" config="config" message="message" show-title="false"></orders-control>
-                    <concept-set patient="patient" ng-if="order.showForm && order.paymentStatus" concept-set-name="formName" concept-set-uuid="formUuid" observations="order.bahmniObservations" show-title="false" section-id="order.orderUuid">
+                    <concept-set patient="patient" ng-if="order.showForm && order.paymentStatus" concept-set-name="order.attachedFormName || formName" concept-set-uuid="order.attachedFormUuid || formUuid" observations="order.bahmniObservations" show-title="false" section-id="order.orderUuid">
                     </concept-set>
                 </td>
             </tr>

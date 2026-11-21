@@ -174,5 +174,16 @@
         "icon": "fa-users",
         "order": 16,
         "requiredPrivilege": "app:admin"
+    },
+    "orderablesManager": {
+        "id": "bahmni.admin.orderablesManager",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {},
+        "label": "Orderables Manager",
+        "url": "#/orderablesManager",
+        "icon": "fa-list-alt",
+        "order": 4,
+        "requiredPrivilege": "app:admin"
     }
 }
