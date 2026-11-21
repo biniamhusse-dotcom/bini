@@ -76,12 +76,15 @@
             <h2 class="harm-title">OpenMRS, OpenELIS &amp; Odoo Lab Harmonization</h2>
             <div class="harm-subtitle">Compare and synchronize laboratory tests and panels across OpenMRS, OpenELIS, and Odoo; purge unwanted dummy tests from all 3 systems.</div>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="harm-btn harm-btn-primary" onclick="syncAll(this)">
                 🔄 Sync All to OpenELIS
             </button>
             <button class="harm-btn harm-btn-danger" id="btnDeleteSelected" onclick="deleteSelected()" disabled>
                 🗑️ Delete Selected
+            </button>
+            <button class="harm-btn harm-btn-warning" id="btnReclassifySelected" onclick="reclassifySelected()" disabled title="Change concept category from Test/Lab to Misc in OpenMRS">
+                🏷️ Remove from Test Category (0)
             </button>
             <a href="/backup-api/harmonization/comparison" target="_blank" class="harm-btn harm-btn-success">
                 ⚡ API Endpoint
@@ -127,12 +130,18 @@
                 <button type="button" class="harm-tab-btn filter-btn" data-filter="MISMATCH" onclick="setFilter('MISMATCH', this)">🟡 Name Diff (<span id="btnMismatchCount">0</span>)</button>
                 <button type="button" class="harm-tab-btn filter-btn" data-filter="MATCHED" onclick="setFilter('MATCHED', this)">🟢 Matched</button>
                 <button type="button" class="harm-tab-btn filter-btn" data-filter="MISSING_ODOO" onclick="setFilter('MISSING_ODOO', this)">🛒 Missing in Odoo</button>
+                <button type="button" class="harm-tab-btn filter-btn" data-filter="NON_LAB" onclick="setFilter('NON_LAB', this)">📁 Non-Lab (<span id="btnNonLabCount">0</span>)</button>
             </div>
 
             <div class="harm-btn-group">
                 <button type="button" class="harm-tab-btn type-btn active" data-type="ALL" onclick="setType('ALL', this)">All Types</button>
                 <button type="button" class="harm-tab-btn type-btn" data-type="Test" onclick="setType('Test', this)">🧪 Tests</button>
                 <button type="button" class="harm-tab-btn type-btn" data-type="Panel" onclick="setType('Panel', this)">📋 Panels</button>
+            </div>
+
+            <div style="display:inline-flex; gap:4px;">
+                <button type="button" class="harm-btn harm-btn-sm" onclick="selectVisibleRows(true)" title="Select all filtered items">☑️ Select Filtered</button>
+                <button type="button" class="harm-btn harm-btn-sm" onclick="selectVisibleRows(false)" title="Clear selection">◻️ Clear</button>
             </div>
         </div>
     </div>
@@ -200,6 +209,13 @@
                 document.getElementById('btnMismatchCount').innerText = s.name_mismatch || 0;
 
                 allItems = data.items || [];
+                var nonLabCount = 0;
+                for (var j = 0; j < allItems.length; j++) {
+                    if (allItems[j].class_name === 'ConvSet') nonLabCount++;
+                }
+                var elNonLab = document.getElementById('btnNonLabCount');
+                if (elNonLab) elNonLab.innerText = nonLabCount;
+
                 filterRows();
             })
             .catch(function(err) {
@@ -235,6 +251,7 @@
             if (currentFilter === 'MISMATCH' && item.status !== 'NAME_MISMATCH') return false;
             if (currentFilter === 'MATCHED' && item.status !== 'MATCHED') return false;
             if (currentFilter === 'MISSING_ODOO' && item.odoo_name) return false;
+            if (currentFilter === 'NON_LAB' && item.class_name !== 'ConvSet') return false;
 
             if (currentType !== 'ALL' && item.type !== currentType) return false;
 
@@ -268,9 +285,14 @@
             else if (item.status === 'NAME_MISMATCH') badgeClass = 'badge-mismatch';
             else if (item.status === 'UNLINKED_MATCH') badgeClass = 'badge-unlinked';
 
-            var typePill = item.type === 'Panel' 
-                ? '<span class="type-pill-panel">📋 Panel' + (item.member_count ? ' (' + item.member_count + ')' : '') + '</span>'
-                : '<span class="type-pill-test">🧪 Test</span>';
+            var typePill = '';
+            if (item.class_name === 'ConvSet') {
+                typePill = '<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold;" title="Convenience Set (Questionnaire/Form)">📁 ConvSet</span>';
+            } else if (item.type === 'Panel') {
+                typePill = '<span class="type-pill-panel">📋 Panel' + (item.member_count ? ' (' + item.member_count + ')' : '') + '</span>';
+            } else {
+                typePill = '<span class="type-pill-test">🧪 Test</span>';
+            }
 
             var shortNameDisplay = (item.short_name && item.short_name.trim() !== '' && item.short_name !== 'NULL')
                 ? '<span style="background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:4px; font-weight:600; font-size:11px; display:inline-block; border:1px solid #bae6fd;">' + escapeHtml(item.short_name) + '</span>'
@@ -286,12 +308,13 @@
 
             var isChecked = selectedUuids[item.uuid] ? 'checked' : '';
 
-            var actions = '<div style="display:flex; justify-content:center; gap:4px;">';
+            var actions = '<div style="display:flex; justify-content:center; gap:4px; flex-wrap:wrap;">';
             if (item.status === 'MISSING_IN_OPENELIS') {
                 actions += '<button class="harm-btn harm-btn-sm" style="border-color:#486086; color:#486086;" onclick="syncSingle(\'' + item.uuid + '\', \'' + item.type + '\', \'create\', this)">Sync</button>';
             } else if (item.status === 'NAME_MISMATCH') {
                 actions += '<button class="harm-btn harm-btn-warning harm-btn-sm" onclick="syncSingle(\'' + item.uuid + '\', \'' + item.type + '\', \'fix_name\', this)">Fix Name</button>';
             }
+            actions += '<button class="harm-btn harm-btn-warning harm-btn-sm" title="Remove from Test Category in OpenMRS (change to Misc)" onclick="reclassifySingle(\'' + item.uuid + '\', \'' + (item.openmrs_name || '').replace(/'/g, "\\'") + '\')">🏷️ Not Lab</button>';
             actions += '<button class="harm-btn harm-btn-danger harm-btn-sm" title="Delete from OpenMRS, OpenELIS & Odoo" onclick="deleteSingle(\'' + item.uuid + '\', \'' + (item.openmrs_name || '').replace(/'/g, "\\'") + '\', \'' + item.type + '\')">🗑️ Delete</button>';
             actions += '</div>';
 
@@ -330,11 +353,90 @@
         updateDeleteSelectedBtn();
     }
 
+    function selectVisibleRows(select) {
+        var cbs = document.querySelectorAll('.row-checkbox');
+        for (var i = 0; i < cbs.length; i++) {
+            cbs[i].checked = select;
+            var u = cbs[i].getAttribute('data-uuid');
+            if (select) selectedUuids[u] = true;
+            else delete selectedUuids[u];
+        }
+        var master = document.getElementById('selectAllCheckbox');
+        if (master) master.checked = select;
+        updateDeleteSelectedBtn();
+    }
+
     function updateDeleteSelectedBtn() {
         var btn = document.getElementById('btnDeleteSelected');
+        var btnReclassify = document.getElementById('btnReclassifySelected');
         var keys = Object.keys(selectedUuids);
-        btn.disabled = keys.length === 0;
-        btn.innerHTML = '🗑️ Delete Selected (' + keys.length + ')';
+        if (btn) {
+            btn.disabled = keys.length === 0;
+            btn.innerHTML = '🗑️ Delete Selected (' + keys.length + ')';
+        }
+        if (btnReclassify) {
+            btnReclassify.disabled = keys.length === 0;
+            btnReclassify.innerHTML = '🏷️ Remove from Test Category (' + keys.length + ')';
+        }
+    }
+
+    function reclassifySingle(uuid, name) {
+        if (!confirm('Are you sure you want to remove "' + name + '" from the Test/Lab category in OpenMRS?\n\nIts category in OpenMRS will be changed to "Misc", so it will no longer appear as a laboratory test or in lab orders.')) {
+            return;
+        }
+
+        fetch(apiBaseUrl + '/harmonization/reclassify-batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uuids: [uuid], target_class: 'Misc' })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (res.success) {
+                alert('Successfully removed "' + name + '" from Test/Lab category (reclassified to Misc in OpenMRS).');
+                loadComparisonData();
+            } else {
+                alert('Error: ' + (res.error || 'Failed to remove from test category'));
+            }
+        })
+        .catch(function(err) {
+            alert('Request error: ' + err.message);
+        });
+    }
+
+    function reclassifySelected() {
+        var keys = Object.keys(selectedUuids);
+        if (keys.length === 0) return;
+
+        if (!confirm('Are you sure you want to remove these ' + keys.length + ' item(s) from the Test/Lab category in OpenMRS?\n\nTheir category in OpenMRS will be changed to "Misc", so they will no longer appear as laboratory tests or in lab orders.')) {
+            return;
+        }
+
+        var btn = document.getElementById('btnReclassifySelected');
+        btn.disabled = true;
+        btn.innerText = 'Removing from Test Category...';
+
+        fetch(apiBaseUrl + '/harmonization/reclassify-batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uuids: keys, target_class: 'Misc' })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (res.success) {
+                alert('Batch removal completed!\nSuccessfully removed ' + res.reclassified_count + ' items from the Test category in OpenMRS (reclassified to Misc).');
+                loadComparisonData();
+            } else {
+                alert('Error: ' + (res.error || 'Failed to remove items'));
+                btn.disabled = false;
+                btn.innerText = '🏷️ Remove from Test Category (' + keys.length + ')';
+            }
+        })
+        .catch(function(err) {
+            alert('Request error: ' + err.message);
+            btn.disabled = false;
+            btn.innerText = '🏷️ Remove from Test Category (' + keys.length + ')';
+        });
     }
 
     function deleteSingle(uuid, name, type) {

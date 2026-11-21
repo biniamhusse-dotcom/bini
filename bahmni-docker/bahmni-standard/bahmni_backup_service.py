@@ -1966,7 +1966,12 @@ def get_lab_harmonization_comparison():
             cnt = int(r[2]) if len(r) > 2 and r[2].isdigit() else 0
             elis_panels[pname.lower()] = {"id": pid, "name": pname, "member_count": cnt}
 
-    odoo_rows = run_odoo_query("SELECT pt.id, pt.name FROM product_template pt WHERE pt.active = true;")
+    odoo_rows = run_odoo_query("""
+        SELECT pp.id, COALESCE(pt.name->>'en_US', pt.name->>'en', pt.name::text) as prod_name 
+        FROM product_product pp 
+        JOIN product_template pt ON pp.product_tmpl_id = pt.id 
+        WHERE pt.active = true;
+    """)
     odoo_prods = {}
     for r in odoo_rows:
         if len(r) >= 2:
@@ -2014,18 +2019,19 @@ def get_lab_harmonization_comparison():
                 status = "MATCHED"
                 status_label = "Harmonized (All 3)"
             else:
-                status = "MATCHED"
-                status_label = "Harmonized"
+                status = "MISSING_IN_ODOO"
+                status_label = "Missing in Odoo"
         else:
             missing_elis_cnt += 1
             status = "MISSING_IN_OPENELIS"
-            status_label = "Missing in OpenELIS"
+            status_label = "Missing in OpenELIS" if not odoo_match else "Missing in OpenELIS (In Odoo)"
 
         items.append({
             "uuid": uuid,
             "openmrs_name": name,
             "short_name": short_name,
             "type": item_type,
+            "class_name": cls_name,
             "member_count": member_count,
             "openelis_id": elis_id,
             "openelis_name": elis_name,
@@ -2082,6 +2088,35 @@ def delete_batch_lab_items(payload):
         except Exception as e:
             log(f"Error deleting {u}: {e}")
     return {"success": True, "deleted_count": count}
+
+def reclassify_batch_lab_items(payload):
+    uuids = payload.get("uuids", [])
+    target_class = payload.get("target_class", "Misc").strip()
+    if not uuids:
+        raise ValueError("No concept UUIDs provided")
+    
+    class_rows = run_omrs_query(f"SELECT concept_class_id FROM concept_class WHERE name = '{target_class}' LIMIT 1;")
+    if not class_rows or not class_rows[0]:
+        target_class = "Misc"
+        class_rows = run_omrs_query("SELECT concept_class_id FROM concept_class WHERE name = 'Misc' LIMIT 1;")
+    target_class_id = class_rows[0][0]
+
+    count = 0
+    for u in uuids:
+        try:
+            esc_u = u.replace("'", "''")
+            # 1. Update concept class in OpenMRS to target_class (e.g. Misc)
+            run_omrs_exec(f"UPDATE concept SET class_id = {target_class_id} WHERE uuid = '{esc_u}';")
+            
+            # 2. If it was active in OpenELIS, deactivate it so it no longer appears in OpenELIS tests
+            name_rows = run_omrs_query(f"SELECT cn.name FROM concept_name cn JOIN concept c ON cn.concept_id = c.concept_id WHERE c.uuid = '{esc_u}' AND cn.concept_name_type = 'FULLY_SPECIFIED' LIMIT 1;")
+            if name_rows and len(name_rows[0]) >= 1:
+                name = name_rows[0][0].strip().replace("'", "''")
+                run_elis_exec(f"UPDATE test SET is_active = 'N' WHERE name = '{name}';")
+            count += 1
+        except Exception as e:
+            log(f"Error reclassifying {u}: {e}")
+    return {"success": True, "reclassified_count": count, "target_class": target_class}
 
 def sync_single_lab_item(payload):
     uuid = payload.get("uuid", "").strip()
@@ -3762,6 +3797,14 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, result)
             except Exception as e:
                 log(f"Error batch deleting lab items: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/harmonization/reclassify-batch", "/harmonization/reclassify-batch", "/api/harmonization/remove-from-test-category", "/harmonization/remove-from-test-category"):
+            try:
+                result = reclassify_batch_lab_items(payload)
+                self._send_json(200, result)
+            except Exception as e:
+                log(f"Error reclassifying lab items: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/master/payment-methods/item", "/master/payment-methods/item"):
