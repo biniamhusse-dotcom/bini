@@ -8,6 +8,13 @@ angular.module('bahmni.orders')
             $scope.selectedOrderType = 'All';
             $scope.loading = false;
 
+            // --- Access Control & Privileges State ---
+            $scope.authLoaded = false;
+            $scope.userPrivileges = [];
+            $scope.userRoles = [];
+            $scope.isSuperUser = false;
+            $scope.hasOrdersAccess = true;
+
             $scope.orderTypes = [
                 { label: 'All Orders', value: 'All', icon: 'fa-th-large' },
                 { label: 'Radiology', value: 'Radiology Order', icon: 'fa-film' },
@@ -52,6 +59,181 @@ angular.module('bahmni.orders')
                 by_department: {}
             };
 
+            // =========================================================================
+            // Access Control & Privilege Verification
+            // =========================================================================
+
+            var loadUserPrivileges = function () {
+                return $http.get('/openmrs/ws/rest/v1/session', { withCredentials: true }).then(function (response) {
+                    var user = (response.data && response.data.user) ? response.data.user : null;
+                    if (user) {
+                        $scope.userPrivileges = (user.privileges || []).map(function (p) {
+                            return (p.name || '').trim().toLowerCase();
+                        });
+                        $scope.userRoles = (user.roles || []).map(function (r) {
+                            return (r.name || '').trim().toLowerCase();
+                        });
+
+                        // Superuser / Admin check
+                        $scope.isSuperUser = $scope.userRoles.indexOf('system developer') !== -1 ||
+                                             $scope.userRoles.indexOf('administrator') !== -1 ||
+                                             user.username === 'admin' ||
+                                             user.username === 'superman';
+
+                        // App-level privilege check (access Orders App from home page and URL)
+                        $scope.hasOrdersAccess = $scope.isSuperUser || $scope.hasPrivilege('app:orders');
+                        $scope.authLoaded = true;
+
+                        // Adjust active tab based on user's granted privileges
+                        if (!$scope.isTabVisible($scope.activeTab)) {
+                            if ($scope.isTabVisible('new')) {
+                                $scope.activeTab = 'new';
+                            } else if ($scope.isTabVisible('backlog')) {
+                                $scope.activeTab = 'backlog';
+                            } else if ($scope.isTabVisible('pricing')) {
+                                $scope.activeTab = 'pricing';
+                                if (!$scope.servicesList || $scope.servicesList.length === 0) {
+                                    $scope.fetchOrderServices();
+                                }
+                            }
+                        }
+
+                        // Adjust selected order type pill if user does not have permission for 'All'
+                        var permittedTypes = $scope.getPermittedOrderTypes();
+                        var hasCurrentType = permittedTypes.some(function (t) { return t.value === $scope.selectedOrderType; });
+                        if (!hasCurrentType && permittedTypes.length > 0) {
+                            $scope.selectedOrderType = permittedTypes[0].value;
+                        }
+                    }
+                    $scope.authLoaded = true;
+                }).catch(function (err) {
+                    console.error('Error loading session privileges:', err);
+                    $scope.authLoaded = true;
+                });
+            };
+
+            $scope.hasPrivilege = function (privilegeName) {
+                if ($scope.isSuperUser) return true;
+                if (!privilegeName) return false;
+                var target = privilegeName.trim().toLowerCase();
+
+                // Direct check
+                if ($scope.userPrivileges.indexOf(target) !== -1) {
+                    return true;
+                }
+
+                // Department alias checks
+                if (target === 'app:radiologyorders' || target === 'app:orders:radiology') {
+                    return $scope.userPrivileges.indexOf('app:radiologyorders') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:radiology') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+                if (target === 'app:procedureorders' || target === 'app:orders:procedure') {
+                    return $scope.userPrivileges.indexOf('app:procedureorders') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:procedure') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+                if (target === 'app:ophthaorders' || target === 'app:ophtha order' || target === 'app:orders:ophtha') {
+                    return $scope.userPrivileges.indexOf('app:ophthaorders') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:ophtha order') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:ophtha') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+                if (target === 'app:pathologyorders' || target === 'app:orders:pathology') {
+                    return $scope.userPrivileges.indexOf('app:pathologyorders') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:pathology') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+                if (target === 'app:orders:allorders') {
+                    return $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+                if (target === 'app:orders:neworders') {
+                    return $scope.userPrivileges.indexOf('app:orders:neworders') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+                if (target === 'app:orders:backlogorders') {
+                    return $scope.userPrivileges.indexOf('app:orders:backlogorders') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+                if (target === 'app:orders:pricing') {
+                    return $scope.userPrivileges.indexOf('app:orders:pricing') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+                if (target === 'app:orders') {
+                    return $scope.userPrivileges.indexOf('app:orders') !== -1 ||
+                           $scope.userPrivileges.indexOf('app:orders:allorders') !== -1;
+                }
+
+                return false;
+            };
+
+            $scope.canAccessOrderType = function (orderType) {
+                if ($scope.isSuperUser || $scope.hasPrivilege('app:orders:allOrders')) {
+                    return true;
+                }
+                if (orderType === 'Radiology Order') {
+                    return $scope.hasPrivilege('app:radiologyOrders');
+                }
+                if (orderType === 'Procedure Order') {
+                    return $scope.hasPrivilege('app:procedureOrders');
+                }
+                if (orderType === 'Ophtha Order') {
+                    return $scope.hasPrivilege('app:ophthaOrders');
+                }
+                if (orderType === 'Pathology Order') {
+                    return $scope.hasPrivilege('app:pathologyOrders');
+                }
+                return false;
+            };
+
+            $scope.isTabVisible = function (tab) {
+                if ($scope.isSuperUser) return true;
+                if (!$scope.authLoaded) return true;
+                if (tab === 'new') {
+                    return $scope.hasPrivilege('app:orders:newOrders');
+                }
+                if (tab === 'backlog') {
+                    return $scope.hasPrivilege('app:orders:backlogOrders');
+                }
+                if (tab === 'pricing') {
+                    return $scope.hasPrivilege('app:orders:pricing');
+                }
+                return true;
+            };
+
+            $scope.hasAnyTabVisible = function () {
+                return $scope.isTabVisible('new') || $scope.isTabVisible('backlog') || $scope.isTabVisible('pricing');
+            };
+
+            $scope.getPermittedOrderTypes = function () {
+                if ($scope.isSuperUser || $scope.hasPrivilege('app:orders:allOrders')) {
+                    return $scope.orderTypes;
+                }
+
+                return $scope.orderTypes.filter(function (type) {
+                    if (type.value === 'All') {
+                        return false;
+                    }
+                    if (type.value === 'Radiology Order') {
+                        return $scope.hasPrivilege('app:radiologyOrders');
+                    }
+                    if (type.value === 'Procedure Order') {
+                        return $scope.hasPrivilege('app:procedureOrders');
+                    }
+                    if (type.value === 'Ophtha Order') {
+                        return $scope.hasPrivilege('app:ophthaOrders');
+                    }
+                    if (type.value === 'Pathology Order') {
+                        return $scope.hasPrivilege('app:pathologyOrders');
+                    }
+                    return false;
+                });
+            };
+
+            // =========================================================================
+            // Orders Fetching & Filtering
+            // =========================================================================
+
             var fetchOrders = function () {
                 $scope.loading = true;
                 var promiseNew = $http.get('/openmrs/ws/rest/v1/bahmnicore/sql', {
@@ -76,6 +258,10 @@ angular.module('bahmni.orders')
             };
 
             $scope.switchTab = function (tab) {
+                if (!$scope.isTabVisible(tab)) {
+                    messagingService.showMessage('error', 'You do not have privilege to access this tab');
+                    return;
+                }
                 $scope.activeTab = tab;
                 if (tab === 'pricing' && (!$scope.servicesList || $scope.servicesList.length === 0)) {
                     $scope.fetchOrderServices();
@@ -83,6 +269,10 @@ angular.module('bahmni.orders')
             };
 
             $scope.setOrderType = function (orderType) {
+                if (orderType !== 'All' && !$scope.canAccessOrderType(orderType)) {
+                    messagingService.showMessage('error', 'You do not have privilege to access ' + orderType);
+                    return;
+                }
                 $scope.selectedOrderType = orderType;
             };
 
@@ -105,17 +295,24 @@ angular.module('bahmni.orders')
                 $scope.filters.identifier = '';
                 $scope.filters.date = '';
                 $scope.filters.datePreset = 'all';
-                $scope.selectedOrderType = 'All';
+                var permitted = $scope.getPermittedOrderTypes();
+                $scope.selectedOrderType = ($scope.isSuperUser || $scope.hasPrivilege('app:orders:allOrders')) ? 'All' : (permitted.length > 0 ? permitted[0].value : 'All');
             };
 
             $scope.hasActiveFilters = function () {
-                return $scope.filters.name || $scope.filters.identifier || $scope.filters.date || $scope.selectedOrderType !== 'All';
+                var defaultType = ($scope.isSuperUser || $scope.hasPrivilege('app:orders:allOrders')) ? 'All' : ($scope.getPermittedOrderTypes().length > 0 ? $scope.getPermittedOrderTypes()[0].value : 'All');
+                return $scope.filters.name || $scope.filters.identifier || $scope.filters.date || $scope.selectedOrderType !== defaultType;
             };
 
             $scope.getFilteredOrders = function () {
                 var list = $scope.activeTab === 'new' ? $scope.newOrders : $scope.backlogOrders;
 
                 return list.filter(function (order) {
+                    // Security guard: Only show orders for departments user has privilege to access
+                    if (!$scope.canAccessOrderType(order.orderType)) {
+                        return false;
+                    }
+
                     // Order Type Filter
                     if ($scope.selectedOrderType !== 'All' && order.orderType !== $scope.selectedOrderType) {
                         return false;
@@ -153,6 +350,10 @@ angular.module('bahmni.orders')
 
             $scope.goToFulfillment = function (order) {
                 if (!order || !order.uuid || !order.orderType) return;
+                if (!$scope.canAccessOrderType(order.orderType)) {
+                    messagingService.showMessage('error', 'You do not have privilege to fulfill ' + order.orderType);
+                    return;
+                }
                 $state.go('orderFulfillment', {
                     patientUuid: order.uuid,
                     orderType: order.orderType
@@ -223,6 +424,14 @@ angular.module('bahmni.orders')
                 var query = ($scope.pricing.search || '').toLowerCase().trim();
 
                 return $scope.servicesList.filter(function (item) {
+                    // Security guard for department in pricing
+                    if (!$scope.isSuperUser && !$scope.hasPrivilege('app:orders:allOrders') && !$scope.hasPrivilege('app:orders:pricing')) {
+                        if (item.department === 'Radiology' && !$scope.hasPrivilege('app:radiologyOrders')) return false;
+                        if (item.department === 'Procedure' && !$scope.hasPrivilege('app:procedureOrders')) return false;
+                        if (item.department === 'Ophthalmology' && !$scope.hasPrivilege('app:ophthaOrders')) return false;
+                        if (item.department === 'Pathology' && !$scope.hasPrivilege('app:pathologyOrders')) return false;
+                    }
+
                     // Department filter
                     if (dept !== 'all' && item.department !== dept) {
                         return false;
@@ -303,7 +512,6 @@ angular.module('bahmni.orders')
                     if (res.data && res.data.success) {
                         var oldCost = item.cost;
                         item.cost = newCost;
-                        // update priced/unpriced stats
                         if (oldCost <= 0 && newCost > 0) {
                             $scope.servicesStats.priced = ($scope.servicesStats.priced || 0) + 1;
                             $scope.servicesStats.unpriced = Math.max(0, ($scope.servicesStats.unpriced || 0) - 1);
@@ -325,7 +533,6 @@ angular.module('bahmni.orders')
             // Toggle Availability (Unavailable = Red to clinician)
             $scope.toggleAvailability = function (item) {
                 var targetUnavailable = !item.is_unavailable;
-                var actionText = targetUnavailable ? 'make unavailable' : 'restore available';
                 var confirmMsg = targetUnavailable
                     ? 'Mark "' + item.name + '" as UNAVAILABLE?\n\nClinicians will see this service in RED during consultation orders.'
                     : 'Restore "' + item.name + '" as AVAILABLE for clinicians?';
@@ -460,7 +667,9 @@ angular.module('bahmni.orders')
                 return end > totalCount ? totalCount : end;
             };
 
-            // Initialize
-            $scope.refresh();
+            // Initialize: load privileges, then fetch orders
+            loadUserPrivileges().then(function () {
+                $scope.refresh();
+            });
         }
     ]);

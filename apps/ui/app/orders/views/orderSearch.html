@@ -593,35 +593,60 @@
 </style>
 
 <div class="order-search-container">
-    <!-- Top-Level Tabs: New Orders vs Backlog Orders vs Pricing & Availability -->
-    <div class="order-primary-tabs">
-        <button type="button"
-                class="order-primary-tab"
-                ng-class="{'active': activeTab === 'new'}"
-                ng-click="switchTab('new')">
-            <i class="fa fa-bolt"></i>
-            <span>New Orders</span>
-            <span class="order-tab-badge">({{newOrders.length}})</span>
-        </button>
-
-        <button type="button"
-                class="order-primary-tab"
-                ng-class="{'active': activeTab === 'backlog'}"
-                ng-click="switchTab('backlog')">
-            <i class="fa fa-history"></i>
-            <span>Backlog Orders</span>
-            <span class="order-tab-badge">({{backlogOrders.length}})</span>
-        </button>
-
-        <button type="button"
-                class="order-primary-tab"
-                ng-class="{'active': activeTab === 'pricing'}"
-                ng-click="switchTab('pricing')">
-            <i class="fa fa-tags"></i>
-            <span>Order Services & Costs / Availability</span>
-            <span class="order-tab-badge" ng-if="servicesStats && servicesStats.total">({{servicesStats.total}})</span>
-        </button>
+    <!-- Access Denied Banner if user has no app:orders privilege -->
+    <div class="order-empty-state" ng-if="authLoaded && !hasOrdersAccess" style="padding: 60px 24px; background: #ffffff; border-radius: 8px; border: 1px solid #fecaca; box-shadow: 0 2px 8px rgba(220,38,38,0.08);">
+        <i class="fa fa-lock" style="font-size: 54px; color: #dc2626; margin-bottom: 16px;"></i>
+        <h3 style="color: #991b1b; margin: 0 0 10px 0; font-size: 20px;">Access Denied: Orders Application</h3>
+        <p style="color: #475569; font-size: 14px; max-width: 540px; margin: 0 auto 18px auto; line-height: 1.5;">
+            Your user account does not have the required privilege (<strong>app:orders</strong>) to access the Orders application or its clinical tabs.
+        </p>
+        <p style="color: #64748b; font-size: 13px; margin: 0;">
+            Please contact your system administrator to assign an appropriate Orders role (e.g. <em>Order-App-All-Orders, Order-App-Radiology, Order-App-Procedure, Order-App-Ophthalmology, or Order-App-Pathology</em>).
+        </p>
     </div>
+
+    <div ng-if="!authLoaded || hasOrdersAccess">
+        <!-- Top-Level Tabs: New Orders vs Backlog Orders vs Pricing & Availability -->
+        <div class="order-primary-tabs" ng-if="hasAnyTabVisible()">
+            <button type="button"
+                    class="order-primary-tab"
+                    ng-if="isTabVisible('new')"
+                    ng-class="{'active': activeTab === 'new'}"
+                    ng-click="switchTab('new')">
+                <i class="fa fa-bolt"></i>
+                <span>New Orders</span>
+                <span class="order-tab-badge">({{newOrders.length}})</span>
+            </button>
+
+            <button type="button"
+                    class="order-primary-tab"
+                    ng-if="isTabVisible('backlog')"
+                    ng-class="{'active': activeTab === 'backlog'}"
+                    ng-click="switchTab('backlog')">
+                <i class="fa fa-history"></i>
+                <span>Backlog Orders</span>
+                <span class="order-tab-badge">({{backlogOrders.length}})</span>
+            </button>
+
+            <button type="button"
+                    class="order-primary-tab"
+                    ng-if="isTabVisible('pricing')"
+                    ng-class="{'active': activeTab === 'pricing'}"
+                    ng-click="switchTab('pricing')">
+                <i class="fa fa-tags"></i>
+                <span>Order Services & Costs / Availability</span>
+                <span class="order-tab-badge" ng-if="servicesStats && servicesStats.total">({{servicesStats.total}})</span>
+            </button>
+        </div>
+
+        <!-- No Tabs Visible Message -->
+        <div class="order-empty-state" ng-if="authLoaded && !hasAnyTabVisible()" style="padding: 48px 24px; background: #ffffff; border-radius: 8px;">
+            <i class="fa fa-exclamation-circle" style="font-size: 44px; color: #f59e0b; margin-bottom: 12px;"></i>
+            <h4 style="color: #b45309; margin: 0 0 8px 0;">No Order Tabs Permitted</h4>
+            <p style="color: #64748b; font-size: 13px; margin: 0;">
+                You have access to the Orders app, but no specific tabs (New Orders, Backlog Orders, or Pricing) are enabled for your role.
+            </p>
+        </div>
 
     <!-- ===================================================================== -->
     <!-- Tab 1 & Tab 2: Orders Search Panel (New / Backlog)                     -->
@@ -637,7 +662,7 @@
                 <button type="button"
                         class="order-type-pill"
                         ng-class="{'active': selectedOrderType === type.value}"
-                        ng-repeat="type in orderTypes"
+                        ng-repeat="type in getPermittedOrderTypes()"
                         ng-click="setOrderType(type.value)">
                     <i class="fa {{type.icon}}"></i> {{type.label}}
                 </button>
@@ -1098,5 +1123,6 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </div>
