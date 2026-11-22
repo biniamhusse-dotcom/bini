@@ -5,11 +5,44 @@
 <%@ taglib uri="/tags/struts-logic" prefix="logic" %>
 
 <style>
-    #tmTable { border-collapse: collapse; width: 100%; }
-    #tmTable th, #tmTable td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
-    #tmTable th { background: #486086; color: white; cursor: pointer; white-space: nowrap; }
+    :root {
+        --tm-bar-height: 48px;
+    }
+    #tmTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-top: none;
+        background: #ffffff;
+    }
+    #tmTable th {
+        position: sticky;
+        top: var(--tm-bar-height, 48px);
+        z-index: 90;
+        background: #486086;
+        color: white;
+        cursor: pointer;
+        white-space: nowrap;
+        padding: 8px 8px;
+        border-top: none;
+        border-left: none;
+        border-right: 1px solid #5a7399;
+        border-bottom: 2px solid #24334a;
+        box-shadow: 0 3px 5px rgba(0,0,0,0.12);
+    }
+    #tmTable th:last-child { border-right: none; }
     #tmTable th:hover { background: #3a4f6f; }
-    #tmTable tr:nth-child(even) { background: #f9f9f9; }
+    #tmTable td {
+        border-top: none;
+        border-left: none;
+        border-right: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 6px 8px;
+        text-align: left;
+    }
+    #tmTable td:last-child { border-right: none; }
+    #tmTable tr:nth-child(even) { background: #f8fafc; }
     #tmTable tr:hover { background: #e8f0fe; }
     .tm-btn { padding: 6px 14px; cursor: pointer; border: 1px solid #999; background: #f0f0f0; margin: 2px; font-size: 13px; }
     .tm-btn-primary { background: #486086; color: white; border: none; }
@@ -175,7 +208,22 @@
     .tm-status-n { color: #999; }
     .tm-sort-indicator { margin-left: 4px; font-size: 10px; }
     .tm-pagination { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-    .tm-action-bar { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+    .tm-action-bar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-bottom: 1px solid #94a3b8;
+        border-radius: 6px 6px 0 0;
+        padding: 8px 12px;
+        margin-bottom: 0;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    }
     .tm-msg { padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; }
     .tm-msg-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
     .tm-msg-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
@@ -1610,6 +1658,8 @@ function tmApplyFilters(useAjax) {
             var curContainer = document.getElementById('tmResultsContainer');
             if (newContainer && curContainer) {
                 curContainer.innerHTML = newContainer.innerHTML;
+                setTimeout(tmUpdateStickyBarHeight, 50);
+                tmUpdateSelectionCount();
             }
 
             var newPreset = doc.getElementById('tmPresetRow');
@@ -2004,7 +2054,18 @@ function tmBulkRemoveNonTests() {
     });
 }
 
+function tmUpdateStickyBarHeight() {
+    var bar = document.querySelector('.tm-action-bar');
+    if (bar) {
+        var h = bar.offsetHeight;
+        document.documentElement.style.setProperty('--tm-bar-height', h + 'px');
+    }
+}
+window.addEventListener('resize', tmUpdateStickyBarHeight);
+window.addEventListener('load', tmUpdateStickyBarHeight);
+
 document.addEventListener('DOMContentLoaded', function() {
+    tmUpdateStickyBarHeight();
     document.addEventListener('change', function(e) {
         if (e.target && e.target.classList.contains('tm-checkbox')) {
             tmUpdateSelectionCount();
