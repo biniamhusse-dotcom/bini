@@ -5124,6 +5124,7 @@ def start_server():
     threading.Thread(target=ensure_restore_privilege, daemon=True).start()
     threading.Thread(target=start_scheduler_loop, daemon=True).start()
     server_address = ("0.0.0.0", PORT)
+    ThreadingHTTPServer.allow_reuse_address = True
     httpd = ThreadingHTTPServer(server_address, BackupAPIHandler)
     log(f"Bahmni Backup Service running on http://0.0.0.0:{PORT}...")
     try:
