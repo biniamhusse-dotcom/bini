@@ -110,7 +110,16 @@ angular.module('bahmni.registration')
             var getEffectiveVisitLocationUuid = function () {
                 var loginLocationCookie = $bahmniCookieStore.get(Bahmni.Common.Constants.locationCookieName);
                 var fallbackLoc = (loginLocationCookie && loginLocationCookie.uuid) || visitLocationUuid || locationUuid;
-                return erTriageConfigService.resolveVisitLocationForTriage(triageType, fallbackLoc) || fallbackLoc;
+                var configuredLoc = erTriageConfigService.resolveVisitLocationForTriage(triageType, fallbackLoc);
+                if (configuredLoc && configuredLoc !== fallbackLoc) {
+                    return configuredLoc;
+                }
+                var targetVisitTypeUuid = getEffectiveVisitTypeUuid();
+                if (targetVisitTypeUuid && $rootScope.regEncounterConfiguration && typeof $rootScope.regEncounterConfiguration.getLocationUuidForVisitType === 'function') {
+                    var mappedLoc = $rootScope.regEncounterConfiguration.getLocationUuidForVisitType(targetVisitTypeUuid);
+                    if (mappedLoc) return mappedLoc;
+                }
+                return configuredLoc || fallbackLoc;
             };
 
             var ensureActiveVisit = function () {

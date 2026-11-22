@@ -351,10 +351,41 @@ angular.module('bahmni.registration')
                 }
                 return $q.when({});
             };
+            var resolveDestinationLocationUuid = function (visitType) {
+                if (!visitType) return visitLocationUuid;
+                var vtUuid = visitType.uuid;
+                var vtName = visitType.name;
+                if ($rootScope.regEncounterConfiguration && typeof $rootScope.regEncounterConfiguration.getLocationUuidForVisitType === 'function') {
+                    var mappedLoc = $rootScope.regEncounterConfiguration.getLocationUuidForVisitType(vtUuid, vtName);
+                    if (mappedLoc) return mappedLoc;
+                }
+                var mapData = $rootScope.regEncounterConfiguration && $rootScope.regEncounterConfiguration.loginLocationToVisitTypeMap;
+                var results = (mapData && mapData.results) || [];
+                for (var i = 0; i < results.length; i++) {
+                    var r = results[i];
+                    if (r && r.mappings) {
+                        for (var j = 0; j < r.mappings.length; j++) {
+                            if (r.mappings[j] && (r.mappings[j].uuid === vtUuid || (vtName && r.mappings[j].name === vtName))) {
+                                return (r.entity && r.entity.uuid) || visitLocationUuid;
+                            }
+                        }
+                    }
+                }
+                if (vtName) {
+                    for (var k = 0; k < results.length; k++) {
+                        if (results[k] && results[k].entity && results[k].entity.name === vtName) {
+                            return results[k].entity.uuid;
+                        }
+                    }
+                }
+                return visitLocationUuid;
+            };
+
             $scope.saveConfirmation = function () {
                 closeVisit().finally(function () {
                     $scope.visitControl.startVisit($scope.selectedVisitType);
-                    var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: visitLocationUuid };
+                    var targetLocationUuid = resolveDestinationLocationUuid($scope.selectedVisitType);
+                    var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: targetLocationUuid };
                     visitService.createVisit(visitDetails).then(function (response) {
                         ngDialog.close();
                         $scope.submit();
@@ -381,7 +412,8 @@ angular.module('bahmni.registration')
                     if (noOfPatients < 35) {
                         try { await closeVisit(); } catch (e) {}
                         $scope.visitControl.startVisit($scope.selectedVisitType);
-                        var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: visitLocationUuid };
+                        var targetLocationUuid = resolveDestinationLocationUuid($scope.selectedVisitType);
+                        var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: targetLocationUuid };
                         visitService.createVisit(visitDetails).then(function (response) {
                             ngDialog.close();
                             $scope.submit();

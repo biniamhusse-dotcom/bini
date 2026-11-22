@@ -23,6 +23,31 @@ Bahmni.Registration.RegistrationEncounterConfig = (function () {
                 }
             });
             return visitType;
+        },
+        getLocationUuidForVisitType: function (visitTypeUuid, visitTypeName) {
+            if (!this.loginLocationToVisitTypeMap || !this.loginLocationToVisitTypeMap.results) {
+                return null;
+            }
+            var results = this.loginLocationToVisitTypeMap.results || [];
+            for (var i = 0; i < results.length; i++) {
+                var entry = results[i];
+                if (entry && entry.mappings) {
+                    for (var j = 0; j < entry.mappings.length; j++) {
+                        var m = entry.mappings[j];
+                        if (m && (m.uuid === visitTypeUuid || (visitTypeName && m.name === visitTypeName))) {
+                            return (entry.entity && entry.entity.uuid) || null;
+                        }
+                    }
+                }
+            }
+            if (visitTypeName) {
+                for (var k = 0; k < results.length; k++) {
+                    if (results[k] && results[k].entity && results[k].entity.name === visitTypeName) {
+                        return results[k].entity.uuid;
+                    }
+                }
+            }
+            return null;
         }
     };
     return RegistrationEncounterConfig;
