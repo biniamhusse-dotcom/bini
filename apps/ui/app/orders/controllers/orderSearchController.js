@@ -77,6 +77,7 @@ angular.module('bahmni.orders')
                         // Superuser / Admin check
                         $scope.isSuperUser = $scope.userRoles.indexOf('system developer') !== -1 ||
                                              $scope.userRoles.indexOf('administrator') !== -1 ||
+                                             $scope.userRoles.indexOf('superadmin') !== -1 ||
                                              user.username === 'admin' ||
                                              user.username === 'superman';
 
