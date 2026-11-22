@@ -34,6 +34,26 @@
                 map.put(desc.trim().toLowerCase(), true);
             }
         }
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+
+        try {
+            ps = conn.prepareStatement("SELECT uuid, name FROM public.unavailable_service");
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                String u = rs.getString("uuid");
+                String n = rs.getString("name");
+                if (u != null && !u.trim().isEmpty()) {
+                    map.put(u.trim(), true);
+                }
+                if (n != null && !n.trim().isEmpty()) {
+                    map.put(n.trim().toLowerCase(), true);
+                    list.put(n.trim());
+                }
+            }
+        } catch (Exception ex2) {
+            // ignore if unavailable_service not created yet
+        }
     } catch (Exception e) {
         map.put("error", e.getMessage());
     } finally {

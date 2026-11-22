@@ -2384,6 +2384,330 @@ def reclassify_batch_lab_items(payload):
 
     return {"success": True, "reclassified_count": total_reclassified, "target_class": target_class}
 
+def remove_non_test_from_lab(payload):
+    """
+    Permanently removes non-tests (or wrongly added tests) from:
+    1. OpenELIS: deletes from test, test_result, result_limits, test_analyte,
+       sampletype_test, panel_item, external_reference. If patient records exist, deactivates.
+    2. OpenMRS: reclassifies concept class from 'Test' to 'Misc' (ID 11),
+       and removes from Department and Specimen/Sample concept sets.
+    3. Odoo: deactivates service products matching the test name.
+    """
+    test_ids = payload.get("test_ids", [])
+    uuids = payload.get("uuids", [])
+    if isinstance(test_ids, (int, str)):
+        test_ids = [test_ids]
+    if isinstance(uuids, str):
+        uuids = [uuids]
+        
+    found_uuids = set(u for u in uuids if u)
+    test_names = []
+    deleted_test_ids = []
+    deactivated_test_ids = []
+    
+    if test_ids:
+        clean_ids = [str(int(t)) for t in test_ids if str(t).strip().isdigit()]
+        if clean_ids:
+            quoted_ids = ", ".join(clean_ids)
+            el_rows = run_elis_query(f"""
+                SELECT t.id, t.name, t.description, COALESCE(er.external_id, ''),
+                       (SELECT COUNT(*) FROM analysis a WHERE a.test_id = t.id) as analysis_count
+                FROM test t
+                LEFT JOIN external_reference er ON t.id = er.item_id AND er.type = 'Test'
+                WHERE t.id IN ({quoted_ids});
+            """)
+            for r in el_rows:
+                if len(r) >= 5:
+                    t_id = r[0]
+                    t_name = r[1]
+                    t_desc = r[2]
+                    ext_uuid = r[3].strip()
+                    a_count = int(r[4]) if r[4].isdigit() else 0
+                    if ext_uuid:
+                        found_uuids.add(ext_uuid)
+                    if t_name:
+                        test_names.append(t_name)
+                    if t_desc and t_desc != t_name:
+                        test_names.append(t_desc)
+                    if a_count == 0:
+                        deleted_test_ids.append(t_id)
+                    else:
+                        deactivated_test_ids.append(t_id)
+
+            if deleted_test_ids:
+                del_str = ", ".join(deleted_test_ids)
+                run_elis_exec(f"""
+                    DELETE FROM test_result WHERE test_id IN ({del_str});
+                    DELETE FROM result_limits WHERE test_id IN ({del_str});
+                    DELETE FROM test_analyte WHERE test_id IN ({del_str});
+                    DELETE FROM sampletype_test WHERE test_id IN ({del_str});
+                    DELETE FROM panel_item WHERE test_id IN ({del_str});
+                    DELETE FROM external_reference WHERE item_id IN ({del_str}) AND type = 'Test';
+                    DELETE FROM test WHERE id IN ({del_str});
+                """)
+            if deactivated_test_ids:
+                deact_str = ", ".join(deactivated_test_ids)
+                run_elis_exec(f"""
+                    UPDATE test SET is_active = 'N', is_reportable = 'N' WHERE id IN ({deact_str});
+                """)
+
+    # OpenMRS lookup by name if no UUID found
+    if not found_uuids and test_names:
+        quoted_names = ", ".join("'" + n.replace("'", "''") + "'" for n in test_names)
+        c_rows = run_omrs_query(f"""
+            SELECT DISTINCT c.uuid FROM concept c
+            JOIN concept_name cn ON c.concept_id = cn.concept_id AND cn.voided = 0
+            WHERE cn.name IN ({quoted_names});
+        """)
+        for cr in c_rows:
+            if cr and cr[0]:
+                found_uuids.add(cr[0].strip())
+
+    reclassified_count = 0
+    if found_uuids:
+        quoted_uuids = ", ".join("'" + u.replace("'", "''") + "'" for u in found_uuids)
+        # 1. Update concept class in OpenMRS to Misc
+        run_omrs_exec(f"""
+            UPDATE concept SET class_id = (SELECT concept_class_id FROM concept_class WHERE name = 'Misc' LIMIT 1)
+            WHERE uuid IN ({quoted_uuids}) AND class_id = (SELECT concept_class_id FROM concept_class WHERE name = 'Test' LIMIT 1);
+        """)
+        # 2. Remove concept from Lab Department and Specimen concept sets
+        run_omrs_exec(f"""
+            DELETE cs FROM concept_set cs
+            JOIN concept c ON cs.concept_id = c.concept_id
+            JOIN concept c_parent ON cs.concept_set = c_parent.concept_id
+            JOIN concept_class cc_p ON c_parent.class_id = cc_p.concept_class_id
+            WHERE c.uuid IN ({quoted_uuids})
+              AND (cc_p.name IN ('Department', 'Specimen', 'Sample', 'LabSet') OR c_parent.concept_id IN (10, 129));
+        """)
+        reclassified_count = len(found_uuids)
+
+    # 3. Deactivate matching products in Odoo
+    if test_names:
+        for t_name in test_names:
+            try:
+                esc_tname = t_name.replace("'", "''")
+                run_odoo_exec(f"UPDATE product_template SET active = false WHERE COALESCE(name->>'en_US', name::text) = '{esc_tname}';")
+            except Exception as e:
+                pass
+
+    return {
+        "success": True,
+        "message": f"Successfully removed {len(deleted_test_ids) + len(deactivated_test_ids)} item(s) from OpenELIS (Deleted: {len(deleted_test_ids)}, Deactivated: {len(deactivated_test_ids)}) and removed from OpenMRS Test category (Reclassified: {reclassified_count}).",
+        "deleted_count": len(deleted_test_ids),
+        "deactivated_count": len(deactivated_test_ids),
+        "reclassified_count": reclassified_count
+    }
+
+def update_and_sync_test(payload):
+    """
+    Updates test in OpenELIS and synchronizes updates to OpenMRS and Odoo:
+    - Updates test table in OpenELIS
+    - Updates concept name & short name in OpenMRS
+    - Links to OpenMRS Specimen Category concept set & Department set
+    - Updates product name in Odoo ERP
+    """
+    test_id = payload.get("test_id") or payload.get("editId")
+    if not test_id:
+        raise ValueError("Missing test_id for update")
+    test_id = int(test_id)
+
+    test_name = (payload.get("testName") or payload.get("name") or "").strip()
+    test_desc = (payload.get("testDesc") or payload.get("description") or test_name).strip()
+    section_id = payload.get("testSectionId") or payload.get("test_section_id")
+    method_id = payload.get("methodId") or payload.get("method_id")
+    uom_id = payload.get("uomId") or payload.get("uom_id")
+    is_active = payload.get("isActive") or payload.get("is_active") or "Y"
+    is_reportable = payload.get("isReportable") or payload.get("is_reportable") or "N"
+    is_referred_out = payload.get("isReferredOut") or payload.get("is_referred_out") or "false"
+    sort_order = payload.get("sortOrder") or payload.get("sort_order") or "2147483647"
+    local_abbrev = (payload.get("localAbbrev") or payload.get("local_abbrev") or "").strip()
+    openmrs_test_name = (payload.get("openmrsTestName") or payload.get("openmrs_test_name") or test_desc or test_name).strip()
+    openmrs_short_name = (payload.get("openmrsShortName") or payload.get("openmrs_short_name") or "").strip()
+    openmrs_sample_category = (payload.get("openmrsSampleCategory") or payload.get("openmrs_sample_category") or "").strip()
+    sync_openmrs = str(payload.get("syncOpenmrs", payload.get("sync_openmrs", "true"))).lower() in ("true", "1", "yes")
+    sync_odoo = str(payload.get("syncOdoo", payload.get("sync_odoo", "true"))).lower() in ("true", "1", "yes")
+
+    # Fetch existing test data for comparison / old name
+    old_rows = run_elis_query(f"SELECT name, description, openmrs_test_name FROM test WHERE id = {test_id};")
+    old_name = old_rows[0][0] if old_rows and old_rows[0] else test_name
+    old_desc = old_rows[0][1] if old_rows and old_rows[0] else test_desc
+    old_omrs_name = old_rows[0][2] if old_rows and old_rows[0] else ""
+
+    # 1. Update OpenELIS test
+    esc_name = test_name.replace("'", "''")
+    esc_desc = test_desc.replace("'", "''")
+    esc_omrs_name = openmrs_test_name.replace("'", "''")
+    esc_short = openmrs_short_name.replace("'", "''")
+    esc_sample = openmrs_sample_category.replace("'", "''")
+    esc_abbrev = local_abbrev.replace("'", "''")
+
+    sec_clause = f"test_section_id = {int(section_id)}," if section_id and str(section_id).isdigit() else "test_section_id = NULL,"
+    method_clause = f"method_id = {int(method_id)}," if method_id and str(method_id).isdigit() else "method_id = NULL,"
+    uom_clause = f"uom_id = {int(uom_id)}," if uom_id and str(uom_id).isdigit() else "uom_id = NULL,"
+    ref_bool = "true" if str(is_referred_out).lower() in ("true", "t", "y", "1") else "false"
+
+    run_elis_exec(f"""
+        UPDATE test SET
+            name = '{esc_name}',
+            description = '{esc_desc}',
+            {sec_clause}
+            {method_clause}
+            {uom_clause}
+            is_active = '{is_active}',
+            is_reportable = '{is_reportable}',
+            is_referred_out = {ref_bool},
+            sort_order = {int(sort_order) if str(sort_order).isdigit() else 2147483647},
+            local_abbrev = '{esc_abbrev}',
+            openmrs_test_name = '{esc_omrs_name}',
+            openmrs_short_name = '{esc_short}',
+            openmrs_sample_category = '{esc_sample}',
+            lastupdated = NOW()
+        WHERE id = {test_id};
+    """)
+
+    # 2. Sync to OpenMRS
+    omrs_synced = False
+    concept_uuid = None
+    ext_rows = run_elis_query(f"SELECT external_id FROM external_reference WHERE item_id = {test_id} AND type = 'Test' LIMIT 1;")
+    if ext_rows and ext_rows[0] and ext_rows[0][0]:
+        concept_uuid = ext_rows[0][0].strip()
+
+    if sync_openmrs:
+        c_id = None
+        if concept_uuid:
+            c_rows = run_omrs_query(f"SELECT concept_id FROM concept WHERE uuid = '{concept_uuid}' LIMIT 1;")
+            if c_rows and c_rows[0]:
+                c_id = c_rows[0][0]
+        if not c_id:
+            esc_old_name = old_name.replace("'", "''")
+            esc_old_desc = old_desc.replace("'", "''")
+            c_rows = run_omrs_query(f"SELECT c.concept_id, c.uuid FROM concept c JOIN concept_name cn ON c.concept_id = cn.concept_id WHERE cn.name IN ('{esc_old_name}', '{esc_old_desc}', '{esc_name}') AND cn.voided = 0 LIMIT 1;")
+            if c_rows and c_rows[0]:
+                c_id = c_rows[0][0]
+                concept_uuid = c_rows[0][1]
+                run_elis_exec(f"""
+                    DELETE FROM external_reference WHERE item_id = {test_id} AND type = 'Test';
+                    INSERT INTO external_reference (item_id, type, external_id) VALUES ({test_id}, 'Test', '{concept_uuid}');
+                """)
+
+        if c_id:
+            # 2a. Set concept class to Test (class_id = 1)
+            run_omrs_exec(f"UPDATE concept SET class_id = (SELECT concept_class_id FROM concept_class WHERE name = 'Test' LIMIT 1) WHERE concept_id = {c_id};")
+
+            # 2b. Update fully specified name
+            target_name = openmrs_test_name or test_desc or test_name
+            esc_target_name = target_name.replace("'", "''")
+            run_omrs_exec(f"""
+                UPDATE concept_name SET name = '{esc_target_name}'
+                WHERE concept_id = {c_id} AND concept_name_type = 'FULLY_SPECIFIED' AND voided = 0;
+            """)
+
+            # 2c. Update or insert short name
+            if openmrs_short_name:
+                sh_rows = run_omrs_query(f"SELECT concept_name_id FROM concept_name WHERE concept_id = {c_id} AND concept_name_type = 'SHORT' AND voided = 0 LIMIT 1;")
+                if sh_rows and sh_rows[0]:
+                    run_omrs_exec(f"UPDATE concept_name SET name = '{esc_short}' WHERE concept_name_id = {sh_rows[0][0]};")
+                else:
+                    run_omrs_exec(f"""
+                        INSERT INTO concept_name (concept_id, name, locale, creator, date_created, concept_name_type, voided, uuid)
+                        VALUES ({c_id}, '{esc_short}', 'en', 1, NOW(), 'SHORT', 0, UUID());
+                    """)
+
+            # 2d. Update Specimen Category concept set in OpenMRS
+            if openmrs_sample_category:
+                spec_rows = run_omrs_query(f"""
+                    SELECT c.concept_id FROM concept c
+                    JOIN concept_class cc ON c.class_id = cc.concept_class_id AND cc.name IN ('Specimen', 'Sample')
+                    JOIN concept_name cn ON c.concept_id = cn.concept_id AND cn.voided = 0
+                    WHERE cn.name = '{esc_sample}' LIMIT 1;
+                """)
+                if spec_rows and spec_rows[0]:
+                    spec_id = spec_rows[0][0]
+                    # Remove from other specimen sets
+                    run_omrs_exec(f"""
+                        DELETE cs FROM concept_set cs
+                        JOIN concept c_spec ON cs.concept_set = c_spec.concept_id
+                        JOIN concept_class cc ON c_spec.class_id = cc.concept_class_id
+                        WHERE cc.name IN ('Specimen', 'Sample') AND cs.concept_id = {c_id};
+                    """)
+                    # Link to new specimen set
+                    run_omrs_exec(f"""
+                        INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+                        VALUES ({c_id}, {spec_id}, 1, 1, NOW(), UUID());
+                    """)
+
+            # 2e. Update Department concept set in OpenMRS
+            if section_id and str(section_id).isdigit():
+                sec_rows = run_elis_query(f"SELECT name, description FROM test_section WHERE id = {int(section_id)};")
+                if sec_rows and sec_rows[0]:
+                    sec_name = sec_rows[0][1] or sec_rows[0][0]
+                    esc_sec_name = sec_name.replace("'", "''")
+                    dept_rows = run_omrs_query(f"""
+                        SELECT c.concept_id FROM concept c
+                        JOIN concept_name cn ON c.concept_id = cn.concept_id AND cn.voided = 0
+                        WHERE cn.name = '{esc_sec_name}' LIMIT 1;
+                    """)
+                    if dept_rows and dept_rows[0]:
+                        dept_id = dept_rows[0][0]
+                        # Remove from other department sets
+                        run_omrs_exec(f"""
+                            DELETE cs FROM concept_set cs
+                            JOIN concept c_dept ON cs.concept_set = c_dept.concept_id
+                            JOIN concept_class cc ON c_dept.class_id = cc.concept_class_id
+                            WHERE cc.name = 'Department' AND cs.concept_id = {c_id};
+                        """)
+                        # Link to chosen department set
+                        run_omrs_exec(f"""
+                            INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+                            VALUES ({c_id}, {dept_id}, 1, 1, NOW(), UUID());
+                        """)
+
+            omrs_synced = True
+
+    # 3. Sync to Odoo
+    odoo_synced = False
+    if sync_odoo:
+        new_prod_name = openmrs_test_name or test_desc or test_name
+        try:
+            import xmlrpc.client
+            common = xmlrpc.client.ServerProxy('http://odoo:8069/xmlrpc/2/common', allow_none=True)
+            uid = common.authenticate('odoo', 'emrsync', 'Admin123', {})
+            if uid:
+                models = xmlrpc.client.ServerProxy('http://odoo:8069/xmlrpc/2/object', allow_none=True)
+                domain = ['|', ('name', '=', old_name), ('name', '=', old_desc)]
+                if old_omrs_name:
+                    domain = ['|', ('name', '=', old_omrs_name)] + domain
+                prods = models.execute_kw('odoo', uid, 'Admin123', 'product.template', 'search_read', [domain], {'fields': ['id', 'name'], 'limit': 1})
+                if prods:
+                    p_id = prods[0]['id']
+                    models.execute_kw('odoo', uid, 'Admin123', 'product.template', 'write', [[p_id], {'name': new_prod_name, 'active': True}])
+                    odoo_synced = True
+                else:
+                    prod_vals = {
+                        'name': new_prod_name,
+                        'type': 'service',
+                        'categ_id': 9,
+                        'sale_ok': True,
+                        'purchase_ok': False,
+                        'active': True
+                    }
+                    p_id = models.execute_kw('odoo', uid, 'Admin123', 'product.template', 'create', [prod_vals])
+                    odoo_synced = True
+        except Exception as ex:
+            log(f"Warning syncing product to Odoo: {ex}")
+
+    return {
+        "success": True,
+        "message": f"Test '{test_name}' updated successfully in OpenELIS" +
+                   (" and synced to OpenMRS" if omrs_synced else "") +
+                   (" and Odoo ERP" if odoo_synced else "") + ".",
+        "test_id": test_id,
+        "openelis_updated": True,
+        "openmrs_synced": omrs_synced,
+        "odoo_synced": odoo_synced
+    }
+
 def sync_single_lab_item(payload):
     uuid = payload.get("uuid", "").strip()
     action = payload.get("action", "create")
@@ -3637,6 +3961,365 @@ def save_role_app_permissions(data):
         
     return {"success": True, "message": f"Updated home app permissions for '{role}' successfully"}
 
+# ── Order Services, Pricing & Availability Management ──────────────────────────────
+
+def get_order_services_catalog(params=None):
+    params = params or {}
+    q = (params.get("q", [""])[0] if isinstance(params.get("q"), list) else str(params.get("q", ""))).strip().lower()
+    dept_filter = (params.get("department", ["all"])[0] if isinstance(params.get("department"), list) else str(params.get("department", "all"))).strip().lower()
+    status_filter = (params.get("status", ["all"])[0] if isinstance(params.get("status"), list) else str(params.get("status", "all"))).strip().lower()
+
+    # 1. Fetch Odoo products map: uuid -> { id, name, list_price, active }
+    odoo_rows = run_odoo_query("""
+        SELECT p.uuid, p.id, COALESCE(pt.name->>'en_US', pt.name->>'en', pt.name::text) as prod_name, pt.list_price, pt.active
+        FROM product_product p
+        JOIN product_template pt ON p.product_tmpl_id = pt.id
+        WHERE p.uuid IS NOT NULL;
+    """)
+    odoo_map = {}
+    odoo_name_map = {}
+    for r in odoo_rows:
+        if len(r) >= 5:
+            u, pid, name, price, act = r[0].strip(), r[1].strip(), r[2].strip(), r[3].strip(), r[4].strip()
+            try:
+                p_val = float(price)
+            except:
+                p_val = 0.0
+            p_obj = {
+                "id": pid,
+                "name": name,
+                "list_price": p_val,
+                "active": act in ("t", "true", "True", "1")
+            }
+            odoo_map[u] = p_obj
+            if name:
+                odoo_name_map[name.lower().strip()] = p_obj
+
+    # 2. Fetch OpenELIS unavailable_service and inactive lab tests
+    unavail_rows = run_elis_query("SELECT uuid, name, department, reason FROM public.unavailable_service;")
+    unavail_set = set()
+    for r in unavail_rows:
+        if len(r) >= 1 and r[0].strip():
+            unavail_set.add(r[0].strip())
+        if len(r) >= 2 and r[1].strip():
+            unavail_set.add(r[1].strip().lower())
+
+    elis_inactive_rows = run_elis_query("SELECT id, name FROM test WHERE UPPER(TRIM(COALESCE(is_active, 'N'))) = 'N';")
+    for r in elis_inactive_rows:
+        if len(r) >= 2 and r[1].strip():
+            unavail_set.add(r[1].strip().lower())
+
+    # 3. Fetch OpenMRS Orderables Tree
+    omrs_sql = """
+    WITH RECURSIVE orderable_tree AS (
+        SELECT 
+            cs.concept_id as dept_id,
+            dept_name.name as department,
+            cs.concept_id as member_id,
+            0 as level
+        FROM concept_set cs
+        JOIN concept_name dept_name ON cs.concept_id = dept_name.concept_id 
+            AND dept_name.concept_name_type = 'FULLY_SPECIFIED' AND dept_name.voided = 0
+        WHERE cs.concept_set = 129
+        
+        UNION ALL
+        
+        SELECT 
+            ot.dept_id,
+            ot.department,
+            cs_child.concept_id as member_id,
+            ot.level + 1
+        FROM orderable_tree ot
+        JOIN concept_set cs_child ON ot.member_id = cs_child.concept_set
+        WHERE ot.level < 4
+    )
+    SELECT DISTINCT
+        c.uuid,
+        c.concept_id,
+        cn.name as full_name,
+        COALESCE(cn_short.name, '') as short_name,
+        ot.department,
+        cc.name as class_name,
+        c.is_set,
+        c.retired
+    FROM orderable_tree ot
+    JOIN concept c ON ot.member_id = c.concept_id
+    JOIN concept_name cn ON c.concept_id = cn.concept_id 
+        AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+    LEFT JOIN concept_name cn_short ON c.concept_id = cn_short.concept_id 
+        AND cn_short.concept_name_type = 'SHORT' AND cn_short.voided = 0
+    JOIN concept_class cc ON c.class_id = cc.concept_class_id
+    WHERE ot.level > 0
+    ORDER BY ot.department ASC, cn.name ASC;
+    """
+    omrs_rows = run_omrs_query(omrs_sql)
+
+    def clean_dept(raw):
+        if not raw: return "Other"
+        r = raw.lower()
+        if "rad" in r: return "Radiology"
+        if "proc" in r: return "Procedure"
+        if "oph" in r: return "Ophthalmology"
+        if "path" in r: return "Pathology"
+        if "lab" in r: return "Laboratory"
+        return raw
+
+    items = []
+    seen_uuids = set()
+
+    stats = {
+        "total": 0,
+        "priced": 0,
+        "unpriced": 0,
+        "available": 0,
+        "unavailable": 0,
+        "retired": 0,
+        "by_department": {
+            "Radiology": {"total": 0, "available": 0, "unavailable": 0, "retired": 0},
+            "Procedure": {"total": 0, "available": 0, "unavailable": 0, "retired": 0},
+            "Ophthalmology": {"total": 0, "available": 0, "unavailable": 0, "retired": 0},
+            "Pathology": {"total": 0, "available": 0, "unavailable": 0, "retired": 0},
+            "Laboratory": {"total": 0, "available": 0, "unavailable": 0, "retired": 0}
+        }
+    }
+
+    for r in omrs_rows:
+        c_uuid = r[0] if len(r) > 0 else ""
+        if not c_uuid or c_uuid in seen_uuids:
+            continue
+        seen_uuids.add(c_uuid)
+
+        cid = r[1] if len(r) > 1 else ""
+        fname = r[2] if len(r) > 2 else ""
+        sname = r[3] if len(r) > 3 else ""
+        raw_dept = r[4] if len(r) > 4 else ""
+        c_class = r[5] if len(r) > 5 else ""
+        is_set = (str(r[6]).strip() == "1") if len(r) > 6 else False
+        is_ret = (str(r[7]).strip() == "1") if len(r) > 7 else False
+
+        dept = clean_dept(raw_dept)
+        if dept not in stats["by_department"]:
+            stats["by_department"][dept] = {"total": 0, "available": 0, "unavailable": 0, "retired": 0}
+
+        p_info = odoo_map.get(c_uuid) or odoo_name_map.get(fname.lower().strip())
+        cost = p_info["list_price"] if p_info else 0.0
+        odoo_id = p_info["id"] if p_info else None
+        odoo_act = p_info["active"] if p_info else False
+
+        is_unavail = bool((c_uuid in unavail_set) or (fname.lower().strip() in unavail_set) or (sname and sname.lower().strip() in unavail_set))
+
+        stats["total"] += 1
+        stats["by_department"][dept]["total"] += 1
+
+        if is_ret:
+            stats["retired"] += 1
+            stats["by_department"][dept]["retired"] += 1
+        elif is_unavail:
+            stats["unavailable"] += 1
+            stats["by_department"][dept]["unavailable"] += 1
+        else:
+            stats["available"] += 1
+            stats["by_department"][dept]["available"] += 1
+
+        if cost > 0:
+            stats["priced"] += 1
+        else:
+            stats["unpriced"] += 1
+
+        item = {
+            "uuid": c_uuid,
+            "concept_id": cid,
+            "name": fname,
+            "short_name": sname,
+            "department": dept,
+            "concept_class": c_class,
+            "is_set": is_set,
+            "retired": is_ret,
+            "is_unavailable": is_unavail,
+            "cost": round(cost, 2),
+            "odoo_product_id": odoo_id,
+            "odoo_active": odoo_act
+        }
+
+        # Apply filtering
+        if dept_filter != "all" and dept.lower() != dept_filter:
+            continue
+        if status_filter == "available" and (is_ret or is_unavail):
+            continue
+        elif status_filter == "unavailable" and (is_ret or not is_unavail):
+            continue
+        elif status_filter == "retired" and not is_ret:
+            continue
+        elif status_filter == "unpriced" and cost > 0:
+            continue
+
+        if q:
+            match = (q in fname.lower()) or (q in sname.lower()) or (q in dept.lower()) or (q in c_class.lower()) or (q in c_uuid.lower())
+            if not match:
+                continue
+
+        items.append(item)
+
+    return {
+        "items": items,
+        "count": len(items),
+        "stats": stats
+    }
+
+def update_order_service_cost(c_uuid, cost):
+    if not c_uuid:
+        raise ValueError("Missing concept UUID")
+    try:
+        cost = float(cost)
+    except:
+        cost = 0.0
+
+    rows = run_odoo_query(f"SELECT id, product_tmpl_id FROM product_product WHERE uuid = '{c_uuid}' LIMIT 1;")
+    if rows and len(rows[0]) >= 2:
+        tmpl_id = rows[0][1]
+        run_odoo_exec(f"UPDATE product_template SET list_price = {cost} WHERE id = {tmpl_id};")
+        return {"success": True, "uuid": c_uuid, "cost": cost, "message": f"Price updated to {cost:.2f} ETB in Odoo"}
+    else:
+        omrs_rows = run_omrs_query(f"""
+            SELECT cn.name FROM concept c
+            JOIN concept_name cn ON c.concept_id = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+            WHERE c.uuid = '{c_uuid}' LIMIT 1;
+        """)
+        c_name = omrs_rows[0][0] if omrs_rows and len(omrs_rows[0]) > 0 else "Medical Service"
+        esc_name = c_name.replace("'", "''")
+        p_rows = run_odoo_query(f"SELECT id FROM product_template WHERE name->>'en_US' = '{esc_name}' OR name->>'en' = '{esc_name}' LIMIT 1;")
+        if p_rows:
+            tmpl_id = p_rows[0][0]
+            run_odoo_exec(f"UPDATE product_template SET list_price = {cost} WHERE id = {tmpl_id};")
+            run_odoo_exec(f"UPDATE product_product SET uuid = '{c_uuid}' WHERE product_tmpl_id = {tmpl_id};")
+            return {"success": True, "uuid": c_uuid, "cost": cost, "message": f"Product linked and price set to {cost:.2f} ETB in Odoo"}
+        else:
+            insert_tmpl_sql = f"""
+                INSERT INTO product_template (name, type, categ_id, list_price, sale_ok, purchase_ok, active, uom_id, uom_po_id, create_date, write_date)
+                VALUES (jsonb_build_object('en_US', '{esc_name}'), 'service', 1, {cost}, true, false, true, 1, 1, NOW(), NOW())
+                RETURNING id;
+            """
+            tmpl_rows = run_odoo_query(insert_tmpl_sql)
+            if tmpl_rows:
+                tmpl_id = tmpl_rows[0][0]
+                run_odoo_exec(f"""
+                    INSERT INTO product_product (product_tmpl_id, uuid, active, default_code, create_date, write_date)
+                    VALUES ({tmpl_id}, '{c_uuid}', true, '{c_uuid[:8]}', NOW(), NOW());
+                """)
+                return {"success": True, "uuid": c_uuid, "cost": cost, "message": f"Created product and set price to {cost:.2f} ETB in Odoo"}
+    return {"success": False, "uuid": c_uuid, "error": "Could not update price in Odoo"}
+
+def toggle_order_service_availability(c_uuid, c_name, dept, is_unavail, reason="Service Not Available"):
+    if not c_uuid:
+        raise ValueError("Missing concept UUID")
+    esc_uuid = c_uuid.replace("'", "''")
+    esc_name = (c_name or "").replace("'", "''")
+    esc_dept = (dept or "").replace("'", "''")
+    esc_reason = (reason or "Service Not Available").replace("'", "''")
+
+    if is_unavail:
+        run_elis_exec(f"""
+            INSERT INTO public.unavailable_service (uuid, name, department, reason)
+            VALUES ('{esc_uuid}', '{esc_name}', '{esc_dept}', '{esc_reason}')
+            ON CONFLICT (uuid) DO UPDATE SET name = EXCLUDED.name, department = EXCLUDED.department, reason = EXCLUDED.reason;
+        """)
+        if "lab" in (dept or "").lower():
+            run_elis_exec(f"UPDATE test SET is_active = 'N' WHERE lower(name) = lower('{esc_name}');")
+        return {"success": True, "uuid": c_uuid, "is_unavailable": True, "message": f"Marked '{c_name}' as UNAVAILABLE (will display in RED to clinicians)"}
+    else:
+        run_elis_exec(f"DELETE FROM public.unavailable_service WHERE uuid = '{esc_uuid}';")
+        if "lab" in (dept or "").lower():
+            run_elis_exec(f"UPDATE test SET is_active = 'Y' WHERE lower(name) = lower('{esc_name}');")
+        return {"success": True, "uuid": c_uuid, "is_unavailable": False, "message": f"Marked '{c_name}' as AVAILABLE (displays normally)"}
+
+def toggle_order_service_retire(c_uuid, retired, reason="Not given in facility"):
+    if not c_uuid:
+        raise ValueError("Missing concept UUID")
+    esc_uuid = c_uuid.replace("'", "''")
+    esc_reason = (reason or "Not given in facility").replace("'", "''")
+
+    if retired:
+        run_omrs_exec(f"""
+            UPDATE concept 
+            SET retired = 1, date_retired = NOW(), retired_by = 1, retire_reason = '{esc_reason}'
+            WHERE uuid = '{esc_uuid}';
+        """)
+        run_odoo_exec(f"""
+            UPDATE product_template 
+            SET active = false 
+            WHERE id IN (SELECT product_tmpl_id FROM product_product WHERE uuid = '{esc_uuid}');
+        """)
+        return {"success": True, "uuid": c_uuid, "retired": True, "message": "Order retired: This service is NOT given in the facility and will NEVER display for clinicians"}
+    else:
+        run_omrs_exec(f"""
+            UPDATE concept 
+            SET retired = 0, date_retired = NULL, retired_by = NULL, retire_reason = NULL
+            WHERE uuid = '{esc_uuid}';
+        """)
+        run_odoo_exec(f"""
+            UPDATE product_template 
+            SET active = true 
+            WHERE id IN (SELECT product_tmpl_id FROM product_product WHERE uuid = '{esc_uuid}');
+        """)
+        return {"success": True, "uuid": c_uuid, "retired": False, "message": "Order activated: This service is active and will now display for clinicians"}
+
+def sync_order_services_odoo_costs():
+    omrs_sql = """
+    WITH RECURSIVE orderable_tree AS (
+        SELECT cs.concept_id as dept_id, cs.concept_id as member_id, 0 as level
+        FROM concept_set cs WHERE cs.concept_set = 129
+        UNION ALL
+        SELECT ot.dept_id, cs_child.concept_id as member_id, ot.level + 1
+        FROM orderable_tree ot
+        JOIN concept_set cs_child ON ot.member_id = cs_child.concept_set
+        WHERE ot.level < 4
+    )
+    SELECT DISTINCT c.uuid, cn.name as full_name
+    FROM orderable_tree ot
+    JOIN concept c ON ot.member_id = c.concept_id
+    JOIN concept_name cn ON c.concept_id = cn.concept_id 
+        AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+    WHERE ot.level > 0;
+    """
+    omrs_rows = run_omrs_query(omrs_sql)
+
+    odoo_rows = run_odoo_query("SELECT uuid, id, product_tmpl_id FROM product_product WHERE uuid IS NOT NULL;")
+    linked_uuids = {r[0].strip(): r[1].strip() for r in odoo_rows if len(r) >= 2}
+
+    created_count = 0
+    linked_count = 0
+    for r in omrs_rows:
+        if len(r) >= 2:
+            u, name = r[0].strip(), r[1].strip()
+            if u not in linked_uuids:
+                esc_name = name.replace("'", "''")
+                p_rows = run_odoo_query(f"SELECT id FROM product_template WHERE name->>'en_US' = '{esc_name}' OR name->>'en' = '{esc_name}' LIMIT 1;")
+                if p_rows:
+                    tmpl_id = p_rows[0][0]
+                    run_odoo_exec(f"UPDATE product_product SET uuid = '{u}' WHERE product_tmpl_id = {tmpl_id};")
+                    linked_count += 1
+                else:
+                    ins_sql = f"""
+                        INSERT INTO product_template (name, type, categ_id, list_price, sale_ok, purchase_ok, active, uom_id, uom_po_id, create_date, write_date)
+                        VALUES (jsonb_build_object('en_US', '{esc_name}'), 'service', 1, 0.0, true, false, true, 1, 1, NOW(), NOW())
+                        RETURNING id;
+                    """
+                    t_res = run_odoo_query(ins_sql)
+                    if t_res:
+                        tmpl_id = t_res[0][0]
+                        run_odoo_exec(f"""
+                            INSERT INTO product_product (product_tmpl_id, uuid, active, default_code, create_date, write_date)
+                            VALUES ({tmpl_id}, '{u}', true, '{u[:8]}', NOW(), NOW());
+                        """)
+                        created_count += 1
+
+    return {
+        "success": True,
+        "linked_count": linked_count,
+        "created_count": created_count,
+        "message": f"Sync completed: {linked_count} orderables linked to existing Odoo products, {created_count} new service products registered in Odoo"
+    }
+
 class BackupAPIHandler(BaseHTTPRequestHandler):
     def _send_cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -3828,6 +4511,13 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, res)
             except Exception as e:
                 log(f"Error fetching role app permissions: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/order-services/list", "/order-services/list"):
+            try:
+                self._send_json(200, get_order_services_catalog(query_params))
+            except Exception as e:
+                log(f"Error loading order services catalog: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         else:
@@ -4229,6 +4919,22 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 log(f"Error reclassifying lab items: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
+        elif path in ("/api/harmonization/remove-non-test", "/harmonization/remove-non-test"):
+            try:
+                result = remove_non_test_from_lab(payload)
+                self._send_json(200, result)
+            except Exception as e:
+                log(f"Error removing non-test from lab: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/harmonization/update-and-sync-test", "/harmonization/update-and-sync-test"):
+            try:
+                result = update_and_sync_test(payload)
+                self._send_json(200, result)
+            except Exception as e:
+                log(f"Error updating and syncing test: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
         elif path in ("/api/harmonization/sync-openmrs-test-info", "/harmonization/sync-openmrs-test-info"):
             try:
                 result = sync_openmrs_test_info_to_openelis()
@@ -4333,6 +5039,48 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(400, {"success": False, "error": str(e)})
             except Exception as e:
                 log(f"Error saving role app permissions: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/order-services/sync-costs", "/order-services/sync-costs"):
+            try:
+                res = sync_order_services_odoo_costs()
+                self._send_json(200, res)
+            except Exception as e:
+                log(f"Error syncing costs with Odoo: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/order-services/update-cost", "/order-services/update-cost"):
+            try:
+                c_uuid = payload.get("uuid")
+                cost = float(payload.get("cost", 0.0))
+                res = update_order_service_cost(c_uuid, cost)
+                self._send_json(200, res)
+            except Exception as e:
+                log(f"Error updating cost in Odoo: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/order-services/toggle-availability", "/order-services/toggle-availability"):
+            try:
+                c_uuid = payload.get("uuid")
+                c_name = payload.get("name", "")
+                dept = payload.get("department", "")
+                is_unavail = bool(payload.get("is_unavailable", False))
+                reason = payload.get("reason", "Service Not Available")
+                res = toggle_order_service_availability(c_uuid, c_name, dept, is_unavail, reason)
+                self._send_json(200, res)
+            except Exception as e:
+                log(f"Error toggling service availability: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/order-services/toggle-retire", "/order-services/toggle-retire"):
+            try:
+                c_uuid = payload.get("uuid")
+                ret = bool(payload.get("retired", False))
+                reason = payload.get("reason", "Not given in facility")
+                res = toggle_order_service_retire(c_uuid, ret, reason)
+                self._send_json(200, res)
+            except Exception as e:
+                log(f"Error toggling service retire: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         else:

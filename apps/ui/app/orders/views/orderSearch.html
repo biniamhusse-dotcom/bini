@@ -6,7 +6,7 @@
         font-family: inherit;
     }
 
-    /* Primary Tabs (New Orders vs Backlog Orders) */
+    /* Primary Tabs (New Orders vs Backlog Orders vs Pricing/Availability) */
     .order-primary-tabs {
         display: flex;
         gap: 12px;
@@ -203,8 +203,11 @@
 
     .order-list-table tbody tr {
         border-bottom: 1px solid #e2e8f0;
-        cursor: pointer;
         transition: background-color 0.15s ease;
+    }
+
+    .order-list-table tbody tr.clickable {
+        cursor: pointer;
     }
 
     .order-list-table tbody tr:hover {
@@ -248,6 +251,11 @@
         color: #be185d;
     }
 
+    .badge-lab {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
     .badge-default {
         background: #f1f5f9;
         color: #475569;
@@ -285,10 +293,307 @@
         margin-bottom: 12px;
         color: #cbd5e1;
     }
+
+    /* =========================================================================
+       Pricing & Availability Styles
+       ========================================================================= */
+
+    .pricing-guide-card {
+        background: #f0fdfa;
+        border-left: 4px solid #0d9488;
+        padding: 14px 18px;
+        border-radius: 6px;
+        margin-bottom: 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .pricing-guide-card h4 {
+        margin: 0 0 6px 0;
+        color: #0f766e;
+        font-size: 14px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .pricing-guide-card p {
+        margin: 0;
+        font-size: 13px;
+        color: #334155;
+        line-height: 1.5;
+    }
+
+    .pricing-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .pricing-kpi-card {
+        background: #ffffff;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 14px 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .pricing-kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .pricing-kpi-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .pricing-kpi-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .pricing-kpi-card.kpi-available { border-left: 4px solid #16a34a; }
+    .pricing-kpi-card.kpi-available .pricing-kpi-value { color: #16a34a; }
+
+    .pricing-kpi-card.kpi-unavailable { border-left: 4px solid #dc2626; }
+    .pricing-kpi-card.kpi-unavailable .pricing-kpi-value { color: #dc2626; }
+
+    .pricing-kpi-card.kpi-retired { border-left: 4px solid #64748b; }
+    .pricing-kpi-card.kpi-retired .pricing-kpi-value { color: #64748b; }
+
+    .pricing-kpi-card.kpi-priced { border-left: 4px solid #0284c7; }
+    .pricing-kpi-card.kpi-priced .pricing-kpi-value { color: #0284c7; }
+
+    .pricing-kpi-card.kpi-unpriced { border-left: 4px solid #d97706; }
+    .pricing-kpi-card.kpi-unpriced .pricing-kpi-value { color: #d97706; }
+
+    /* Status Badges in Pricing Table */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .status-available {
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+    }
+
+    .status-unavailable {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+        animation: pulse-red 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+
+    .status-retired {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+        text-decoration: line-through;
+    }
+
+    /* Action Buttons in Pricing Table */
+    .btn-action-sm {
+        padding: 5px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.15s ease;
+    }
+
+    .btn-avail-toggle-on {
+        background: #fef2f2;
+        border-color: #fca5a5;
+        color: #b91c1c;
+    }
+    .btn-avail-toggle-on:hover {
+        background: #dc2626;
+        color: #ffffff;
+    }
+
+    .btn-avail-toggle-off {
+        background: #f0fdf4;
+        border-color: #86efac;
+        color: #15803d;
+    }
+    .btn-avail-toggle-off:hover {
+        background: #16a34a;
+        color: #ffffff;
+    }
+
+    .btn-retire-toggle-on {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+    .btn-retire-toggle-on:hover {
+        background: #64748b;
+        color: #ffffff;
+    }
+
+    .btn-retire-toggle-off {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+    }
+    .btn-retire-toggle-off:hover {
+        background: #2563eb;
+        color: #ffffff;
+    }
+
+    .cost-input {
+        width: 90px;
+        padding: 4px 6px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid #557A7B;
+        border-radius: 4px;
+        outline: none;
+    }
+
+    .btn-cost-save {
+        background: #16a34a;
+        color: #ffffff;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+    }
+
+    .btn-cost-cancel {
+        background: #94a3b8;
+        color: #ffffff;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+    }
+
+    .btn-cost-edit {
+        background: transparent;
+        border: none;
+        color: #0284c7;
+        cursor: pointer;
+        padding: 2px 6px;
+        font-size: 12px;
+    }
+    .btn-cost-edit:hover {
+        color: #0369a1;
+        text-decoration: underline;
+    }
+
+    /* Pagination */
+    .pagination-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 18px;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        font-size: 13px;
+        color: #475569;
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .btn-page {
+        padding: 6px 12px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .btn-page:hover:not(:disabled) {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+    }
+
+    .btn-page:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-primary-action {
+        background: #557A7B;
+        color: #ffffff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s ease;
+    }
+
+    .btn-primary-action:hover {
+        background: #3e5a5b;
+    }
+
+    .btn-secondary-action {
+        background: #ffffff;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-secondary-action:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
 </style>
 
 <div class="order-search-container">
-    <!-- Top-Level Tabs: New Orders vs Backlog Orders -->
+    <!-- Top-Level Tabs: New Orders vs Backlog Orders vs Pricing & Availability -->
     <div class="order-primary-tabs">
         <button type="button"
                 class="order-primary-tab"
@@ -307,143 +612,491 @@
             <span>Backlog Orders</span>
             <span class="order-tab-badge">({{backlogOrders.length}})</span>
         </button>
+
+        <button type="button"
+                class="order-primary-tab"
+                ng-class="{'active': activeTab === 'pricing'}"
+                ng-click="switchTab('pricing')">
+            <i class="fa fa-tags"></i>
+            <span>Order Services & Costs / Availability</span>
+            <span class="order-tab-badge" ng-if="servicesStats && servicesStats.total">({{servicesStats.total}})</span>
+        </button>
     </div>
 
-    <!-- Filter Toolbar Panel -->
-    <div class="order-filter-panel">
-        <!-- Order Type Filter Pills -->
-        <div class="order-type-pills">
-            <span style="font-weight: 700; color: #475569; margin-right: 6px; align-self: center; font-size: 13px;">
-                <i class="fa fa-filter"></i> Order Type:
-            </span>
-            <button type="button"
-                    class="order-type-pill"
-                    ng-class="{'active': selectedOrderType === type.value}"
-                    ng-repeat="type in orderTypes"
-                    ng-click="setOrderType(type.value)">
-                <i class="fa {{type.icon}}"></i> {{type.label}}
-            </button>
-        </div>
-
-        <!-- Filter Inputs: Name, MRN, Date (for Backlog) -->
-        <div class="order-inputs-row">
-            <!-- Filter by Name -->
-            <div class="filter-input-group">
-                <i class="fa fa-user input-icon"></i>
-                <input type="text"
-                       ng-model="filters.name"
-                       placeholder="Filter by Patient Name..."
-                       title="Type patient given or family name"/>
+    <!-- ===================================================================== -->
+    <!-- Tab 1 & Tab 2: Orders Search Panel (New / Backlog)                     -->
+    <!-- ===================================================================== -->
+    <div ng-if="activeTab !== 'pricing'">
+        <!-- Filter Toolbar Panel -->
+        <div class="order-filter-panel">
+            <!-- Order Type Filter Pills -->
+            <div class="order-type-pills">
+                <span style="font-weight: 700; color: #475569; margin-right: 6px; align-self: center; font-size: 13px;">
+                    <i class="fa fa-filter"></i> Order Type:
+                </span>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': selectedOrderType === type.value}"
+                        ng-repeat="type in orderTypes"
+                        ng-click="setOrderType(type.value)">
+                    <i class="fa {{type.icon}}"></i> {{type.label}}
+                </button>
             </div>
 
-            <!-- Filter by MRN / Identifier -->
-            <div class="filter-input-group">
-                <i class="fa fa-id-card input-icon"></i>
-                <input type="text"
-                       ng-model="filters.identifier"
-                       placeholder="Filter by MRN / Identifier..."
-                       title="Type patient identifier / MRN"/>
-            </div>
+            <!-- Filter Inputs: Name, MRN, Date (for Backlog) -->
+            <div class="order-inputs-row">
+                <!-- Filter by Name -->
+                <div class="filter-input-group">
+                    <i class="fa fa-user input-icon"></i>
+                    <input type="text"
+                           ng-model="filters.name"
+                           placeholder="Filter by Patient Name..."
+                           title="Type patient given or family name"/>
+                </div>
 
-            <!-- Filter by Date (Backlog Only) -->
-            <div class="filter-input-group" ng-if="activeTab === 'backlog'" style="flex: 1.2;">
-                <i class="fa fa-calendar input-icon"></i>
-                <input type="date"
-                       ng-model="filters.date"
-                       placeholder="Filter by Date (YYYY-MM-DD)..."
-                       title="Select order date"/>
-                <div style="display: flex; gap: 4px; margin-left: 8px;">
-                    <button type="button" class="btn btn-xs btn-default" ng-click="setDatePreset('all')" title="All Dates" style="font-size: 11px; padding: 4px 8px;">All</button>
-                    <button type="button" class="btn btn-xs btn-default" ng-click="setDatePreset('yesterday')" title="Yesterday" style="font-size: 11px; padding: 4px 8px;">Yesterday</button>
+                <!-- Filter by MRN / Identifier -->
+                <div class="filter-input-group">
+                    <i class="fa fa-id-card input-icon"></i>
+                    <input type="text"
+                           ng-model="filters.identifier"
+                           placeholder="Filter by MRN / Identifier..."
+                           title="Type patient identifier / MRN"/>
+                </div>
+
+                <!-- Filter by Date (Backlog Only) -->
+                <div class="filter-input-group" ng-if="activeTab === 'backlog'" style="flex: 1.2;">
+                    <i class="fa fa-calendar input-icon"></i>
+                    <input type="date"
+                           ng-model="filters.date"
+                           placeholder="Filter by Date (YYYY-MM-DD)..."
+                           title="Select order date"/>
+                    <div style="display: flex; gap: 4px; margin-left: 8px;">
+                        <button type="button" class="btn btn-xs btn-default" ng-click="setDatePreset('all')" title="All Dates" style="font-size: 11px; padding: 4px 8px;">All</button>
+                        <button type="button" class="btn btn-xs btn-default" ng-click="setDatePreset('yesterday')" title="Yesterday" style="font-size: 11px; padding: 4px 8px;">Yesterday</button>
+                    </div>
+                </div>
+
+                <!-- Clear & Refresh -->
+                <div style="display: inline-flex; gap: 8px;">
+                    <button type="button" class="btn-clear-filters" ng-if="hasActiveFilters()" ng-click="clearFilters()">
+                        <i class="fa fa-times"></i> Clear Filters
+                    </button>
+                    <button type="button" class="btn-refresh" ng-click="refresh()" title="Refresh Orders List">
+                        <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i>
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Clear & Refresh -->
-            <div style="display: inline-flex; gap: 8px;">
-                <button type="button" class="btn-clear-filters" ng-if="hasActiveFilters()" ng-click="clearFilters()">
-                    <i class="fa fa-times"></i> Clear Filters
-                </button>
-                <button type="button" class="btn-refresh" ng-click="refresh()" title="Refresh Orders List">
-                    <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i>
-                </button>
+        <!-- Results Table -->
+        <div class="order-table-wrapper">
+            <table class="order-list-table">
+                <thead>
+                    <tr>
+                        <th style="width: 22%;">Patient Name</th>
+                        <th style="width: 14%;">MRN (Identifier)</th>
+                        <th style="width: 15%;">Order Type</th>
+                        <th style="width: 18%;">Test / Procedure</th>
+                        <th style="width: 12%;">Accession No</th>
+                        <th style="width: 14%;">Date</th>
+                        <th style="width: 10%;">Result Status</th>
+                        <th style="width: 15%; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="order in filtered = getFilteredOrders()" ng-click="goToFulfillment(order)" class="clickable">
+                        <td>
+                            <span style="font-weight: 700; color: #1e293b;">{{order.name}}</span>
+                            <i class="fa fa-bed" ng-if="order.hasBeenAdmitted === 'true'" title="Admitted Patient" style="color: #0284c7; margin-left: 6px;"></i>
+                        </td>
+                        <td>
+                            <span style="font-family: monospace; font-size: 13px; font-weight: 600; color: #475569;">{{order.identifier}}</span>
+                        </td>
+                        <td>
+                            <span class="badge-order-type" ng-class="getOrderTypeBadgeClass(order.orderType)">
+                                {{order.orderType.replace(' Order', '')}}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-weight: 600; color: #334155;">{{order.orderName}}</span>
+                        </td>
+                        <td>
+                            <span style="color: #64748b; font-size: 12px;">{{order.orderNumber}}</span>
+                        </td>
+                        <td>
+                            <span style="color: #475569; font-size: 12px;">{{order.orderDateFormatted}}</span>
+                        </td>
+                        <td>
+                            <span ng-if="order.isFulfilled === 'true'" style="color: #16a34a; font-weight: 600; font-size: 12px;">
+                                <i class="fa fa-check-circle"></i> Fulfilled
+                            </span>
+                            <span ng-if="order.isFulfilled !== 'true'" style="color: #ea580c; font-weight: 600; font-size: 12px;">
+                                <i class="fa fa-clock-o"></i> Pending
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            <button type="button" class="btn-enter-result" ng-click="$event.stopPropagation(); goToFulfillment(order)">
+                                <i class="fa fa-edit"></i> Enter Result
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Empty Results Message -->
+            <div class="order-empty-state" ng-if="!loading && (!filtered || filtered.length === 0)">
+                <i class="fa fa-inbox"></i>
+                <h4 style="margin: 0 0 6px 0; color: #475569;">No orders found</h4>
+                <p style="margin: 0; font-size: 13px;" ng-if="hasActiveFilters()">
+                    No orders match your active filter criteria. <a href="" ng-click="clearFilters()">Clear filters</a> to see all orders.
+                </p>
+                <p style="margin: 0; font-size: 13px;" ng-if="!hasActiveFilters() && activeTab === 'new'">
+                    There are currently no new diagnostic orders from active visits.
+                </p>
+                <p style="margin: 0; font-size: 13px;" ng-if="!hasActiveFilters() && activeTab === 'backlog'">
+                    There are currently no backlog orders.
+                </p>
+            </div>
+
+            <!-- Loading State -->
+            <div class="order-empty-state" ng-if="loading">
+                <i class="fa fa-spinner fa-spin" style="color: #557A7B;"></i>
+                <h4 style="margin: 0; color: #475569;">Loading orders...</h4>
             </div>
         </div>
     </div>
 
-    <!-- Results Table -->
-    <div class="order-table-wrapper">
-        <table class="order-list-table">
-            <thead>
-                <tr>
-                    <th style="width: 22%;">Patient Name</th>
-                    <th style="width: 14%;">MRN (Identifier)</th>
-                    <th style="width: 15%;">Order Type</th>
-                    <th style="width: 18%;">Test / Procedure</th>
-                    <th style="width: 12%;">Accession No</th>
-                    <th style="width: 14%;">Date</th>
-                    <th style="width: 10%;">Result Status</th>
-                    <th style="width: 15%; text-align: right;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr ng-repeat="order in filtered = getFilteredOrders()" ng-click="goToFulfillment(order)">
-                    <td>
-                        <span style="font-weight: 700; color: #1e293b;">{{order.name}}</span>
-                        <i class="fa fa-bed" ng-if="order.hasBeenAdmitted === 'true'" title="Admitted Patient" style="color: #0284c7; margin-left: 6px;"></i>
-                    </td>
-                    <td>
-                        <span style="font-family: monospace; font-size: 13px; font-weight: 600; color: #475569;">{{order.identifier}}</span>
-                    </td>
-                    <td>
-                        <span class="badge-order-type" ng-class="getOrderTypeBadgeClass(order.orderType)">
-                            {{order.orderType.replace(' Order', '')}}
-                        </span>
-                    </td>
-                    <td>
-                        <span style="font-weight: 600; color: #334155;">{{order.orderName}}</span>
-                    </td>
-                    <td>
-                        <span style="color: #64748b; font-size: 12px;">{{order.orderNumber}}</span>
-                    </td>
-                    <td>
-                        <span style="color: #475569; font-size: 12px;">{{order.orderDateFormatted}}</span>
-                    </td>
-                    <td>
-                        <span ng-if="order.isFulfilled === 'true'" style="color: #16a34a; font-weight: 600; font-size: 12px;">
-                            <i class="fa fa-check-circle"></i> Fulfilled
-                        </span>
-                        <span ng-if="order.isFulfilled !== 'true'" style="color: #ea580c; font-weight: 600; font-size: 12px;">
-                            <i class="fa fa-clock-o"></i> Pending
-                        </span>
-                    </td>
-                    <td style="text-align: right;">
-                        <button type="button" class="btn-enter-result" ng-click="$event.stopPropagation(); goToFulfillment(order)">
-                            <i class="fa fa-edit"></i> Enter Result
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- Empty Results Message -->
-        <div class="order-empty-state" ng-if="!loading && (!filtered || filtered.length === 0)">
-            <i class="fa fa-inbox"></i>
-            <h4 style="margin: 0 0 6px 0; color: #475569;">No orders found</h4>
-            <p style="margin: 0; font-size: 13px;" ng-if="hasActiveFilters()">
-                No orders match your active filter criteria. <a href="" ng-click="clearFilters()">Clear filters</a> to see all orders.
-            </p>
-            <p style="margin: 0; font-size: 13px;" ng-if="!hasActiveFilters() && activeTab === 'new'">
-                There are currently no new diagnostic orders from active visits.
-            </p>
-            <p style="margin: 0; font-size: 13px;" ng-if="!hasActiveFilters() && activeTab === 'backlog'">
-                There are currently no backlog orders.
+    <!-- ===================================================================== -->
+    <!-- Tab 3: Order Services & Costs / Availability Management               -->
+    <!-- ===================================================================== -->
+    <div ng-if="activeTab === 'pricing'">
+        <!-- Guidance Banner -->
+        <div class="pricing-guide-card">
+            <h4><i class="fa fa-info-circle"></i> Order Services, Real-Time Costs & Availability Management</h4>
+            <p>
+                Manage service availability and pricing across all order departments.
+                <strong>Unavailable:</strong> Marks tests or imaging with broken equipment / reagent stockout &mdash; <span style="color: #dc2626; font-weight: 700;">displays in RED to clinicians</span> during consultation ordering.
+                <strong>Retire:</strong> If a service is <span style="font-weight: 700;">NOT given in this facility</span>, retire it to permanently hide it from clinician order sheets.
+                <strong>Cost (ETB):</strong> Real-time sales price synchronized with Odoo ERP.
             </p>
         </div>
 
-        <!-- Loading State -->
-        <div class="order-empty-state" ng-if="loading">
-            <i class="fa fa-spinner fa-spin" style="color: #557A7B;"></i>
-            <h4 style="margin: 0; color: #475569;">Loading orders...</h4>
+        <!-- KPI Summary Cards -->
+        <div class="pricing-kpi-grid">
+            <div class="pricing-kpi-card">
+                <div class="pricing-kpi-label"><i class="fa fa-list"></i> Total Orderables</div>
+                <div class="pricing-kpi-value">{{servicesStats.total || '0'}}</div>
+            </div>
+            <div class="pricing-kpi-card kpi-available">
+                <div class="pricing-kpi-label"><i class="fa fa-check-circle"></i> Available / Ready</div>
+                <div class="pricing-kpi-value">{{servicesStats.available || '0'}}</div>
+            </div>
+            <div class="pricing-kpi-card kpi-unavailable">
+                <div class="pricing-kpi-label"><i class="fa fa-ban"></i> Unavailable (Red)</div>
+                <div class="pricing-kpi-value">{{servicesStats.unavailable || '0'}}</div>
+            </div>
+            <div class="pricing-kpi-card kpi-retired">
+                <div class="pricing-kpi-label"><i class="fa fa-eye-slash"></i> Retired (Not Given)</div>
+                <div class="pricing-kpi-value">{{servicesStats.retired || '0'}}</div>
+            </div>
+            <div class="pricing-kpi-card kpi-priced">
+                <div class="pricing-kpi-label"><i class="fa fa-money"></i> Priced in Odoo</div>
+                <div class="pricing-kpi-value">{{servicesStats.priced || '0'}}</div>
+            </div>
+            <div class="pricing-kpi-card kpi-unpriced">
+                <div class="pricing-kpi-label"><i class="fa fa-question-circle"></i> Unpriced (0 ETB)</div>
+                <div class="pricing-kpi-value">{{servicesStats.unpriced || '0'}}</div>
+            </div>
+        </div>
+
+        <!-- Filter & Control Panel -->
+        <div class="order-filter-panel">
+            <!-- Department Filter Pills -->
+            <div class="order-type-pills">
+                <span style="font-weight: 700; color: #475569; margin-right: 6px; align-self: center; font-size: 13px;">
+                    <i class="fa fa-sitemap"></i> Department:
+                </span>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.department === 'all'}"
+                        ng-click="setPricingDept('all')">
+                    <i class="fa fa-th-large"></i> All Departments ({{servicesStats.total || 0}})
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.department === 'Radiology'}"
+                        ng-click="setPricingDept('Radiology')">
+                    <i class="fa fa-film"></i> Radiology ({{servicesStats.by_department.Radiology.total || 0}})
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.department === 'Procedure'}"
+                        ng-click="setPricingDept('Procedure')">
+                    <i class="fa fa-medkit"></i> Procedures ({{servicesStats.by_department.Procedure.total || 0}})
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.department === 'Ophthalmology'}"
+                        ng-click="setPricingDept('Ophthalmology')">
+                    <i class="fa fa-eye"></i> Ophthalmology ({{servicesStats.by_department.Ophthalmology.total || 0}})
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.department === 'Pathology'}"
+                        ng-click="setPricingDept('Pathology')">
+                    <i class="fa fa-flask"></i> Pathology ({{servicesStats.by_department.Pathology.total || 0}})
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.department === 'Laboratory'}"
+                        ng-click="setPricingDept('Laboratory')">
+                    <i class="fa fa-tint"></i> Laboratory ({{servicesStats.by_department.Laboratory.total || 0}})
+                </button>
+            </div>
+
+            <!-- Status Filter Pills -->
+            <div class="order-type-pills" style="margin-bottom: 14px; padding-bottom: 12px;">
+                <span style="font-weight: 700; color: #475569; margin-right: 6px; align-self: center; font-size: 13px;">
+                    <i class="fa fa-filter"></i> Status:
+                </span>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.status === 'all'}"
+                        ng-click="setPricingStatus('all')">
+                    All Status
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.status === 'available'}"
+                        ng-click="setPricingStatus('available')">
+                    <span style="color: #16a34a;">●</span> Available Only
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.status === 'unavailable'}"
+                        ng-click="setPricingStatus('unavailable')">
+                    <span style="color: #dc2626;">●</span> Unavailable Only (Red to Clinician)
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.status === 'retired'}"
+                        ng-click="setPricingStatus('retired')">
+                    <span style="color: #64748b;">●</span> Retired Only (Hidden from Clinician)
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.status === 'priced'}"
+                        ng-click="setPricingStatus('priced')">
+                    Priced (> 0 ETB)
+                </button>
+                <button type="button"
+                        class="order-type-pill"
+                        ng-class="{'active': pricing.status === 'unpriced'}"
+                        ng-click="setPricingStatus('unpriced')">
+                    Unpriced (0 ETB)
+                </button>
+            </div>
+
+            <!-- Search, Sync, and Export Controls -->
+            <div class="order-inputs-row">
+                <!-- Search by name or code -->
+                <div class="filter-input-group" style="flex: 2;">
+                    <i class="fa fa-search input-icon"></i>
+                    <input type="text"
+                           ng-model="pricing.search"
+                           ng-change="pricing.currentPage = 1"
+                           placeholder="Search service by name, short code, or concept ID..."
+                           title="Search orderables"/>
+                </div>
+
+                <!-- Sync from Odoo Button -->
+                <button type="button" class="btn-primary-action" ng-click="syncOdooCosts()" ng-disabled="pricing.syncing" title="Sync all order prices and products with Odoo ERP">
+                    <i class="fa fa-refresh" ng-class="{'fa-spin': pricing.syncing}"></i>
+                    <span>Sync Costs from Odoo</span>
+                </button>
+
+                <!-- Export CSV Button -->
+                <button type="button" class="btn-secondary-action" ng-click="exportServicesCsv()" title="Export current filtered catalog to CSV">
+                    <i class="fa fa-download"></i>
+                    <span>Export CSV</span>
+                </button>
+
+                <!-- Clear & Refresh -->
+                <div style="display: inline-flex; gap: 8px;">
+                    <button type="button" class="btn-clear-filters" ng-if="hasActivePricingFilters()" ng-click="clearPricingFilters()">
+                        <i class="fa fa-times"></i> Clear Filters
+                    </button>
+                    <button type="button" class="btn-refresh" ng-click="fetchOrderServices()" title="Reload Catalog">
+                        <i class="fa fa-refresh" ng-class="{'fa-spin': pricing.loading}"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services & Costs Table -->
+        <div class="order-table-wrapper">
+            <table class="order-list-table">
+                <thead>
+                    <tr>
+                        <th style="width: 4%;">#</th>
+                        <th style="width: 32%;">Orderable Service Name & Code</th>
+                        <th style="width: 14%;">Department</th>
+                        <th style="width: 16%;">Cost / Price (ETB)</th>
+                        <th style="width: 16%;">Clinician Status</th>
+                        <th style="width: 18%; text-align: right;">Facility & Availability Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="item in filteredServices = getPaginatedServices()">
+                        <td style="color: #94a3b8; font-size: 12px;">
+                            {{($index + 1) + ((pricing.currentPage - 1) * pricing.pageSize)}}
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; color: #1e293b; font-size: 13px;">
+                                {{item.name}}
+                                <i class="fa fa-cubes" ng-if="item.is_set" title="Panel / Order Set" style="color: #6366f1; margin-left: 4px;"></i>
+                            </div>
+                            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                                <span ng-if="item.short_name" style="margin-right: 8px;"><strong>Code:</strong> {{item.short_name}}</span>
+                                <span style="margin-right: 8px;"><strong>ID:</strong> {{item.concept_id}}</span>
+                                <span><strong>Class:</strong> {{item.concept_class}}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge-order-type"
+                                  ng-class="{
+                                      'badge-radiology': item.department === 'Radiology',
+                                      'badge-procedure': item.department === 'Procedure',
+                                      'badge-ophtha': item.department === 'Ophthalmology',
+                                      'badge-pathology': item.department === 'Pathology',
+                                      'badge-lab': item.department === 'Laboratory'
+                                  }">
+                                {{item.department}}
+                            </span>
+                        </td>
+                        <td>
+                            <!-- Normal Mode -->
+                            <div ng-if="!pricing.editingCost[item.uuid]" style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-weight: 700; font-size: 13px; color: #0f172a;" ng-class="{'text-muted': !item.cost || item.cost <= 0}">
+                                    {{(item.cost != null ? item.cost : 0) | number:2}} ETB
+                                </span>
+                                <button type="button" class="btn-cost-edit" ng-click="startEditCost(item)" title="Edit Price in Odoo">
+                                    <i class="fa fa-pencil"></i>
+                                </button>
+                            </div>
+
+                            <!-- Inline Edit Mode -->
+                            <div ng-if="pricing.editingCost[item.uuid]" style="display: flex; align-items: center; gap: 4px;">
+                                <input type="number" step="0.5" min="0" class="cost-input" ng-model="pricing.editCost[item.uuid]"/>
+                                <button type="button" class="btn-cost-save" ng-click="saveCost(item)" ng-disabled="pricing.savingCost[item.uuid]" title="Save price to Odoo">
+                                    <i class="fa fa-check" ng-class="{'fa-spin': pricing.savingCost[item.uuid]}"></i>
+                                </button>
+                                <button type="button" class="btn-cost-cancel" ng-click="cancelEditCost(item)" title="Cancel">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <!-- Retired Status -->
+                            <span class="status-badge status-retired" ng-if="item.retired" title="This service is NOT given in this hospital and is hidden from clinicians.">
+                                <i class="fa fa-eye-slash"></i> Retired (Hidden)
+                            </span>
+
+                            <!-- Unavailable Status -->
+                            <span class="status-badge status-unavailable" ng-if="!item.retired && item.is_unavailable" title="Temporarily unavailable! Appears in RED with warning on clinician consultation order sheet.">
+                                <i class="fa fa-exclamation-triangle"></i> Unavailable (Red)
+                            </span>
+
+                            <!-- Available Status -->
+                            <span class="status-badge status-available" ng-if="!item.retired && !item.is_unavailable" title="Active and offered in hospital. Clinicians can place orders normally.">
+                                <i class="fa fa-check-circle"></i> Available
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 6px; justify-content: flex-end;">
+                                <!-- Toggle Availability Button (Unavailable / Red) -->
+                                <button type="button"
+                                        class="btn-action-sm btn-avail-toggle-on"
+                                        ng-if="!item.retired && !item.is_unavailable"
+                                        ng-click="toggleAvailability(item)"
+                                        ng-disabled="pricing.savingStatus[item.uuid]"
+                                        title="Make unavailable (reagent stockout / machine down). Clinicians will see this in RED.">
+                                    <i class="fa fa-ban"></i> Make Unavailable (Red)
+                                </button>
+
+                                <button type="button"
+                                        class="btn-action-sm btn-avail-toggle-off"
+                                        ng-if="!item.retired && item.is_unavailable"
+                                        ng-click="toggleAvailability(item)"
+                                        ng-disabled="pricing.savingStatus[item.uuid]"
+                                        title="Restore service as available for clinicians.">
+                                    <i class="fa fa-check"></i> Restore Available
+                                </button>
+
+                                <!-- Toggle Retire Button (Not Given in Facility) -->
+                                <button type="button"
+                                        class="btn-action-sm btn-retire-toggle-on"
+                                        ng-if="!item.retired"
+                                        ng-click="toggleRetire(item)"
+                                        ng-disabled="pricing.savingStatus[item.uuid]"
+                                        title="If this service is NOT given in this facility, retire it to permanently hide it from clinicians.">
+                                    <i class="fa fa-trash-o"></i> Retire (Not in Facility)
+                                </button>
+
+                                <button type="button"
+                                        class="btn-action-sm btn-retire-toggle-off"
+                                        ng-if="item.retired"
+                                        ng-click="toggleRetire(item)"
+                                        ng-disabled="pricing.savingStatus[item.uuid]"
+                                        title="Reactivate service so it appears for clinicians.">
+                                    <i class="fa fa-undo"></i> Reactivate Service
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Empty State for Pricing -->
+            <div class="order-empty-state" ng-if="!pricing.loading && (!filteredServices || filteredServices.length === 0)">
+                <i class="fa fa-inbox"></i>
+                <h4 style="margin: 0 0 6px 0; color: #475569;">No orderable services found</h4>
+                <p style="margin: 0; font-size: 13px;" ng-if="hasActivePricingFilters()">
+                    No services match your active filter criteria. <a href="" ng-click="clearPricingFilters()">Clear filters</a> to view all services.
+                </p>
+                <p style="margin: 0; font-size: 13px;" ng-if="!hasActivePricingFilters()">
+                    No orderable services available in the system catalog.
+                </p>
+            </div>
+
+            <!-- Loading State for Pricing -->
+            <div class="order-empty-state" ng-if="pricing.loading">
+                <i class="fa fa-spinner fa-spin" style="color: #557A7B;"></i>
+                <h4 style="margin: 0; color: #475569;">Loading orderables catalog & Odoo costs...</h4>
+            </div>
+
+            <!-- Pagination Bar -->
+            <div class="pagination-bar" ng-if="!pricing.loading && getFilteredServices().length > 0">
+                <div>
+                    Showing <strong>{{((pricing.currentPage - 1) * pricing.pageSize) + 1}}</strong> to
+                    <strong>{{getDisplayEnd(getFilteredServices().length)}}</strong> of
+                    <strong>{{getFilteredServices().length}}</strong> services
+                    <span ng-if="getFilteredServices().length < servicesList.length" style="color: #94a3b8;">
+                        (filtered from {{servicesList.length}} total)
+                    </span>
+                </div>
+                <div class="pagination-controls">
+                    <button type="button" class="btn-page" ng-click="prevPage()" ng-disabled="pricing.currentPage === 1">
+                        <i class="fa fa-chevron-left"></i> Previous
+                    </button>
+                    <span style="font-weight: 600; padding: 0 8px;">
+                        Page {{pricing.currentPage}} of {{getTotalPages(getFilteredServices().length)}}
+                    </span>
+                    <button type="button" class="btn-page" ng-click="nextPage(getFilteredServices().length)" ng-disabled="pricing.currentPage >= getTotalPages(getFilteredServices().length)">
+                        Next <i class="fa fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

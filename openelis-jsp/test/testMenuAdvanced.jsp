@@ -1045,6 +1045,7 @@
         <span style="font-size:11px;font-weight:700;color:#64748b;margin-right:4px;text-transform:uppercase;">Quick Presets:</span>
         <button type="button" class="tm-preset-chip <%= !hasFilters ? "active" : "" %>" onclick="tmApplyPreset('all')">All Tests</button>
         <button type="button" class="tm-preset-chip <%= "Y".equals(filterActive) && !hasFilters ? "active" : "" %>" onclick="tmApplyPreset('active')">Active Tests</button>
+        <button type="button" class="tm-preset-chip <%= "__NONE__".equals(filterSampleCategory) ? "active" : "" %>" style="border: 1px solid #fca5a5; color: #b91c1c; font-weight: 700; background: <%= "__NONE__".equals(filterSampleCategory) ? "#fee2e2" : "#fff" %>;" onclick="tmApplyPreset('missingCategory')">&#9888; Missing Sample Category</button>
         <button type="button" class="tm-preset-chip <%= "__HAS__".equals(filterPanel) ? "active" : "" %>" onclick="tmApplyPreset('inPanel')">&#128203; In a Panel</button>
         <button type="button" class="tm-preset-chip <%= "Blood".equals(filterSampleCategory) ? "active" : "" %>" onclick="tmApplyPreset('blood')">Blood / Serum</button>
         <button type="button" class="tm-preset-chip <%= "Urine".equals(filterSampleCategory) ? "active" : "" %>" onclick="tmApplyPreset('urine')">Urine Tests</button>
@@ -1150,7 +1151,8 @@
     <button class="tm-btn" onclick="tmDeselectAll()">Deselect All</button>
     <button class="tm-btn tm-btn-success" onclick="tmBulkActivate()" title="Activate all selected tests">Activate Selected</button>
     <button class="tm-btn tm-btn-warning" onclick="tmBulkDeactivate()" title="Deactivate all selected tests">Deactivate Selected</button>
-    <button class="tm-btn tm-btn-danger" onclick="tmBulkDelete()">Delete Selected</button>
+    <button class="tm-btn tm-btn-danger" onclick="tmBulkDelete()">Delete Selected (<span id="tmDeleteCount">0</span>)</button>
+    <button class="tm-btn" style="background:#b91c1c;color:white;border:none;font-weight:600;padding:6px 14px;border-radius:4px;cursor:pointer;" onclick="tmBulkRemoveNonTests()" title="Permanently remove selected non-tests from OpenELIS and OpenMRS Test Category">&#128465; Remove from Test Category (<span id="tmSelectedCount">0</span>)</button>
 </div>
 
 <table id="tmTable">
@@ -1258,7 +1260,7 @@
                 <% if (openmrsSampleCategory != null && !openmrsSampleCategory.trim().isEmpty()) { %>
                     <span style="background:#e6f4ea;color:#137333;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;"><%= openmrsSampleCategory %></span>
                 <% } else { %>
-                    <span style="color:#bbb;">-</span>
+                    <span style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;" title="No OpenMRS Sample Category - Not a test or unmapped">&#9888; Missing Category</span>
                 <% } %>
             </td>
             <td class="<%= activeClass %>"><%= activeStr %></td>
@@ -1268,11 +1270,15 @@
             <td><%= tatDisplay %></td>
             <td><%= locationName != null ? locationName : "<i>All</i>" %></td>
             <td>
-                <span class="tm-edit-btn" onclick="tmEditRow(this)">Edit</span>
+                <span class="tm-edit-btn" onclick="tmEditRow(this)" title="Edit and give full test information">Edit</span>
                 &nbsp;|&nbsp;
                 <span class="tm-del-btn" onclick="tmDelete(<%= id %>)">Delete</span>
                 &nbsp;|&nbsp;
                 <span class="tm-edit-btn" onclick="tmToggleActive(<%= id %>)" title="Toggle Active"><%= "Y".equals(activeStr) ? "Deactivate" : "Activate" %></span>
+                <% if (openmrsSampleCategory == null || openmrsSampleCategory.trim().isEmpty()) { %>
+                    <br>
+                    <span class="tm-del-btn" style="color:#b91c1c;font-weight:bold;font-size:11px;display:inline-block;margin-top:3px;cursor:pointer;" onclick="tmRemoveNonTest(<%= id %>, '<%= (desc != null ? desc.replace("'", "\\'") : "") %>')" title="Remove this non-test from OpenELIS and OpenMRS Test Category">&#10006; Remove Non-Test</span>
+                <% } %>
             </td>
         </tr>
         <%
@@ -1396,7 +1402,35 @@
             </div>
             <div class="tm-form-row">
                 <label>OpenMRS Sample Category:</label>
-                <input type="text" name="openmrsSampleCategory" id="tmFormOpenmrsSample" placeholder="e.g. Blood Specimen, Serum, Urine">
+                <div style="flex:1;display:flex;gap:6px;">
+                    <input type="text" name="openmrsSampleCategory" id="tmFormOpenmrsSample" list="tmSampleCategoryDatalist" placeholder="Select or type sample category (e.g. Blood Specimen, Serum, Urine)..." style="flex:1;">
+                    <datalist id="tmSampleCategoryDatalist">
+                        <option value="Blood Specimen">
+                        <option value="Serum">
+                        <option value="Urine">
+                        <option value="Sputum">
+                        <option value="Cerebrospinal fluid">
+                        <option value="Parasitology">
+                        <option value="Nasopharyngeal Swab">
+                        <option value="Body fluid specimen">
+                        <option value="Ascitic fluid">
+                        <option value="Joint fluid">
+                        <option value="Pleural fluid">
+                        <option value="Tissue Specimen">
+                        <option value="Skin Specimen">
+                        <option value="Amniotic fluid specimen">
+                        <option value="Aspirate specimen">
+                        <option value="Biopsy specimen">
+                        <option value="Bone marrow specimen">
+                        <option value="Bronchial aspirate">
+                        <option value="Cervical Swab">
+                        <option value="High vaginal swab">
+                        <option value="Pus specimen">
+                        <option value="Semen">
+                        <option value="Whole blood sample">
+                        <option value="Other Specimen">
+                    </datalist>
+                </div>
             </div>
             <div class="tm-form-row">
                 <label>Lab Location:</label>
@@ -1411,6 +1445,14 @@
                         }
                     %>
                 </select>
+            </div>
+
+            <!-- Sync to OpenMRS and Odoo option -->
+            <div style="background:#f0f9ff;border:1px solid #bae6fd;padding:10px 14px;border-radius:6px;margin:14px 0;">
+                <label style="cursor:pointer;display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#0369a1;font-weight:600;margin:0;">
+                    <input type="checkbox" name="syncOpenmrsOdoo" id="tmFormSyncOpenmrsOdoo" value="true" checked style="margin-top:2px;">
+                    <span>&#8635; Automatically sync update to OpenMRS (concept name, short name, sample category set) &amp; Odoo ERP (product name)</span>
+                </label>
             </div>
 
             <div class="tm-form-actions">
