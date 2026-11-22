@@ -148,6 +148,23 @@ angular.module('bahmni.registration')
                 return null;
             };
 
+            var getEffectiveVisitParams = function () {
+                var effectiveVisitUuid = vm.visitUuid || $scope.visitUuid;
+                var effectiveVisitTypeUuid = vm.visitTypeUuid || ($scope.selectedVisitType && $scope.selectedVisitType.uuid);
+                if (!effectiveVisitTypeUuid && defaultVisitType) {
+                    var allVt = ($rootScope.regEncounterConfiguration && typeof $rootScope.regEncounterConfiguration.getVisitTypesAsArray === 'function')
+                        ? $rootScope.regEncounterConfiguration.getVisitTypesAsArray() : [];
+                    var vtMatch = _.find(allVt, function (v) { return v.name === defaultVisitType; });
+                    effectiveVisitTypeUuid = (vtMatch && vtMatch.uuid) || (typeof defaultVisitType === 'object' ? defaultVisitType.uuid : null);
+                }
+                var effectiveLocationUuid = vm.visitLocationUuid || locationUuid;
+                return {
+                    visitUuid: effectiveVisitUuid,
+                    visitTypeUuid: effectiveVisitTypeUuid,
+                    locationUuid: effectiveLocationUuid
+                };
+            };
+
             var save = function () {
                 var triageTypeObs = findObservationValue($scope.observations, "Triage Type");
                 var isOphthalmic = false;
@@ -159,14 +176,29 @@ angular.module('bahmni.registration')
 
                 return getFee(feeType).then(function (r) {
                     $rootScope.newCRPat = false;
+                    var vParams = getEffectiveVisitParams();
+
                     $scope.encounter = {
                         patientUuid: $scope.patient.uuid,
-                        locationUuid: locationUuid,
+                        locationUuid: vParams.locationUuid || locationUuid,
                         encounterTypeUuid: regEncounterTypeUuid,
                         orders: [],
                         drugOrders: [],
                         extensions: {}
                     };
+
+                    if ($scope.encounterUuid) {
+                        $scope.encounter.encounterUuid = $scope.encounterUuid;
+                    }
+                    if (vParams.visitUuid) {
+                        $scope.encounter.visitUuid = vParams.visitUuid;
+                    }
+                    if (vParams.visitTypeUuid) {
+                        $scope.encounter.visitTypeUuid = vParams.visitTypeUuid;
+                    }
+                    if (vParams.locationUuid) {
+                        $scope.encounter.visitLocationUuid = vParams.locationUuid;
+                    }
 
                     if (r.data.results && r.data.results[0]) {
                         $scope.encounter.orders.push({
@@ -222,7 +254,7 @@ angular.module('bahmni.registration')
 
             var searchActiveVisitsPromise = function () {
                 return visitService.search({
-                    patient: patientUuid, includeInactive: false, v: "custom:(uuid,location:(uuid))"
+                    patient: patientUuid, includeInactive: false, v: "custom:(uuid,location:(uuid),visitType:(uuid,name))"
                 }).then(function (response) {
                     var results = (response.data && response.data.results) ? response.data.results : [];
                     var matchedVisit = null;
@@ -237,6 +269,8 @@ angular.module('bahmni.registration')
 
                     var hasActiveVisit = !!matchedVisit;
                     vm.visitUuid = hasActiveVisit ? matchedVisit.uuid : "";
+                    vm.visitTypeUuid = (hasActiveVisit && matchedVisit.visitType && matchedVisit.visitType.uuid) || "";
+                    vm.visitLocationUuid = (hasActiveVisit && matchedVisit.location && matchedVisit.location.uuid) || "";
                     $scope.canCloseVisit = isUserPrivilegedToCloseVisit() && hasActiveVisit;
                 });
             };
@@ -387,8 +421,17 @@ angular.module('bahmni.registration')
                     var targetLocationUuid = resolveDestinationLocationUuid($scope.selectedVisitType);
                     var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: targetLocationUuid };
                     visitService.createVisit(visitDetails).then(function (response) {
+                        var newVisitUuid = (response && response.data && (response.data.uuid || (response.data.visit && response.data.visit.uuid))) || null;
+                        if (newVisitUuid) {
+                            vm.visitUuid = newVisitUuid;
+                        }
+                        vm.visitTypeUuid = ($scope.selectedVisitType && $scope.selectedVisitType.uuid) || null;
+                        vm.visitLocationUuid = targetLocationUuid;
                         ngDialog.close();
                         $scope.submit();
+                    }, function () {
+                        ngDialog.close();
+                        messagingService.showMessage('error', 'Error creating destination visit');
                     });
                 });
             };
@@ -415,8 +458,17 @@ angular.module('bahmni.registration')
                         var targetLocationUuid = resolveDestinationLocationUuid($scope.selectedVisitType);
                         var visitDetails = { patient: patientUuid, visitType: $scope.selectedVisitType.uuid, location: targetLocationUuid };
                         visitService.createVisit(visitDetails).then(function (response) {
+                            var newVisitUuid = (response && response.data && (response.data.uuid || (response.data.visit && response.data.visit.uuid))) || null;
+                            if (newVisitUuid) {
+                                vm.visitUuid = newVisitUuid;
+                            }
+                            vm.visitTypeUuid = ($scope.selectedVisitType && $scope.selectedVisitType.uuid) || null;
+                            vm.visitLocationUuid = targetLocationUuid;
                             ngDialog.close();
                             $scope.submit();
+                        }, function () {
+                            ngDialog.close();
+                            messagingService.showMessage('error', 'Error creating destination visit');
                         });
                     }
 
@@ -515,14 +567,29 @@ angular.module('bahmni.registration')
 
 
             $scope.changeVisits = function () {
+                var vParams = getEffectiveVisitParams();
                 $scope.encounter = {
                     patientUuid: $scope.patient.uuid,
-                    locationUuid: locationUuid,
+                    locationUuid: vParams.locationUuid || locationUuid,
                     encounterTypeUuid: regEncounterTypeUuid,
                     orders: [],
                     drugOrders: [],
                     extensions: {}
                 };
+
+                if ($scope.encounterUuid) {
+                    $scope.encounter.encounterUuid = $scope.encounterUuid;
+                }
+                if (vParams.visitUuid) {
+                    $scope.encounter.visitUuid = vParams.visitUuid;
+                }
+                if (vParams.visitTypeUuid) {
+                    $scope.encounter.visitTypeUuid = vParams.visitTypeUuid;
+                }
+                if (vParams.locationUuid) {
+                    $scope.encounter.visitLocationUuid = vParams.locationUuid;
+                }
+
                 $scope.encounter.observations = $scope.observations;
                 $scope.encounter.observations = new Bahmni.Common.Domain.ObservationFilter().filter($scope.encounter.observations);
                 addFormObservations($scope.encounter.observations);
@@ -534,7 +601,7 @@ angular.module('bahmni.registration')
                     afterSave();
                 });
 
-            }
+            };
 
             $scope.enterVisitDetails = $rootScope.newCRPat;
             $scope.disableFormSubmitOnEnter = function () {
