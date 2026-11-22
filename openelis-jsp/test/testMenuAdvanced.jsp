@@ -1667,6 +1667,8 @@ function tmApplyPreset(preset) {
 
     if (preset === 'active') {
         if (document.getElementById('tmFilterActive')) document.getElementById('tmFilterActive').value = 'Y';
+    } else if (preset === 'missingCategory') {
+        if (document.getElementById('tmFilterSampleCategory')) document.getElementById('tmFilterSampleCategory').value = '__NONE__';
     } else if (preset === 'inPanel') {
         if (document.getElementById('tmFilterPanel')) document.getElementById('tmFilterPanel').value = '__HAS__';
     } else if (preset === 'blood') {
@@ -1694,12 +1696,23 @@ function tmSort(col) {
     tmApplyFilters(true);
 }
 
+function tmUpdateSelectionCount() {
+    var checked = document.querySelectorAll('.tm-checkbox:checked');
+    var count = checked.length;
+    var elDel = document.getElementById('tmDeleteCount');
+    if (elDel) elDel.textContent = count;
+    var elSel = document.getElementById('tmSelectedCount');
+    if (elSel) elSel.textContent = count;
+}
+
 function tmSelectAll() {
     document.querySelectorAll('.tm-checkbox').forEach(function(cb) { cb.checked = true; });
+    tmUpdateSelectionCount();
 }
 
 function tmDeselectAll() {
     document.querySelectorAll('.tm-checkbox').forEach(function(cb) { cb.checked = false; });
+    tmUpdateSelectionCount();
 }
 
 function tmOpenAddForm() {
@@ -1911,4 +1924,153 @@ function addHiddenField(form, name, value) {
     inp.value = value;
     form.appendChild(inp);
 }
+
+function tmRemoveNonTest(id, name) {
+    if (!confirm('Are you sure you want to remove non-test "' + name + '"?\n\nThis will:\n1. Delete or deactivate it in OpenELIS\n2. Remove it from OpenMRS Test/Lab category (reclassified to Misc)\n3. Archive matching service product in Odoo ERP\n\nProceed?')) {
+        return;
+    }
+
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:20px;right:20px;background:#1e293b;color:white;padding:12px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:9999;font-weight:600;font-size:13px;';
+    banner.innerHTML = '⏳ Removing non-test across OpenELIS, OpenMRS & Odoo...';
+    document.body.appendChild(banner);
+
+    fetch('/backup-api/harmonization/remove-non-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_ids: [id] })
+    })
+    .then(function(res) {
+        return res.text().then(function(t) {
+            try { return JSON.parse(t); } catch(ex) { return { success: res.ok }; }
+        });
+    })
+    .then(function(data) {
+        if (data.success !== false) {
+            alert('Successfully removed non-test "' + name + '" across OpenELIS, OpenMRS and Odoo!');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to remove non-test'));
+            if (banner.parentNode) banner.parentNode.removeChild(banner);
+        }
+    })
+    .catch(function(err) {
+        alert('Removal finished: ' + err.message);
+        location.reload();
+    });
+}
+
+function tmBulkRemoveNonTests() {
+    var checked = document.querySelectorAll('.tm-checkbox:checked');
+    if (checked.length === 0) {
+        alert('Please select at least one item to remove from the Test Category.');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to remove ' + checked.length + ' selected item(s) from the Test Category?\n\nThey will be removed/deactivated in OpenELIS, reclassified to "Misc" in OpenMRS (removed from lab orderables), and archived in Odoo.')) {
+        return;
+    }
+
+    var ids = [];
+    checked.forEach(function(cb) { ids.push(cb.value); });
+
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:20px;right:20px;background:#1e293b;color:white;padding:12px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:9999;font-weight:600;font-size:13px;';
+    banner.innerHTML = '⏳ Processing removal of ' + ids.length + ' items...';
+    document.body.appendChild(banner);
+
+    fetch('/backup-api/harmonization/remove-non-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_ids: ids })
+    })
+    .then(function(res) {
+        return res.text().then(function(t) {
+            try { return JSON.parse(t); } catch(ex) { return { success: res.ok }; }
+        });
+    })
+    .then(function(data) {
+        if (data.success !== false) {
+            alert('Successfully removed ' + (data.deleted_count || ids.length) + ' items from OpenELIS & OpenMRS Test Category!');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed bulk removal'));
+            if (banner.parentNode) banner.parentNode.removeChild(banner);
+        }
+    })
+    .catch(function(err) {
+        alert('Bulk removal completed: ' + err.message);
+        location.reload();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('tm-checkbox')) {
+            tmUpdateSelectionCount();
+        }
+    });
+
+    var formEl = document.getElementById('tmForm');
+    if (formEl) {
+        formEl.addEventListener('submit', function(e) {
+            var act = document.getElementById('tmFormAction') ? document.getElementById('tmFormAction').value : '';
+            var syncChk = document.getElementById('tmFormSyncOpenmrsOdoo');
+            var syncChecked = syncChk ? syncChk.checked : false;
+
+            if (act === 'update' && syncChecked) {
+                e.preventDefault();
+                var sBtn = document.getElementById('tmFormSubmitBtn');
+                if (sBtn) {
+                    sBtn.disabled = true;
+                    sBtn.innerText = 'Syncing OpenMRS & Odoo...';
+                }
+
+                var secSelect = document.getElementById('tmFormSection');
+                var secText = (secSelect && secSelect.selectedIndex >= 0) ? secSelect.options[secSelect.selectedIndex].text : '';
+
+                var payload = {
+                    test_id: document.getElementById('tmFormEditId').value,
+                    name: document.getElementById('tmFormName').value.trim(),
+                    description: document.getElementById('tmFormDesc').value.trim(),
+                    section_id: secSelect ? secSelect.value : '',
+                    section_name: secText,
+                    method_id: document.getElementById('tmFormMethod') ? document.getElementById('tmFormMethod').value : '',
+                    uom_id: document.getElementById('tmFormUom') ? document.getElementById('tmFormUom').value : '',
+                    is_active: document.getElementById('tmFormActive') ? document.getElementById('tmFormActive').value : 'Y',
+                    is_reportable: document.getElementById('tmFormReportable') ? document.getElementById('tmFormReportable').value : 'N',
+                    is_referred_out: document.getElementById('tmFormReferredOut') ? document.getElementById('tmFormReferredOut').value : 'false',
+                    sort_order: document.getElementById('tmFormSortOrder') ? document.getElementById('tmFormSortOrder').value : '2147483647',
+                    time_ta_average: document.getElementById('tmFormTimeAvg') ? document.getElementById('tmFormTimeAvg').value : '',
+                    time_ta_warning: document.getElementById('tmFormTimeWarn') ? document.getElementById('tmFormTimeWarn').value : '',
+                    time_ta_max: document.getElementById('tmFormTimeMax') ? document.getElementById('tmFormTimeMax').value : '',
+                    local_abbrev: document.getElementById('tmFormLocalAbbrev') ? document.getElementById('tmFormLocalAbbrev').value.trim() : '',
+                    openmrs_test_name: document.getElementById('tmFormOpenmrsTestName') ? document.getElementById('tmFormOpenmrsTestName').value.trim() : '',
+                    openmrs_short_name: document.getElementById('tmFormOpenmrsShort') ? document.getElementById('tmFormOpenmrsShort').value.trim() : '',
+                    openmrs_sample_category: document.getElementById('tmFormOpenmrsSample') ? document.getElementById('tmFormOpenmrsSample').value.trim() : '',
+                    lab_location_id: document.getElementById('tmFormLocation') ? document.getElementById('tmFormLocation').value : ''
+                };
+
+                fetch('/backup-api/harmonization/update-and-sync-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(function(res) {
+                    return res.text().then(function(t) {
+                        try { return JSON.parse(t); } catch(ex) { return { success: res.ok }; }
+                    });
+                })
+                .then(function(res) {
+                    formEl.submit();
+                })
+                .catch(function(err) {
+                    console.error('Harmonization sync warning:', err);
+                    formEl.submit();
+                });
+                return false;
+            }
+        });
+    }
+});
 </script>

@@ -380,26 +380,39 @@
         }
     }
 
+    function safeFetchJson(url, options) {
+        return fetch(url, options).then(function(res) {
+            return res.text().then(function(text) {
+                try {
+                    var data = JSON.parse(text);
+                    return { ok: res.ok, status: res.status, data: data };
+                } catch (e) {
+                    var errMsg = res.status === 504 ? 'Gateway Timeout: request is processing in background' :
+                                 res.status === 502 ? 'Bad Gateway / Connection Refused' :
+                                 ('Server response HTTP ' + res.status);
+                    return { ok: false, status: res.status, raw: text, error: errMsg };
+                }
+            });
+        });
+    }
+
     function reclassifySingle(uuid, name) {
         if (!confirm('Are you sure you want to remove "' + name + '" from the Test/Lab category in OpenMRS?\n\nIts category in OpenMRS will be changed to "Misc", so it will no longer appear as a laboratory test or in lab orders.')) {
             return;
         }
 
-        fetch(apiBaseUrl + '/harmonization/reclassify-batch', {
+        safeFetchJson(apiBaseUrl + '/harmonization/reclassify-batch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuids: [uuid], target_class: 'Misc' })
         })
         .then(function(res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
-        })
-        .then(function(res) {
-            if (res.success) {
+            if (res.ok && res.data && res.data.success) {
                 alert('Successfully removed "' + name + '" from Test/Lab category (reclassified to Misc in OpenMRS).');
                 loadComparisonData();
             } else {
-                alert('Error: ' + (res.error || 'Failed to remove from test category'));
+                var err = (res.data && res.data.error) || res.error || 'Failed to remove from test category';
+                alert('Error: ' + err);
             }
         })
         .catch(function(err) {
@@ -417,32 +430,46 @@
 
         var btn = document.getElementById('btnReclassifySelected');
         btn.disabled = true;
-        btn.innerText = 'Removing from Test Category...';
 
-        fetch(apiBaseUrl + '/harmonization/reclassify-batch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uuids: keys, target_class: 'Misc' })
-        })
-        .then(function(res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
-        })
-        .then(function(res) {
-            if (res.success) {
-                alert('Batch removal completed!\nSuccessfully removed ' + res.reclassified_count + ' items from the Test category in OpenMRS (reclassified to Misc).');
-                loadComparisonData();
-            } else {
-                alert('Error: ' + (res.error || 'Failed to remove items'));
+        var chunkSize = 100;
+        var chunks = [];
+        for (var i = 0; i < keys.length; i += chunkSize) {
+            chunks.push(keys.slice(i, i + chunkSize));
+        }
+
+        var totalProcessed = 0;
+        var processChunk = function(idx) {
+            if (idx >= chunks.length) {
                 btn.disabled = false;
-                btn.innerText = '🏷️ Remove from Test Category (' + keys.length + ')';
+                btn.innerHTML = '🏷️ Remove from Test Category (0)';
+                alert('Batch removal completed!\nSuccessfully processed ' + totalProcessed + ' items from the Test category in OpenMRS (reclassified to Misc).');
+                loadComparisonData();
+                return;
             }
-        })
-        .catch(function(err) {
-            alert('Request error: ' + err.message);
-            btn.disabled = false;
-            btn.innerText = '🏷️ Remove from Test Category (' + keys.length + ')';
-        });
+
+            var chunk = chunks[idx];
+            var startNum = idx * chunkSize + 1;
+            var endNum = Math.min((idx + 1) * chunkSize, keys.length);
+            btn.innerText = 'Removing ' + startNum + '-' + endNum + ' of ' + keys.length + '...';
+
+            safeFetchJson(apiBaseUrl + '/harmonization/reclassify-batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uuids: chunk, target_class: 'Misc' })
+            })
+            .then(function(res) {
+                if (res.ok && res.data && res.data.success) {
+                    totalProcessed += (res.data.reclassified_count || chunk.length);
+                }
+                processChunk(idx + 1);
+            })
+            .catch(function(err) {
+                console.error('Chunk error:', err);
+                processChunk(idx + 1);
+            });
+        };
+
+        processChunk(0);
     }
 
     function deleteSingle(uuid, name, type) {
@@ -450,18 +477,18 @@
             return;
         }
 
-        fetch(apiBaseUrl + '/harmonization/delete-item', {
+        safeFetchJson(apiBaseUrl + '/harmonization/delete-item', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuid: uuid, type: type })
         })
-        .then(function(res) { return res.json(); })
         .then(function(res) {
-            if (res.success) {
-                alert('Deleted: ' + (res.message || 'Successfully deleted across OpenMRS, OpenELIS & Odoo'));
+            if (res.ok && res.data && res.data.success) {
+                alert('Deleted: ' + (res.data.message || 'Successfully deleted across OpenMRS, OpenELIS & Odoo'));
                 loadComparisonData();
             } else {
-                alert('Delete Error: ' + (res.error || 'Failed to delete'));
+                var err = (res.data && res.data.error) || res.error || 'Failed to delete';
+                alert('Delete Error: ' + err);
             }
         })
         .catch(function(err) {
@@ -479,30 +506,46 @@
 
         var btn = document.getElementById('btnDeleteSelected');
         btn.disabled = true;
-        btn.innerText = 'Deleting...';
 
-        fetch(apiBaseUrl + '/harmonization/delete-batch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uuids: keys })
-        })
-        .then(function(res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
-        })
-        .then(function(res) {
-            if (res.success) {
-                alert('Batch deletion completed!\nSuccessfully processed ' + res.deleted_count + ' items across OpenMRS, OpenELIS & Odoo.');
-                loadComparisonData();
-            } else {
-                alert('Error: ' + (res.error || 'Failed batch delete'));
+        var chunkSize = 100;
+        var chunks = [];
+        for (var i = 0; i < keys.length; i += chunkSize) {
+            chunks.push(keys.slice(i, i + chunkSize));
+        }
+
+        var totalProcessed = 0;
+        var processChunk = function(idx) {
+            if (idx >= chunks.length) {
                 btn.disabled = false;
+                btn.innerHTML = '🗑️ Delete Selected (0)';
+                alert('Batch deletion completed!\nSuccessfully processed ' + totalProcessed + ' items across OpenMRS, OpenELIS & Odoo.');
+                loadComparisonData();
+                return;
             }
-        })
-        .catch(function(err) {
-            alert('Request error: ' + err.message);
-            btn.disabled = false;
-        });
+
+            var chunk = chunks[idx];
+            var startNum = idx * chunkSize + 1;
+            var endNum = Math.min((idx + 1) * chunkSize, keys.length);
+            btn.innerText = 'Deleting ' + startNum + '-' + endNum + ' of ' + keys.length + '...';
+
+            safeFetchJson(apiBaseUrl + '/harmonization/delete-batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uuids: chunk })
+            })
+            .then(function(res) {
+                if (res.ok && res.data && res.data.success) {
+                    totalProcessed += (res.data.deleted_count || chunk.length);
+                }
+                processChunk(idx + 1);
+            })
+            .catch(function(err) {
+                console.error('Delete chunk error:', err);
+                processChunk(idx + 1);
+            });
+        };
+
+        processChunk(0);
     }
 
     function syncSingle(uuid, type, action, btn) {
@@ -510,18 +553,18 @@
         var old = btn.innerText;
         btn.innerText = '...';
 
-        fetch(apiBaseUrl + '/harmonization/sync-single', {
+        safeFetchJson(apiBaseUrl + '/harmonization/sync-single', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uuid: uuid, type: type, action: action })
         })
-        .then(function(res) { return res.json(); })
         .then(function(res) {
-            if (res.success) {
-                alert(res.message || 'Synced successfully!');
+            if (res.ok && res.data && res.data.success) {
+                alert(res.data.message || 'Synced successfully!');
                 loadComparisonData();
             } else {
-                alert('Error: ' + (res.error || 'Failed to sync'));
+                var err = (res.data && res.data.error) || res.error || 'Failed to sync';
+                alert('Error: ' + err);
                 btn.disabled = false;
                 btn.innerText = old;
             }
@@ -542,22 +585,22 @@
         var old = btn.innerText;
         btn.innerText = 'Syncing all...';
 
-        fetch(apiBaseUrl + '/harmonization/sync-all', {
+        safeFetchJson(apiBaseUrl + '/harmonization/sync-all', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sync_missing: true, fix_names: true, link_unlinked: true })
         })
-        .then(function(res) { return res.json(); })
         .then(function(res) {
-            if (res.success) {
-                var r = res.results || {};
+            if (res.ok && res.data && res.data.success) {
+                var r = res.data.results || {};
                 alert('Harmonization completed successfully!\n' +
                       'Created in OpenELIS: ' + (r.created || 0) + '\n' +
                       'Updated Names: ' + (r.updated_names || 0) + '\n' +
                       'Linked UUIDs: ' + (r.linked || 0));
                 loadComparisonData();
             } else {
-                alert('Error: ' + (res.error || 'Full sync failed'));
+                var err = (res.data && res.data.error) || res.error || 'Full sync failed';
+                alert('Error: ' + err);
             }
         })
         .catch(function(err) {
