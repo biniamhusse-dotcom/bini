@@ -1,0 +1,338 @@
+<div class="main-diagnosis-config-container" style="padding: 24px 28px; background: #f8fafc; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+
+    <!-- Top Action / Navigation Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <a href="#/dashboard" class="btn btn-default" style="border: 1px solid #cbd5e1; background: #ffffff; color: #475569; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                <i class="fa fa-arrow-left"></i> Admin Home
+            </a>
+            <div>
+                <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa fa-star" style="color: #f59e0b;"></i> Main Diagnosis Settings &amp; Rules
+                </h2>
+                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                    Control mandatory enforcement, occurrence rules, code filters, and dictionary validation across clinical encounters
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <a href="#/diagnosisManagement" class="btn" style="background: #ffffff; border: 1px solid #0284c7; color: #0284c7; border-radius: 6px; padding: 8px 16px; font-weight: 600; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-stethoscope"></i> ICD-11 Dictionary
+            </a>
+            <button type="button" class="btn" ng-click="resetDefaults()"
+                    style="background: #ffffff; border: 1px solid #cbd5e1; color: #64748b; border-radius: 6px; padding: 8px 14px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-undo"></i> Reset Defaults
+            </button>
+            <button type="button" class="btn" ng-click="loadConfig()"
+                    style="background: #ffffff; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; padding: 8px 14px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i> Refresh
+            </button>
+            <button type="button" class="btn" ng-click="saveConfig()" ng-disabled="saving"
+                    style="background: #0284c7; color: #ffffff; border: none; border-radius: 6px; padding: 8px 20px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(2,132,199,0.3);">
+                <i class="fa" ng-class="saving ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                <span>{{ saving ? 'Saving...' : 'Save Changes' }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Feedback Banners -->
+    <div ng-if="successMessage" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #065f46; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa fa-check-circle" style="color: #059669; font-size: 16px;"></i>
+            <span>{{ successMessage }}</span>
+        </div>
+        <button type="button" ng-click="successMessage = ''" style="background: none; border: none; color: #065f46; cursor: pointer; font-size: 16px;">&times;</button>
+    </div>
+
+    <div ng-if="errorMessage" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #991b1b; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa fa-exclamation-triangle" style="color: #dc2626; font-size: 16px;"></i>
+            <span>{{ errorMessage }}</span>
+        </div>
+        <button type="button" ng-click="errorMessage = ''" style="background: none; border: none; color: #991b1b; cursor: pointer; font-size: 16px;">&times;</button>
+    </div>
+
+    <!-- Status Overview KPI Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <!-- Feature Status -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Feature Status</div>
+            <div style="font-size: 20px; font-weight: 800; margin-top: 4px;" ng-style="config.enabled ? {'color': '#059669'} : {'color': '#dc2626'}">
+                <i class="fa" ng-class="config.enabled ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                {{ config.enabled ? 'ACTIVE' : 'DISABLED' }}
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Main diagnosis section in Consultation</div>
+        </div>
+
+        <!-- Mandatory Status -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);"
+             ng-style="config.isMandatory ? {'border-color': '#fca5a5', 'background': '#fffafa'} : {'border-color': '#cbd5e1'}">
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Requirement Rule</div>
+            <div style="font-size: 20px; font-weight: 800; margin-top: 4px;" ng-style="config.isMandatory ? {'color': '#dc2626'} : {'color': '#0284c7'}">
+                <i class="fa" ng-class="config.isMandatory ? 'fa-exclamation-circle' : 'fa-info-circle'"></i>
+                {{ config.isMandatory ? 'MANDATORY' : 'OPTIONAL' }}
+            </div>
+            <div style="font-size: 11px; margin-top: 2px;" ng-style="config.isMandatory ? {'color': '#b91c1c'} : {'color': '#64748b'}">
+                {{ config.isMandatory ? 'Encounter blocked if omitted' : 'Doctor can save without main diagnosis' }}
+            </div>
+        </div>
+
+        <!-- Occurrence Status -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Occurrence Rule</div>
+            <div style="font-size: 20px; font-weight: 800; margin-top: 4px; color: #0f172a;">
+                {{ config.requireOccurrence ? 'REQUIRED' : 'OPTIONAL' }}
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">New or Repeat condition flag</div>
+        </div>
+
+        <!-- Coding Strictness -->
+        <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Coding Mode</div>
+            <div style="font-size: 20px; font-weight: 800; margin-top: 4px; color: #0f172a;">
+                {{ config.allowNonCoded ? 'FREE-TEXT ALLOWED' : 'CODED ONLY' }}
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
+                {{ config.allowNonCoded ? 'Accepts unmapped entries' : 'Must pick from search list' }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Configuration Panel & Live Preview Grid -->
+    <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px; align-items: start;">
+
+        <!-- Left: Configuration Form -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <h3 style="margin: 0 0 18px 0; font-size: 16px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="fa fa-sliders" style="color: #0284c7;"></i> Configuration Switches &amp; Rules
+            </h3>
+
+            <!-- Switch 1: Feature Enable -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f8fafc;">
+                <div style="padding-right: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #1e293b;">Enable Main Diagnosis Feature</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                        Display the dedicated Main Diagnosis highlight box on the clinical Consultation Diagnosis tab.
+                    </div>
+                </div>
+                <div>
+                    <label style="position: relative; display: inline-block; width: 48px; height: 26px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" ng-model="config.enabled" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 26px;"
+                              ng-style="config.enabled ? {'background-color': '#0284c7'} : {}">
+                            <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"
+                                  ng-style="config.enabled ? {'transform': 'translateX(22px)'} : {}"></span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Switch 2: Mandatory vs Unmandatory -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #f8fafc; background: #fafafa; margin: 0 -24px; padding-left: 24px; padding-right: 24px;">
+                <div style="padding-right: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;"
+                         ng-style="config.isMandatory ? {'color': '#dc2626'} : {'color': '#1e293b'}">
+                        <span>Make Main Diagnosis Mandatory</span>
+                        <span style="font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700;"
+                              ng-style="config.isMandatory ? {'background': '#fee2e2', 'color': '#dc2626'} : {'background': '#e0f2fe', 'color': '#0284c7'}">
+                            {{ config.isMandatory ? 'ENFORCED' : 'OPTIONAL' }}
+                        </span>
+                    </div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 4px; line-height: 1.5;">
+                        <strong ng-if="config.isMandatory" style="color: #b91c1c;">
+                            Mandatory: Doctors cannot save the consultation without selecting a Main Diagnosis.
+                        </strong>
+                        <strong ng-if="!config.isMandatory" style="color: #0369a1;">
+                            Unmandatory (Optional): Doctors can save consultations without a Main Diagnosis. If left empty, information saves smoothly.
+                        </strong>
+                    </div>
+                </div>
+                <div>
+                    <label style="position: relative; display: inline-block; width: 48px; height: 26px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" ng-model="config.isMandatory" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 26px;"
+                              ng-style="config.isMandatory ? {'background-color': '#dc2626'} : {}">
+                            <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"
+                                  ng-style="config.isMandatory ? {'transform': 'translateX(22px)'} : {}"></span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Switch 3: Occurrence Mandatory -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f8fafc;">
+                <div style="padding-right: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #1e293b;">Occurrence Mandatory (New / Repeat)</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                        When enabled, doctor must select Occurrence (New or Repeat) when a Main Diagnosis is provided. When disabled, Occurrence is optional.
+                    </div>
+                </div>
+                <div>
+                    <label style="position: relative; display: inline-block; width: 48px; height: 26px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" ng-model="config.requireOccurrence" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 26px;"
+                              ng-style="config.requireOccurrence ? {'background-color': '#0284c7'} : {}">
+                            <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"
+                                  ng-style="config.requireOccurrence ? {'transform': 'translateX(22px)'} : {}"></span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Switch 4: Allow Non-Coded / Free Text -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f8fafc;">
+                <div style="padding-right: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #1e293b;">Allow Non-Coded Free Text Entries</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                        When OFF (recommended for ICD compliance), doctors must pick from coded terms. When ON, free-text entries can be saved directly.
+                    </div>
+                </div>
+                <div>
+                    <label style="position: relative; display: inline-block; width: 48px; height: 26px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" ng-model="config.allowNonCoded" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 26px;"
+                              ng-style="config.allowNonCoded ? {'background-color': '#0284c7'} : {}">
+                            <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"
+                                  ng-style="config.allowNonCoded ? {'transform': 'translateX(22px)'} : {}"></span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Switch 5: Enforce Single Main Diagnosis -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f8fafc;">
+                <div style="padding-right: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #1e293b;">Enforce Single Primary Diagnosis</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                        Only one Main Diagnosis per encounter. Any additional diagnoses are automatically categorized as Secondary.
+                    </div>
+                </div>
+                <div>
+                    <label style="position: relative; display: inline-block; width: 48px; height: 26px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" ng-model="config.enforceSingle" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 26px;"
+                              ng-style="config.enforceSingle ? {'background-color': '#0284c7'} : {}">
+                            <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"
+                                  ng-style="config.enforceSingle ? {'transform': 'translateX(22px)'} : {}"></span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Setting 6: Default Code Filter -->
+            <div style="padding: 16px 0; border-bottom: 1px solid #f8fafc;">
+                <div style="font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">Default Code Filter on Diagnosis Tab</div>
+                <div style="font-size: 12px; color: #64748b; margin-bottom: 10px;">
+                    Select which code system button is pre-selected for clinicians when opening the Diagnosis consultation screen.
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" ng-click="config.defaultCodeFilter = 'All'"
+                            style="padding: 7px 16px; font-size: 12px; font-weight: 600; border-radius: 20px; border: 1px solid #cbd5e1; cursor: pointer;"
+                            ng-style="config.defaultCodeFilter === 'All' ? {'background': '#0284c7', 'color': 'white', 'border-color': '#0284c7'} : {'background': '#fff', 'color': '#475569'}">
+                        All Codes
+                    </button>
+                    <button type="button" ng-click="config.defaultCodeFilter = 'ICD-11'"
+                            style="padding: 7px 16px; font-size: 12px; font-weight: 600; border-radius: 20px; border: 1px solid #cbd5e1; cursor: pointer;"
+                            ng-style="config.defaultCodeFilter === 'ICD-11' ? {'background': '#f59e0b', 'color': 'white', 'border-color': '#f59e0b'} : {'background': '#fff', 'color': '#475569'}">
+                        <i class="fa fa-star" style="font-size: 10px;"></i> ICD-11
+                    </button>
+                    <button type="button" ng-click="config.defaultCodeFilter = 'ICD-10'"
+                            style="padding: 7px 16px; font-size: 12px; font-weight: 600; border-radius: 20px; border: 1px solid #cbd5e1; cursor: pointer;"
+                            ng-style="config.defaultCodeFilter === 'ICD-10' ? {'background': '#10b981', 'color': 'white', 'border-color': '#10b981'} : {'background': '#fff', 'color': '#475569'}">
+                        ICD-10
+                    </button>
+                </div>
+            </div>
+
+            <!-- Save Bar Bottom -->
+            <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="btn" ng-click="resetDefaults()"
+                        style="background: #ffffff; border: 1px solid #cbd5e1; color: #64748b; border-radius: 6px; padding: 9px 18px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                    Reset
+                </button>
+                <button type="button" class="btn" ng-click="saveConfig()" ng-disabled="saving"
+                        style="background: #0284c7; color: #ffffff; border: none; border-radius: 6px; padding: 9px 24px; font-weight: 600; font-size: 13px; cursor: pointer; box-shadow: 0 1px 3px rgba(2,132,199,0.3);">
+                    <i class="fa" ng-class="saving ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                    <span>{{ saving ? 'Saving Changes...' : 'Save &amp; Apply Changes' }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Interactive Live Preview Card -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-desktop" style="color: #64748b;"></i> Live Consultation Preview
+                </h4>
+                <span style="font-size: 11px; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-weight: 600;">
+                    Real-time doctor view
+                </span>
+            </div>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 16px;">
+                This preview dynamically demonstrates how the Main Diagnosis section will render to clinicians based on the switches above:
+            </div>
+
+            <!-- Simulated Clinical Box -->
+            <div style="background:#fff8f0;border:2px solid #f5a623;border-radius:8px;padding:14px;box-shadow: 0 2px 4px rgba(245,166,35,0.08);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                    <h3 style="margin:0;font-size:13px;color:#333;font-weight:700;">
+                        <i class="fa fa-star" style="color:#f5a623;margin-right:6px;"></i>Main Diagnosis
+                        <span ng-if="config.isMandatory" style="font-weight:700;font-size:11px;color:#dc2626;margin-left:6px;"><i class="fa fa-asterisk" style="font-size:8px;"></i> Mandatory</span>
+                        <span ng-if="!config.isMandatory" style="font-weight:600;font-size:11px;color:#64748b;margin-left:6px;">(Optional)</span>
+                        <span style="font-weight:normal;font-size:11px;color:#888;margin-left:4px;">&bull; Only ONE per encounter</span>
+                    </h3>
+                    <div style="display:inline-flex;align-items:center;gap:4px;">
+                        <span style="font-size:11px;color:#666;font-weight:600;">Filter:</span>
+                        <span style="padding:2px 8px;font-size:10px;border-radius:10px;font-weight:700;"
+                              ng-style="config.defaultCodeFilter === 'All' ? {'background':'#0284c7','color':'white'} : {'background':'#e2e8f0','color':'#64748b'}">All</span>
+                        <span style="padding:2px 8px;font-size:10px;border-radius:10px;font-weight:700;"
+                              ng-style="config.defaultCodeFilter === 'ICD-11' ? {'background':'#f5a623','color':'white'} : {'background':'#e2e8f0','color':'#64748b'}">ICD-11</span>
+                        <span style="padding:2px 8px;font-size:10px;border-radius:10px;font-weight:700;"
+                              ng-style="config.defaultCodeFilter === 'ICD-10' ? {'background':'#10b981','color':'white'} : {'background':'#e2e8f0','color':'#64748b'}">ICD-10</span>
+                    </div>
+                </div>
+
+                <!-- Simulated Input & Select Row -->
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <div style="flex:2;">
+                        <input type="text" disabled value="Pneumonia (CA40 - ICD-11)"
+                               style="width:100%;height:34px;padding:4px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;box-sizing:border-box;">
+                    </div>
+                    <div style="flex:1;">
+                        <select disabled style="width:100%;height:34px;padding:4px 8px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;box-sizing:border-box;">
+                            <option>Repeat</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Badges -->
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                    <span style="background:#10b981;color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;">
+                        <i class="fa fa-check"></i> Coded
+                    </span>
+                    <span style="background:#f59e0b;color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;">
+                        <i class="fa fa-star"></i> ICD-11: CA40
+                    </span>
+                    <span style="background:#e2e8f0;color:#475569;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;">
+                        <i class="fa fa-times"></i> Clear
+                    </span>
+                </div>
+            </div>
+
+            <!-- Rules Summary Card -->
+            <div style="margin-top: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
+                <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Active Rules Summary:</div>
+                <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #475569; line-height: 1.6;">
+                    <li><strong>Requirement:</strong> {{ config.isMandatory ? 'Main diagnosis is MANDATORY for all encounters' : 'Main diagnosis is OPTIONAL (doctors can save without it)' }}</li>
+                    <li><strong>Occurrence:</strong> {{ config.requireOccurrence ? 'New / Repeat is required when diagnosis is picked' : 'Occurrence is optional' }}</li>
+                    <li><strong>Validation:</strong> {{ config.allowNonCoded ? 'Free-text entries allowed' : 'Must select from dictionary list' }}</li>
+                    <li><strong>Default Filter:</strong> {{ config.defaultCodeFilter || 'All' }}</li>
+                    <li><strong>Status:</strong> Immediate zero-downtime persistence</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+</div>

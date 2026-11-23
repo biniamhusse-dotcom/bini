@@ -3238,6 +3238,70 @@ def run_openmrs_query(sql):
             rows.append(dict(zip(headers, parts)))
     return rows
 
+def load_main_diagnosis_config():
+    clinical_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical", "mainDiagnosisConfig.json")
+    default_config = {
+        "enabled": True,
+        "isMandatory": False,
+        "requireOccurrence": True,
+        "allowNonCoded": False,
+        "enforceSingle": True,
+        "defaultCodeFilter": "All",
+        "description": "Configuration for Main Diagnosis in clinical consultation."
+    }
+    if os.path.isfile(clinical_file):
+        try:
+            with open(clinical_file, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+                if isinstance(saved, dict):
+                    default_config.update(saved)
+                    return default_config
+        except Exception as e:
+            log(f"Warning reading mainDiagnosisConfig.json: {e}")
+    try:
+        rows = run_openmrs_query("SELECT property_value FROM global_property WHERE property = 'bahmni.clinical.mainDiagnosisConfig' LIMIT 1;")
+        if rows and rows[0] and rows[0].get("property_value"):
+            gp_val = json.loads(rows[0]["property_value"])
+            if isinstance(gp_val, dict):
+                default_config.update(gp_val)
+    except Exception as e:
+        pass
+    return default_config
+
+def save_main_diagnosis_config(payload):
+    current = load_main_diagnosis_config()
+    for k in ["enabled", "isMandatory", "requireOccurrence", "allowNonCoded", "enforceSingle", "defaultCodeFilter", "description"]:
+        if k in payload:
+            current[k] = payload[k]
+    current["updatedAt"] = datetime.datetime.utcnow().isoformat() + "Z"
+
+    clinical_dir = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical")
+    os.makedirs(clinical_dir, exist_ok=True)
+    cfg_file = os.path.join(clinical_dir, "mainDiagnosisConfig.json")
+    write_file_safe(cfg_file, json.dumps(current, indent=2, ensure_ascii=False) + "\n")
+
+    sync_file_to_bahmni_web(cfg_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/clinical/mainDiagnosisConfig.json")
+
+    try:
+        ui_dest = "/opt/emr/apps/ui/app/clinical/mainDiagnosisConfig.json"
+        write_file_safe(ui_dest, json.dumps(current, indent=2, ensure_ascii=False) + "\n")
+    except Exception as e:
+        log(f"Notice saving ui mainDiagnosisConfig: {e}")
+
+    try:
+        json_str = json.dumps(current).replace("'", "''")
+        check_sql = "SELECT count(*) as cnt FROM global_property WHERE property = 'bahmni.clinical.mainDiagnosisConfig';"
+        chk = run_openmrs_query(check_sql)
+        cnt = int(chk[0]["cnt"]) if chk else 0
+        if cnt > 0:
+            run_openmrs_query(f"UPDATE global_property SET property_value = '{json_str}' WHERE property = 'bahmni.clinical.mainDiagnosisConfig';")
+        else:
+            run_openmrs_query(f"INSERT INTO global_property (property, property_value, uuid) VALUES ('bahmni.clinical.mainDiagnosisConfig', '{json_str}', UUID());")
+    except Exception as e:
+        log(f"Notice updating global_property bahmni.clinical.mainDiagnosisConfig: {e}")
+
+    return current
+
 def get_diagnosis_catalog(params):
     q = (params.get("q", [""])[0] if isinstance(params.get("q"), list) else str(params.get("q", ""))).strip()
     status = params.get("status", ["active"])[0] if isinstance(params.get("status"), list) else str(params.get("status", "active"))
@@ -4363,6 +4427,12 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
             self._send_json(200, load_auto_config())
         elif path in ("/api/branding", "/branding"):
             self._send_json(200, load_branding_config())
+        elif path in ("/api/main-diagnosis-config", "/main-diagnosis-config", "/api/main-diagnosis/config", "/main-diagnosis/config"):
+            try:
+                self._send_json(200, load_main_diagnosis_config())
+            except Exception as e:
+                log(f"Error loading main diagnosis config: {e}")
+                self._send_json(500, {"error": str(e)})
         elif path in ("/api/drug-catalog/config", "/drug-catalog/config", "/api/drug-catalog-config", "/drug-catalog-config"):
             try:
                 self._send_json(200, load_drug_catalog_config())
@@ -4746,6 +4816,14 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True, "message": "Branding updated successfully.", "branding": updated_branding})
             except Exception as e:
                 log(f"Error saving branding: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/main-diagnosis-config", "/main-diagnosis-config", "/api/main-diagnosis/config", "/main-diagnosis/config"):
+            try:
+                result = save_main_diagnosis_config(payload)
+                self._send_json(200, {"success": True, "message": "Main diagnosis settings updated successfully.", "config": result})
+            except Exception as e:
+                log(f"Error saving main diagnosis config: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/drug-catalog/config", "/drug-catalog/config", "/api/drug-catalog-config", "/drug-catalog-config"):

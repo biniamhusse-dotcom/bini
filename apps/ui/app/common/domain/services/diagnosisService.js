@@ -3,14 +3,23 @@
 angular.module('bahmni.common.domain')
     .service('diagnosisService', ['$http', '$rootScope', '$q', function ($http, $rootScope, $q) {
         var self = this;
+        var searchCache = {};
+
         this.getAllFor = function (searchTerm, locale, codeFilter) {
             if (!searchTerm || !searchTerm.trim()) {
                 return $q.when({ data: [] });
             }
             var cleanTerm = searchTerm.trim();
-            var limit = Bahmni.Common.Constants.emrapiDiagnosisLimit || 25;
+            var cacheKey = cleanTerm.toLowerCase() + "_" + (codeFilter || 'all');
+            if (searchCache[cacheKey]) {
+                return $q.when({ data: searchCache[cacheKey] });
+            }
 
-            // 1. Search OpenMRS concepts by name (standard OpenMRS concept search)
+            var limit = Bahmni.Common.Constants.emrapiDiagnosisLimit || 25;
+            var upperTerm = cleanTerm.toUpperCase();
+            var icd11List = $rootScope.icd11Data || [];
+
+            // 1. Search OpenMRS concepts by name (standard fast OpenMRS concept search)
             var conceptSearchPromise = $http.get("/openmrs/ws/rest/v1/concept", {
                 params: {
                     q: cleanTerm,
@@ -23,8 +32,11 @@ angular.module('bahmni.common.domain')
                 return [];
             });
 
-            // 2. Search OpenMRS concept reference terms by code (ICD-11, ICD-10, SNOMED, etc.)
-            var codeSearchPromise = $http.get("/openmrs/ws/rest/v1/bahmnicore/sql", {
+            // 2. Search OpenMRS concept reference terms by code (ICD-11, ICD-10, etc.)
+            var isCodeLike = /^[0-9A-Za-z]{1,8}(\.[0-9A-Za-z]+)?(&[0-9A-Za-z]+)?$/i.test(cleanTerm) &&
+                             (/[0-9]/.test(cleanTerm) || cleanTerm.length <= 4);
+
+            var codeSearchPromise = isCodeLike ? $http.get("/openmrs/ws/rest/v1/bahmnicore/sql", {
                 params: {
                     q: "emrapi.sqlsearch.diagnosisSearchByCode",
                     term: cleanTerm
@@ -34,78 +46,28 @@ angular.module('bahmni.common.domain')
                 return (res.data && Array.isArray(res.data)) ? res.data : [];
             }).catch(function () {
                 return [];
-            });
+            }) : $q.when([]);
 
-            // 3. Search icd11Data in memory if available
-            var icd11Matches = [];
-            var icd11List = $rootScope.icd11Data || [];
-            if (icd11List && icd11List.length > 0) {
-                var upperTerm = cleanTerm.toUpperCase();
-                for (var i = 0; i < icd11List.length; i++) {
-                    var item = icd11List[i];
-                    var itemCode = (item.code || '').toUpperCase();
-                    var itemName = (item.name || '').toLowerCase();
-                    if (itemCode === upperTerm || itemCode.indexOf(upperTerm) === 0 || itemName.indexOf(cleanTerm.toLowerCase()) === 0) {
-                        icd11Matches.push(item);
-                    }
-                    if (icd11Matches.length >= 8) break;
-                }
-            }
-
-            var icd11ConceptPromises = [];
-            if (icd11Matches.length > 0) {
-                icd11Matches.forEach(function (icdItem) {
-                    var p = $http.get("/openmrs/ws/rest/v1/concept", {
-                        params: {
-                            q: icdItem.name,
-                            v: 'custom:(uuid,name:(name),conceptClass:(name))',
-                            limit: 3
-                        }
-                    }).then(function (res) {
-                        var results = (res.data && res.data.results) || [];
-                        var best = null;
-                        for (var r = 0; r < results.length; r++) {
-                            var rName = (results[r].name && results[r].name.name) ? results[r].name.name.toLowerCase() : '';
-                            if (rName === icdItem.name.toLowerCase()) {
-                                best = results[r];
-                                break;
-                            }
-                        }
-                        best = best || results[0];
-                        if (best) {
-                            return {
-                                conceptUuid: best.uuid,
-                                conceptName: (best.name && best.name.name) ? best.name.name : icdItem.name,
-                                matchedName: (best.name && best.name.name) ? best.name.name : icdItem.name,
-                                code: icdItem.code,
-                                conceptSystem: 'ICD-11'
-                            };
-                        }
-                        return null;
-                    }).catch(function () { return null; });
-                    icd11ConceptPromises.push(p);
-                });
-            }
-
-            return $q.all([conceptSearchPromise, codeSearchPromise, $q.all(icd11ConceptPromises)]).then(function (results) {
-                var nameConcepts = results[0];
-                var codeConcepts = results[1];
-                var icd11Concepts = (results[2] || []).filter(function (x) { return x !== null; });
+            return $q.all([conceptSearchPromise, codeSearchPromise]).then(function (results) {
+                var nameConcepts = results[0] || [];
+                var codeConcepts = results[1] || [];
 
                 var combined = [];
                 var seenUuids = {};
 
-                var isCodeLike = /^[0-9A-Za-z]{1,6}(\.[0-9A-Za-z]+)?(&[0-9A-Za-z]+)?$/i.test(cleanTerm);
-
                 var addConcept = function (item) {
                     if (!item || !item.conceptUuid) return;
+                    // Ensure pure UUID (strip any legacy slash prefix)
+                    if (item.conceptUuid.indexOf('/') !== -1) {
+                        var parts = item.conceptUuid.split('/');
+                        item.conceptUuid = parts[parts.length - 1];
+                    }
                     if (seenUuids[item.conceptUuid]) return;
                     seenUuids[item.conceptUuid] = true;
                     combined.push(item);
                 };
 
                 if (isCodeLike) {
-                    icd11Concepts.forEach(addConcept);
                     codeConcepts.forEach(addConcept);
                 }
 
@@ -133,8 +95,13 @@ angular.module('bahmni.common.domain')
 
                 if (!isCodeLike) {
                     codeConcepts.forEach(addConcept);
-                    icd11Concepts.forEach(addConcept);
                 }
+
+                // Cache up to 60 recent searches
+                if (Object.keys(searchCache).length > 60) {
+                    searchCache = {};
+                }
+                searchCache[cacheKey] = combined;
 
                 return { data: combined };
             });

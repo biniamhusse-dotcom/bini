@@ -153,6 +153,17 @@
         "order": 14,
         "requiredPrivilege": "app:admin"
     },
+    "mainDiagnosisConfig": {
+        "id": "bahmni.admin.mainDiagnosisConfig",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {},
+        "label": "Main Diagnosis Settings",
+        "url": "#/mainDiagnosisConfig",
+        "icon": "fa-star",
+        "order": 15,
+        "requiredPrivilege": "app:admin"
+    },
     "medicationConfig": {
         "id": "bahmni.admin.medicationConfig",
         "extensionPointId": "org.bahmni.admin.dashboard",
@@ -161,7 +172,7 @@
         "label": "Medication Dropdown Management",
         "url": "#/medicationConfig",
         "icon": "fa-pills",
-        "order": 15,
+        "order": 16,
         "requiredPrivilege": "app:admin"
     },
     "roleAppManager": {

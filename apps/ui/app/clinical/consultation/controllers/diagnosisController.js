@@ -93,6 +93,36 @@ angular.module('bahmni.clinical')
                 return null;
             };
 
+            $scope.mainDiagnosisConfig = {
+                enabled: true,
+                isMandatory: false,
+                requireOccurrence: true,
+                allowNonCoded: false,
+                enforceSingle: true,
+                defaultCodeFilter: 'All'
+            };
+
+            var loadMainDiagnosisConfig = function () {
+                $http.get('/backup-api/main-diagnosis-config?t=' + Date.now()).then(function (res) {
+                    if (res.data) {
+                        $scope.mainDiagnosisConfig = angular.extend($scope.mainDiagnosisConfig, res.data);
+                        if ($scope.mainDiagnosisConfig.defaultCodeFilter && !$scope.selectedCodeFilter) {
+                            $scope.selectedCodeFilter = $scope.mainDiagnosisConfig.defaultCodeFilter === 'All' ? '' : $scope.mainDiagnosisConfig.defaultCodeFilter;
+                        }
+                    }
+                }).catch(function () {
+                    $http.get('/bahmni_config/openmrs/apps/clinical/mainDiagnosisConfig.json?t=' + Date.now()).then(function (res2) {
+                        if (res2.data) {
+                            $scope.mainDiagnosisConfig = angular.extend($scope.mainDiagnosisConfig, res2.data);
+                            if ($scope.mainDiagnosisConfig.defaultCodeFilter && !$scope.selectedCodeFilter) {
+                                $scope.selectedCodeFilter = $scope.mainDiagnosisConfig.defaultCodeFilter === 'All' ? '' : $scope.mainDiagnosisConfig.defaultCodeFilter;
+                            }
+                        }
+                    }).catch(function () {});
+                });
+            };
+            loadMainDiagnosisConfig();
+
             $scope.mainDiagnosis = $scope.consultation.mainDiagnosis || {
                 name: '',
                 uuid: '',
@@ -110,9 +140,14 @@ angular.module('bahmni.clinical')
                     var concept = item.lookup || item.concept || item;
                     $scope.consultation.mainDiagnosis = $scope.consultation.mainDiagnosis || {};
                     var cleanName = concept.name || (item.value ? item.value.split(' (')[0].split(' => ')[0] : '');
+                    var rawUuid = concept.uuid || '';
+                    if (rawUuid.indexOf('/') !== -1) {
+                        var parts = rawUuid.split('/');
+                        rawUuid = parts[parts.length - 1];
+                    }
                     $scope.consultation.mainDiagnosis.name = cleanName;
                     $scope.consultation.mainDiagnosis.selectedName = cleanName;
-                    $scope.consultation.mainDiagnosis.uuid = concept.uuid || '';
+                    $scope.consultation.mainDiagnosis.uuid = rawUuid;
                     $scope.consultation.mainDiagnosis.isNonCoded = false;
                     $scope.consultation.mainDiagnosis.conceptSystem = concept.conceptSystem || '';
                     var icd11Match = lookupIcd11ByName(cleanName);
@@ -430,15 +465,30 @@ angular.module('bahmni.clinical')
             var contextChange = function () {
                 var md = $scope.consultation.mainDiagnosis;
                 var hasCodedMainDiagnosis = md && md.uuid;
-                var hasNewDiagnoses = $scope.consultation.newlyAddedDiagnoses.some(function (d) { return !d.isEmpty(); });
-                var hasSavedDiagnoses = $scope.consultation.savedDiagnosesFromCurrentEncounter.length > 0;
-                if (!hasCodedMainDiagnosis && (hasNewDiagnoses || hasSavedDiagnoses || (md && md.name))) {
-                    $scope.errorMessage = "Main Diagnosis must be a coded value. Please select a diagnosis from the search list.";
-                    return { allow: false, errorMessage: $scope.errorMessage };
-                }
-                if (hasCodedMainDiagnosis && (!md.occurrence || md.occurrence === '')) {
-                    $scope.errorMessage = "Main Diagnosis Occurrence (New or Repeat) is mandatory. Please select Occurrence.";
-                    return { allow: false, errorMessage: $scope.errorMessage };
+                var hasName = md && md.name && md.name.trim();
+                var mdConfig = $scope.mainDiagnosisConfig || { isMandatory: false, requireOccurrence: true };
+
+                if (mdConfig.enabled !== false) {
+                    if (mdConfig.isMandatory) {
+                        var allowNonCoded = !!mdConfig.allowNonCoded;
+                        if (!hasCodedMainDiagnosis && (!allowNonCoded || !hasName)) {
+                            $scope.errorMessage = allowNonCoded
+                                ? "Main Diagnosis is mandatory. Please enter a diagnosis."
+                                : "Main Diagnosis is mandatory. Please select a coded diagnosis from the search list.";
+                            return { allow: false, errorMessage: $scope.errorMessage };
+                        }
+                    } else {
+                        // When unmandatory/optional: only validate if doctor entered something into the name field
+                        if (hasName && !hasCodedMainDiagnosis && !mdConfig.allowNonCoded) {
+                            $scope.errorMessage = "Main Diagnosis must be selected from the search list.";
+                            return { allow: false, errorMessage: $scope.errorMessage };
+                        }
+                    }
+
+                    if ((hasCodedMainDiagnosis || (mdConfig.allowNonCoded && hasName)) && mdConfig.requireOccurrence && (!md.occurrence || md.occurrence === '')) {
+                        $scope.errorMessage = "Main Diagnosis Occurrence (New or Repeat) is mandatory. Please select Occurrence.";
+                        return { allow: false, errorMessage: $scope.errorMessage };
+                    }
                 }
                 var invalidnewlyAddedDiagnoses = $scope.consultation.newlyAddedDiagnoses.filter(function (diagnosis) {
                     return isDuplicateWithNewlyAddedDiagnosis(diagnosis) || !$scope.isValid(diagnosis) || isDuplicateWithSavedDiagnosis(diagnosis) || $scope.isDiagnosisStatusValid === false;
@@ -505,9 +555,13 @@ angular.module('bahmni.clinical')
 
             $scope.getAddConditionMethod = function () {
                 return function (item) {
-                    var conceptSystem = item.lookup.conceptSystem ? item.lookup.conceptSystem + "/" : "";
-                    item.lookup.uuid = conceptSystem + item.lookup.uuid;
-                    $scope.consultation.condition.concept.uuid = item.lookup.uuid;
+                    var rawUuid = item.lookup.uuid || '';
+                    if (rawUuid.indexOf('/') !== -1) {
+                        var p = rawUuid.split('/');
+                        rawUuid = p[p.length - 1];
+                    }
+                    item.lookup.uuid = rawUuid;
+                    $scope.consultation.condition.concept.uuid = rawUuid;
                     item.value = $scope.consultation.condition.concept.name = item.lookup.name;
                     getAlerts();
                 };

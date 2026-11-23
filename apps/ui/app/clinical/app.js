@@ -226,7 +226,7 @@ angular.module('consultation')
                 },
                 views: {
                     'consultation-content': {
-                        templateUrl: 'consultation/views/diagnosis.html',
+                        templateUrl: 'consultation/views/diagnosis.html?v=20261123b',
                         controller: 'DiagnosisController'
                     }
                 }

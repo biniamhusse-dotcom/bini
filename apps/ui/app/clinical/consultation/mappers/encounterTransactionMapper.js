@@ -39,13 +39,22 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
             encounterData.visitType = defaultVisitType;
         }
 
+        var cleanConceptUuid = function (rawUuid) {
+            if (!rawUuid) return undefined;
+            var str = String(rawUuid).trim();
+            if (str.indexOf('/') !== -1) {
+                var parts = str.split('/');
+                str = parts[parts.length - 1];
+            }
+            return str || undefined;
+        };
+
         var mappedDiagnoses = [];
         var seenCodedUuids = {};
 
         if (consultation.newlyAddedDiagnoses && consultation.newlyAddedDiagnoses.length > 0) {
             consultation.newlyAddedDiagnoses.forEach(function (diagnosis) {
-                var conceptSystem = (diagnosis.codedAnswer && diagnosis.codedAnswer.conceptSystem) ? diagnosis.codedAnswer.conceptSystem + "/" : "";
-                var codedUuid = (!diagnosis.isNonCodedAnswer && diagnosis.codedAnswer && diagnosis.codedAnswer.uuid) ? (conceptSystem + diagnosis.codedAnswer.uuid) : undefined;
+                var codedUuid = (!diagnosis.isNonCodedAnswer && diagnosis.codedAnswer && diagnosis.codedAnswer.uuid) ? cleanConceptUuid(diagnosis.codedAnswer.uuid) : undefined;
                 var dedupKey = codedUuid || (diagnosis.codedAnswer && diagnosis.codedAnswer.name) || '';
                 if (dedupKey && seenCodedUuids[dedupKey]) {
                     return;
@@ -62,7 +71,7 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
                     comments = parts.join("") + (comments ? " " + comments : "");
                 }
                 var diagOrder = diagnosis.order || "SECONDARY";
-                if (consultation.mainDiagnosis && consultation.mainDiagnosis.uuid && diagOrder === "PRIMARY") {
+                if (consultation.mainDiagnosis && (consultation.mainDiagnosis.uuid || consultation.mainDiagnosis.name) && diagOrder === "PRIMARY") {
                     diagOrder = "SECONDARY";
                 }
                 mappedDiagnoses.push({
@@ -79,10 +88,9 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
             });
         }
 
-        if (consultation.mainDiagnosis && consultation.mainDiagnosis.uuid) {
-            var mainConceptSystem = consultation.mainDiagnosis.conceptSystem ? consultation.mainDiagnosis.conceptSystem + "/" : "";
-            var mainUuid = mainConceptSystem + consultation.mainDiagnosis.uuid;
-            var rawMainUuid = consultation.mainDiagnosis.uuid;
+        if (consultation.mainDiagnosis && (consultation.mainDiagnosis.uuid || (consultation.mainDiagnosis.name && consultation.mainDiagnosis.name.trim()))) {
+            var rawMainUuid = cleanConceptUuid(consultation.mainDiagnosis.uuid);
+            var isNonCodedMain = !rawMainUuid && !!consultation.mainDiagnosis.name;
             var mainComments = "";
             if (consultation.mainDiagnosis.icd11Code || consultation.mainDiagnosis.occurrence) {
                 var parts = [];
@@ -94,8 +102,10 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
             var matchedSaved = null;
             if (consultation.savedDiagnosesFromCurrentEncounter) {
                 consultation.savedDiagnosesFromCurrentEncounter.forEach(function (sd) {
-                    var sdUuid = (sd.codedAnswer && sd.codedAnswer.uuid) ? sd.codedAnswer.uuid : (sd.uuid || '');
-                    if (sdUuid && (sdUuid === mainUuid || sdUuid === rawMainUuid || sdUuid.indexOf(rawMainUuid) !== -1)) {
+                    var sdUuid = cleanConceptUuid((sd.codedAnswer && sd.codedAnswer.uuid) ? sd.codedAnswer.uuid : (sd.uuid || ''));
+                    if (rawMainUuid && sdUuid && sdUuid === rawMainUuid) {
+                        matchedSaved = sd;
+                    } else if (isNonCodedMain && sd.freeTextAnswer && sd.freeTextAnswer === consultation.mainDiagnosis.name) {
                         matchedSaved = sd;
                     }
                 });
@@ -103,8 +113,10 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
 
             var matchedNew = null;
             mappedDiagnoses.forEach(function (nd) {
-                var ndUuid = (nd.codedAnswer && nd.codedAnswer.uuid) ? nd.codedAnswer.uuid : '';
-                if (ndUuid && (ndUuid === mainUuid || ndUuid === rawMainUuid || ndUuid.indexOf(rawMainUuid) !== -1)) {
+                var ndUuid = cleanConceptUuid((nd.codedAnswer && nd.codedAnswer.uuid) ? nd.codedAnswer.uuid : '');
+                if (rawMainUuid && ndUuid && ndUuid === rawMainUuid) {
+                    matchedNew = nd;
+                } else if (isNonCodedMain && nd.freeTextAnswer && nd.freeTextAnswer === consultation.mainDiagnosis.name) {
                     matchedNew = nd;
                 }
             });
@@ -125,12 +137,12 @@ Bahmni.Clinical.EncounterTransactionMapper = function () {
                     matchedNew.comments = mainComments;
                 }
             } else {
-                var dedupKey = mainUuid;
+                var dedupKey = rawMainUuid || consultation.mainDiagnosis.name;
                 if (!seenCodedUuids[dedupKey]) {
                     seenCodedUuids[dedupKey] = true;
                     mappedDiagnoses.unshift({
-                        codedAnswer: { uuid: mainUuid },
-                        freeTextAnswer: undefined,
+                        codedAnswer: rawMainUuid ? { uuid: rawMainUuid } : undefined,
+                        freeTextAnswer: isNonCodedMain ? consultation.mainDiagnosis.name : undefined,
                         order: "PRIMARY",
                         certainty: "CONFIRMED",
                         existingObs: null,

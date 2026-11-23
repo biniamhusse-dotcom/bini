@@ -139,6 +139,13 @@ angular.module('admin')
                 data: {
                     backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
                 }
+            }).state('admin.mainDiagnosisConfig', {
+                url: '/mainDiagnosisConfig',
+                templateUrl: 'views/mainDiagnosisConfig.html?v=1.0',
+                controller: 'MainDiagnosisConfigController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
             }).state('admin.medicationConfig', {
                 url: '/medicationConfig',
                 templateUrl: 'views/medicationConfig.html?v=1.0',

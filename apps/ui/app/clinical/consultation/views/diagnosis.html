@@ -8,7 +8,9 @@
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
                         <h3 style="margin:0;font-size:14px;color:#333;font-weight:600;">
                             <i class="fa fa-star" style="color:#f5a623;margin-right:6px;"></i>Main Diagnosis
-                            <span style="font-weight:normal;font-size:12px;color:#888;margin-left:8px;">(Only ONE per encounter)</span>
+                            <span ng-if="mainDiagnosisConfig.isMandatory" style="font-weight:700;font-size:12px;color:#dc2626;margin-left:8px;"><i class="fa fa-asterisk" style="font-size:9px;"></i> Mandatory</span>
+                            <span ng-if="!mainDiagnosisConfig.isMandatory" style="font-weight:600;font-size:12px;color:#4b5563;margin-left:8px;">(Optional)</span>
+                            <span style="font-weight:normal;font-size:12px;color:#888;margin-left:6px;">&bull; Only ONE per encounter</span>
                         </h3>
                         <div style="display:inline-flex;align-items:center;gap:6px;">
                             <span style="font-size:12px;color:#666;font-weight:600;"><i class="fa fa-filter"></i> Code Filter:</span>
@@ -42,15 +44,15 @@
                         <div style="flex:0 0 auto;min-width:150px;max-width:190px;">
                             <select ng-model="consultation.mainDiagnosis.occurrence"
                                 id="mainDiagnosisOccurrence"
-                                required
+                                ng-required="mainDiagnosisConfig.requireOccurrence"
                                 style="width:100%;height:38px !important;min-height:38px !important;max-height:38px !important;line-height:24px !important;padding:6px 28px 6px 10px !important;font-size:13px !important;border:1px solid #ccc !important;border-radius:4px !important;background:#fff !important;color:#333 !important;cursor:pointer !important;box-sizing:border-box !important;float:none !important;margin:0 !important;display:block !important;appearance:auto !important;-webkit-appearance:auto !important;"
-                                ng-style="consultation.mainDiagnosis.uuid && !consultation.mainDiagnosis.occurrence ? {'border-color': '#d9534f !important', 'background-color': '#fff5f5 !important'} : {}">
-                                <option value="">Occurrence *</option>
+                                ng-style="consultation.mainDiagnosis.uuid && !consultation.mainDiagnosis.occurrence && mainDiagnosisConfig.requireOccurrence ? {'border-color': '#d9534f !important', 'background-color': '#fff5f5 !important'} : {}">
+                                <option value="">{{ mainDiagnosisConfig.requireOccurrence ? 'Occurrence *' : 'Occurrence (Optional)' }}</option>
                                 <option value="New">New</option>
                                 <option value="Repeat">Repeat</option>
                             </select>
                         </div>
-                        <span ng-if="consultation.mainDiagnosis.uuid && !consultation.mainDiagnosis.occurrence"
+                        <span ng-if="consultation.mainDiagnosis.uuid && !consultation.mainDiagnosis.occurrence && mainDiagnosisConfig.requireOccurrence"
                             style="display:inline-flex;align-items:center;gap:4px;background:#fff0f0;color:#c9302c;border:1px solid #ebccd1;padding:6px 10px;border-radius:4px;font-size:12px;font-weight:600;height:38px;box-sizing:border-box;margin:0;">
                             <i class="fa fa-exclamation-circle"></i> Occurrence required (New / Repeat)
                         </span>
