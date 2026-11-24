@@ -76,17 +76,17 @@ angular.module('bahmni.reports')
                 }
                 report.reportTemplateLocation = report.config.macroTemplatePath;
             }
-            report.startDate = Bahmni.Common.Util.DateUtil.getDateWithoutTime(report.startDate);
-            report.stopDate = Bahmni.Common.Util.DateUtil.getDateWithoutTime(report.stopDate);
-            if (isDateRangeRequiredFor(report) && (!report.startDate || !report.stopDate)) {
+            var startDate = Bahmni.Common.Util.DateUtil.getDateWithoutTime(report.startDate);
+            var stopDate = Bahmni.Common.Util.DateUtil.getDateWithoutTime(report.stopDate);
+            if (isDateRangeRequiredFor(report) && (!startDate || !stopDate)) {
                 var msg = [];
-                if (!report.startDate) {
+                if (!startDate) {
                     msg.push("start date");
                 }
-                if (!report.stopDate) {
+                if (!stopDate) {
                     msg.push("end date");
                 }
-                if ((report.startDate > report.stopDate)) {
+                if ((startDate > stopDate)) {
                     msg.push(getTranslatedMessage("START_DATE_CANNOT_LATER_THAN_STOP_DATE"));
                 }
                 messagingService.showMessage("error", "Please select the " + msg.join(" and "));
@@ -101,7 +101,46 @@ angular.module('bahmni.reports')
 
         $scope.downloadReport = function (report) {
             if (validateReport(report)) {
-                reportService.generateReport(report);
+                report.isLoading = true;
+                var reportWindow = null;
+                var isHtml = !report.responseType || report.responseType === 'text/html';
+                if (isHtml) {
+                    reportWindow = window.open('about:blank', '_blank');
+                    if (reportWindow) {
+                        try {
+                            reportWindow.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Generating ' + _.escape(report.name) + '...</title>' +
+                                '<style>' +
+                                'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8fafc; color: #1e293b; }' +
+                                '.card { background: #fff; padding: 40px 48px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); text-align: center; max-width: 440px; border: 1px solid #e2e8f0; }' +
+                                '.spinner { border: 4px solid #e2e8f0; border-top: 4px solid #009384; border-radius: 50%; width: 44px; height: 44px; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }' +
+                                '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }' +
+                                'h2 { margin: 0 0 10px; font-size: 18px; color: #0f172a; font-weight: 600; }' +
+                                'p { margin: 0; font-size: 13px; color: #64748b; line-height: 1.5; }' +
+                                '</style></head><body><div class="card"><div class="spinner"></div><h2>Generating ' + _.escape(report.name) + '</h2><p>Please wait while report data is being fetched and prepared...</p></div></body></html>');
+                            reportWindow.document.close();
+                        } catch (e) {
+                            console.warn("Could not write initial loader to reportWindow:", e);
+                        }
+                    }
+                }
+
+                var promise = reportService.generateReport(report, reportWindow);
+                if (promise && promise.finally) {
+                    spinner.forPromise(promise);
+                    promise.finally(function () {
+                        report.isLoading = false;
+                    });
+                } else if (promise && promise.then) {
+                    spinner.forPromise(promise);
+                    promise.then(function () {
+                        report.isLoading = false;
+                    }, function () {
+                        report.isLoading = false;
+                    });
+                } else {
+                    report.isLoading = false;
+                }
+
                 if (report.responseType === 'application/vnd.ms-excel-custom') {
                     report.reportTemplateLocation = undefined;
                     report.responseType = _.values($scope.formats)[0];
@@ -154,6 +193,9 @@ angular.module('bahmni.reports')
 
             initializeFormats();
             initializeDateRange();
+
+            $scope.setDefault('dateRangeType', 'reportsRequiringDateRange');
+            $scope.setDefault('responseType', 'reportsRequiringDateRange');
         };
 
         initialization();

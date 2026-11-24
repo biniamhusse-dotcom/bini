@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('bahmni.reports')
-    .service('reportService', ['appService', '$bahmniCookieStore', '$http', function (appService, $bahmniCookieStore, $http) {
+    .service('reportService', ['appService', '$bahmniCookieStore', '$http', '$q', function (appService, $bahmniCookieStore, $http, $q) {
         var paperSize = appService.getAppDescriptor().getConfigValue("paperSize");
         var appName = appService.getAppName() ? appService.getAppName() : "reports";
         var currentDate = new Date();
@@ -598,36 +598,54 @@ angular.module('bahmni.reports')
             return formattedReport;
         };
 
-        var generateReport = function (report) {
+        var generateReport = function (report, targetWindow) {
             var startDate = Bahmni.Common.Util.DateUtil.getDateWithoutTime(report.startDate);
             var endDate = Bahmni.Common.Util.DateUtil.getDateWithoutTime(report.stopDate);
             var mimeType = report.responseType || "text/html";
 
             if (mimeType === "text/html") {
                 var csvUrl = Bahmni.Common.Constants.reportsUrl + "/report";
-                csvUrl = (csvUrl + "?name={0}&startDate={1}&endDate={2}&responseType={3}&paperSize={4}&appName={5}&userName={6}").format(report.name, startDate, endDate, "text/csv", paperSize, appName, currentUser());
-                $http.get(csvUrl, {responseType: 'text', withCredentials: true}).then(function (response) {
+                csvUrl = (csvUrl + "?name={0}&startDate={1}&endDate={2}&responseType={3}&paperSize={4}&appName={5}&userName={6}").format(
+                    encodeURIComponent(report.name), startDate, endDate, "text/csv", paperSize, appName, currentUser());
+
+                return $http.get(csvUrl, {responseType: 'text', withCredentials: true}).then(function (response) {
                     var csvText = response.data;
-                    if (typeof csvText !== 'string') {
+                    if (typeof csvText !== 'string' && response.data instanceof Blob) {
                         var reader = new FileReader();
                         reader.onload = function () {
-                            csvText = reader.result;
-                            openProfessionalReport(csvText, report, startDate, endDate);
+                            openProfessionalReport(reader.result, report, startDate, endDate, targetWindow);
                         };
                         reader.readAsText(response.data);
                     } else {
-                        openProfessionalReport(csvText, report, startDate, endDate);
+                        openProfessionalReport(csvText, report, startDate, endDate, targetWindow);
                     }
                 }, function (error) {
-                    alert("Failed to generate report. Status: " + (error.status || 'unknown'));
+                    var errorMsg = "Failed to generate report. Status: " + (error.status || 'unknown');
+                    if (targetWindow && !targetWindow.closed) {
+                        try {
+                            targetWindow.document.open('text/html');
+                            targetWindow.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Report Generation Error</title>' +
+                                '<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fef2f2;color:#991b1b;}' +
+                                '.card{background:#fff;padding:30px 40px;border-radius:8px;border:1px solid #fecaca;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.05);}' +
+                                'button{margin-top:15px;padding:8px 16px;background:#ef4444;color:#fff;border:none;border-radius:4px;cursor:pointer;}' +
+                                '</style></head><body><div class="card"><h3>Unable to Generate Report</h3><p>' + escapeHtml(errorMsg) + '</p>' +
+                                '<button onclick="window.close()">Close Window</button></div></body></html>');
+                            targetWindow.document.close();
+                        } catch (e) {
+                            console.warn("Could not write error to targetWindow:", e);
+                        }
+                    }
+                    alert(errorMsg);
+                    return $q.reject(error);
                 });
             } else {
                 var url = Bahmni.Common.Constants.reportsUrl + "/report";
-                url = (url + "?name={0}&startDate={1}&endDate={2}&responseType={3}&paperSize={4}&appName={5}&userName={6}").format(report.name, startDate, endDate, mimeType, paperSize, appName, currentUser());
-                if (report.reportTemplateLocation && mimeType == 'application/vnd.ms-excel-custom') {
+                url = (url + "?name={0}&startDate={1}&endDate={2}&responseType={3}&paperSize={4}&appName={5}&userName={6}").format(
+                    encodeURIComponent(report.name), startDate, endDate, mimeType, paperSize, appName, currentUser());
+                if (report.reportTemplateLocation && mimeType === 'application/vnd.ms-excel-custom') {
                     url = (url + "&macroTemplateLocation=" + report.reportTemplateLocation);
                 }
-                $http.get(url, {responseType: 'blob', withCredentials: true}).then(function (response) {
+                return $http.get(url, {responseType: 'blob', withCredentials: true}).then(function (response) {
                     if (response.data.size === 0) {
                         alert("Empty response from server");
                         return;
@@ -649,15 +667,26 @@ angular.module('bahmni.reports')
                     setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 10000);
                 }, function (error) {
                     alert("Failed to generate report. Status: " + (error.status || 'unknown'));
+                    return $q.reject(error);
                 });
             }
         };
 
-        var openProfessionalReport = function (csvText, report, startDate, endDate) {
+        var openProfessionalReport = function (csvText, report, startDate, endDate, targetWindow) {
             var enhancedHtml = buildProfessionalReport(csvText, report, startDate, endDate);
+            if (targetWindow && !targetWindow.closed) {
+                try {
+                    targetWindow.document.open('text/html');
+                    targetWindow.document.write(enhancedHtml);
+                    targetWindow.document.close();
+                    return;
+                } catch (e) {
+                    console.warn("Could not write directly to targetWindow:", e);
+                }
+            }
             var blob = new Blob([enhancedHtml], {type: 'text/html'});
             var blobUrl = URL.createObjectURL(blob);
-            var newWindow = window.open(blobUrl);
+            var newWindow = window.open(blobUrl, '_blank');
             if (!newWindow) {
                 alert("Please allow pop-ups for this site to view reports.");
             }
