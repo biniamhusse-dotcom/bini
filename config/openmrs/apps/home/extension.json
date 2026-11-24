@@ -198,7 +198,7 @@
     "extensionPointId": "org.bahmni.home.dashboard",
     "type": "link",
     "translationKey": "MODULE_LABEL_APPOINTMENT_SCHEDULING_KEY",
-    "url": "../appointments",
+    "url": "/appointments/#/home/manage/appointments/list/new",
     "icon": "fa fa-calendar",
     "order": 7,
     "requiredPrivilege": "app:appointments"
@@ -208,7 +208,7 @@
     "extensionPointId": "org.bahmni.home.dashboard",
     "type": "link",
     "translationKey": "Liaison Scheduling",
-    "url": "../appointments/#/liaisonHome/manage/appointments/waitingList",
+    "url": "/appointments/#/home/manage/appointments/list/new",
     "icon": "fa fa-calendar-o",
     "order": 8,
     "requiredPrivilege": "app:liaison"

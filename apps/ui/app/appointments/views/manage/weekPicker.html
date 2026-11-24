@@ -7,7 +7,7 @@
     <button class="app-view-prev" ng-click="goToPreviousWeek()"><i class="fa fa-angle-left"></i></button>
     <span>
         <label for="weeklyDate">{{weekStartDate | date:'d MMM'}} - {{weekEndDate | date:'d MMM'}}</label>
-        <input id="weeklyDate" type="date" ng-model="viewDate" required/>
+        <ethiopian-date-selector date="viewDate" allow-future-dates="true" input-style="width: 140px; display: inline-block;"></ethiopian-date-selector>
     </span>
     <button type="button" ng-click="goToNextWeek()"><i class="fa fa-angle-right"></i></button>
 </div>

@@ -38,7 +38,7 @@ angular.module('bahmni.common.displaycontrol.navigationlinks')
                 {
                     "name": "appointments",
                     "translationKey": "Appointments",
-                    "url": "../appointments/#/patient/{{patientUuid}}"
+                    "url": "/appointments/#/home/manage/appointments/list/new"
                 }
 
             ];

@@ -156,9 +156,7 @@
                     <label for="date">
                         {{'APPOINTMENT_DATE' | translate}}<sup class="asterick">*</sup>
                     </label>
-                    <input id="date" type="date" ng-min="isEditMode() && !isEditAllowed()" min="{{today}}" required
-                        ng-model="appointment.date" ng-change="appointment.service && checkAvailability()"
-                        placeholder="Pick appointment date" ng-disabled="isEditMode() && isFieldEditNotAllowed()" />
+                    <ethiopian-date-selector date="appointment.date" change="checkAvailability()" allow-future-dates="true" required="true" placeholder="'Pick appointment date'"></ethiopian-date-selector>
                     <span class="slots-remaining"></span>
                 </p>
                 <p class="warning-message" ng-if="warning.appointmentDate">

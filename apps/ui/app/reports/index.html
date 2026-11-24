@@ -8,6 +8,7 @@
         <link rel="stylesheet" href="../components/ngDialog/css/ngDialog.min.css"/>
         <link rel="stylesheet" href="../components/ngDialog/css/ngDialog-theme-default.min.css"/>
         <link rel="stylesheet" href="../components/ngDialog/css/ngDialog-theme-plain.min.css"/>
+        <link rel="stylesheet" href="../lib/jquery-calendars/css/jquery.calendars.picker.css?v=1.2"/>
         <!-- build:css reports.min.css -->
         <link rel="stylesheet" href="../styles/clinical.css"/>
         <!-- endbuild -->
@@ -45,6 +46,11 @@
         <script src="../components/angular-translate-handler-log/angular-translate-handler-log.min.js"></script>
         <script src="../components/ngDialog/js/ngDialog.min.js"></script>
         <script src="../lib/angular-workers/dist/angular-workers.js"></script>
+
+        <script src="../lib/jquery-calendars/js/jquery.plugin.min.js"></script>
+        <script src="../lib/jquery-calendars/js/jquery.calendars.all.min.js"></script>
+        <script src="../lib/jquery-calendars/js/jquery.calendars.ethiopian.min.js"></script>
+        <script src="../lib/jquery-calendars/js/jquery.calendars.ethiopian-am.js"></script>
 
         <!-- build:js reports.min.js -->
         <script src="../common/constants.js"></script>
@@ -139,6 +145,12 @@
         <script src="../common/logging/services/loggingService.js"></script>
         <script src="../common/logging/services/auditLogService.js"></script>
         <script src="../common/models/auditLogEventDetails.js"></script>
+
+        <script src="../common/ethiopianDateSelector/init.js"></script>
+        <script src="../common/ethiopianDateSelector/services/ethiopianGregorianConversionService.js"></script>
+        <script src="../common/ethiopianDateSelector/directives/ethiopian-date-selector.js"></script>
+        <script src="../common/ethiopianDateSelector/directives/ethiopian-date-time-selector.js"></script>
+        <script src="../common/ethiopianDateSelector/directives/ethiopian-calendar-input-for-date-type-field.js"></script>
 
         <script src="init.js"></script>
         <script src="initialization.js"></script>
