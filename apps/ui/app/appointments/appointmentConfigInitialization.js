@@ -34,7 +34,9 @@ angular.module('bahmni.appointments').factory('appointmentConfigInitialization',
                 };
 
                 var getAllSpecialities = function () {
-                    return specialityService.getAllSpecialities();
+                    return specialityService.getAllSpecialities().catch(function () {
+                        return { data: [] };
+                    });
                 };
 
                 var getAllServices = function () {

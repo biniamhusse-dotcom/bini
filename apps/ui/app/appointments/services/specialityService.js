@@ -7,6 +7,8 @@ angular.module('bahmni.appointments')
                 return $http.get(Bahmni.Appointments.Constants.getAllSpecialitiesUrl, {
                     withCredentials: true,
                     headers: {"Accept": "application/json", "Content-Type": "application/json"}
+                }).catch(function () {
+                    return { data: [] };
                 });
             };
         }]);
