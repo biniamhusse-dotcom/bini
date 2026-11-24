@@ -196,5 +196,16 @@
         "icon": "fa-list-alt",
         "order": 4,
         "requiredPrivilege": "app:admin"
+    },
+    "reportManager": {
+        "id": "bahmni.admin.reportManager",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {},
+        "label": "Report Designer & Manager",
+        "url": "#/reportManager",
+        "icon": "fa-bar-chart",
+        "order": 17,
+        "requiredPrivilege": "app:admin"
     }
 }

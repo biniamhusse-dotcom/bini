@@ -160,6 +160,13 @@ angular.module('admin')
                 data: {
                     backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
                 }
+            }).state('admin.reportManager', {
+                url: '/reportManager',
+                templateUrl: 'views/reportManager.html?v=1.0',
+                controller: 'ReportManagerController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
             });
             $httpProvider.defaults.headers.common['Disable-WWW-Authenticate'] = true;
             $bahmniTranslateProvider.init({app: 'admin', shouldMerge: true});

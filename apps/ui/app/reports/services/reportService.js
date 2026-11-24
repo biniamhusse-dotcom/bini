@@ -348,6 +348,21 @@ angular.module('bahmni.reports')
                 serviceUnitFilterHtml += '<option value="' + escapeHtml(su) + '">' + escapeHtml(su) + '</option>';
             });
 
+            var themeColorHex = (report && report.config && report.config.themeColor) || '#1a237e';
+            var themeGradients = {
+                '#0d9488': { start: '#0f766e', mid: '#0d9488', end: '#14b8a6', accent: '#0d9488', hover: '#0f766e' },
+                '#1e3a8a': { start: '#172554', mid: '#1e3a8a', end: '#2563eb', accent: '#1e3a8a', hover: '#172554' },
+                '#4338ca': { start: '#312e81', mid: '#4338ca', end: '#6366f1', accent: '#4338ca', hover: '#312e81' },
+                '#be123c': { start: '#881337', mid: '#be123c', end: '#e11d48', accent: '#be123c', hover: '#881337' },
+                '#6b21a8': { start: '#581c87', mid: '#6b21a8', end: '#9333ea', accent: '#6b21a8', hover: '#581c87' },
+                '#334155': { start: '#0f172a', mid: '#334155', end: '#475569', accent: '#334155', hover: '#0f172a' },
+                '#1a237e': { start: '#1a237e', mid: '#283593', end: '#3949ab', accent: '#283593', hover: '#1a237e' }
+            };
+            var activeTheme = themeGradients[themeColorHex] || { start: themeColorHex, mid: themeColorHex, end: themeColorHex, accent: themeColorHex, hover: themeColorHex };
+            var customSubtitle = (report && report.config && report.config.subtitle) || 'Medical Record Unit &mdash; Patient Visit Summary';
+            var reportOrientation = (report && report.config && report.config.orientation) || 'landscape';
+            var showStatsCards = !(report && report.config && report.config.showSummaryCards === false);
+
             var formattedReport = '<!DOCTYPE html>' +
             '<html lang="en">' +
             '<head>' +
@@ -358,30 +373,30 @@ angular.module('bahmni.reports')
             '* { margin: 0; padding: 0; box-sizing: border-box; }' +
             'body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; }' +
             '.report-container { max-width: 1200px; margin: 0 auto; padding: 24px; }' +
-            '.report-header { background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%); color: white; padding: 32px 40px; border-radius: 12px 12px 0 0; box-shadow: 0 4px 20px rgba(26,35,126,0.3); }' +
+            '.report-header { background: linear-gradient(135deg, ' + activeTheme.start + ' 0%, ' + activeTheme.mid + ' 50%, ' + activeTheme.end + ' 100%); color: white; padding: 32px 40px; border-radius: 12px 12px 0 0; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }' +
             '.report-header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }' +
             '.report-header .subtitle { font-size: 14px; opacity: 0.9; margin-bottom: 4px; }' +
             '.report-header .generated-info { font-size: 12px; opacity: 0.75; margin-top: 12px; display: flex; gap: 24px; }' +
             '.report-header .generated-info span { display: inline-flex; align-items: center; gap: 6px; }' +
 
-            '.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 24px 40px; background: white; border-bottom: 1px solid #e0e0e0; }' +
-            '.stat-card { background: #f8f9ff; border-radius: 8px; padding: 16px 20px; border-left: 4px solid #3949ab; }' +
+            '.stats-row { display: ' + (showStatsCards ? 'grid' : 'none') + '; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 24px 40px; background: white; border-bottom: 1px solid #e0e0e0; }' +
+            '.stat-card { background: #f8f9ff; border-radius: 8px; padding: 16px 20px; border-left: 4px solid ' + activeTheme.accent + '; }' +
             '.stat-card .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; font-weight: 600; }' +
-            '.stat-card .stat-value { font-size: 28px; font-weight: 700; color: #1a237e; margin-top: 4px; }' +
+            '.stat-card .stat-value { font-size: 28px; font-weight: 700; color: ' + activeTheme.start + '; margin-top: 4px; }' +
             '.stat-card .stat-detail { font-size: 11px; color: #999; margin-top: 2px; }' +
 
             '.controls-bar { display: flex; flex-wrap: wrap; gap: 12px; padding: 20px 40px; background: white; border-bottom: 1px solid #e0e0e0; align-items: center; }' +
             '.controls-bar .filter-group { display: flex; flex-direction: column; gap: 4px; }' +
             '.controls-bar .filter-group label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; font-weight: 600; }' +
             '.controls-bar input, .controls-bar select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; transition: border-color 0.2s; }' +
-            '.controls-bar input:focus, .controls-bar select:focus { border-color: #3949ab; box-shadow: 0 0 0 3px rgba(57,73,171,0.1); }' +
+            '.controls-bar input:focus, .controls-bar select:focus { border-color: ' + activeTheme.accent + '; box-shadow: 0 0 0 3px rgba(13,148,136,0.15); }' +
             '.controls-bar input[type="text"] { min-width: 240px; }' +
             '.controls-bar select { min-width: 180px; }' +
 
             '.btn-group { display: flex; gap: 8px; margin-left: auto; }' +
             '.btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.3px; }' +
-            '.btn-print { background: #3949ab; color: white; }' +
-            '.btn-print:hover { background: #283593; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(57,73,171,0.3); }' +
+            '.btn-print { background: ' + activeTheme.accent + '; color: white; }' +
+            '.btn-print:hover { background: ' + activeTheme.hover + '; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }' +
             '.btn-csv { background: #2e7d32; color: white; }' +
             '.btn-csv:hover { background: #1b5e20; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(46,125,50,0.3); }' +
             '.btn-reset { background: #e53935; color: white; }' +
@@ -390,8 +405,8 @@ angular.module('bahmni.reports')
             '.table-container { background: white; border-radius: 0 0 12px 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }' +
             '.table-wrapper { overflow-x: auto; }' +
             'table { width: 100%; border-collapse: collapse; font-size: 13px; }' +
-            'thead th { background: #283593; color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; white-space: nowrap; }' +
-            'thead th:hover { background: #1a237e; }' +
+            'thead th { background: ' + activeTheme.accent + '; color: white; padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; white-space: nowrap; }' +
+            'thead th:hover { background: ' + activeTheme.hover + '; }' +
             'thead th .sort-icon { margin-left: 6px; font-size: 10px; opacity: 0.6; }' +
             'thead th.sorted-asc .sort-icon::after { content: "\\25B2"; opacity: 1; }' +
             'thead th.sorted-desc .sort-icon::after { content: "\\25BC"; opacity: 1; }' +
@@ -412,11 +427,11 @@ angular.module('bahmni.reports')
             '  .report-container { padding: 0; }' +
             '  .report-header { box-shadow: none; border-radius: 0; }' +
             '  .table-container { box-shadow: none; border-radius: 0; }' +
-            '  thead th { background: #283593 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+            '  thead th { background: ' + activeTheme.accent + ' !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
             '  tbody tr.even { background: #fafbff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
             '  .stat-card { background: #f8f9ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
             '  .table-footer { display: none; }' +
-            '  @page { margin: 1cm; size: landscape; }' +
+            '  @page { margin: 1cm; size: ' + reportOrientation + '; }' +
             '}' +
             '</style>' +
             '</head>' +
@@ -425,7 +440,7 @@ angular.module('bahmni.reports')
 
             '<div class="report-header">' +
             '  <h1>' + escapeHtml(report.name) + '</h1>' +
-            '  <div class="subtitle">Medical Record Unit &mdash; Patient Visit Summary</div>' +
+            '  <div class="subtitle">' + escapeHtml(customSubtitle) + '</div>' +
             '  <div class="generated-info">' +
             '    <span>&#128197; From: <strong>' + escapeHtml(startDate) + '</strong></span>' +
             '    <span>&#128197; To: <strong>' + escapeHtml(endDate) + '</strong></span>' +
@@ -565,9 +580,9 @@ angular.module('bahmni.reports')
             '  });' +
             '  var html = \'<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>\';' +
             '  html += \'<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:Calibri,sans-serif;font-size:11pt;">\';' +
-            '  html += \'<tr style="background:#1a237e;color:white;"><th colspan="\' + headers.length + \'" style="font-size:16pt;font-weight:bold;text-align:left;padding:12px;">\' + title + \'</th></tr>\';' +
+            '  html += \'<tr style="background:' + activeTheme.start + ';color:white;"><th colspan="\' + headers.length + \'" style="font-size:16pt;font-weight:bold;text-align:left;padding:12px;">\' + title + \'</th></tr>\';' +
             '  html += \'<tr><td colspan="\' + headers.length + \'" style="font-size:10pt;color:#555;padding:4px;">\' + dateInfo + \'</td></tr>\';' +
-            '  html += \'<tr style="background:#283593;color:white;font-weight:bold;">\';' +
+            '  html += \'<tr style="background:' + activeTheme.accent + ';color:white;font-weight:bold;">\';' +
             '  headers.forEach(function(h, i) {' +
             '    html += \'<th style="padding:8px 10px;text-align:left;font-size:10pt;width:\' + colWidths[i] + \'ch;">\' + h + \'</th>\';' +
             '  });' +

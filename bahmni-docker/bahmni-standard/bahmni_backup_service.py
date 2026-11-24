@@ -4384,6 +4384,105 @@ def sync_order_services_odoo_costs():
         "message": f"Sync completed: {linked_count} orderables linked to existing Odoo products, {created_count} new service products registered in Odoo"
     }
 
+
+# -------------------------------------------------------------------------
+# Bahmni Reports Manager & Observation Form Report Generator
+# -------------------------------------------------------------------------
+def load_reports_config():
+    reports_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "reports", "reports.json")
+    sql_dir = os.path.join(CONFIG_DIR, "openmrs", "apps", "reports", "sql")
+    reports_data = {}
+    if os.path.exists(reports_file):
+        try:
+            with open(reports_file, "r", encoding="utf-8") as f:
+                reports_data = json.load(f)
+        except Exception as e:
+            log(f"Error loading reports.json: {e}")
+
+    sql_files = []
+    if os.path.isdir(sql_dir):
+        for root, dirs, files in os.walk(sql_dir):
+            for file in files:
+                if file.endswith(".sql"):
+                    full_p = os.path.join(root, file)
+                    rel_p = os.path.relpath(full_p, sql_dir).replace("\\", "/")
+                    sql_files.append(rel_p)
+    sql_files.sort()
+    return {"reports": reports_data, "sqlFiles": sql_files}
+
+def get_sql_file_content(path_or_filename):
+    sql_dir = os.path.join(CONFIG_DIR, "openmrs", "apps", "reports", "sql")
+    clean_rel = path_or_filename.replace("/etc/bahmni_config/openmrs/apps/reports/sql/", "")
+    clean_rel = clean_rel.lstrip("/\\")
+    full_p = os.path.normpath(os.path.join(sql_dir, clean_rel))
+    if not full_p.startswith(os.path.normpath(sql_dir)):
+        raise ValueError("Invalid SQL file path outside sql directory.")
+    if os.path.isfile(full_p):
+        with open(full_p, "r", encoding="utf-8", errors="replace") as f:
+            return f.read()
+    return ""
+
+def save_report_entry(payload):
+    reports_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "reports", "reports.json")
+    sql_dir = os.path.join(CONFIG_DIR, "openmrs", "apps", "reports", "sql")
+    os.makedirs(sql_dir, exist_ok=True)
+
+    report_key = payload.get("key")
+    report_obj = payload.get("report")
+    sql_content = payload.get("sqlContent")
+    sql_filename = payload.get("sqlFileName")
+    old_key = payload.get("oldKey")
+
+    if not report_key or not isinstance(report_obj, dict):
+        raise ValueError("Report key and report definition object are required.")
+
+    if sql_content is not None and sql_filename:
+        sql_filename = sql_filename.replace("\\", "/").lstrip("/")
+        if not sql_filename.endswith(".sql"):
+            sql_filename += ".sql"
+        sql_full_path = os.path.normpath(os.path.join(sql_dir, sql_filename))
+        if not sql_full_path.startswith(os.path.normpath(sql_dir)):
+            raise ValueError("Invalid target SQL file path.")
+        os.makedirs(os.path.dirname(sql_full_path), exist_ok=True)
+        write_file_safe(sql_full_path, sql_content)
+        if "config" not in report_obj or not isinstance(report_obj["config"], dict):
+            report_obj["config"] = {}
+        report_obj["config"]["sqlPath"] = f"/etc/bahmni_config/openmrs/apps/reports/sql/{sql_filename}"
+
+    reports_data = {}
+    if os.path.exists(reports_file):
+        try:
+            with open(reports_file, "r", encoding="utf-8") as f:
+                reports_data = json.load(f)
+        except Exception as e:
+            log(f"Warning reading reports.json before update: {e}")
+
+    if old_key and old_key in reports_data and old_key != report_key:
+        del reports_data[old_key]
+
+    reports_data[report_key] = report_obj
+    write_file_safe(reports_file, json.dumps(reports_data, indent=2, ensure_ascii=False) + "\n")
+    sync_file_to_bahmni_web(reports_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/reports/reports.json")
+    log(f"Report '{report_key}' saved successfully into reports.json.")
+    return load_reports_config()
+
+def delete_report_entry(payload):
+    reports_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "reports", "reports.json")
+    report_key = payload.get("key")
+    if not report_key:
+        raise ValueError("Report key required for deletion.")
+    reports_data = {}
+    if os.path.exists(reports_file):
+        with open(reports_file, "r", encoding="utf-8") as f:
+            reports_data = json.load(f)
+    if report_key in reports_data:
+        del reports_data[report_key]
+        write_file_safe(reports_file, json.dumps(reports_data, indent=2, ensure_ascii=False) + "\n")
+        sync_file_to_bahmni_web(reports_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/reports/reports.json")
+        log(f"Report '{report_key}' deleted successfully from reports.json.")
+    return load_reports_config()
+
+
 class BackupAPIHandler(BaseHTTPRequestHandler):
     def _send_cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -4506,6 +4605,21 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 log(f"Error loading location visit mappings: {e}")
                 self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/reports-manager/reports", "/reports-manager/reports"):
+            try:
+                self._send_json(200, load_reports_config())
+            except Exception as e:
+                log(f"Error loading reports: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/reports-manager/sql-content", "/reports-manager/sql-content"):
+            try:
+                sql_path = query_params.get("path", [""])[0]
+                content = get_sql_file_content(sql_path)
+                self._send_json(200, {"content": content})
+            except Exception as e:
+                self._send_json(400, {"error": str(e)})
 
         elif path in ("/api/obs-form-config", "/obs-form-config"):
             try:
@@ -4898,6 +5012,22 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True, "result": result, "mappings": result.get("mappings", [])})
             except Exception as e:
                 log(f"Error saving location visit mappings: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/reports-manager/save-report", "/reports-manager/save-report"):
+            try:
+                result = save_report_entry(payload)
+                self._send_json(200, {"success": True, "result": result, "reports": result.get("reports", {}), "sqlFiles": result.get("sqlFiles", [])})
+            except Exception as e:
+                log(f"Error saving report: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/reports-manager/delete-report", "/reports-manager/delete-report"):
+            try:
+                result = delete_report_entry(payload)
+                self._send_json(200, {"success": True, "result": result, "reports": result.get("reports", {}), "sqlFiles": result.get("sqlFiles", [])})
+            except Exception as e:
+                log(f"Error deleting report: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/obs-form-config", "/obs-form-config"):
