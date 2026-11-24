@@ -100,7 +100,14 @@ angular.module('bahmni.clinical')
 
             var insertTemplate = function (template) {
                 if (template && !(template.isDefault() || template.alwaysShow)) {
-                    $scope.consultation.selectedObsTemplate.push(template);
+                    var alreadyPresent = _.some($scope.consultation.selectedObsTemplate, function (t) {
+                        return t === template ||
+                               (t.uuid && template.uuid && t.uuid === template.uuid && t.label === template.label) ||
+                               (t.id && template.id && t.id === template.id);
+                    });
+                    if (!alreadyPresent) {
+                        $scope.consultation.selectedObsTemplate.push(template);
+                    }
                 }
             };
 
