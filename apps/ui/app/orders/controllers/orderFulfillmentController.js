@@ -1,9 +1,9 @@
 "use strict";
 
 angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userService', '$http', '$scope', '$rootScope', '$stateParams', '$state', '$q', 'patientContext', 'orderService', 'observationsService', 'orderObservationService',
-    'orderTypeService', 'sessionService', 'encounterService', 'spinner', 'messagingService', 'appService', '$anchorScroll', 'orderFulfillmentConfig', 'contextChangeHandler', '$translate', 'paymentStatusService',
+    'orderTypeService', 'sessionService', 'encounterService', 'spinner', 'messagingService', 'appService', '$anchorScroll', 'orderFulfillmentConfig', 'contextChangeHandler', '$translate', 'paymentStatusService', 'visitService',
     function (userService, $http, $scope, $rootScope, $stateParams, $state, $q, patientContext, orderService, observationsService, orderObservationService,
-        orderTypeService, sessionService, encounterService, spinner, messagingService, appService, $anchorScroll, orderFulfillmentConfig, contextChangeHandler, $translate, paymentStatusService) {
+        orderTypeService, sessionService, encounterService, spinner, messagingService, appService, $anchorScroll, orderFulfillmentConfig, contextChangeHandler, $translate, paymentStatusService, visitService) {
         $scope.patient = patientContext.patient;
         var currentUser = $rootScope.currentUser || $scope.currentUser || { privileges: [] };
         $scope.patient.docpriv = (currentUser.privileges || []).filter(function (priv) {
@@ -27,10 +27,15 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
         $scope.isPaymentBypassed = !!payment_config["disable checking"];
         var ordersSerialNumberBuilding = appService.getAppDescriptor().getConfigValue("ordersSerialNumberBuilding");
         var orderFulfillmentFormMap = {
+            "Radiology": "Radiology order fulfillment form",
             "Radiology Order": "Radiology order fulfillment form",
+            "Pathology": "Pathology order fulfillment form",
             "Pathology Order": "Pathology order fulfillment form",
+            "Ophtha": "Ophtha Order fulfillment form",
             "Ophtha Order": "Ophtha Order fulfillment form",
+            "Procedure": "Procedure order fulfillment form",
             "Procedure Order": "Procedure order fulfillment form",
+            "Lab": "Lab order fulfillment form",
             "Lab Order": "Lab order fulfillment form"
         };
         $scope.formName = (orderFulfillmentConfig && orderFulfillmentConfig.resolvedFormName) ||
@@ -318,6 +323,78 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
             return $translate.instant('NO_ORDERS_PRESENT', {orderType: $scope.orderType});
         };
 
+        var getEncounterTypeUuid = function () {
+            var config = appService.getAppDescriptor().getConfigValue("encounterType");
+            if (config && $rootScope.encounterConfig) {
+                var u = $rootScope.encounterConfig.getEncounterTypeUuid(config);
+                if (u) return u;
+            }
+            if ($scope.fulfillmentConfig && $scope.fulfillmentConfig.encounterType && $rootScope.encounterConfig) {
+                var u = $rootScope.encounterConfig.getEncounterTypeUuid($scope.fulfillmentConfig.encounterType);
+                if (u) return u;
+            }
+            var type = $scope.orderType || $stateParams.orderType || "";
+            if ($rootScope.encounterConfig) {
+                var cleanType = type.replace(/\s+Order$/i, '').trim();
+                var encTypeUuid = $rootScope.encounterConfig.getEncounterTypeUuid(type) ||
+                                  $rootScope.encounterConfig.getEncounterTypeUuid(cleanType) ||
+                                  $rootScope.encounterConfig.getEncounterTypeUuid(cleanType.toUpperCase()) ||
+                                  $rootScope.encounterConfig.getEncounterTypeUuid(type.toUpperCase());
+                if (encTypeUuid) return encTypeUuid;
+                if (/radiology/i.test(type)) {
+                    return $rootScope.encounterConfig.getRadiologyEncounterTypeUuid() || "d3a89c59-5e07-11ef-8f7c-0242ac120002";
+                }
+                return $rootScope.encounterConfig.getConsultationEncounterTypeUuid();
+            }
+            if (/radiology/i.test(type)) {
+                return "d3a89c59-5e07-11ef-8f7c-0242ac120002";
+            }
+            return null;
+        };
+
+        var getVisitInfo = function () {
+            var defaultVisitTypeName = appService.getAppDescriptor().getConfigValue("defaultVisitType") || "OPD";
+            var defaultVisitTypeUuid = null;
+            if ($rootScope.encounterConfig && $rootScope.encounterConfig.visitTypes) {
+                defaultVisitTypeUuid = $rootScope.encounterConfig.visitTypes[defaultVisitTypeName] ||
+                                       $rootScope.encounterConfig.visitTypes["OPD"] ||
+                                       "54f43754-c6ce-4472-890e-0f28acaeaea6";
+            } else {
+                defaultVisitTypeUuid = "54f43754-c6ce-4472-890e-0f28acaeaea6";
+            }
+
+            if (!visitService || !visitService.search) {
+                return $q.when({
+                    visitUuid: null,
+                    visitType: defaultVisitTypeName,
+                    visitTypeUuid: defaultVisitTypeUuid
+                });
+            }
+
+            return visitService.search({
+                patient: $scope.patient.uuid,
+                includeInactive: false,
+                v: "custom:(uuid,visitType:(uuid,name),startDatetime,stopDatetime)"
+            }).then(function (res) {
+                var activeVisits = (res.data && res.data.results) ? res.data.results : [];
+                var activeVisit = _.find(activeVisits, function (v) {
+                    return !v.stopDatetime;
+                });
+                return {
+                    visitUuid: activeVisit ? activeVisit.uuid : null,
+                    visitType: defaultVisitTypeName,
+                    visitTypeUuid: defaultVisitTypeUuid
+                };
+            }).catch(function (err) {
+                console.warn("Could not query active visits, falling back to default visit type:", err);
+                return {
+                    visitUuid: null,
+                    visitType: defaultVisitTypeName,
+                    visitTypeUuid: defaultVisitTypeUuid
+                };
+            });
+        };
+
         $scope.$on("event:saveOrderObservations", function () {
             if (!$scope.isFormValid()) {
                 $scope.$parent.$broadcast("event:errorsOnForm");
@@ -336,7 +413,24 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
             if (!locUuid && $rootScope.facilityLocationUuids && $rootScope.facilityLocationUuids.length > 0) {
                 locUuid = $rootScope.facilityLocationUuids[0];
             }
-            var savePromise = orderObservationService.save($scope.orders, $scope.patient, locUuid);
+
+            var currentProviderUuid = ($rootScope.currentProvider && $rootScope.currentProvider.uuid) ? $rootScope.currentProvider.uuid : null;
+            var providers = currentProviderUuid ? [{ uuid: currentProviderUuid }] : [];
+            var encTypeUuid = getEncounterTypeUuid();
+
+            var savePromise = getVisitInfo().then(function (visitInfo) {
+                return orderObservationService.save(
+                    $scope.orders,
+                    $scope.patient,
+                    locUuid,
+                    visitInfo.visitUuid,
+                    encTypeUuid,
+                    visitInfo.visitTypeUuid,
+                    visitInfo.visitType,
+                    providers
+                );
+            });
+
             spinner.forPromise(savePromise.then(function () {
                 $state.transitionTo($state.current, $state.params, {
                     reload: true,
@@ -348,11 +442,12 @@ angular.module('bahmni.orders').controller('OrderFulfillmentController', ['userS
             }).catch(function (error) {
                 var message = $translate.instant("DEFAULT_SERVER_ERROR_MESSAGE");
                 try {
-                    /* This is a dirty fix to do, the real reason of failure is because of there is no visit type assosiated with
-                     save request to create a new visit in mrs.
-                      */
-                    if (error.data.error.message.indexOf("Visit Type is required") >= 0) {
-                        message = $translate.instant("VISIT_CLOSED_CREATE_NEW_ERROR_MESSAGE");
+                    if (error && error.data && error.data.error && error.data.error.message) {
+                        if (error.data.error.message.indexOf("Visit Type is required") >= 0) {
+                            message = $translate.instant("VISIT_CLOSED_CREATE_NEW_ERROR_MESSAGE");
+                        } else {
+                            message = error.data.error.message;
+                        }
                     }
                 } catch (e) { /* ignore the error */ }
                 messagingService.showMessage('error', message);

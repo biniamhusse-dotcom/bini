@@ -6,10 +6,15 @@ angular.module('bahmni.orders')
             var getFormNameVariants = function (formName) {
                 var variants = [formName];
                 var directMap = {
+                    "Radiology Fulfillment Form": "Radiology order fulfillment form",
                     "Radiology Order Fulfillment Form": "Radiology order fulfillment form",
+                    "Pathology Fulfillment Form": "Pathology order fulfillment form",
                     "Pathology Order Fulfillment Form": "Pathology order fulfillment form",
+                    "Ophtha Fulfillment Form": "Ophtha Order fulfillment form",
                     "Ophtha Order Fulfillment Form": "Ophtha Order fulfillment form",
+                    "Procedure Fulfillment Form": "Procedure order fulfillment form",
                     "Procedure Order Fulfillment Form": "Procedure order fulfillment form",
+                    "Lab Fulfillment Form": "Lab order fulfillment form",
                     "Lab Order Fulfillment Form": "Lab order fulfillment form"
                 };
                 if (directMap[formName] && variants.indexOf(directMap[formName]) === -1) {
@@ -19,6 +24,10 @@ angular.module('bahmni.orders')
                                       .replace(" Order fulfillment form", " order fulfillment form");
                 if (variants.indexOf(lowered) === -1) {
                     variants.push(lowered);
+                }
+                var withOrder = formName.replace(" Fulfillment Form", " Order Fulfillment Form");
+                if (directMap[withOrder] && variants.indexOf(directMap[withOrder]) === -1) {
+                    variants.unshift(directMap[withOrder]);
                 }
                 return variants;
             };

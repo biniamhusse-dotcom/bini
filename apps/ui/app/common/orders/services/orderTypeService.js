@@ -14,6 +14,14 @@ angular.module('bahmni.common.orders')
         };
 
         self.getOrderTypeUuid = function (orderTypeName) {
-            return _.result(_.find(self.orderTypes, {display: orderTypeName}), 'uuid');
+            if (!orderTypeName) return null;
+            var direct = _.find(self.orderTypes, {display: orderTypeName});
+            if (direct) return direct.uuid;
+            var normalized = orderTypeName.toLowerCase().trim();
+            var match = _.find(self.orderTypes, function (t) {
+                var d = (t.display || "").toLowerCase().trim();
+                return d === normalized || d === (normalized + " order") || normalized === (d + " order");
+            });
+            return match ? match.uuid : null;
         };
     }]);
