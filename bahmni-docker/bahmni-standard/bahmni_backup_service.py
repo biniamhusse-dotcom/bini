@@ -4772,6 +4772,113 @@ def retry_openelis_failed_events(payload):
     return load_lab_mapping_overview()
 
 
+def _run_odoo_psql(sql_query):
+    cmd = [
+        "docker", "exec", "-i", "bahmni-standard-odoodb-1",
+        "psql", "-U", "odoo", "-d", "odoo", "-At", "-F", "\t"
+    ]
+    proc = subprocess.run(cmd, input=sql_query, capture_output=True, text=True, timeout=30)
+    if proc.returncode != 0:
+        raise RuntimeError(f"Odoo DB error: {proc.stderr.strip()}")
+    return proc.stdout
+
+
+def check_and_heal_odoo_encounter_marker():
+    """Verify Odoo's encounter AtomFeed marker still exists in OpenMRS; recover automatically if stale."""
+    marker_out = _run_odoo_psql(
+        "SELECT feed_uri_for_last_read_entry, last_read_entry_id FROM markers "
+        "WHERE feed_uri = 'http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent' LIMIT 1;"
+    ).strip()
+    if not marker_out or "\t" not in marker_out:
+        return
+    feed_page_url, entry_id = marker_out.split("\t", 1)
+    uuid_val = entry_id.replace("tag:atomfeed.ict4h.org:", "").strip()
+    if not re.match(r"^[a-zA-Z0-9-]+$", uuid_val):
+        return
+
+    exists_out = _run_openmrs_mysql(
+        f"SELECT 1 FROM event_records WHERE uuid = '{uuid_val}' LIMIT 1;"
+    ).strip()
+    if exists_out == "1":
+        return
+
+    log(f"[OdooWatchdog] Stale Odoo encounter marker detected ({feed_page_url} -> {uuid_val}). Recovering...")
+
+    # Determine target timestamp from latest sale_order in Odoo (fallback: OpenELIS marker)
+    last_so_ts = _run_odoo_psql(
+        "SELECT to_char(create_date, 'YYYY-MM-DD\"T\"HH24:MI') FROM sale_order ORDER BY id DESC LIMIT 1;"
+    ).strip()
+    if not last_so_ts:
+        return
+
+    # Find OpenELIS's current encounter page as upper bound
+    elis_page_out = _run_openelis_psql(
+        "SELECT feed_uri_for_last_read_entry FROM markers "
+        "WHERE feed_uri = 'http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent' LIMIT 1;"
+    ).strip()
+    hi = 60000
+    m = re.search(r"/encounter/(\d+)$", elis_page_out)
+    if m:
+        hi = int(m.group(1)) + 50
+    lo = max(1, hi - 5000)
+
+    best_page = None
+    best_entry = None
+    for _ in range(25):
+        if lo > hi:
+            break
+        mid = (lo + hi) // 2
+        proc = subprocess.run(
+            ["docker", "exec", "bahmni-standard-odoo-connect-1", "curl", "-s",
+             f"http://openmrs:8080/openmrs/ws/atomfeed/encounter/{mid}"],
+            capture_output=True, text=True, timeout=15
+        )
+        xml = proc.stdout or ""
+        entries = re.findall(r"<entry>.*?<id>([^<]+)</id>.*?<updated>([^<]+)</updated>.*?</entry>", xml, re.S)
+        if not entries:
+            hi = mid - 1
+            continue
+        dates = [d for _, d in entries]
+        if max(dates) < last_so_ts:
+            lo = mid + 1
+        elif min(dates) > last_so_ts:
+            hi = mid - 1
+        else:
+            best_page = mid
+            best_entry = entries[-1][0]
+            break
+
+    if best_page is None and lo > 0:
+        proc = subprocess.run(
+            ["docker", "exec", "bahmni-standard-odoo-connect-1", "curl", "-s",
+             f"http://openmrs:8080/openmrs/ws/atomfeed/encounter/{lo}"],
+            capture_output=True, text=True, timeout=15
+        )
+        entries = re.findall(r"<entry>.*?<id>([^<]+)</id>.*?<updated>([^<]+)</updated>.*?</entry>", proc.stdout or "", re.S)
+        if entries:
+            best_page = lo
+            best_entry = entries[0][0]
+
+    if best_page and best_entry:
+        _run_odoo_psql(
+            f"UPDATE markers SET feed_uri_for_last_read_entry = 'http://openmrs:8080/openmrs/ws/atomfeed/encounter/{best_page}', "
+            f"last_read_entry_id = '{best_entry}' "
+            f"WHERE feed_uri = 'http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent';"
+        )
+        log(f"[OdooWatchdog] Recovered Odoo encounter marker to encounter/{best_page} ({best_entry}).")
+
+
+def start_odoo_sync_watchdog():
+    log("Odoo Sync Marker Watchdog started.")
+    time.sleep(20)
+    while True:
+        try:
+            check_and_heal_odoo_encounter_marker()
+        except Exception as e:
+            log(f"[OdooWatchdog] Check warning: {e}")
+        time.sleep(120)
+
+
 
 class BackupAPIHandler(BaseHTTPRequestHandler):
     def _send_cors(self):
@@ -5660,6 +5767,7 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
 def start_server():
     threading.Thread(target=ensure_restore_privilege, daemon=True).start()
     threading.Thread(target=start_scheduler_loop, daemon=True).start()
+    threading.Thread(target=start_odoo_sync_watchdog, daemon=True).start()
     server_address = ("0.0.0.0", PORT)
     ThreadingHTTPServer.allow_reuse_address = True
     httpd = ThreadingHTTPServer(server_address, BackupAPIHandler)
