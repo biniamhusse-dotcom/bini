@@ -4879,6 +4879,160 @@ def start_odoo_sync_watchdog():
         time.sleep(120)
 
 
+def load_odoo_sync_overview():
+    # 1. Container statuses
+    ps_out = subprocess.run(
+        ["docker", "ps", "-a", "--filter", "name=odoo", "--format", "{{.Names}}\t{{.Status}}"],
+        capture_output=True, text=True, timeout=15
+    ).stdout.strip()
+    containers = []
+    odoo_connect_up = False
+    for line in ps_out.splitlines():
+        parts = line.split("\t", 1)
+        if len(parts) == 2:
+            is_up = parts[1].lower().startswith("up")
+            if "odoo-connect" in parts[0] and is_up:
+                odoo_connect_up = True
+            containers.append({"name": parts[0], "status": parts[1], "up": is_up})
+
+    # 2. Markers & live validation against OpenMRS event_records
+    markers_out = _run_odoo_psql(
+        "SELECT id, feed_uri, COALESCE(feed_uri_for_last_read_entry, ''), COALESCE(last_read_entry_id, '') "
+        "FROM markers ORDER BY id;"
+    )
+    markers = []
+    stale_count = 0
+    encounter_page = ""
+    for line in markers_out.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 4:
+            mid, feed_uri, page_uri, entry_id = int(parts[0]), parts[1], parts[2], parts[3]
+            uuid_val = entry_id.replace("tag:atomfeed.ict4h.org:", "").strip()
+            valid = True
+            if uuid_val and re.match(r"^[a-zA-Z0-9-]+$", uuid_val):
+                chk = _run_openmrs_mysql(f"SELECT 1 FROM event_records WHERE uuid = '{uuid_val}' LIMIT 1;").strip()
+                valid = (chk == "1")
+            if not valid:
+                stale_count += 1
+            if "encounter/recent" in feed_uri:
+                m = re.search(r"/encounter/(\d+)$", page_uri)
+                encounter_page = f"encounter/{m.group(1)}" if m else page_uri
+            markers.append({
+                "id": mid,
+                "feedUri": feed_uri,
+                "feedPageUri": page_uri,
+                "lastReadEntryId": entry_id,
+                "valid": valid
+            })
+
+    # 3. Recent Sale Orders & Today's stats
+    stats_out = _run_odoo_psql(
+        "SELECT count(*), COALESCE(max(id)::text, '0'), COALESCE(to_char(max(create_date), 'YYYY-MM-DD HH24:MI:SS'), '') "
+        "FROM sale_order WHERE create_date >= CURRENT_DATE;"
+    ).strip()
+    orders_today, latest_so_id, latest_so_time = 0, 0, ""
+    if stats_out:
+        sp = stats_out.split("\t")
+        if len(sp) >= 3:
+            orders_today = int(sp[0] or 0)
+            latest_so_id = int(sp[1] or 0)
+            latest_so_time = sp[2]
+
+    recent_orders_out = _run_odoo_psql("""
+        SELECT so.id, so.name, so.state, COALESCE(rp.name, 'Unknown'),
+               COALESCE(so.amount_total::text, '0'),
+               to_char(so.create_date, 'YYYY-MM-DD HH24:MI:SS'),
+               COALESCE(so.origin, '')
+        FROM sale_order so
+        LEFT JOIN res_partner rp ON so.partner_id = rp.id
+        ORDER BY so.id DESC
+        LIMIT 30;
+    """)
+    recent_orders = []
+    for line in recent_orders_out.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 7:
+            recent_orders.append({
+                "id": int(parts[0]),
+                "name": parts[1],
+                "state": parts[2],
+                "customer": parts[3],
+                "amountTotal": parts[4],
+                "createDate": parts[5],
+                "origin": parts[6]
+            })
+
+    # 4. Failed events
+    failed_out = _run_odoo_psql("""
+        SELECT id, title, to_char(failed_at, 'YYYY-MM-DD HH24:MI:SS'), retries,
+               COALESCE(substring(error_message from 'encounter/[0-9]+'), ''),
+               COALESCE(substring(error_message from 'Caused by: [^\n]+'), left(error_message, 220))
+        FROM failed_events
+        ORDER BY id DESC
+        LIMIT 50;
+    """)
+    failed_events = []
+    for line in failed_out.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 6:
+            failed_events.append({
+                "id": int(parts[0]),
+                "title": parts[1],
+                "failedAt": parts[2],
+                "retries": int(parts[3]),
+                "encounter": parts[4],
+                "reason": parts[5].replace("\n", " ").strip()
+            })
+
+    total_failed = int(_run_odoo_psql("SELECT count(*) FROM failed_events;").strip() or "0")
+
+    return {
+        "containers": containers,
+        "markers": markers,
+        "recentOrders": recent_orders,
+        "failedEvents": failed_events,
+        "stats": {
+            "odooConnectUp": odoo_connect_up,
+            "staleMarkers": stale_count,
+            "encounterPage": encounter_page or "Unknown",
+            "ordersToday": orders_today,
+            "latestOrderId": latest_so_id,
+            "latestOrderTime": latest_so_time,
+            "totalFailedEvents": total_failed
+        }
+    }
+
+def heal_odoo_markers_now():
+    check_and_heal_odoo_encounter_marker()
+    return load_odoo_sync_overview()
+
+def retry_odoo_failed_events(payload):
+    eid = payload.get("id")
+    if eid == "all":
+        _run_odoo_psql("UPDATE failed_events SET retries = 0;")
+    elif eid is not None:
+        _run_odoo_psql(f"UPDATE failed_events SET retries = 0 WHERE id = {int(eid)};")
+    else:
+        raise ValueError("Missing event id or 'all'.")
+    return load_odoo_sync_overview()
+
+def delete_odoo_failed_events(payload):
+    eid = payload.get("id")
+    if eid == "all":
+        _run_odoo_psql("DELETE FROM failed_events;")
+    elif eid is not None:
+        _run_odoo_psql(f"DELETE FROM failed_events WHERE id = {int(eid)};")
+    else:
+        raise ValueError("Missing event id or 'all'.")
+    return load_odoo_sync_overview()
+
+def restart_odoo_connect_container():
+    proc = subprocess.run(["docker", "restart", "bahmni-standard-odoo-connect-1"], capture_output=True, text=True, timeout=60)
+    if proc.returncode != 0:
+        raise RuntimeError(f"Failed to restart odoo-connect: {proc.stderr.strip()}")
+    return load_odoo_sync_overview()
+
+
 
 class BackupAPIHandler(BaseHTTPRequestHandler):
     def _send_cors(self):
@@ -5023,6 +5177,13 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, load_lab_mapping_overview())
             except Exception as e:
                 log(f"Error loading lab mapping overview: {e}")
+                self._send_json(500, {"error": str(e)})
+
+        elif path in ("/api/odoo-sync/overview", "/odoo-sync/overview"):
+            try:
+                self._send_json(200, load_odoo_sync_overview())
+            except Exception as e:
+                log(f"Error loading odoo sync overview: {e}")
                 self._send_json(500, {"error": str(e)})
 
         elif path in ("/api/obs-form-config", "/obs-form-config"):
@@ -5464,6 +5625,38 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True, "result": result})
             except Exception as e:
                 log(f"Error retrying failed events: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/odoo-sync/heal-markers", "/odoo-sync/heal-markers"):
+            try:
+                result = heal_odoo_markers_now()
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error healing Odoo markers: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/odoo-sync/retry-failed", "/odoo-sync/retry-failed"):
+            try:
+                result = retry_odoo_failed_events(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error retrying Odoo failed events: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/odoo-sync/delete-failed", "/odoo-sync/delete-failed"):
+            try:
+                result = delete_odoo_failed_events(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error deleting Odoo failed events: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/odoo-sync/restart-connect", "/odoo-sync/restart-connect"):
+            try:
+                result = restart_odoo_connect_container()
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error restarting odoo-connect: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/obs-form-config", "/obs-form-config"):

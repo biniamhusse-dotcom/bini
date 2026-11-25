@@ -218,5 +218,16 @@
         "icon": "fa-flask",
         "order": 18,
         "requiredPrivilege": "app:admin"
+    },
+    "odooSyncManager": {
+        "id": "bahmni.admin.odooSyncManager",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {},
+        "label": "Odoo Sync & Orders",
+        "url": "#/odooSyncManager",
+        "icon": "fa-shopping-cart",
+        "order": 19,
+        "requiredPrivilege": "app:admin"
     }
 }
