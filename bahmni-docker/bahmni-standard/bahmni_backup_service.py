@@ -4895,35 +4895,45 @@ def load_odoo_sync_overview():
                 odoo_connect_up = True
             containers.append({"name": parts[0], "status": parts[1], "up": is_up})
 
-    # 2. Markers & live validation against OpenMRS event_records
+    # 2. Markers & live validation against OpenMRS event_records (single batched MySQL query)
     markers_out = _run_odoo_psql(
         "SELECT id, feed_uri, COALESCE(feed_uri_for_last_read_entry, ''), COALESCE(last_read_entry_id, '') "
         "FROM markers ORDER BY id;"
     )
-    markers = []
-    stale_count = 0
-    encounter_page = ""
+    raw_markers = []
+    uuids_to_check = []
     for line in markers_out.strip().splitlines():
         parts = line.split("\t")
         if len(parts) >= 4:
             mid, feed_uri, page_uri, entry_id = int(parts[0]), parts[1], parts[2], parts[3]
             uuid_val = entry_id.replace("tag:atomfeed.ict4h.org:", "").strip()
-            valid = True
             if uuid_val and re.match(r"^[a-zA-Z0-9-]+$", uuid_val):
-                chk = _run_openmrs_mysql(f"SELECT 1 FROM event_records WHERE uuid = '{uuid_val}' LIMIT 1;").strip()
-                valid = (chk == "1")
-            if not valid:
-                stale_count += 1
-            if "encounter/recent" in feed_uri:
-                m = re.search(r"/encounter/(\d+)$", page_uri)
-                encounter_page = f"encounter/{m.group(1)}" if m else page_uri
-            markers.append({
-                "id": mid,
-                "feedUri": feed_uri,
-                "feedPageUri": page_uri,
-                "lastReadEntryId": entry_id,
-                "valid": valid
-            })
+                uuids_to_check.append(uuid_val)
+            raw_markers.append((mid, feed_uri, page_uri, entry_id, uuid_val))
+
+    existing_uuids = set()
+    if uuids_to_check:
+        in_clause = ",".join(f"'{u}'" for u in uuids_to_check)
+        chk_out = _run_openmrs_mysql(f"SELECT uuid FROM event_records WHERE uuid IN ({in_clause});")
+        existing_uuids = set(u.strip() for u in chk_out.splitlines() if u.strip())
+
+    markers = []
+    stale_count = 0
+    encounter_page = ""
+    for mid, feed_uri, page_uri, entry_id, uuid_val in raw_markers:
+        valid = (uuid_val in existing_uuids) if uuid_val else True
+        if not valid:
+            stale_count += 1
+        if "encounter/recent" in feed_uri:
+            m = re.search(r"/encounter/(\d+)$", page_uri)
+            encounter_page = f"encounter/{m.group(1)}" if m else page_uri
+        markers.append({
+            "id": mid,
+            "feedUri": feed_uri,
+            "feedPageUri": page_uri,
+            "lastReadEntryId": entry_id,
+            "valid": valid
+        })
 
     # 3. Recent Sale Orders & Today's stats
     stats_out = _run_odoo_psql(
