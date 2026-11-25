@@ -162,7 +162,7 @@ angular.module('admin')
                 }
             }).state('admin.reportManager', {
                 url: '/reportManager',
-                templateUrl: 'views/reportManager.html?v=1.0',
+                templateUrl: 'views/reportManager.html?v=1.1',
                 controller: 'ReportManagerController',
                 data: {
                     backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]

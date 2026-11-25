@@ -270,17 +270,16 @@ angular.module('admin')
                 $scope.obsFormsLoading = true;
                 $http.get(OPENMRS_BASE + '/concept/' + ALL_OBS_TEMPLATES_UUID, {
                     params: {
-                        v: 'custom:(uuid,display,name:(name),setMembers:(uuid,display,name:(name),datatype:(uuid,name),conceptClass:(uuid,name)))',
+                        v: 'custom:(uuid,display,setMembers:(uuid,display))',
                         t: Date.now()
                     }
                 }).then(function (res) {
                     $scope.obsFormsLoading = false;
                     var members = (res.data && res.data.setMembers) || [];
                     $scope.observationForms = members.map(function (m) {
-                        var name = (m.name && m.name.name) || m.display || 'Observation Form';
                         return {
                             uuid: m.uuid,
-                            name: name
+                            name: m.display || 'Observation Form'
                         };
                     });
                 }, function (err) {
@@ -290,6 +289,7 @@ angular.module('admin')
             };
 
             $scope.selectObsForm = function (form) {
+                if (!form) return;
                 $scope.selectedObsForm = form;
                 $scope.obsReportConfig.reportName = form.name + ' Observation Report';
                 $scope.obsReportConfig.reportKey = form.name + ' Observations';
@@ -303,7 +303,8 @@ angular.module('admin')
                 $scope.formHierarchyLoading = true;
                 $scope.formQuestions = [];
 
-                var queryUrl = OPENMRS_BASE + '/concept/' + uuid + '?v=custom:(uuid,display,name:(name),datatype:(uuid,name),conceptClass:(uuid,name),answers:(uuid,display,name:(name)),setMembers:(uuid,display,name:(name),datatype:(uuid,name),conceptClass:(uuid,name),answers:(uuid,display,name:(name)),setMembers:(uuid,display,name:(name),datatype:(uuid,name),conceptClass:(uuid,name),answers:(uuid,display,name:(name))))))';
+                var rep = 'custom:(uuid,display,datatype:(uuid,name),conceptClass:(uuid,name),setMembers:(uuid,display,datatype:(uuid,name),conceptClass:(uuid,name),setMembers:(uuid,display,datatype:(uuid,name),conceptClass:(uuid,name),setMembers:(uuid,display,datatype:(uuid,name),conceptClass:(uuid,name),setMembers:(uuid,display,datatype:(uuid,name),conceptClass:(uuid,name))))))';
+                var queryUrl = OPENMRS_BASE + '/concept/' + uuid + '?v=' + rep;
 
                 $http.get(queryUrl, { params: { t: Date.now() } }).then(function (res) {
                     $scope.formHierarchyLoading = false;
@@ -316,14 +317,14 @@ angular.module('admin')
                         if (members.length > 0) {
                             var currentSection = sectionPrefix;
                             if (conceptNode.uuid !== uuid) {
-                                var secName = (conceptNode.name && conceptNode.name.name) || conceptNode.display || '';
+                                var secName = conceptNode.display || '';
                                 currentSection = currentSection ? currentSection + ' > ' + secName : secName;
                             }
                             angular.forEach(members, function (child) {
                                 extractQuestions(child, currentSection);
                             });
                         } else {
-                            var qName = (conceptNode.name && conceptNode.name.name) || conceptNode.display || '';
+                            var qName = conceptNode.display || '';
                             var dtName = (conceptNode.datatype && conceptNode.datatype.name) || 'Text';
                             var cleanTitle = qName.replace(new RegExp('^' + ($scope.selectedObsForm.name || '') + '\\s*-\\s*', 'i'), '');
 
@@ -333,8 +334,7 @@ angular.module('admin')
                                 conceptName: qName,
                                 columnTitle: cleanTitle,
                                 datatype: dtName,
-                                section: sectionPrefix || 'General',
-                                answers: conceptNode.answers || []
+                                section: sectionPrefix || 'General'
                             });
                         }
                     }
