@@ -4519,7 +4519,7 @@ def _run_openmrs_mysql(sql_query):
         "docker", "exec", "-i", "bahmni-standard-openmrsdb-1",
         "mysql", "--default-character-set=utf8mb4", f"-u{user}", f"-p{pwd}", "openmrs", "-N", "-B"
     ]
-    proc = subprocess.run(cmd, input=sql_query, capture_output=True, timeout=30)
+    proc = subprocess.run(cmd, input=sql_query.encode("utf-8"), capture_output=True, timeout=30)
     if proc.returncode != 0:
         raise RuntimeError(f"OpenMRS DB error: {proc.stderr.decode('utf-8', errors='replace').strip()}")
     return proc.stdout.decode("utf-8", errors="replace")
