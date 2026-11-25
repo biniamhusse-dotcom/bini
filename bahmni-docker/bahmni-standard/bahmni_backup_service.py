@@ -4514,10 +4514,10 @@ def _get_openmrs_db_creds():
     return user, pwd
 
 def _run_openmrs_mysql(sql_query):
-    user, pwd = _get_openmrs_db_creds()
     cmd = [
         "docker", "exec", "-i", "bahmni-standard-openmrsdb-1",
-        "mysql", "--default-character-set=utf8mb4", f"-u{user}", f"-p{pwd}", "openmrs", "-N", "-B"
+        "sh", "-c",
+        'mysql --default-character-set=utf8mb4 -u"${MYSQL_USER:-root}" -p"${MYSQL_PASSWORD:-$MYSQL_ROOT_PASSWORD}" openmrs -N -B'
     ]
     proc = subprocess.run(cmd, input=sql_query.encode("utf-8"), capture_output=True, timeout=30)
     if proc.returncode != 0:
