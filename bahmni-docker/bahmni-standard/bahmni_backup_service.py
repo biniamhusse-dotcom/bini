@@ -4483,6 +4483,296 @@ def delete_report_entry(payload):
     return load_reports_config()
 
 
+# -------------------------------------------------------------------------
+# OpenMRS <-> OpenELIS Lab Test & Sample Type Mapping Manager
+# -------------------------------------------------------------------------
+def _run_openelis_psql(sql_query):
+    cmd = [
+        "docker", "exec", "-i", "bahmni-standard-openelisdb-1",
+        "psql", "-U", "clinlims", "-d", "clinlims", "-At", "-F", "\t"
+    ]
+    proc = subprocess.run(cmd, input=sql_query, capture_output=True, text=True, timeout=30)
+    if proc.returncode != 0:
+        raise RuntimeError(f"OpenELIS DB error: {proc.stderr.strip()}")
+    return proc.stdout
+
+def _get_openmrs_db_creds():
+    env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    user = os.environ.get("OPENMRS_DB_USERNAME", "openmrs-user")
+    pwd = os.environ.get("OPENMRS_DB_PASSWORD", "ulDHfskBAYSFkOPBGkkjCPbv")
+    if os.path.isfile(env_file):
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("OPENMRS_DB_USERNAME="):
+                        user = line.split("=", 1)[1].strip().strip("'\"")
+                    elif line.startswith("OPENMRS_DB_PASSWORD="):
+                        pwd = line.split("=", 1)[1].strip().strip("'\"")
+        except Exception:
+            pass
+    return user, pwd
+
+def _run_openmrs_mysql(sql_query):
+    user, pwd = _get_openmrs_db_creds()
+    cmd = [
+        "docker", "exec", "-i", "bahmni-standard-openmrsdb-1",
+        "mysql", "--default-character-set=utf8mb4", f"-u{user}", f"-p{pwd}", "openmrs", "-N", "-B"
+    ]
+    proc = subprocess.run(cmd, input=sql_query, capture_output=True, timeout=30)
+    if proc.returncode != 0:
+        raise RuntimeError(f"OpenMRS DB error: {proc.stderr.decode('utf-8', errors='replace').strip()}")
+    return proc.stdout.decode("utf-8", errors="replace")
+
+def load_lab_mapping_overview():
+    sample_types_out = _run_openelis_psql(
+        "SELECT id, description, COALESCE(local_abbrev, description), is_active FROM type_of_sample ORDER BY description;"
+    )
+    sample_types = []
+    for line in sample_types_out.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 4:
+            sample_types.append({
+                "id": int(parts[0]),
+                "description": parts[1],
+                "abbrev": parts[2],
+                "isActive": parts[3] == "t"
+            })
+
+    tests_out = _run_openelis_psql("""
+        SELECT t.id, t.name, t.is_active, COALESCE(ts.description, 'Unassigned'),
+               COALESCE(stt.sample_type_id::text, ''), COALESCE(tos.description, ''),
+               COALESCE(er.external_id, '')
+        FROM test t
+        LEFT JOIN test_section ts ON t.test_section_id = ts.id
+        LEFT JOIN sampletype_test stt ON t.id = stt.test_id
+        LEFT JOIN type_of_sample tos ON stt.sample_type_id = tos.id
+        LEFT JOIN external_reference er ON t.id = er.item_id AND er.type = 'Test'
+        ORDER BY (CASE WHEN stt.sample_type_id IS NULL THEN 0 WHEN stt.sample_type_id = 202 THEN 1 ELSE 2 END), t.is_active DESC, t.name ASC;
+    """)
+    tests = []
+    unmapped_count = 0
+    fallback_count = 0
+    for line in tests_out.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 7:
+            st_id = int(parts[4]) if parts[4] else None
+            if st_id is None and parts[2] == "Y":
+                unmapped_count += 1
+            elif st_id == 202 and parts[2] == "Y":
+                fallback_count += 1
+            tests.append({
+                "id": int(parts[0]),
+                "name": parts[1],
+                "isActive": parts[2] == "Y",
+                "section": parts[3],
+                "sampleTypeId": st_id,
+                "sampleTypeName": parts[5] or "Unmapped",
+                "openmrsUuid": parts[6]
+            })
+
+    panels_out = _run_openelis_psql("""
+        SELECT p.id, p.name, COALESCE(er.external_id, ''), count(pi.id),
+               COALESCE(string_agg(DISTINCT tos.description, ', '), 'None')
+        FROM panel p
+        LEFT JOIN external_reference er ON p.id = er.item_id AND er.type = 'Panel'
+        LEFT JOIN panel_item pi ON p.id = pi.panel_id
+        LEFT JOIN sampletype_test stt ON pi.test_id = stt.test_id
+        LEFT JOIN type_of_sample tos ON stt.sample_type_id = tos.id
+        GROUP BY p.id, p.name, er.external_id
+        ORDER BY count(pi.id) ASC, p.name ASC;
+    """)
+    panels = []
+    empty_panels = 0
+    for line in panels_out.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 5:
+            cnt = int(parts[3])
+            if cnt == 0:
+                empty_panels += 1
+            panels.append({
+                "id": int(parts[0]),
+                "name": parts[1],
+                "openmrsUuid": parts[2],
+                "itemCount": cnt,
+                "sampleTypes": parts[4]
+            })
+
+    failed_out = _run_openelis_psql("""
+        SELECT id, title, to_char(failed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'), retries,
+               COALESCE(substring(error_message from 'encounter/[0-9]+'), ''),
+               COALESCE(substring(error_message from 'Caused by: [^\n]+'), left(error_message, 180))
+        FROM failed_events
+        ORDER BY id DESC
+        LIMIT 50;
+    """)
+    failed_events = []
+    for line in failed_out.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 6:
+            failed_events.append({
+                "id": int(parts[0]),
+                "title": parts[1],
+                "failedAt": parts[2],
+                "retries": int(parts[3]),
+                "encounter": parts[4],
+                "reason": parts[5].replace("\n", " ").strip()
+            })
+
+    total_failed_out = _run_openelis_psql("SELECT count(*) FROM failed_events;")
+    total_failed = int(total_failed_out.strip() or "0")
+
+    return {
+        "sampleTypes": sample_types,
+        "tests": tests,
+        "panels": panels,
+        "failedEvents": failed_events,
+        "stats": {
+            "totalTests": len(tests),
+            "unmappedTests": unmapped_count,
+            "fallbackTests": fallback_count,
+            "totalPanels": len(panels),
+            "emptyPanels": empty_panels,
+            "totalFailedEvents": total_failed
+        }
+    }
+
+def update_test_sample_type(payload):
+    test_id = int(payload.get("testId"))
+    sample_type_id = int(payload.get("sampleTypeId"))
+    sql = f"""
+    SELECT setval('sample_type_test_seq', GREATEST((SELECT COALESCE(MAX(id), 1)::bigint FROM sampletype_test), 1::bigint));
+    DELETE FROM sampletype_test WHERE test_id = {test_id};
+    INSERT INTO sampletype_test (id, sample_type_id, test_id, is_panel)
+    VALUES (nextval('sample_type_test_seq'), {sample_type_id}, {test_id}, false);
+    """
+    _run_openelis_psql(sql)
+    return {"testId": test_id, "sampleTypeId": sample_type_id}
+
+def auto_fix_all_lab_mappings():
+    sql = r"""
+    SELECT setval('sample_type_test_seq', GREATEST((SELECT COALESCE(MAX(id), 1)::bigint FROM sampletype_test), 1::bigint));
+
+    INSERT INTO sampletype_test (id, sample_type_id, test_id, is_panel)
+    SELECT
+      nextval('sample_type_test_seq'),
+      CASE
+        WHEN t.name ILIKE '%Leishmania%' OR t.name ILIKE '%SSS%' THEN COALESCE((SELECT id FROM type_of_sample WHERE description ILIKE '%Leishmania%' LIMIT 1), 202)
+        WHEN t.name ILIKE '%DBS%' THEN COALESCE((SELECT id FROM type_of_sample WHERE description = 'DBS' LIMIT 1), 202)
+        WHEN t.name ILIKE '%sputum%' OR t.name ILIKE '%AFB%' THEN COALESCE((SELECT id FROM type_of_sample WHERE description = 'Sputum' LIMIT 1), 202)
+        WHEN t.name ILIKE '%urine%' THEN COALESCE((SELECT id FROM type_of_sample WHERE description = 'Urine' LIMIT 1), 202)
+        WHEN t.name ILIKE '%CD4%' OR t.name ILIKE '%CD-4%' OR t.name ILIKE '%CD-8%'
+          OR t.name ILIKE '%hematocrite%' OR t.name ILIKE '%hemoglobin%' OR t.name ILIKE '%haemoglobin%'
+          OR t.name ILIKE '%ESR%' OR t.name ILIKE '%platelet%' OR t.name ILIKE '%lymphocyte%'
+          OR t.name ILIKE '%neutrophil%' OR t.name ILIKE '%monocyte%' OR t.name ILIKE '%eosinophil%'
+          OR t.name ILIKE '%basophil%' OR t.name ILIKE '%reticulocyte%' OR t.name ILIKE '%PLCC%'
+          OR t.name ILIKE '%RDW%' OR t.name ILIKE '%MPV%' OR t.name ILIKE '%plasmodium%'
+          OR t.name ILIKE '%malaria%' OR t.name ILIKE '%hepatitis%' OR t.name ILIKE '%granulocyte%'
+          THEN COALESCE((SELECT id FROM type_of_sample WHERE description = 'Blood Specimen' LIMIT 1), 202)
+        ELSE COALESCE((SELECT id FROM type_of_sample WHERE description = 'Other Specimen' LIMIT 1), (SELECT id FROM type_of_sample ORDER BY id LIMIT 1))
+      END,
+      t.id,
+      false
+    FROM test t
+    LEFT JOIN sampletype_test stt ON t.id = stt.test_id
+    WHERE stt.id IS NULL;
+
+    CREATE OR REPLACE FUNCTION fn_ensure_default_sampletype_for_test()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      IF NEW.is_active = 'Y' THEN
+        INSERT INTO sampletype_test (id, sample_type_id, test_id, is_panel)
+        SELECT nextval('sample_type_test_seq'),
+               COALESCE((SELECT id FROM type_of_sample WHERE description = 'Other Specimen' LIMIT 1), (SELECT id FROM type_of_sample ORDER BY id LIMIT 1)),
+               NEW.id, false
+        WHERE NOT EXISTS (SELECT 1 FROM sampletype_test WHERE test_id = NEW.id);
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DROP TRIGGER IF EXISTS trg_ensure_default_sampletype_for_test ON test;
+    CREATE TRIGGER trg_ensure_default_sampletype_for_test
+    AFTER INSERT ON test
+    FOR EACH ROW
+    EXECUTE PROCEDURE fn_ensure_default_sampletype_for_test();
+
+    CREATE OR REPLACE FUNCTION fn_replace_fallback_sampletype()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      IF NEW.sample_type_id <> COALESCE((SELECT id FROM type_of_sample WHERE description = 'Other Specimen' LIMIT 1), 202) THEN
+        DELETE FROM sampletype_test
+        WHERE test_id = NEW.test_id
+          AND sample_type_id = COALESCE((SELECT id FROM type_of_sample WHERE description = 'Other Specimen' LIMIT 1), 202);
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DROP TRIGGER IF EXISTS trg_replace_fallback_sampletype ON sampletype_test;
+    CREATE TRIGGER trg_replace_fallback_sampletype
+    BEFORE INSERT ON sampletype_test
+    FOR EACH ROW
+    EXECUTE PROCEDURE fn_replace_fallback_sampletype();
+    """
+    _run_openelis_psql(sql)
+    return load_lab_mapping_overview()
+
+def sync_panel_members_from_openmrs(payload):
+    panel_id = int(payload.get("panelId"))
+    panel_uuid = (payload.get("panelUuid") or "").strip()
+    if not panel_uuid:
+        raise ValueError("Panel has no OpenMRS external_reference UUID.")
+    if not re.match(r"^[a-zA-Z0-9-]+$", panel_uuid):
+        raise ValueError("Invalid OpenMRS UUID format.")
+
+    members_out = _run_openmrs_mysql(f"""
+        SELECT DISTINCT m.uuid
+        FROM concept p
+        JOIN concept_set cs ON p.concept_id = cs.concept_set
+        JOIN concept m ON cs.concept_id = m.concept_id AND m.retired = 0
+        WHERE p.uuid = '{panel_uuid}';
+    """)
+    member_uuids = [u.strip() for u in members_out.strip().splitlines() if u.strip()]
+    if not member_uuids:
+        return {"panelId": panel_id, "added": 0, "message": "No member concepts found in OpenMRS for this panel."}
+
+    in_list = ",".join(f"'{u}'" for u in member_uuids if re.match(r"^[a-zA-Z0-9-]+$", u))
+    if not in_list:
+        return {"panelId": panel_id, "added": 0, "message": "No valid member UUIDs found."}
+
+    sql = f"""
+    SELECT setval('panel_item_seq', GREATEST((SELECT COALESCE(MAX(id), 1)::bigint FROM panel_item), 1::bigint));
+    INSERT INTO panel_item (id, panel_id, sort_order, test_local_abbrev, lastupdated, test_name, test_id)
+    SELECT
+      nextval('panel_item_seq'),
+      {panel_id},
+      ROW_NUMBER() OVER (ORDER BY t.id),
+      LEFT(t.name, 100),
+      NOW(),
+      LEFT(t.name, 20),
+      t.id
+    FROM external_reference er
+    JOIN test t ON er.item_id = t.id AND er.type = 'Test'
+    WHERE er.external_id IN ({in_list})
+      AND NOT EXISTS (SELECT 1 FROM panel_item WHERE panel_id = {panel_id} AND test_id = t.id);
+    """
+    out = _run_openelis_psql(sql)
+    return {"panelId": panel_id, "output": out.strip(), "overview": load_lab_mapping_overview()}
+
+def retry_openelis_failed_events(payload):
+    event_id = payload.get("id")
+    if event_id == "all_recent":
+        _run_openelis_psql("UPDATE failed_events SET retries = 0 WHERE failed_at > NOW() - INTERVAL '7 days';")
+    elif event_id is not None:
+        eid = int(event_id)
+        _run_openelis_psql(f"UPDATE failed_events SET retries = 0 WHERE id = {eid};")
+    else:
+        raise ValueError("Missing event id or 'all_recent'.")
+    return load_lab_mapping_overview()
+
+
+
 class BackupAPIHandler(BaseHTTPRequestHandler):
     def _send_cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -4620,6 +4910,13 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"content": content})
             except Exception as e:
                 self._send_json(400, {"error": str(e)})
+
+        elif path in ("/api/lab-mapping/overview", "/lab-mapping/overview"):
+            try:
+                self._send_json(200, load_lab_mapping_overview())
+            except Exception as e:
+                log(f"Error loading lab mapping overview: {e}")
+                self._send_json(500, {"error": str(e)})
 
         elif path in ("/api/obs-form-config", "/obs-form-config"):
             try:
@@ -5028,6 +5325,38 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True, "result": result, "reports": result.get("reports", {}), "sqlFiles": result.get("sqlFiles", [])})
             except Exception as e:
                 log(f"Error deleting report: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/lab-mapping/update-sample-type", "/lab-mapping/update-sample-type"):
+            try:
+                result = update_test_sample_type(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error updating test sample type: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/lab-mapping/auto-fix-all", "/lab-mapping/auto-fix-all"):
+            try:
+                result = auto_fix_all_lab_mappings()
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error auto-fixing lab mappings: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/lab-mapping/sync-panel", "/lab-mapping/sync-panel"):
+            try:
+                result = sync_panel_members_from_openmrs(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error syncing panel members: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/lab-mapping/retry-failed", "/lab-mapping/retry-failed"):
+            try:
+                result = retry_openelis_failed_events(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error retrying failed events: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/obs-form-config", "/obs-form-config"):
