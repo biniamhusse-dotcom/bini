@@ -40,7 +40,7 @@ angular.module('admin')
                 reportKey: '',
                 category: 'Observations',
                 mode: 'patientList', // 'patientList' | 'aggregate'
-                themeColor: 'teal',
+                themeColor: '#00796b',
                 subtitle: '',
                 includeId: true,
                 includeName: true,
@@ -66,7 +66,7 @@ angular.module('admin')
                 dateRangeRequired: true,
                 sqlFileName: '',
                 sqlContent: '',
-                themeColor: 'royal',
+                themeColor: '#283593',
                 subtitle: '',
                 showSummaryCards: true,
                 showFilters: true,
