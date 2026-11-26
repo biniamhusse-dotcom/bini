@@ -4874,6 +4874,7 @@ def start_odoo_sync_watchdog():
     while True:
         try:
             check_and_heal_odoo_encounter_marker()
+            heal_odoo_missing_patient_events(None)
         except Exception as e:
             log(f"[OdooWatchdog] Check warning: {e}")
         time.sleep(120)
@@ -5016,12 +5017,124 @@ def heal_odoo_markers_now():
     check_and_heal_odoo_encounter_marker()
     return load_odoo_sync_overview()
 
+def _get_odoo_session():
+    import urllib.request
+    import http.cookiejar
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    for base_url in ("http://localhost:8069", "http://bahmni-standard-odoo-1:8069", "http://host.docker.internal:8069"):
+        try:
+            req = urllib.request.Request(
+                f"{base_url}/web/session/authenticate",
+                data=json.dumps({"jsonrpc": "2.0", "params": {"db": "odoo", "login": "emrsync", "password": "Admin123"}}).encode("utf-8"),
+                headers={"Content-Type": "application/json"}
+            )
+            res = json.loads(opener.open(req, timeout=8).read().decode("utf-8"))
+            if res.get("result", {}).get("uid"):
+                return base_url, opener
+        except Exception:
+            continue
+    return None, None
+
+
+def _ensure_patient_in_odoo(patient_uuid, base_url=None, opener=None):
+    if not patient_uuid or not re.match(r"^[a-zA-Z0-9-]+$", patient_uuid):
+        return False
+    exists = _run_odoo_psql(f"SELECT id FROM res_partner WHERE uuid = '{patient_uuid}' LIMIT 1;").strip()
+    if exists:
+        return True
+
+    # Fetch patient info from OpenMRS DB
+    pt_out = _run_openmrs_mysql(f"""
+        SELECT COALESCE(pi.identifier, ''),
+               TRIM(CONCAT(COALESCE(pn.given_name, ''), ' ', COALESCE(pn.middle_name, ''), ' ', COALESCE(pn.family_name, '')))
+        FROM person p
+        LEFT JOIN person_name pn ON p.person_id = pn.person_id AND pn.voided = 0 AND pn.preferred = 1
+        LEFT JOIN patient_identifier pi ON p.person_id = pi.patient_id AND pi.voided = 0 AND pi.preferred = 1
+        WHERE p.uuid = '{patient_uuid}'
+        LIMIT 1;
+    """).strip()
+    if not pt_out:
+        return False
+    parts = pt_out.split("\t")
+    ident = parts[0].strip() if len(parts) > 0 else ""
+    name = re.sub(r"\s+", " ", parts[1]).strip() if len(parts) > 1 else ""
+    if not name:
+        name = ident or patient_uuid
+
+    if not base_url or not opener:
+        base_url, opener = _get_odoo_session()
+    if not base_url or not opener:
+        return False
+
+    import urllib.request
+    kw_payload = {
+        "jsonrpc": "2.0",
+        "method": "call",
+        "params": {
+            "model": "res.partner",
+            "method": "create",
+            "args": [{
+                "name": name,
+                "ref": ident,
+                "uuid": patient_uuid,
+                "customer_rank": 1,
+                "active": True
+            }],
+            "kwargs": {}
+        }
+    }
+    req = urllib.request.Request(
+        f"{base_url}/web/dataset/call_kw",
+        data=json.dumps(kw_payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+    res = json.loads(opener.open(req, timeout=15).read().decode("utf-8"))
+    if res.get("result"):
+        log(f"[OdooSync] Created missing patient in Odoo: {name} ({ident}, {patient_uuid}) -> partner_id={res['result']}")
+        return True
+    return False
+
+
+def heal_odoo_missing_patient_events(target_id=None):
+    where_clause = f"id = {int(target_id)}" if target_id is not None else "error_message LIKE '%Patient Id not found in Odoo%'"
+    rows = _run_odoo_psql(
+        f"SELECT id, COALESCE(event_content, ''), COALESCE(error_message, '') FROM failed_events WHERE {where_clause} ORDER BY id DESC LIMIT 50;"
+    ).strip()
+    if not rows:
+        return 0
+    base_url, opener = _get_odoo_session()
+    healed = 0
+    for line in rows.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 3:
+            continue
+        eid, content, err = int(parts[0]), parts[1], parts[2]
+        if "Patient Id not found in Odoo" not in err:
+            continue
+        m = re.search(r"bahmniencounter/([a-zA-Z0-9-]+)", content)
+        if not m:
+            continue
+        enc_uuid = m.group(1)
+        pt_uuid = _run_openmrs_mysql(
+            f"SELECT p.uuid FROM encounter e JOIN person p ON e.patient_id = p.person_id WHERE e.uuid = '{enc_uuid}' LIMIT 1;"
+        ).strip()
+        if pt_uuid and _ensure_patient_in_odoo(pt_uuid, base_url, opener):
+            healed += 1
+    return healed
+
+
 def retry_odoo_failed_events(payload):
     eid = payload.get("id")
     if eid == "all":
+        heal_odoo_missing_patient_events(None)
+        _run_odoo_psql("DELETE FROM failed_event_retry_log WHERE failed_event_id IN (SELECT event_id FROM failed_events);")
         _run_odoo_psql("UPDATE failed_events SET retries = 0;")
     elif eid is not None:
-        _run_odoo_psql(f"UPDATE failed_events SET retries = 0 WHERE id = {int(eid)};")
+        eid_int = int(eid)
+        heal_odoo_missing_patient_events(eid_int)
+        _run_odoo_psql(f"DELETE FROM failed_event_retry_log WHERE failed_event_id IN (SELECT event_id FROM failed_events WHERE id = {eid_int});")
+        _run_odoo_psql(f"UPDATE failed_events SET retries = 0 WHERE id = {eid_int};")
     else:
         raise ValueError("Missing event id or 'all'.")
     return load_odoo_sync_overview()
