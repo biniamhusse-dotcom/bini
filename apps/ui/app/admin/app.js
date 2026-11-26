@@ -183,7 +183,7 @@ angular.module('admin')
                 }
             }).state('admin.autoCloseVisits', {
                 url: '/autoCloseVisits',
-                templateUrl: 'views/autoCloseVisits.html?v=1.0',
+                templateUrl: 'views/autoCloseVisits.html?v=1.1',
                 controller: 'AutoCloseVisitsController',
                 data: {
                     backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]

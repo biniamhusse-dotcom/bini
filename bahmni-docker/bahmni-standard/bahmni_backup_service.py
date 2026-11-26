@@ -1428,6 +1428,7 @@ def load_payment_config():
     reg_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "registration", "app.json")
     orders_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "orders", "app.json")
     clinical_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical", "app.json")
+    adt_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "adt", "app.json")
 
     config = {
         "odoo": check_odoo_status(),
@@ -1440,6 +1441,10 @@ def load_payment_config():
         },
         "clinical": {
             "disable_checking": False
+        },
+        "admission": {
+            "bypass_admission_fee": False,
+            "bypass_locations": []
         }
     }
 
@@ -1471,6 +1476,17 @@ def load_payment_config():
         except Exception as e:
             log(f"Warning reading clinical app.json: {e}")
 
+    if os.path.isfile(adt_file):
+        try:
+            with open(adt_file, "r", encoding="utf-8") as f:
+                d = json.load(f)
+                p_cfg = d.get("config", {}).get("paymentConfig", {}) or d.get("paymentConfig", {})
+                config["admission"]["bypass_admission_fee"] = bool(p_cfg.get("bypass admission fee", False))
+                locs = p_cfg.get("bypass admission locations", [])
+                config["admission"]["bypass_locations"] = locs if isinstance(locs, list) else []
+        except Exception as e:
+            log(f"Warning reading adt app.json: {e}")
+
     is_bypass = config["orders"]["disable_checking"] and config["registration"]["disable_billing"]
     config["mode"] = "emergency_bypass" if is_bypass else "enforce_odoo"
     return config
@@ -1479,10 +1495,12 @@ def save_payment_config(payload):
     reg_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "registration", "app.json")
     orders_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "orders", "app.json")
     clinical_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "clinical", "app.json")
+    adt_file = os.path.join(CONFIG_DIR, "openmrs", "apps", "adt", "app.json")
 
     reg_payload = payload.get("registration", {})
     orders_payload = payload.get("orders", {})
     clinical_payload = payload.get("clinical", {})
+    admission_payload = payload.get("admission", {})
 
     log(f"Saving payment config: registration={reg_payload}, orders={orders_payload}, clinical={clinical_payload}")
 
@@ -1548,6 +1566,28 @@ def save_payment_config(payload):
             log("Updated clinical paymentConfig successfully.")
         except Exception as e:
             log(f"Error updating clinical app.json: {e}")
+            raise
+
+    # 4. Update ADT (Bed Management) app.json for Admission Fee Bypass
+    if admission_payload and os.path.isfile(adt_file):
+        try:
+            with open(adt_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if "config" not in data or not isinstance(data["config"], dict):
+                data["config"] = {}
+            if "paymentConfig" not in data["config"] or not isinstance(data["config"]["paymentConfig"], dict):
+                data["config"]["paymentConfig"] = {}
+
+            if "bypass_admission_fee" in admission_payload:
+                data["config"]["paymentConfig"]["bypass admission fee"] = bool(admission_payload["bypass_admission_fee"])
+            if "bypass_locations" in admission_payload and isinstance(admission_payload["bypass_locations"], list):
+                data["config"]["paymentConfig"]["bypass admission locations"] = admission_payload["bypass_locations"]
+
+            write_file_safe(adt_file, json.dumps(data, indent=4))
+            sync_file_to_bahmni_web(adt_file, "/usr/local/apache2/htdocs/bahmni_config/openmrs/apps/adt/app.json")
+            log("Updated adt admission bypass paymentConfig successfully.")
+        except Exception as e:
+            log(f"Error updating adt app.json: {e}")
             raise
 
     return load_payment_config()
@@ -4964,7 +5004,10 @@ def _evaluate_visit_eligibility(row, rule, db_now, exclude_admitted, is_schedule
         except Exception:
             hh, mm = 23, 59
         today_cutoff = db_now.replace(hour=hh, minute=mm, second=0, microsecond=0)
-        if is_scheduler and db_now < today_cutoff:
+        effective_cutoff = today_cutoff if db_now >= today_cutoff else (today_cutoff - datetime.timedelta(days=1))
+        if is_scheduler:
+            if ref_dt <= effective_cutoff:
+                return True, f"Before daily cutoff {effective_cutoff.strftime('%Y-%m-%d %H:%M')}"
             return False, f"Waiting for daily time {daily_str}"
         if ref_dt <= today_cutoff:
             return True, f"Before daily cutoff {today_cutoff.strftime('%Y-%m-%d %H:%M')}"
@@ -4992,9 +5035,9 @@ def _query_active_triaged_visits():
         COALESCE(l.name, '') AS location_name,
         DATE_FORMAT(v.date_started, '%Y-%m-%d %H:%i:%s') AS visit_start,
         DATE_FORMAT(MAX(CASE WHEN cn.name IN ('Central Triage Form', 'Main triage Form') THEN o.obs_datetime END), '%Y-%m-%d %H:%i:%s') AS central_triage_time,
-        DATE_FORMAT(MAX(CASE WHEN cn.name IN ('Emergency Department Triage Form', 'ED Triage Form - GYN', 'Pediatrics Triage Form', 'Triage Color Result', 'Triage Score Result', 'Triage Record Vital Sign', 'Triage color') THEN o.obs_datetime END), '%Y-%m-%d %H:%i:%s') AS em_triage_time,
+        DATE_FORMAT(MAX(CASE WHEN cn.name IN ('Emergency Department Triage Form', 'ED Triage Form - GYN', 'Pediatrics Triage Form', 'Triage Color Result', 'Triage Score Result', 'Triage Record Vital Sign', 'Triage color', 'Triage category', 'Time seen by triage officer') THEN o.obs_datetime END), '%Y-%m-%d %H:%i:%s') AS em_triage_time,
         MAX(CASE WHEN cn.name IN ('Central Triage Form', 'Main triage Form') OR LOWER(COALESCE(vt.name,'')) LIKE '%central triage%' OR LOWER(COALESCE(l.name,'')) LIKE '%central triage%' THEN 1 ELSE 0 END) AS is_central,
-        MAX(CASE WHEN cn.name IN ('Emergency Department Triage Form', 'ED Triage Form - GYN', 'Pediatrics Triage Form', 'Triage Color Result', 'Triage Score Result', 'Triage Record Vital Sign', 'Triage color') OR LOWER(COALESCE(vt.name,'')) LIKE '%emergency triage%' OR LOWER(COALESCE(l.name,'')) LIKE '%emergency triage%' THEN 1 ELSE 0 END) AS is_em,
+        MAX(CASE WHEN cn.name IN ('Emergency Department Triage Form', 'ED Triage Form - GYN', 'Pediatrics Triage Form', 'Triage Color Result', 'Triage Score Result', 'Triage Record Vital Sign', 'Triage color', 'Triage category', 'Time seen by triage officer') OR LOWER(COALESCE(vt.name,'')) LIKE '%emergency triage%' OR LOWER(COALESCE(l.name,'')) LIKE '%emergency triage%' THEN 1 ELSE 0 END) AS is_em,
         DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') AS db_now
     FROM visit v
     JOIN patient p ON v.patient_id = p.patient_id AND p.voided = 0

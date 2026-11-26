@@ -11,6 +11,8 @@ angular.module('bahmni.admin')
             $scope.filterGroup = 'ALL';
             $scope.searchQuery = '';
             $scope.selectedIds = {};
+            $scope.statusMessage = '';
+            $scope.statusType = 'info';
 
             $scope.stats = {
                 totalActiveTriaged: 0,
@@ -51,6 +53,58 @@ angular.module('bahmni.admin')
                 referenceTime: 'triage_time'
             };
 
+            function pad2(n) {
+                return n < 10 ? '0' + n : '' + n;
+            }
+
+            function formatDt(d) {
+                return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+                    ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+            }
+
+            function computePresetDt(preset) {
+                var base = $scope.dbNow ? new Date($scope.dbNow.replace(' ', 'T')) : new Date();
+                if (isNaN(base.getTime())) base = new Date();
+                if (preset === 'now') {
+                    return formatDt(base);
+                } else if (preset === 'today_start') {
+                    base.setHours(0, 0, 0, 0);
+                    return formatDt(base);
+                } else if (preset === 'yesterday_end') {
+                    base.setDate(base.getDate() - 1);
+                    base.setHours(23, 59, 0, 0);
+                    return formatDt(base);
+                } else if (preset === 'minus_24h') {
+                    base.setHours(base.getHours() - 24);
+                    return formatDt(base);
+                } else if (preset === 'minus_48h') {
+                    base.setHours(base.getHours() - 48);
+                    return formatDt(base);
+                } else if (preset === 'minus_7d') {
+                    base.setDate(base.getDate() - 7);
+                    return formatDt(base);
+                }
+                return formatDt(base);
+            }
+
+            $scope.setCustomCutoffPreset = function (preset) {
+                $scope.customRun.cutoffDateTime = computePresetDt(preset);
+            };
+
+            $scope.setRuleCutoffPreset = function (groupKey, preset) {
+                if ($scope.config && $scope.config[groupKey]) {
+                    $scope.config[groupKey].cutoffDateTime = computePresetDt(preset);
+                }
+            };
+
+            $scope.setStatus = function (type, msg) {
+                $scope.statusType = type;
+                $scope.statusMessage = msg;
+                if (messagingService && messagingService.showMessage) {
+                    messagingService.showMessage(type === 'error' ? 'error' : 'info', msg);
+                }
+            };
+
             $scope.setTab = function (tab) {
                 $scope.activeTab = tab;
             };
@@ -63,6 +117,9 @@ angular.module('bahmni.admin')
                 if (data.config) {
                     $scope.config = data.config;
                 }
+                if (!$scope.customRun.cutoffDateTime && $scope.dbNow) {
+                    $scope.customRun.cutoffDateTime = computePresetDt('yesterday_end');
+                }
                 $scope.selectedIds = {};
             };
 
@@ -74,7 +131,7 @@ angular.module('bahmni.admin')
                     })
                     .catch(function (err) {
                         var msg = (err.data && err.data.error) || 'Failed to load active triaged visits.';
-                        messagingService.showMessage('error', msg);
+                        $scope.setStatus('error', msg);
                     })
                     .finally(function () {
                         $scope.loading = false;
@@ -88,11 +145,11 @@ angular.module('bahmni.admin')
                         if (resp.data && resp.data.overview) {
                             $scope.applyOverview(resp.data.overview);
                         }
-                        messagingService.showMessage('info', 'Auto-close schedule & triage rules saved.');
+                        $scope.setStatus('info', 'Auto-close schedule & triage rules saved.');
                     })
                     .catch(function (err) {
                         var msg = (err.data && err.data.error) || 'Failed to save configuration.';
-                        messagingService.showMessage('error', msg);
+                        $scope.setStatus('error', msg);
                     })
                     .finally(function () {
                         $scope.saving = false;
@@ -127,6 +184,28 @@ angular.module('bahmni.admin')
                 });
             };
 
+            $scope.closeSingleVisit = function (v) {
+                if (!v || !v.visitId) return;
+                if (!window.confirm('Close active visit #' + v.visitId + ' for ' + v.patientName + ' (' + v.identifier + ')?')) {
+                    return;
+                }
+                $scope.saving = true;
+                $http.post(API_BASE + '/auto-close-visits/run-now', { visitIds: [v.visitId] })
+                    .then(function (resp) {
+                        if (resp.data && resp.data.overview) {
+                            $scope.applyOverview(resp.data.overview);
+                        }
+                        $scope.setStatus('info', 'Closed visit #' + v.visitId + ' for ' + v.patientName + '.');
+                    })
+                    .catch(function (err) {
+                        var msg = (err.data && err.data.error) || 'Failed to close visit.';
+                        $scope.setStatus('error', msg);
+                    })
+                    .finally(function () {
+                        $scope.saving = false;
+                    });
+            };
+
             $scope.closeEligibleNow = function (target) {
                 var label = target === 'central' ? 'Central Triage' : (target === 'em' ? 'EM Triage' : 'both Central & EM Triage');
                 if (!window.confirm('Close all eligible active visits for ' + label + ' based on current rules?')) {
@@ -138,11 +217,11 @@ angular.module('bahmni.admin')
                         if (resp.data && resp.data.overview) {
                             $scope.applyOverview(resp.data.overview);
                         }
-                        messagingService.showMessage('info', 'Closed ' + (resp.data.closedCount || 0) + ' active triaged visit(s).');
+                        $scope.setStatus('info', 'Closed ' + (resp.data.closedCount || 0) + ' active triaged visit(s).');
                     })
                     .catch(function (err) {
                         var msg = (err.data && err.data.error) || 'Failed to close visits.';
-                        messagingService.showMessage('error', msg);
+                        $scope.setStatus('error', msg);
                     })
                     .finally(function () {
                         $scope.saving = false;
@@ -164,11 +243,11 @@ angular.module('bahmni.admin')
                         if (resp.data && resp.data.overview) {
                             $scope.applyOverview(resp.data.overview);
                         }
-                        messagingService.showMessage('info', 'Closed ' + (resp.data.closedCount || 0) + ' selected visit(s).');
+                        $scope.setStatus('info', 'Closed ' + (resp.data.closedCount || 0) + ' selected visit(s).');
                     })
                     .catch(function (err) {
                         var msg = (err.data && err.data.error) || 'Failed to close selected visits.';
-                        messagingService.showMessage('error', msg);
+                        $scope.setStatus('error', msg);
                     })
                     .finally(function () {
                         $scope.saving = false;
@@ -177,7 +256,7 @@ angular.module('bahmni.admin')
 
             $scope.closeCustomNow = function () {
                 if ($scope.customRun.overrideMode === 'cutoff_datetime' && !$scope.customRun.cutoffDateTime) {
-                    messagingService.showMessage('error', 'Please select a cutoff date and time.');
+                    $scope.setStatus('error', 'Please enter or pick a cutoff date and time (YYYY-MM-DD HH:MM).');
                     return;
                 }
                 if (!window.confirm('Run one-time close for ' + $scope.customRun.target.toUpperCase() + ' active triaged visits with the specified time/date option?')) {
@@ -189,11 +268,11 @@ angular.module('bahmni.admin')
                         if (resp.data && resp.data.overview) {
                             $scope.applyOverview(resp.data.overview);
                         }
-                        messagingService.showMessage('info', 'Closed ' + (resp.data.closedCount || 0) + ' active visit(s).');
+                        $scope.setStatus('info', 'Closed ' + (resp.data.closedCount || 0) + ' active visit(s).');
                     })
                     .catch(function (err) {
                         var msg = (err.data && err.data.error) || 'Failed to run custom close.';
-                        messagingService.showMessage('error', msg);
+                        $scope.setStatus('error', msg);
                     })
                     .finally(function () {
                         $scope.saving = false;
