@@ -76,8 +76,14 @@ angular.module('bahmni.common.displaycontrol.disposition')
                         .then(handleDispositionResponse);
                 };
 
+                $scope.lamaDispositions = [];
+
                 var handleDispositionResponse = function (response) {
                     $scope.dispositions = response.data;
+                    $scope.lamaDispositions = ($scope.dispositions || []).filter($scope.isLama).map(function (d) {
+                        d._lamaData = $scope.getLamaMedia(d);
+                        return d;
+                    });
 
                     if (_.isEmpty($scope.dispositions)) {
                         $scope.noDispositionsMessage = Bahmni.Common.Constants.messageForNoDisposition;
@@ -105,11 +111,7 @@ angular.module('bahmni.common.displaycontrol.disposition')
                 };
 
                 $scope.hasLama = function () {
-                    return ($scope.dispositions || []).some($scope.isLama);
-                };
-
-                $scope.getLamaDispositions = function () {
-                    return ($scope.dispositions || []).filter($scope.isLama);
+                    return $scope.lamaDispositions && $scope.lamaDispositions.length > 0;
                 };
 
                 $scope.getLamaMedia = function (disposition) {
