@@ -5124,19 +5124,155 @@ def heal_odoo_missing_patient_events(target_id=None):
     return healed
 
 
+def _fetch_openmrs_encounter(enc_uuid):
+    import urllib.request, base64, ssl
+    auth_hdr = "Basic " + base64.b64encode(b"admin:Admin123").decode("ascii")
+    ctx = ssl._create_unverified_context()
+    for base_url in ("http://localhost:8080", "http://bahmni-standard-openmrs-1:8080", "https://localhost", "http://host.docker.internal:8080"):
+        try:
+            url = f"{base_url}/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/{enc_uuid}?includeAll=true"
+            req = urllib.request.Request(url, headers={"Authorization": auth_hdr})
+            with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            continue
+    return None
+
+
+def _replay_failed_encounter_to_odoo(eid, event_id, content, base_url, opener):
+    import urllib.request
+    m = re.search(r"bahmniencounter/([a-zA-Z0-9-]+)", content or "")
+    if not m:
+        return False, "No encounter UUID in event_content"
+    enc_uuid = m.group(1)
+    enc = _fetch_openmrs_encounter(enc_uuid)
+    if not enc:
+        return False, f"Could not fetch encounter {enc_uuid} from OpenMRS"
+
+    pt_uuid = enc.get("patientUuid")
+    pt_id = enc.get("patientId")
+    if pt_uuid:
+        _ensure_patient_in_odoo(pt_uuid, base_url, opener)
+
+    all_orders = []
+    visit_type = enc.get("visitType") or "OPD"
+    visit_uuid = enc.get("visitUuid") or ""
+    loc_name = enc.get("locationName") or "OPD"
+    providers = enc.get("providers") or []
+    prov_name = providers[0].get("name") if providers else "Super User"
+
+    for o in (enc.get("orders") or []):
+        concept = o.get("concept") or {}
+        if o.get("voided"):
+            continue
+        all_orders.append({
+            "orderId": o.get("uuid"),
+            "previousOrderId": o.get("previousOrderUuid"),
+            "encounterId": enc_uuid,
+            "productId": o.get("conceptUuid") or concept.get("uuid"),
+            "productName": concept.get("name") or concept.get("shortName") or "Order",
+            "quantity": 1.0,
+            "quantityUnits": "Unit(s)",
+            "action": o.get("action") or "NEW",
+            "visitId": visit_uuid,
+            "visitType": visit_type,
+            "type": o.get("orderType") or "Lab Order",
+            "description": o.get("instructions"),
+            "voided": bool(o.get("voided", False)),
+            "locationName": loc_name,
+            "providerName": prov_name,
+            "dispensed": "false",
+            "conceptName": concept.get("name"),
+            "dateCreated": o.get("dateCreated") or enc.get("encounterDateTime")
+        })
+
+    for d in (enc.get("drugOrders") or []):
+        if d.get("voided"):
+            continue
+        drug = d.get("drug") or {}
+        dosing = d.get("dosingInstructions") or {}
+        qty = dosing.get("quantity") or 1.0
+        qty_unit = dosing.get("quantityUnits") or "Unit(s)"
+        all_orders.append({
+            "orderId": d.get("uuid"),
+            "previousOrderId": d.get("previousOrderUuid"),
+            "encounterId": enc_uuid,
+            "productId": drug.get("uuid") or (d.get("concept") or {}).get("uuid"),
+            "productName": drug.get("name") or (d.get("concept") or {}).get("name") or "Drug",
+            "quantity": float(qty),
+            "quantityUnits": qty_unit,
+            "action": d.get("action") or "NEW",
+            "visitId": visit_uuid,
+            "visitType": visit_type,
+            "type": d.get("orderType") or "Drug Order",
+            "description": d.get("instructions"),
+            "voided": bool(d.get("voided", False)),
+            "locationName": loc_name,
+            "providerName": prov_name,
+            "dispensed": str(bool(d.get("dispensed", False))).lower(),
+            "conceptName": (d.get("concept") or {}).get("name"),
+            "dateCreated": d.get("dateCreated") or enc.get("encounterDateTime")
+        })
+
+    if not all_orders:
+        # No billable orders in encounter -> safe to clear from failed_events
+        return True, "No active orders in encounter"
+
+    # Resolve customer_id preserving leading zeros (e.g. "098035")
+    cust_id = str(pt_id) if pt_id is not None else pt_uuid
+
+    payload = {
+        "last_read_entry_id": event_id or f"tag:atomfeed.ict4h.org:{enc_uuid}",
+        "feed_uri_for_last_read_entry": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent",
+        "locationName": loc_name,
+        "orders": {
+            "id": enc_uuid,
+            "openERPOrders": all_orders
+        },
+        "category": "create.sale.order",
+        "customer_id": cust_id,
+        "encounter_id": enc_uuid,
+        "feed_uri": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent"
+    }
+
+    req = urllib.request.Request(
+        f"{base_url}/api/bahmni-saleorder",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+    res_raw = opener.open(req, timeout=20).read().decode("utf-8")
+    res_json = json.loads(res_raw)
+    result_obj = res_json.get("result", {})
+    if isinstance(result_obj, dict) and result_obj.get("status") in (200, 201, None) and not result_obj.get("error"):
+        return True, "Synced"
+    return False, str(result_obj.get("error") or res_json.get("error") or res_raw)[:300]
+
+
 def retry_odoo_failed_events(payload):
     eid = payload.get("id")
-    if eid == "all":
-        heal_odoo_missing_patient_events(None)
-        _run_odoo_psql("DELETE FROM failed_event_retry_log WHERE failed_event_id IN (SELECT event_id FROM failed_events);")
-        _run_odoo_psql("UPDATE failed_events SET retries = 0;")
-    elif eid is not None:
-        eid_int = int(eid)
-        heal_odoo_missing_patient_events(eid_int)
-        _run_odoo_psql(f"DELETE FROM failed_event_retry_log WHERE failed_event_id IN (SELECT event_id FROM failed_events WHERE id = {eid_int});")
-        _run_odoo_psql(f"UPDATE failed_events SET retries = 0 WHERE id = {eid_int};")
-    else:
-        raise ValueError("Missing event id or 'all'.")
+    where_clause = "1=1" if eid == "all" else f"id = {int(eid)}"
+    rows = _run_odoo_psql(
+        f"SELECT id, COALESCE(event_id, ''), COALESCE(event_content, '') FROM failed_events WHERE {where_clause} ORDER BY id DESC LIMIT 100;"
+    ).strip()
+    if rows:
+        base_url, opener = _get_odoo_session()
+        if base_url and opener:
+            for line in rows.splitlines():
+                parts = line.split("\t")
+                if len(parts) < 3:
+                    continue
+                row_id, ev_id, content = int(parts[0]), parts[1], parts[2]
+                try:
+                    ok, msg = _replay_failed_encounter_to_odoo(row_id, ev_id, content, base_url, opener)
+                    if ok:
+                        _run_odoo_psql(
+                            f"DELETE FROM failed_event_retry_log WHERE failed_event_id = '{ev_id}'; "
+                            f"DELETE FROM failed_events WHERE id = {row_id};"
+                        )
+                    else:
+                        log(f"[OdooRetry] Event {row_id} replay note: {msg}")
+                except Exception as ex:
+                    log(f"[OdooRetry] Event {row_id} replay exception: {ex}")
     return load_odoo_sync_overview()
 
 def delete_odoo_failed_events(payload):
