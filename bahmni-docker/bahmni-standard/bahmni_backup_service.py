@@ -4839,6 +4839,341 @@ def delete_openelis_failed_events(payload):
     return load_lab_mapping_overview()
 
 
+AUTO_CLOSE_VISITS_CONFIG_FILE = os.path.join(BACKUP_DIR, "auto_close_visits_config.json")
+AUTO_CLOSE_VISITS_LOCK = threading.Lock()
+
+
+def _default_auto_close_visits_config():
+    return {
+        "enabled": False,
+        "excludeAdmitted": True,
+        "checkIntervalSeconds": 300,
+        "centralTriage": {
+            "enabled": True,
+            "mode": "hours",
+            "hoursThreshold": 24,
+            "dailyTime": "23:59",
+            "cutoffDateTime": "",
+            "referenceTime": "triage_time"
+        },
+        "emTriage": {
+            "enabled": True,
+            "mode": "hours",
+            "hoursThreshold": 48,
+            "dailyTime": "23:59",
+            "cutoffDateTime": "",
+            "referenceTime": "triage_time"
+        },
+        "lastRunAt": None,
+        "lastClosedCount": 0,
+        "lastDailyRunDate": {"central": "", "em": ""},
+        "recentLogs": []
+    }
+
+
+def load_auto_close_visits_config():
+    cfg = _default_auto_close_visits_config()
+    if os.path.exists(AUTO_CLOSE_VISITS_CONFIG_FILE):
+        try:
+            with open(AUTO_CLOSE_VISITS_CONFIG_FILE, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+            if isinstance(saved, dict):
+                for k in ("enabled", "excludeAdmitted", "checkIntervalSeconds", "lastRunAt", "lastClosedCount"):
+                    if k in saved:
+                        cfg[k] = saved[k]
+                for grp in ("centralTriage", "emTriage"):
+                    if isinstance(saved.get(grp), dict):
+                        cfg[grp].update(saved[grp])
+                if isinstance(saved.get("lastDailyRunDate"), dict):
+                    cfg["lastDailyRunDate"].update(saved["lastDailyRunDate"])
+                if isinstance(saved.get("recentLogs"), list):
+                    cfg["recentLogs"] = saved["recentLogs"][:30]
+        except Exception as e:
+            log(f"Warning reading auto-close visits config: {e}")
+    return cfg
+
+
+def save_auto_close_visits_config(payload):
+    with AUTO_CLOSE_VISITS_LOCK:
+        cfg = load_auto_close_visits_config()
+        if "enabled" in payload:
+            cfg["enabled"] = bool(payload["enabled"])
+        if "excludeAdmitted" in payload:
+            cfg["excludeAdmitted"] = bool(payload["excludeAdmitted"])
+        if "checkIntervalSeconds" in payload:
+            cfg["checkIntervalSeconds"] = max(60, int(payload["checkIntervalSeconds"] or 300))
+        for grp in ("centralTriage", "emTriage"):
+            if isinstance(payload.get(grp), dict):
+                src = payload[grp]
+                dst = cfg[grp]
+                if "enabled" in src:
+                    dst["enabled"] = bool(src["enabled"])
+                if src.get("mode") in ("hours", "daily_time", "cutoff_datetime"):
+                    dst["mode"] = src["mode"]
+                if "hoursThreshold" in src:
+                    dst["hoursThreshold"] = max(0.5, float(src["hoursThreshold"] or 24))
+                if "dailyTime" in src:
+                    dst["dailyTime"] = str(src["dailyTime"] or "23:59").strip()[:5]
+                if "cutoffDateTime" in src:
+                    dst["cutoffDateTime"] = str(src["cutoffDateTime"] or "").strip()
+                if src.get("referenceTime") in ("triage_time", "visit_start"):
+                    dst["referenceTime"] = src["referenceTime"]
+        os.makedirs(os.path.dirname(AUTO_CLOSE_VISITS_CONFIG_FILE), exist_ok=True)
+        with open(AUTO_CLOSE_VISITS_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+        return cfg
+
+
+def _parse_dt_flexible(dt_str):
+    if not dt_str:
+        return None
+    s = str(dt_str).strip().replace("T", " ")
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.datetime.strptime(s[:len(fmt) + 2] if fmt == "%Y-%m-%d %H:%M:%S" else s, fmt)
+        except Exception:
+            pass
+    try:
+        return datetime.datetime.fromisoformat(str(dt_str).strip().replace("Z", ""))
+    except Exception:
+        return None
+
+
+def _evaluate_visit_eligibility(row, rule, db_now, exclude_admitted, is_scheduler=False):
+    if not rule.get("enabled"):
+        return False, "Rule disabled"
+    if exclude_admitted and row.get("isAdmitted"):
+        return False, "Excluded (IPD/Ward admission)"
+    mode = rule.get("mode", "hours")
+    ref_field = "triageTime" if rule.get("referenceTime", "triage_time") == "triage_time" else "visitStart"
+    ref_dt = _parse_dt_flexible(row.get(ref_field)) or _parse_dt_flexible(row.get("visitStart"))
+    if not ref_dt:
+        return False, "No timestamp"
+
+    if mode == "hours":
+        threshold = float(rule.get("hoursThreshold") or 24)
+        age_hours = (db_now - ref_dt).total_seconds() / 3600.0
+        if age_hours >= threshold:
+            return True, f"Age {age_hours:.1f}h >= {threshold:g}h"
+        return False, f"Age {age_hours:.1f}h < {threshold:g}h"
+
+    elif mode == "daily_time":
+        daily_str = str(rule.get("dailyTime") or "23:59").strip()
+        try:
+            hh, mm = [int(x) for x in daily_str.split(":", 1)]
+        except Exception:
+            hh, mm = 23, 59
+        today_cutoff = db_now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        if is_scheduler and db_now < today_cutoff:
+            return False, f"Waiting for daily time {daily_str}"
+        if ref_dt <= today_cutoff:
+            return True, f"Before daily cutoff {today_cutoff.strftime('%Y-%m-%d %H:%M')}"
+        return False, "Created after daily cutoff"
+
+    elif mode == "cutoff_datetime":
+        cutoff_dt = _parse_dt_flexible(rule.get("cutoffDateTime"))
+        if not cutoff_dt:
+            return False, "No cutoff date/time set"
+        if ref_dt <= cutoff_dt:
+            return True, f"Before {cutoff_dt.strftime('%Y-%m-%d %H:%M')}"
+        return False, f"After {cutoff_dt.strftime('%Y-%m-%d %H:%M')}"
+
+    return False, "Unknown mode"
+
+
+def _query_active_triaged_visits():
+    sql = """
+    SELECT
+        v.visit_id,
+        v.patient_id,
+        COALESCE(pi.identifier, '') AS identifier,
+        CONCAT_WS(' ', pn.given_name, pn.middle_name, pn.family_name) AS patient_name,
+        COALESCE(vt.name, '') AS visit_type,
+        COALESCE(l.name, '') AS location_name,
+        DATE_FORMAT(v.date_started, '%Y-%m-%d %H:%i:%s') AS visit_start,
+        DATE_FORMAT(MAX(CASE WHEN cn.name IN ('Central Triage Form', 'Main triage Form') THEN o.obs_datetime END), '%Y-%m-%d %H:%i:%s') AS central_triage_time,
+        DATE_FORMAT(MAX(CASE WHEN cn.name IN ('Emergency Department Triage Form', 'ED Triage Form - GYN', 'Pediatrics Triage Form', 'Triage Color Result', 'Triage Score Result', 'Triage Record Vital Sign', 'Triage color') THEN o.obs_datetime END), '%Y-%m-%d %H:%i:%s') AS em_triage_time,
+        MAX(CASE WHEN cn.name IN ('Central Triage Form', 'Main triage Form') OR LOWER(COALESCE(vt.name,'')) LIKE '%central triage%' OR LOWER(COALESCE(l.name,'')) LIKE '%central triage%' THEN 1 ELSE 0 END) AS is_central,
+        MAX(CASE WHEN cn.name IN ('Emergency Department Triage Form', 'ED Triage Form - GYN', 'Pediatrics Triage Form', 'Triage Color Result', 'Triage Score Result', 'Triage Record Vital Sign', 'Triage color') OR LOWER(COALESCE(vt.name,'')) LIKE '%emergency triage%' OR LOWER(COALESCE(l.name,'')) LIKE '%emergency triage%' THEN 1 ELSE 0 END) AS is_em,
+        DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') AS db_now
+    FROM visit v
+    JOIN patient p ON v.patient_id = p.patient_id AND p.voided = 0
+    LEFT JOIN patient_identifier pi ON p.patient_id = pi.patient_id AND pi.voided = 0 AND pi.preferred = 1
+    LEFT JOIN person_name pn ON p.patient_id = pn.person_id AND pn.voided = 0 AND pn.preferred = 1
+    LEFT JOIN visit_type vt ON v.visit_type_id = vt.visit_type_id
+    LEFT JOIN location l ON v.location_id = l.location_id
+    LEFT JOIN encounter e ON v.visit_id = e.visit_id AND e.voided = 0
+    LEFT JOIN obs o ON e.encounter_id = o.encounter_id AND o.voided = 0
+    LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED'
+    WHERE v.date_stopped IS NULL AND v.voided = 0
+    GROUP BY v.visit_id, v.patient_id, pi.identifier, pn.given_name, pn.middle_name, pn.family_name, vt.name, l.name, v.date_started
+    HAVING is_central = 1 OR is_em = 1
+    ORDER BY v.date_started ASC;
+    """
+    out = _run_openmrs_mysql(sql)
+    db_now = datetime.datetime.now()
+    rows = []
+    admitted_kw = ("ward", "ipd", "icu", "nicu", "labor", "delivery", "or room")
+    for line in out.strip().splitlines():
+        parts = line.split("\t")
+        if len(parts) < 12:
+            continue
+        is_central = parts[9] == "1"
+        is_em = parts[10] == "1"
+        parsed_now = _parse_dt_flexible(parts[11])
+        if parsed_now:
+            db_now = parsed_now
+        vt_low = parts[4].lower()
+        loc_low = parts[5].lower()
+        is_admitted = any(k in vt_low or k in loc_low for k in admitted_kw)
+        c_time = parts[7] if parts[7] and parts[7] != "NULL" else ""
+        e_time = parts[8] if parts[8] and parts[8] != "NULL" else ""
+        triage_time = e_time or c_time or parts[6]
+        triage_dt = _parse_dt_flexible(triage_time) or _parse_dt_flexible(parts[6])
+        age_hours = round((db_now - triage_dt).total_seconds() / 3600.0, 1) if triage_dt else 0.0
+        rows.append({
+            "visitId": int(parts[0]),
+            "patientId": int(parts[1]),
+            "identifier": parts[2] or str(parts[1]),
+            "patientName": parts[3].strip() or "Unknown",
+            "visitType": parts[4] or "-",
+            "location": parts[5] or "-",
+            "visitStart": parts[6],
+            "triageTime": triage_time,
+            "triageGroup": "Both" if (is_central and is_em) else ("EM Triage" if is_em else "Central Triage"),
+            "isCentral": is_central,
+            "isEm": is_em,
+            "isAdmitted": is_admitted,
+            "ageHours": age_hours
+        })
+    return rows, db_now
+
+
+def load_auto_close_visits_overview():
+    cfg = load_auto_close_visits_config()
+    rows, db_now = _query_active_triaged_visits()
+    exclude_admitted = bool(cfg.get("excludeAdmitted", True))
+    central_cnt = 0
+    em_cnt = 0
+    eligible_cnt = 0
+    for r in rows:
+        if r["isCentral"]:
+            central_cnt += 1
+        if r["isEm"]:
+            em_cnt += 1
+        elig_c, reason_c = (False, "")
+        elig_e, reason_e = (False, "")
+        if r["isCentral"]:
+            elig_c, reason_c = _evaluate_visit_eligibility(r, cfg["centralTriage"], db_now, exclude_admitted)
+        if r["isEm"]:
+            elig_e, reason_e = _evaluate_visit_eligibility(r, cfg["emTriage"], db_now, exclude_admitted)
+        r["eligibleNow"] = bool(elig_c or elig_e)
+        r["eligibleReason"] = reason_e if elig_e else (reason_c if elig_c else (reason_e or reason_c))
+        if r["eligibleNow"]:
+            eligible_cnt += 1
+
+    return {
+        "config": cfg,
+        "dbNow": db_now.strftime("%Y-%m-%d %H:%M:%S"),
+        "stats": {
+            "totalActiveTriaged": len(rows),
+            "centralTriageActive": central_cnt,
+            "emTriageActive": em_cnt,
+            "eligibleNow": eligible_cnt
+        },
+        "visits": rows
+    }
+
+
+def run_auto_close_visits(payload, is_scheduler=False):
+    payload = payload or {}
+    cfg = load_auto_close_visits_config()
+    rows, db_now = _query_active_triaged_visits()
+    target = payload.get("target", "both")  # "both" | "central" | "em"
+    visit_ids = payload.get("visitIds")
+    override_mode = payload.get("overrideMode")
+    exclude_admitted = bool(payload.get("excludeAdmitted", cfg.get("excludeAdmitted", True)))
+
+    to_close = []
+    if isinstance(visit_ids, list) and len(visit_ids) > 0:
+        id_set = set(int(x) for x in visit_ids)
+        to_close = [r for r in rows if r["visitId"] in id_set]
+    else:
+        c_rule = dict(cfg["centralTriage"])
+        e_rule = dict(cfg["emTriage"])
+        if override_mode in ("hours", "cutoff_datetime", "all"):
+            for rl in (c_rule, e_rule):
+                rl["enabled"] = True
+                if override_mode == "all":
+                    rl["mode"] = "hours"
+                    rl["hoursThreshold"] = 0
+                else:
+                    rl["mode"] = override_mode
+                    if "hoursThreshold" in payload:
+                        rl["hoursThreshold"] = float(payload["hoursThreshold"] or 24)
+                    if "cutoffDateTime" in payload:
+                        rl["cutoffDateTime"] = str(payload["cutoffDateTime"] or "")
+                    if payload.get("referenceTime") in ("triage_time", "visit_start"):
+                        rl["referenceTime"] = payload["referenceTime"]
+
+        for r in rows:
+            match_c = target in ("both", "central") and r["isCentral"]
+            match_e = target in ("both", "em") and r["isEm"]
+            ok_c = _evaluate_visit_eligibility(r, c_rule, db_now, exclude_admitted, is_scheduler=is_scheduler)[0] if match_c else False
+            ok_e = _evaluate_visit_eligibility(r, e_rule, db_now, exclude_admitted, is_scheduler=is_scheduler)[0] if match_e else False
+            if ok_c or ok_e:
+                to_close.append(r)
+
+    closed_ids = [r["visitId"] for r in to_close]
+    if closed_ids:
+        id_csv = ",".join(str(x) for x in closed_ids)
+        _run_openmrs_mysql(
+            f"UPDATE visit SET date_stopped = NOW(), date_changed = NOW(), changed_by = 1 "
+            f"WHERE visit_id IN ({id_csv}) AND date_stopped IS NULL AND voided = 0;"
+        )
+
+    with AUTO_CLOSE_VISITS_LOCK:
+        cfg_w = load_auto_close_visits_config()
+        cfg_w["lastRunAt"] = db_now.strftime("%Y-%m-%d %H:%M:%S")
+        cfg_w["lastClosedCount"] = len(closed_ids)
+        if not is_scheduler or len(closed_ids) > 0:
+            logs = cfg_w.get("recentLogs", [])
+            logs.insert(0, {
+                "timestamp": db_now.strftime("%Y-%m-%d %H:%M:%S"),
+                "source": "Scheduler" if is_scheduler else "Manual",
+                "target": target,
+                "closedCount": len(closed_ids)
+            })
+            cfg_w["recentLogs"] = logs[:30]
+        os.makedirs(os.path.dirname(AUTO_CLOSE_VISITS_CONFIG_FILE), exist_ok=True)
+        with open(AUTO_CLOSE_VISITS_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(cfg_w, f, indent=2)
+
+    return {
+        "success": True,
+        "closedCount": len(closed_ids),
+        "closedVisitIds": closed_ids,
+        "overview": load_auto_close_visits_overview()
+    }
+
+
+def start_auto_close_visits_scheduler():
+    log("Auto-Close Triaged Visits scheduler started.")
+    time.sleep(25)
+    while True:
+        interval = 300
+        try:
+            cfg = load_auto_close_visits_config()
+            interval = max(60, int(cfg.get("checkIntervalSeconds") or 300))
+            if cfg.get("enabled"):
+                res = run_auto_close_visits({"target": "both"}, is_scheduler=True)
+                if res.get("closedCount", 0) > 0:
+                    log(f"[AutoCloseVisits] Automatically closed {res['closedCount']} triaged active visit(s).")
+        except Exception as e:
+            log(f"[AutoCloseVisits] Scheduler warning: {e}")
+        time.sleep(interval)
+
+
 def _run_odoo_psql(sql_query):
     cmd = [
         "docker", "exec", "-i", "bahmni-standard-odoodb-1",
@@ -5523,6 +5858,13 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 log(f"Error loading odoo sync overview: {e}")
                 self._send_json(500, {"error": str(e)})
 
+        elif path in ("/api/auto-close-visits/overview", "/auto-close-visits/overview"):
+            try:
+                self._send_json(200, load_auto_close_visits_overview())
+            except Exception as e:
+                log(f"Error loading auto-close visits overview: {e}")
+                self._send_json(500, {"error": str(e)})
+
         elif path in ("/api/obs-form-config", "/obs-form-config"):
             try:
                 self._send_json(200, load_obs_form_config())
@@ -5906,6 +6248,22 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True, "result": result})
             except Exception as e:
                 log(f"Error saving er triage config: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/auto-close-visits/config", "/auto-close-visits/config"):
+            try:
+                cfg = save_auto_close_visits_config(payload)
+                self._send_json(200, {"success": True, "config": cfg, "overview": load_auto_close_visits_overview()})
+            except Exception as e:
+                log(f"Error saving auto-close visits config: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/auto-close-visits/run-now", "/auto-close-visits/run-now"):
+            try:
+                res = run_auto_close_visits(payload)
+                self._send_json(200, res)
+            except Exception as e:
+                log(f"Error running auto-close visits: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/location-visit-mappings", "/location-visit-mappings"):
@@ -6359,6 +6717,7 @@ def start_server():
     threading.Thread(target=ensure_restore_privilege, daemon=True).start()
     threading.Thread(target=start_scheduler_loop, daemon=True).start()
     threading.Thread(target=start_odoo_sync_watchdog, daemon=True).start()
+    threading.Thread(target=start_auto_close_visits_scheduler, daemon=True).start()
     server_address = ("0.0.0.0", PORT)
     ThreadingHTTPServer.allow_reuse_address = True
     httpd = ThreadingHTTPServer(server_address, BackupAPIHandler)

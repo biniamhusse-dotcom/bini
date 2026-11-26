@@ -229,5 +229,16 @@
         "icon": "fa-shopping-cart",
         "order": 19,
         "requiredPrivilege": "app:admin"
+    },
+    "autoCloseVisits": {
+        "id": "bahmni.admin.autoCloseVisits",
+        "extensionPointId": "org.bahmni.admin.dashboard",
+        "type": "link",
+        "extensionParams": {},
+        "label": "Auto-Close Triaged Visits",
+        "url": "#/autoCloseVisits",
+        "icon": "fa-clock-o",
+        "order": 20,
+        "requiredPrivilege": "app:admin"
     }
 }

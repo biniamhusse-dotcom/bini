@@ -181,6 +181,13 @@ angular.module('admin')
                 data: {
                     backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
                 }
+            }).state('admin.autoCloseVisits', {
+                url: '/autoCloseVisits',
+                templateUrl: 'views/autoCloseVisits.html?v=1.0',
+                controller: 'AutoCloseVisitsController',
+                data: {
+                    backLinks: [{label: "Home", state: "admin.dashboard", icon: "fa-home"}]
+                }
             });
             $httpProvider.defaults.headers.common['Disable-WWW-Authenticate'] = true;
             $bahmniTranslateProvider.init({app: 'admin', shouldMerge: true});

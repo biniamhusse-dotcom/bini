@@ -1,0 +1,297 @@
+<div class="auto-close-visits-page" style="padding: 20px; max-width: 1400px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, #0f766e, #0ea5e9); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+        <i class="fa fa-clock-o"></i>
+      </div>
+      <div>
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #1e293b;">Auto-Close Active Triaged Visits</h2>
+        <div style="font-size: 13px; color: #64748b;">Flexible time &amp; date rules to close active visits triaged in Central Triage and Emergency (EM) Triage. <span ng-if="dbNow">Server Time: <strong>{{ dbNow }}</strong></span></div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <button type="button" class="btn btn-default" ng-click="loadOverview()" ng-disabled="loading || saving" style="border-radius: 6px; padding: 8px 14px; font-weight: 600;">
+        <i class="fa fa-refresh" ng-class="{'fa-spin': loading}"></i> Refresh
+      </button>
+      <button type="button" class="btn btn-primary" ng-click="closeEligibleNow('both')" ng-disabled="saving || stats.eligibleNow === 0" style="background: #0f766e; border-color: #0d9488; color: white; border-radius: 6px; padding: 8px 16px; font-weight: 600;">
+        <i class="fa fa-check-circle"></i> Close Eligible Now ({{ stats.eligibleNow }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 20px;">
+    <div style="background: white; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7;">
+      <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b;">Total Active Triaged</div>
+      <div style="font-size: 28px; font-weight: 800; color: #0f172a; margin-top: 4px;">{{ stats.totalActiveTriaged }}</div>
+    </div>
+    <div style="background: white; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0; border-left: 4px solid #7c3aed;">
+      <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b;">Central Triage Active</div>
+      <div style="font-size: 28px; font-weight: 800; color: #6d28d9; margin-top: 4px;">{{ stats.centralTriageActive }}</div>
+    </div>
+    <div style="background: white; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0; border-left: 4px solid #dc2626;">
+      <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b;">EM Triage Active</div>
+      <div style="font-size: 28px; font-weight: 800; color: #b91c1c; margin-top: 4px;">{{ stats.emTriageActive }}</div>
+    </div>
+    <div style="background: white; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0; border-left: 4px solid #16a34a;">
+      <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b;">Eligible to Close Now</div>
+      <div style="font-size: 28px; font-weight: 800; color: #15803d; margin-top: 4px;">{{ stats.eligibleNow }}</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+    <button type="button" class="btn" ng-click="setTab('visits')" ng-style="{'background': activeTab==='visits' ? '#0f172a' : 'white', 'color': activeTab==='visits' ? 'white' : '#475569'}" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-weight: 600;">
+      <i class="fa fa-users"></i> Active Triaged Patients ({{ visits.length }})
+    </button>
+    <button type="button" class="btn" ng-click="setTab('rules')" ng-style="{'background': activeTab==='rules' ? '#0f172a' : 'white', 'color': activeTab==='rules' ? 'white' : '#475569'}" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-weight: 600;">
+      <i class="fa fa-sliders"></i> Schedule &amp; Flexible Time/Date Rules
+    </button>
+    <button type="button" class="btn" ng-click="setTab('logs')" ng-style="{'background': activeTab==='logs' ? '#0f172a' : 'white', 'color': activeTab==='logs' ? 'white' : '#475569'}" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-weight: 600;">
+      <i class="fa fa-history"></i> Run History ({{ (config.recentLogs || []).length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: ACTIVE TRIAGED PATIENTS & ONE-TIME FLEXIBLE CLOSE -->
+  <div ng-if="activeTab==='visits'">
+    <div style="background: white; padding: 14px 18px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <input type="text" ng-model="searchQuery" placeholder="Search ID, name, location..." class="form-control" style="width: 220px; display: inline-block;">
+        <select ng-model="filterGroup" class="form-control" style="width: 190px; display: inline-block;">
+          <option value="ALL">All Triaged ({{ visits.length }})</option>
+          <option value="CENTRAL">Central Triage ({{ stats.centralTriageActive }})</option>
+          <option value="EM">EM Triage ({{ stats.emTriageActive }})</option>
+          <option value="ELIGIBLE">Eligible Now ({{ stats.eligibleNow }})</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-default" ng-click="closeSelectedNow()" ng-disabled="saving || selectedCount() === 0" style="color: #dc2626; border-color: #fecaca; font-weight: 600; border-radius: 6px;">
+          <i class="fa fa-times-circle"></i> Close Selected ({{ selectedCount() }})
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Flexible Date/Time One-Time Close Bar -->
+    <div style="background: #f8fafc; padding: 14px 18px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 14px; display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #475569; display: block;">TARGET GROUP</label>
+        <select ng-model="customRun.target" class="form-control" style="width: 170px;">
+          <option value="both">Central &amp; EM Triage</option>
+          <option value="central">Central Triage Only</option>
+          <option value="em">EM Triage Only</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #475569; display: block;">FLEXIBLE OPTION</label>
+        <select ng-model="customRun.overrideMode" class="form-control" style="width: 185px;">
+          <option value="cutoff_datetime">Before Date &amp; Time</option>
+          <option value="hours">Older Than (Hours)</option>
+          <option value="all">All Active in Group</option>
+        </select>
+      </div>
+      <div ng-if="customRun.overrideMode==='cutoff_datetime'">
+        <label style="font-size: 11px; font-weight: 700; color: #475569; display: block;">CUTOFF DATE &amp; TIME</label>
+        <input type="datetime-local" ng-model="customRun.cutoffDateTime" class="form-control" style="width: 215px;">
+      </div>
+      <div ng-if="customRun.overrideMode==='hours'">
+        <label style="font-size: 11px; font-weight: 700; color: #475569; display: block;">HOURS OLDER THAN</label>
+        <input type="number" min="0.5" step="0.5" ng-model="customRun.hoursThreshold" class="form-control" style="width: 120px;">
+      </div>
+      <div ng-if="customRun.overrideMode!=='all'">
+        <label style="font-size: 11px; font-weight: 700; color: #475569; display: block;">COMPARE AGAINST</label>
+        <select ng-model="customRun.referenceTime" class="form-control" style="width: 150px;">
+          <option value="triage_time">Triage Time</option>
+          <option value="visit_start">Visit Start Time</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-warning" ng-click="closeCustomNow()" ng-disabled="saving" style="font-weight: 600; border-radius: 6px; padding: 7px 14px;">
+        <i class="fa fa-bolt"></i> Run Custom Close Now
+      </button>
+    </div>
+
+    <div style="background: white; border-radius: 10px; border: 1px solid #e2e8f0; overflow-x: auto;">
+      <table class="table" style="margin: 0; width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-size: 11px; text-transform: uppercase; color: #475569;">
+            <th style="padding: 10px 12px; width: 36px;"><input type="checkbox" ng-click="toggleSelectAllVisible($event.target.checked)"></th>
+            <th style="padding: 10px 12px;">Patient</th>
+            <th style="padding: 10px 12px;">Triage Group</th>
+            <th style="padding: 10px 12px;">Triage Time</th>
+            <th style="padding: 10px 12px;">Visit Start</th>
+            <th style="padding: 10px 12px;">Visit Type / Location</th>
+            <th style="padding: 10px 12px;">Age</th>
+            <th style="padding: 10px 12px;">Rule Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="v in filteredVisits()" style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 12px;"><input type="checkbox" ng-model="selectedIds[v.visitId]"></td>
+            <td style="padding: 10px 12px;">
+              <div style="font-weight: 700; color: #0f172a;">{{ v.patientName }}</div>
+              <div style="font-size: 12px; color: #64748b;">ID: {{ v.identifier }} &bull; Visit #{{ v.visitId }}</div>
+            </td>
+            <td style="padding: 10px 12px;">
+              <span style="padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;"
+                    ng-style="{'background': v.isEm ? '#fee2e2' : '#ede9fe', 'color': v.isEm ? '#b91c1c' : '#6d28d9'}">
+                {{ v.triageGroup }}
+              </span>
+              <div ng-if="v.isAdmitted" style="font-size: 11px; color: #b45309; margin-top: 3px;"><i class="fa fa-bed"></i> IPD/Ward</div>
+            </td>
+            <td style="padding: 10px 12px; font-size: 12px; color: #334155;">{{ v.triageTime }}</td>
+            <td style="padding: 10px 12px; font-size: 12px; color: #64748b;">{{ v.visitStart }}</td>
+            <td style="padding: 10px 12px; font-size: 12px;">
+              <div style="font-weight: 600; color: #1e293b;">{{ v.visitType }}</div>
+              <div style="color: #64748b;">{{ v.location }}</div>
+            </td>
+            <td style="padding: 10px 12px; font-weight: 700; color: #0f172a;">{{ v.ageHours }}h</td>
+            <td style="padding: 10px 12px; font-size: 12px;">
+              <span ng-if="v.eligibleNow" style="color: #15803d; font-weight: 700;"><i class="fa fa-check-circle"></i> {{ v.eligibleReason }}</span>
+              <span ng-if="!v.eligibleNow" style="color: #64748b;">{{ v.eligibleReason }}</span>
+            </td>
+          </tr>
+          <tr ng-if="filteredVisits().length === 0">
+            <td colspan="8" style="padding: 30px; text-align: center; color: #94a3b8;">No active triaged visits match the current filter.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 2: FLEXIBLE SCHEDULE & RULES -->
+  <div ng-if="activeTab==='rules'">
+    <div style="background: white; padding: 18px 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <label style="font-size: 15px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" ng-model="config.enabled" style="width: 18px; height: 18px;">
+            Enable Automatic Background Visit Closer
+          </label>
+          <div style="font-size: 12px; color: #64748b; margin-top: 2px;">When enabled, the background scheduler automatically closes matching active visits at the configured interval.</div>
+        </div>
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+          <label style="font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
+            <input type="checkbox" ng-model="config.excludeAdmitted"> Exclude Admitted (IPD / Ward / ICU)
+          </label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 600; color: #475569;">Check every (sec):</span>
+            <input type="number" min="60" step="60" ng-model="config.checkIntervalSeconds" class="form-control" style="width: 90px;">
+          </div>
+          <button type="button" class="btn btn-primary" ng-click="saveConfig()" ng-disabled="saving" style="background: #2563eb; border-color: #1d4ed8; color: white; border-radius: 6px; padding: 8px 18px; font-weight: 600;">
+            <i class="fa fa-save"></i> Save Rules
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px;">
+      <!-- Central Triage Rule Card -->
+      <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; border-top: 4px solid #7c3aed;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #5b21b6;"><i class="fa fa-stethoscope"></i> Central Triage Rule</h3>
+          <label style="font-weight: 600; cursor: pointer;"><input type="checkbox" ng-model="config.centralTriage.enabled"> Enabled</label>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">CLOSE MODE</label>
+          <select ng-model="config.centralTriage.mode" class="form-control">
+            <option value="hours">After X Hours (Rolling Duration)</option>
+            <option value="daily_time">Every Day at Specific Time (Daily Cutoff)</option>
+            <option value="cutoff_datetime">Before Specific Date &amp; Time</option>
+          </select>
+        </div>
+        <div class="form-group" ng-if="config.centralTriage.mode==='hours'" style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">CLOSE AFTER HOURS</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" min="0.5" step="0.5" ng-model="config.centralTriage.hoursThreshold" class="form-control" style="width: 120px;">
+            <button type="button" class="btn btn-xs btn-default" ng-click="config.centralTriage.hoursThreshold=12">12h</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="config.centralTriage.hoursThreshold=24">24h</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="config.centralTriage.hoursThreshold=48">48h</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="config.centralTriage.hoursThreshold=72">72h</button>
+          </div>
+        </div>
+        <div class="form-group" ng-if="config.centralTriage.mode==='daily_time'" style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">DAILY CLOSE TIME (HH:MM)</label>
+          <input type="time" ng-model="config.centralTriage.dailyTime" class="form-control" style="width: 160px;">
+        </div>
+        <div class="form-group" ng-if="config.centralTriage.mode==='cutoff_datetime'" style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">CUTOFF DATE &amp; TIME</label>
+          <input type="datetime-local" ng-model="config.centralTriage.cutoffDateTime" class="form-control" style="width: 240px;">
+        </div>
+        <div class="form-group">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">MEASURE TIME FROM</label>
+          <select ng-model="config.centralTriage.referenceTime" class="form-control">
+            <option value="triage_time">Central Triage Time</option>
+            <option value="visit_start">Visit Start Time</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- EM Triage Rule Card -->
+      <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; border-top: 4px solid #dc2626;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #991b1b;"><i class="fa fa-ambulance"></i> Emergency (EM) Triage Rule</h3>
+          <label style="font-weight: 600; cursor: pointer;"><input type="checkbox" ng-model="config.emTriage.enabled"> Enabled</label>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">CLOSE MODE</label>
+          <select ng-model="config.emTriage.mode" class="form-control">
+            <option value="hours">After X Hours (Rolling Duration)</option>
+            <option value="daily_time">Every Day at Specific Time (Daily Cutoff)</option>
+            <option value="cutoff_datetime">Before Specific Date &amp; Time</option>
+          </select>
+        </div>
+        <div class="form-group" ng-if="config.emTriage.mode==='hours'" style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">CLOSE AFTER HOURS</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" min="0.5" step="0.5" ng-model="config.emTriage.hoursThreshold" class="form-control" style="width: 120px;">
+            <button type="button" class="btn btn-xs btn-default" ng-click="config.emTriage.hoursThreshold=12">12h</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="config.emTriage.hoursThreshold=24">24h</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="config.emTriage.hoursThreshold=48">48h</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="config.emTriage.hoursThreshold=72">72h</button>
+          </div>
+        </div>
+        <div class="form-group" ng-if="config.emTriage.mode==='daily_time'" style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">DAILY CLOSE TIME (HH:MM)</label>
+          <input type="time" ng-model="config.emTriage.dailyTime" class="form-control" style="width: 160px;">
+        </div>
+        <div class="form-group" ng-if="config.emTriage.mode==='cutoff_datetime'" style="margin-bottom: 12px;">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">CUTOFF DATE &amp; TIME</label>
+          <input type="datetime-local" ng-model="config.emTriage.cutoffDateTime" class="form-control" style="width: 240px;">
+        </div>
+        <div class="form-group">
+          <label style="font-size: 12px; font-weight: 700; color: #475569;">MEASURE TIME FROM</label>
+          <select ng-model="config.emTriage.referenceTime" class="form-control">
+            <option value="triage_time">EM Triage Time</option>
+            <option value="visit_start">Visit Start Time</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: RUN HISTORY -->
+  <div ng-if="activeTab==='logs'">
+    <div style="background: white; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden;">
+      <table class="table" style="margin: 0; width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-size: 11px; text-transform: uppercase; color: #475569;">
+            <th style="padding: 10px 14px;">Timestamp</th>
+            <th style="padding: 10px 14px;">Trigger</th>
+            <th style="padding: 10px 14px;">Target</th>
+            <th style="padding: 10px 14px;">Closed Visits</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="lg in config.recentLogs" style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 14px; font-size: 13px;">{{ lg.timestamp }}</td>
+            <td style="padding: 10px 14px; font-size: 13px; font-weight: 600;">{{ lg.source }}</td>
+            <td style="padding: 10px 14px; font-size: 13px;">{{ lg.target }}</td>
+            <td style="padding: 10px 14px; font-size: 13px; font-weight: 700; color: #0f766e;">{{ lg.closedCount }}</td>
+          </tr>
+          <tr ng-if="(config.recentLogs || []).length === 0">
+            <td colspan="4" style="padding: 30px; text-align: center; color: #94a3b8;">No auto-close runs recorded yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
