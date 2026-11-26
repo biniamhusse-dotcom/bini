@@ -92,10 +92,59 @@ angular.module('bahmni.common.displaycontrol.disposition')
                 };
 
                 $scope.getNotes = function (disposition) {
-                    if (disposition.additionalObs[0] && disposition.additionalObs[0].value) {
+                    if (disposition.additionalObs && disposition.additionalObs[0] && disposition.additionalObs[0].value) {
                         return disposition.additionalObs[0].value;
                     }
                     return "";
+                };
+
+                $scope.isLama = function (disposition) {
+                    if (!disposition) return false;
+                    return disposition.code === 'LEAVING_AGAINST' ||
+                        (disposition.conceptName && disposition.conceptName.indexOf('Leaving Against Medical Advice') >= 0);
+                };
+
+                $scope.hasLama = function () {
+                    return ($scope.dispositions || []).some($scope.isLama);
+                };
+
+                $scope.getLamaDispositions = function () {
+                    return ($scope.dispositions || []).filter($scope.isLama);
+                };
+
+                $scope.getLamaMedia = function (disposition) {
+                    var result = { images: [], videos: [], fields: [] };
+                    var notes = $scope.getNotes(disposition) || '';
+                    if (!notes) return result;
+                    var parts = notes.split(' | ');
+                    parts.forEach(function (part) {
+                        part = (part || '').trim();
+                        if (!part) return;
+                        if (part.indexOf('Uploaded Media:') === 0) {
+                            var mediaStr = part.substring('Uploaded Media:'.length).trim();
+                            mediaStr.split(',').forEach(function (entry) {
+                                entry = entry.trim();
+                                if (entry.indexOf('image:') === 0) {
+                                    var u = entry.substring('image:'.length).trim();
+                                    if (u) result.images.push({ url: u, fullUrl: '/document_images/' + u.replace(/^\/+/, '') });
+                                } else if (entry.indexOf('video:') === 0) {
+                                    var v = entry.substring('video:'.length).trim();
+                                    if (v) result.videos.push({ url: v, fullUrl: '/document_images/' + v.replace(/^\/+/, '') });
+                                }
+                            });
+                        } else {
+                            var colonIdx = part.indexOf(':');
+                            if (colonIdx > 0) {
+                                result.fields.push({
+                                    label: part.substring(0, colonIdx).trim(),
+                                    value: part.substring(colonIdx + 1).trim()
+                                });
+                            } else {
+                                result.fields.push({ label: 'Notes', value: part });
+                            }
+                        }
+                    });
+                    return result;
                 };
                 $scope.getDisplayName = function (disposition) {
                     if (disposition.preferredName != null) {
