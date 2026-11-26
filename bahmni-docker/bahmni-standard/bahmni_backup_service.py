@@ -4486,10 +4486,10 @@ def delete_report_entry(payload):
 # -------------------------------------------------------------------------
 # OpenMRS <-> OpenELIS Lab Test & Sample Type Mapping Manager
 # -------------------------------------------------------------------------
-def _run_openelis_psql(sql_query):
+def _run_openelis_psql(sql_query, sep="\t"):
     cmd = [
         "docker", "exec", "-i", "bahmni-standard-openelisdb-1",
-        "psql", "-U", "clinlims", "-d", "clinlims", "-At", "-F", "\t"
+        "psql", "-U", "clinlims", "-d", "clinlims", "-At", "-F", sep
     ]
     proc = subprocess.run(cmd, input=sql_query, capture_output=True, text=True, timeout=30)
     if proc.returncode != 0:
@@ -4525,12 +4525,14 @@ def _run_openmrs_mysql(sql_query):
     return proc.stdout.decode("utf-8", errors="replace")
 
 def load_lab_mapping_overview():
+    sep = "\x1f"
     sample_types_out = _run_openelis_psql(
-        "SELECT id, description, COALESCE(local_abbrev, description), is_active FROM type_of_sample ORDER BY description;"
+        "SELECT id, description, COALESCE(local_abbrev, description), is_active FROM type_of_sample ORDER BY description;",
+        sep=sep
     )
     sample_types = []
     for line in sample_types_out.strip().splitlines():
-        parts = line.split("\t")
+        parts = line.split(sep)
         if len(parts) >= 4:
             sample_types.append({
                 "id": int(parts[0]),
@@ -4540,7 +4542,7 @@ def load_lab_mapping_overview():
             })
 
     tests_out = _run_openelis_psql("""
-        SELECT t.id, t.name, t.is_active, COALESCE(ts.description, 'Unassigned'),
+        SELECT t.id, regexp_replace(t.name, E'[\\r\\n\\t]+', ' ', 'g'), t.is_active, COALESCE(ts.description, 'Unassigned'),
                COALESCE(stt.sample_type_id::text, ''), COALESCE(tos.description, ''),
                COALESCE(er.external_id, '')
         FROM test t
@@ -4549,12 +4551,12 @@ def load_lab_mapping_overview():
         LEFT JOIN type_of_sample tos ON stt.sample_type_id = tos.id
         LEFT JOIN external_reference er ON t.id = er.item_id AND er.type = 'Test'
         ORDER BY (CASE WHEN stt.sample_type_id IS NULL THEN 0 WHEN stt.sample_type_id = 202 THEN 1 ELSE 2 END), t.is_active DESC, t.name ASC;
-    """)
+    """, sep=sep)
     tests = []
     unmapped_count = 0
     fallback_count = 0
     for line in tests_out.strip().splitlines():
-        parts = line.split("\t")
+        parts = line.split(sep)
         if len(parts) >= 7:
             st_id = int(parts[4]) if parts[4] else None
             if st_id is None and parts[2] == "Y":
@@ -4572,7 +4574,7 @@ def load_lab_mapping_overview():
             })
 
     panels_out = _run_openelis_psql("""
-        SELECT p.id, p.name, COALESCE(er.external_id, ''), count(pi.id),
+        SELECT p.id, regexp_replace(p.name, E'[\\r\\n\\t]+', ' ', 'g'), COALESCE(er.external_id, ''), count(pi.id),
                COALESCE(string_agg(DISTINCT tos.description, ', '), 'None')
         FROM panel p
         LEFT JOIN external_reference er ON p.id = er.item_id AND er.type = 'Panel'
@@ -4581,11 +4583,11 @@ def load_lab_mapping_overview():
         LEFT JOIN type_of_sample tos ON stt.sample_type_id = tos.id
         GROUP BY p.id, p.name, er.external_id
         ORDER BY count(pi.id) ASC, p.name ASC;
-    """)
+    """, sep=sep)
     panels = []
     empty_panels = 0
     for line in panels_out.strip().splitlines():
-        parts = line.split("\t")
+        parts = line.split(sep)
         if len(parts) >= 5:
             cnt = int(parts[3])
             if cnt == 0:
@@ -4605,10 +4607,10 @@ def load_lab_mapping_overview():
         FROM failed_events
         ORDER BY id DESC
         LIMIT 50;
-    """)
+    """, sep=sep)
     failed_events = []
     for line in failed_out.strip().splitlines():
-        parts = line.split("\t")
+        parts = line.split(sep)
         if len(parts) >= 6:
             failed_events.append({
                 "id": int(parts[0]),
@@ -4716,6 +4718,33 @@ def auto_fix_all_lab_mappings():
     EXECUTE PROCEDURE fn_replace_fallback_sampletype();
     """
     _run_openelis_psql(sql)
+    try:
+        loc_out = _run_openmrs_mysql("SELECT name, uuid FROM location WHERE retired = 0;")
+        active_locs = {}
+        for line in loc_out.strip().splitlines():
+            parts = line.split("\t")
+            if len(parts) >= 2 and parts[0].strip() and parts[1].strip():
+                active_locs[parts[0].strip()] = parts[1].strip()
+        if active_locs:
+            er_out = _run_openelis_psql(
+                "SELECT er.id, ss.name, er.external_id FROM external_reference er "
+                "JOIN sample_source ss ON er.item_id = ss.id WHERE er.type = 'SampleSource';"
+            )
+            updates = []
+            for line in er_out.strip().splitlines():
+                parts = line.split("\t")
+                if len(parts) >= 3:
+                    er_id = int(parts[0])
+                    ss_name = parts[1].strip()
+                    cur_uuid = parts[2].strip()
+                    target_uuid = active_locs.get(ss_name)
+                    if target_uuid and target_uuid != cur_uuid and re.match(r"^[a-zA-Z0-9-]+$", target_uuid):
+                        updates.append(f"UPDATE external_reference SET external_id = '{target_uuid}' WHERE id = {er_id};")
+            if updates:
+                _run_openelis_psql("\n".join(updates))
+                log(f"Synced {len(updates)} SampleSource external_reference UUID(s) from active OpenMRS locations.")
+    except Exception as e:
+        log(f"Warning syncing SampleSource UUIDs: {e}")
     return load_lab_mapping_overview()
 
 def sync_panel_members_from_openmrs(payload):

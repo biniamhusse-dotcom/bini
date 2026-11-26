@@ -192,7 +192,7 @@
     <div style="background: white; padding: 14px 18px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <div style="font-size: 13px; color: #475569;">Showing latest <strong>{{ failedEvents.length }}</strong> of {{ stats.totalFailedEvents }} failed OpenELIS atomfeed events.</div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button type="button" class="btn btn-primary" ng-click="retryFailedEvent('all_recent')" ng-disabled="saving || failedEvents.length === 0" style="background: #2563eb; border-color: #1d4ed8; color: white; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;">
+        <button type="button" class="btn btn-primary" ng-click="retryFailedEvent('all')" ng-disabled="saving || failedEvents.length === 0" style="background: #2563eb; border-color: #1d4ed8; color: white; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;">
           <i class="fa fa-repeat"></i> Retry &amp; Clean Queue
         </button>
         <button type="button" class="btn btn-default" ng-click="deleteFailedEvent('all_metadata')" ng-disabled="saving || failedEvents.length === 0" style="color: #b45309; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;">
