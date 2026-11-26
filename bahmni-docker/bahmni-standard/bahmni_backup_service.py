@@ -5916,6 +5916,59 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 log(f"Error saving location visit mappings: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
+        elif path in ("/api/specialities/save", "/specialities/save"):
+            try:
+                import uuid as _uuid_mod
+                name = (payload.get("name") or "").strip()
+                spec_uuid = (payload.get("uuid") or "").strip()
+                if not name:
+                    self._send_json(400, {"success": False, "message": "Speciality name is required."})
+                    return
+                safe_name = name.replace("\\", "\\\\").replace("'", "''")
+                if spec_uuid:
+                    safe_uuid = spec_uuid.replace("\\", "\\\\").replace("'", "''")
+                    dup = _run_openmrs_mysql(f"SELECT uuid FROM appointment_speciality WHERE LOWER(name) = LOWER('{safe_name}') AND uuid != '{safe_uuid}' AND voided = 0 LIMIT 1;")
+                    if dup.strip():
+                        self._send_json(400, {"success": False, "message": f"Speciality '{name}' already exists."})
+                        return
+                    _run_openmrs_mysql(f"UPDATE appointment_speciality SET name = '{safe_name}', date_changed = NOW(), changed_by = 1 WHERE uuid = '{safe_uuid}';")
+                    self._send_json(200, {"uuid": spec_uuid, "name": name})
+                else:
+                    existing = _run_openmrs_mysql(f"SELECT uuid, voided FROM appointment_speciality WHERE LOWER(name) = LOWER('{safe_name}') LIMIT 1;")
+                    if existing.strip():
+                        parts = existing.strip().split("\t")
+                        ex_uuid = parts[0]
+                        ex_voided = parts[1] if len(parts) > 1 else "0"
+                        if ex_voided == "1":
+                            _run_openmrs_mysql(f"UPDATE appointment_speciality SET voided = 0, name = '{safe_name}', date_changed = NOW(), date_voided = NULL, voided_by = NULL, void_reason = NULL WHERE uuid = '{ex_uuid}';")
+                            self._send_json(200, {"uuid": ex_uuid, "name": name})
+                        else:
+                            self._send_json(400, {"success": False, "message": f"Speciality '{name}' already exists."})
+                        return
+                    new_uuid = str(_uuid_mod.uuid4())
+                    _run_openmrs_mysql(f"INSERT INTO appointment_speciality (name, date_created, creator, uuid, voided) VALUES ('{safe_name}', NOW(), 1, '{new_uuid}', 0);")
+                    self._send_json(200, {"uuid": new_uuid, "name": name})
+            except Exception as e:
+                log(f"Error saving speciality: {e}")
+                self._send_json(500, {"success": False, "message": str(e)})
+
+        elif path in ("/api/specialities/delete", "/specialities/delete"):
+            try:
+                spec_uuid = (payload.get("uuid") or "").strip()
+                if not spec_uuid:
+                    self._send_json(400, {"success": False, "message": "Speciality uuid is required."})
+                    return
+                safe_uuid = spec_uuid.replace("\\", "\\\\").replace("'", "''")
+                linked = _run_openmrs_mysql(f"SELECT COUNT(*) FROM appointment_service s JOIN appointment_speciality sp ON s.speciality_id = sp.speciality_id WHERE sp.uuid = '{safe_uuid}' AND s.voided = 0;")
+                if linked.strip() and int(linked.strip()) > 0:
+                    self._send_json(400, {"success": False, "message": "Cannot delete speciality because it is used by active services."})
+                    return
+                _run_openmrs_mysql(f"UPDATE appointment_speciality SET voided = 1, date_voided = NOW(), voided_by = 1, void_reason = 'Deleted via Manage Specialities' WHERE uuid = '{safe_uuid}';")
+                self._send_json(200, {"success": True, "uuid": spec_uuid})
+            except Exception as e:
+                log(f"Error deleting speciality: {e}")
+                self._send_json(500, {"success": False, "message": str(e)})
+
         elif path in ("/api/reports-manager/save-report", "/reports-manager/save-report"):
             try:
                 result = save_report_entry(payload)

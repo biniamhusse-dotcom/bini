@@ -145,6 +145,11 @@
         $scope.alertType = '';
 
         var baseUrl = '/openmrs/ws/rest/v1/speciality';
+        var manageUrl = '/backup-api/specialities';
+
+        function getErrMsg(err) {
+            return (err && err.data && (err.data.message || err.data.error)) || 'Error';
+        }
 
         function showAlert(msg, type) {
             $scope.alertMsg = msg;
@@ -159,19 +164,19 @@
                     return s;
                 });
             }, function(err) {
-                showAlert('Failed to load specialities: ' + (err.data.message || 'Error'), 'error');
+                showAlert('Failed to load specialities: ' + getErrMsg(err), 'error');
             });
         }
 
         $scope.addSpeciality = function() {
             if (!$scope.newSpeciality.name || !$scope.newSpeciality.name.trim()) return;
-            $http.post(baseUrl + '/save', {name: $scope.newSpeciality.name.trim()}, {withCredentials: true}).then(function(resp) {
+            $http.post(manageUrl + '/save', {name: $scope.newSpeciality.name.trim()}, {withCredentials: true}).then(function(resp) {
                 $scope.showAddForm = false;
                 $scope.newSpeciality = {};
                 showAlert('Speciality "' + resp.data.name + '" created successfully.', 'success');
                 loadSpecialities();
             }, function(err) {
-                showAlert('Failed to create speciality: ' + (err.data.message || 'Error'), 'error');
+                showAlert('Failed to create speciality: ' + getErrMsg(err), 'error');
             });
         };
 
@@ -187,12 +192,12 @@
 
         $scope.saveEdit = function(s) {
             if (!s.editName || !s.editName.trim()) return;
-            $http.post(baseUrl + '/save', {uuid: s.uuid, name: s.editName.trim()}, {withCredentials: true}).then(function(resp) {
+            $http.post(manageUrl + '/save', {uuid: s.uuid, name: s.editName.trim()}, {withCredentials: true}).then(function(resp) {
                 s.editing = false;
                 showAlert('Speciality updated successfully.', 'success');
                 loadSpecialities();
             }, function(err) {
-                showAlert('Failed to update speciality: ' + (err.data.message || 'Error'), 'error');
+                showAlert('Failed to update speciality: ' + getErrMsg(err), 'error');
             });
         };
 
@@ -201,12 +206,12 @@
         };
 
         $scope.deleteSpeciality = function(s) {
-            $http.post(baseUrl + '/delete', {uuid: s.uuid}, {withCredentials: true}).then(function(resp) {
+            $http.post(manageUrl + '/delete', {uuid: s.uuid}, {withCredentials: true}).then(function(resp) {
                 $scope.deleteConfirm = null;
                 showAlert('Speciality "' + s.name + '" deleted successfully.', 'success');
                 loadSpecialities();
             }, function(err) {
-                showAlert('Failed to delete speciality: ' + (err.data.message || 'Error'), 'error');
+                showAlert('Failed to delete speciality: ' + getErrMsg(err), 'error');
             });
         };
 
