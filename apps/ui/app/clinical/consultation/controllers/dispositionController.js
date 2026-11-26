@@ -1632,24 +1632,61 @@ angular.module('bahmni.clinical')
             videos: []
         };
 
+        var convertImageToPng = function (dataUrl, callback) {
+            var img = new Image();
+            img.onload = function () {
+                try {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || img.width || 1;
+                    canvas.height = img.naturalHeight || img.height || 1;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    callback(canvas.toDataURL('image/png'));
+                } catch (e) {
+                    callback(dataUrl);
+                }
+            };
+            img.onerror = function () { callback(dataUrl); };
+            img.src = dataUrl;
+        };
+
         $scope.onLamaFilesSelected = function (fileList, mediaType) {
             if (!fileList || !fileList.length) return;
             Array.prototype.forEach.call(fileList, function (file) {
                 var reader = new FileReader();
                 reader.onload = function (ev) {
-                    $scope.$applyAsync(function () {
-                        var entry = {
-                            name: file.name,
-                            dataUrl: ev.target.result,
-                            previewUrl: URL.createObjectURL(file)
-                        };
-                        if (mediaType === 'video') {
-                            $scope.lamaForm.videos.push(entry);
-                        } else {
-                            $scope.lamaForm.images.push(entry);
+                    var rawUrl = ev.target.result;
+                    var finalizeEntry = function (finalUrl, finalName) {
+                        $scope.$applyAsync(function () {
+                            var entry = {
+                                name: finalName,
+                                dataUrl: finalUrl,
+                                previewUrl: URL.createObjectURL(file)
+                            };
+                            if (mediaType === 'video') {
+                                $scope.lamaForm.videos.push(entry);
+                            } else {
+                                $scope.lamaForm.images.push(entry);
+                            }
+                            $scope.lamaSaved = false;
+                        });
+                    };
+                    if (mediaType === 'image') {
+                        var ext = (file.name && file.name.indexOf('.') >= 0) ? file.name.split('.').pop().toLowerCase() : '';
+                        var mimeMatch = /^data:image\/([^;]+);/i.exec(rawUrl);
+                        var mimeFmt = mimeMatch ? mimeMatch[1].toLowerCase() : ext;
+                        if (mimeFmt === 'jpg') mimeFmt = 'jpeg';
+                        if (['png', 'jpeg', 'gif'].indexOf(mimeFmt) === -1) {
+                            var pngName = (file.name && file.name.lastIndexOf('.') > 0)
+                                ? file.name.substring(0, file.name.lastIndexOf('.')) + '.png'
+                                : (file.name || 'image') + '.png';
+                            convertImageToPng(rawUrl, function (pngDataUrl) {
+                                finalizeEntry(pngDataUrl, pngName);
+                            });
+                            return;
                         }
-                        $scope.lamaSaved = false;
-                    });
+                    }
+                    finalizeEntry(rawUrl, file.name);
                 };
                 reader.readAsDataURL(file);
             });
@@ -1669,7 +1706,14 @@ angular.module('bahmni.clinical')
             var searchStr = ';base64,';
             var b64Idx = dataUrl.indexOf(searchStr);
             var b64Content = b64Idx >= 0 ? dataUrl.substring(b64Idx + searchStr.length) : dataUrl;
-            var format = (item.name && item.name.indexOf('.') >= 0) ? item.name.split('.').pop() : (mediaType === 'video' ? 'mp4' : 'png');
+            var mimeMatch = /^data:[^/]+\/([^;]+);/i.exec(dataUrl);
+            var format = (mimeMatch ? mimeMatch[1].toLowerCase() : '') || ((item.name && item.name.indexOf('.') >= 0) ? item.name.split('.').pop().toLowerCase() : (mediaType === 'video' ? 'mp4' : 'png'));
+            if (mediaType === 'image') {
+                if (format === 'jpg') format = 'jpeg';
+                if (['png', 'jpeg', 'gif'].indexOf(format) === -1) format = 'png';
+            } else {
+                format = (item.name && item.name.indexOf('.') >= 0) ? item.name.split('.').pop().toLowerCase() : 'mp4';
+            }
             var baseName = (item.name && item.name.lastIndexOf('.') > 0) ? item.name.substring(0, item.name.lastIndexOf('.')) : (mediaType === 'video' ? 'lama_video' : 'lama_image');
             return $http.post('/openmrs/ws/rest/v1/bahmnicore/visitDocument/uploadDocument', {
                 content: b64Content,
