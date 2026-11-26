@@ -381,6 +381,86 @@
                         </select></div>
                 </div>
             </div>
+
+            <div ng-if="dispositionCode==='APPOINTMENT'" class="refer-form-container" style="margin-top: 15px;">
+                <div class="refer-form-header" style="background: #00796B;">
+                    <i class="fa fa-calendar-plus-o"></i> NEW APPOINTMENT
+                </div>
+                <div class="refer-form-section">
+                    <div class="refer-form-row">
+                        <div class="refer-form-field">
+                            <label class="refer-label">Speciality</label>
+                            <select id="dispApptSpeciality" ng-model="apptForm.speciality" ng-change="onApptSpecialityChange()"
+                                ng-options="s for s in specialities | orderBy:'toString()'" class="refer-input">
+                                <option value="">All Specialities</option>
+                            </select>
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">Service <span style="color:#c0392b;">*</span></label>
+                            <select id="dispApptService" ng-model="apptForm.service" ng-change="onApptServiceChange()"
+                                ng-options="svc as svc.name for svc in apptFilteredServices | orderBy:'name'" class="refer-input">
+                                <option value="">Select Service</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="refer-form-row" style="margin-top: 8px;">
+                        <div class="refer-form-field">
+                            <label class="refer-label">Provider</label>
+                            <select id="dispApptProvider" ng-model="apptForm.provider"
+                                ng-options="doc as doc.FullName for doc in apptFilteredProviders | orderBy:'FullName'" class="refer-input">
+                                <option value="">Select Provider</option>
+                            </select>
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">Location</label>
+                            <select id="dispApptLocation" ng-model="apptForm.location"
+                                ng-options="loc as loc.display for loc in apptLocations | orderBy:'display'" class="refer-input">
+                                <option value="">Select Location</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="refer-form-row" style="margin-top: 8px;">
+                        <div class="refer-form-field">
+                            <label class="refer-label">Appointment Date (Ethiopian) <span style="color:#c0392b;">*</span></label>
+                            <input type="text" id="dispApptDate" ng-model="apptForm.ethDateStr" class="refer-input" placeholder="DD/MM/YYYY" autocomplete="off" readonly style="cursor:pointer; background:#fff;" />
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">Start Time <span style="color:#c0392b;">*</span></label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="dispApptStartTime" ng-model="apptForm.startTime" ng-change="onApptStartTimeChange()" class="refer-input" placeholder="hh:mm" maxlength="5" style="flex:1;" />
+                                <select id="dispApptStartAmPm" ng-model="apptForm.startAmPm" ng-change="onApptStartTimeChange()" class="refer-input" style="width:72px;">
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="refer-form-field">
+                            <label class="refer-label">End Time <span style="color:#c0392b;">*</span></label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="dispApptEndTime" ng-model="apptForm.endTime" class="refer-input" placeholder="hh:mm" maxlength="5" style="flex:1;" />
+                                <select id="dispApptEndAmPm" ng-model="apptForm.endAmPm" class="refer-input" style="width:72px;">
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="refer-form-row" style="margin-top: 8px;">
+                        <div class="refer-form-field">
+                            <label class="refer-label">Appointment Notes</label>
+                            <textarea id="dispApptNotes" ng-model="apptForm.comments" class="refer-textarea" rows="2" placeholder="Optional notes for appointment..."></textarea>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px;">
+                        <button type="button" id="dispApptSaveBtn" ng-click="saveDispositionAppointment()" ng-disabled="apptSaving"
+                            style="background:#00796B; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:600; cursor:pointer;">
+                            {{ apptSaving ? 'Saving...' : 'Save Appointment' }}
+                        </button>
+                        <span ng-if="apptSaveMsg" style="color:#27ae60; font-weight:600; font-size:13px;">{{apptSaveMsg}}</span>
+                        <span ng-if="apptSaveErr" style="color:#c0392b; font-weight:600; font-size:13px;">{{apptSaveErr}}</span>
+                    </div>
+                </div>
+            </div>
             <br><br><br><br>
             <div class="dispositionNotesWrap">
                 <label class="disposition-notes" for="dispositionNotes"><span class="label">{{

@@ -24,7 +24,8 @@ angular.module('bahmni.clinical')
                         name: "Fingerprint and video upload Templates",
                         v: "custom:" + customRepresentation
                     }).then(function (response) {
-                        var allTemplates = response.data.results[0].setMembers;
+                        var firstResult = (response && response.data && response.data.results && response.data.results[0]) || null;
+                        var allTemplates = (firstResult && firstResult.setMembers) || [];
                         createConceptSections(allTemplates);
                         if ($state.params.programUuid) {
                             showOnlyTemplatesFilledInProgram();

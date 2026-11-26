@@ -1431,7 +1431,196 @@ angular.module('bahmni.clinical')
 
         spinner.forPromise(loadDispositionActions(), '#disposition');
 
+        // --- Give Appointment (APPOINTMENT disposition) ---
+        $scope.apptServices = [];
+        $scope.apptFilteredServices = [];
+        $scope.apptFilteredProviders = [];
+        $scope.apptLocations = [];
+        $scope.apptSaved = false;
+        $scope.apptSaving = false;
+        $scope.apptSaveMsg = '';
+        $scope.apptSaveErr = '';
+        $scope.apptForm = {
+            speciality: '',
+            service: null,
+            provider: null,
+            location: null,
+            dateObj: new Date(),
+            ethDateStr: '',
+            startTime: '09:00',
+            startAmPm: 'AM',
+            endTime: '09:30',
+            endAmPm: 'AM',
+            comments: ''
+        };
+
+        var loadAppointmentMeta = function () {
+            $http.get('/openmrs/ws/rest/v1/appointmentService/all/default', { withCredentials: true }).then(function (r) {
+                $scope.apptServices = Array.isArray(r.data) ? r.data : [];
+                $scope.apptFilteredServices = $scope.apptServices;
+            }).catch(function () {});
+            $http.get('/openmrs/ws/rest/v1/location', { params: { tag: 'Appointment Location', v: 'default' }, withCredentials: true }).then(function (r) {
+                $scope.apptLocations = (r.data && r.data.results) || [];
+            }).catch(function () {});
+        };
+        loadAppointmentMeta();
+
+        var formatEthFromDate = function (jsDate) {
+            try {
+                if (window.jQuery && window.jQuery.calendars) {
+                    var cg = window.jQuery.calendars.instance('gregorian');
+                    var ce = window.jQuery.calendars.instance('ethiopian', 'am');
+                    var gd = cg.newDate(jsDate.getFullYear(), jsDate.getMonth() + 1, jsDate.getDate());
+                    var ed = ce.fromJD(cg.toJD(gd));
+                    return ce.formatDate('dd/mm/yyyy', ed);
+                }
+            } catch (e) {}
+            return '';
+        };
+
+        var initDispositionApptDatePicker = function () {
+            setTimeout(function () {
+                var el = document.getElementById('dispApptDate');
+                if (!el || !window.jQuery || !window.jQuery.calendars) return;
+                var $el = window.jQuery(el);
+                if ($el.data('ethInit')) return;
+                $el.data('ethInit', true);
+                var ce = window.jQuery.calendars.instance('ethiopian', 'am');
+                var cg = window.jQuery.calendars.instance('gregorian');
+                var todayJd = cg.toJD(cg.newDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()));
+                var ethMin = ce.fromJD(todayJd);
+                if (!$scope.apptForm.ethDateStr) {
+                    $scope.$applyAsync(function () {
+                        $scope.apptForm.ethDateStr = ce.formatDate('dd/mm/yyyy', ethMin);
+                    });
+                }
+                $el.calendarsPicker({
+                    calendar: ce,
+                    dateFormat: 'dd/mm/yyyy',
+                    minDate: ethMin,
+                    onSelect: function (dates) {
+                        if (dates && dates[0]) {
+                            var ed = dates[0];
+                            var gd = cg.fromJD(ce.toJD(ed));
+                            var jsDate = new Date(gd.year(), gd.month() - 1, gd.day());
+                            var formatted = ce.formatDate('dd/mm/yyyy', ed);
+                            try { $el.calendarsPicker('hide'); } catch (ex) {}
+                            $scope.$applyAsync(function () {
+                                $scope.apptForm.dateObj = jsDate;
+                                $scope.apptForm.ethDateStr = formatted;
+                            });
+                        }
+                    }
+                });
+            }, 150);
+        };
+
+        $scope.$watch('dispositionCode', function (newVal) {
+            if (newVal === 'APPOINTMENT') {
+                $scope.apptFilteredProviders = $scope.allDoctors || [];
+                if (!$scope.apptForm.ethDateStr) {
+                    $scope.apptForm.ethDateStr = formatEthFromDate($scope.apptForm.dateObj || new Date());
+                }
+                initDispositionApptDatePicker();
+            }
+        });
+
+        $scope.onApptSpecialityChange = function () {
+            var spec = $scope.apptForm.speciality;
+            if (!spec) {
+                $scope.apptFilteredServices = $scope.apptServices;
+                $scope.apptFilteredProviders = $scope.allDoctors || [];
+            } else {
+                $scope.apptFilteredServices = ($scope.apptServices || []).filter(function (s) {
+                    return s.speciality && s.speciality.name === spec;
+                });
+                $scope.apptFilteredProviders = ($scope.allDoctors || []).filter(function (d) {
+                    return d.specialities && d.specialities.indexOf(spec) !== -1;
+                });
+            }
+        };
+
+        var parseTimeParts = function (timeStr, ampm) {
+            var m = /^(\d{1,2}):(\d{2})$/.exec((timeStr || '').trim());
+            if (!m) return null;
+            var h = parseInt(m[1], 10);
+            var min = parseInt(m[2], 10);
+            if (h < 1 || h > 12 || min < 0 || min > 59) return null;
+            if (ampm === 'PM' && h < 12) h += 12;
+            if (ampm === 'AM' && h === 12) h = 0;
+            return { h: h, m: min };
+        };
+
+        $scope.onApptStartTimeChange = function () {
+            var parts = parseTimeParts($scope.apptForm.startTime, $scope.apptForm.startAmPm);
+            if (!parts) return;
+            var mins = ($scope.apptForm.service && $scope.apptForm.service.durationMins) ? parseInt($scope.apptForm.service.durationMins, 10) : 30;
+            var total = parts.h * 60 + parts.m + mins;
+            var eh = Math.floor(total / 60) % 24;
+            var em = total % 60;
+            var eAmPm = eh >= 12 ? 'PM' : 'AM';
+            var dispH = eh % 12;
+            if (dispH === 0) dispH = 12;
+            $scope.apptForm.endTime = String(dispH).padStart(2, '0') + ':' + String(em).padStart(2, '0');
+            $scope.apptForm.endAmPm = eAmPm;
+        };
+
+        $scope.onApptServiceChange = function () {
+            var svc = $scope.apptForm.service;
+            if (svc && svc.location && svc.location.uuid) {
+                var matched = ($scope.apptLocations || []).find(function (l) { return l.uuid === svc.location.uuid; });
+                if (matched) $scope.apptForm.location = matched;
+            }
+            $scope.onApptStartTimeChange();
+        };
+
+        $scope.saveDispositionAppointment = function () {
+            $scope.apptSaveMsg = '';
+            $scope.apptSaveErr = '';
+            var svc = $scope.apptForm.service;
+            if (!svc || !svc.uuid) {
+                $scope.apptSaveErr = 'Please select a Service.';
+                return $q.reject('Missing service');
+            }
+            var d = $scope.apptForm.dateObj || new Date();
+            var st = parseTimeParts($scope.apptForm.startTime, $scope.apptForm.startAmPm);
+            var et = parseTimeParts($scope.apptForm.endTime, $scope.apptForm.endAmPm);
+            if (!st || !et) {
+                $scope.apptSaveErr = 'Please enter valid Start and End time (hh:mm).';
+                return $q.reject('Invalid time');
+            }
+            var startDt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), st.h, st.m, 0, 0);
+            var endDt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), et.h, et.m, 0, 0);
+            if (endDt <= startDt) {
+                $scope.apptSaveErr = 'End time must be after Start time.';
+                return $q.reject('End time before start time');
+            }
+            var payload = {
+                patientUuid: $scope.patientUuid || ($scope.patient && $scope.patient.uuid),
+                serviceUuid: svc.uuid,
+                startDateTime: startDt.toISOString(),
+                endDateTime: endDt.toISOString(),
+                providers: $scope.apptForm.provider ? [{ uuid: $scope.apptForm.provider.uuid, response: 'ACCEPTED' }] : [],
+                locationUuid: $scope.apptForm.location ? $scope.apptForm.location.uuid : null,
+                appointmentKind: 'Scheduled',
+                status: 'Scheduled',
+                comments: $scope.apptForm.comments || ($scope.dispositionNote && $scope.dispositionNote.value) || ''
+            };
+            $scope.apptSaving = true;
+            return $http.post('/openmrs/ws/rest/v1/appointment', payload, { withCredentials: true }).then(function () {
+                $scope.apptSaving = false;
+                $scope.apptSaved = true;
+                $scope.apptSaveMsg = 'Appointment scheduled and added to Appointments List!';
+            }).catch(function (err) {
+                $scope.apptSaving = false;
+                $scope.apptSaveErr = (err && err.data && err.data.error && err.data.error.message) || 'Failed to save appointment.';
+            });
+        };
+
         var saveDispositions = function () {
+            if ($scope.dispositionCode === 'APPOINTMENT' && !$scope.apptSaved && $scope.apptForm && $scope.apptForm.service) {
+                $scope.saveDispositionAppointment();
+            }
             var selectedDisposition = getSelectedDisposition();
             if (selectedDisposition) {
                 consultation.disposition = selectedDisposition;
