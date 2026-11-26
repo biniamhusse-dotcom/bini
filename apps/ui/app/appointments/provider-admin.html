@@ -202,6 +202,55 @@
         #toast.success { background: #27ae60; border-left: 5px solid #1e8449; }
         #toast.error { background: #e74c3c; border-left: 5px solid #c0392b; }
         #toast.info { background: #446565; border-left: 5px solid #2d4545; }
+
+        /* Speciality Assignment Styles */
+        .spec-filter {
+            padding: 7px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333;
+            background: #fff;
+            outline: none;
+            min-width: 180px;
+        }
+        .spec-filter:focus { border-color: #446565; }
+        .spec-cell { display: flex; flex-direction: column; gap: 6px; }
+        .spec-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+        .spec-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e6f2f2;
+            color: #2d4545;
+            border: 1px solid #b8d6d6;
+            border-radius: 14px;
+            padding: 3px 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .spec-pill-remove {
+            cursor: pointer;
+            color: #446565;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 1;
+            border: none;
+            background: transparent;
+            padding: 0 2px;
+        }
+        .spec-pill-remove:hover { color: #c0392b; }
+        .spec-assign-select {
+            max-width: 220px;
+            padding: 5px 8px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #333;
+            background: #fff;
+            cursor: pointer;
+        }
+        .spec-assign-select:focus { border-color: #446565; outline: none; }
     </style>
 </head>
 <body>
@@ -222,6 +271,9 @@
                 <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                 <input type="text" id="searchInput" placeholder="Search provider by name or ID..." oninput="onSearchOrFilterChange()">
             </div>
+            <select id="specialityFilter" class="spec-filter" onchange="onSearchOrFilterChange()">
+                <option value="">All Specialities</option>
+            </select>
             <div class="filter-tabs">
                 <button class="filter-btn active" id="tabAll" onclick="setTab('all')">All (<span id="countAll">0</span>)</button>
                 <button class="filter-btn" id="tabAvailable" onclick="setTab('available')">Available (<span id="countAvailable">0</span>)</button>
@@ -241,8 +293,9 @@
             <table id="providerTable" style="display:none;">
                 <thead>
                     <tr>
-                        <th style="width: 60%;">Provider Name</th>
-                        <th style="width: 40%;">Available for Appointments</th>
+                        <th style="width: 33%;">Provider Name</th>
+                        <th style="width: 42%;">Assigned Specialities</th>
+                        <th style="width: 25%;">Available for Appointments</th>
                     </tr>
                 </thead>
                 <tbody id="providerBody"></tbody>
@@ -255,8 +308,10 @@
 
     <script>
         var allProviders = [];
+        var allSpecialities = [];
         var activeTab = 'all';
-        var attrTypeUuid = 'e2aaac17-5e07-11ef-8f7c-0242ac120002'; // default fallback
+        var attrTypeUuid = 'e2aaac17-5e07-11ef-8f7c-0242ac120002'; // Available for appointments fallback
+        var specialityAttrTypeUuid = ''; // Speciality provider attribute type UUID
         var toastTimeout = null;
 
         function showToast(msg, type) {
@@ -269,7 +324,7 @@
             }, 3500);
         }
 
-        // 1. Fetch Attribute Type UUID dynamically
+        // 1. Fetch Attribute Type UUIDs dynamically (and auto-create Speciality attribute type if missing)
         function initAttributeType(callback) {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', '/openmrs/ws/rest/v1/providerattributetype');
@@ -279,17 +334,77 @@
                     try {
                         var res = JSON.parse(xhr.responseText);
                         var types = res.results || [];
-                        var found = types.find(function(t) {
+                        var foundAvail = types.find(function(t) {
                             return t.display === 'Available for appointments' || (t.name && t.name.indexOf('Available') >= 0);
                         });
-                        if (found && found.uuid) {
-                            attrTypeUuid = found.uuid;
+                        if (foundAvail && foundAvail.uuid) {
+                            attrTypeUuid = foundAvail.uuid;
                         }
+                        var foundSpec = types.find(function(t) {
+                            return t.display === 'Speciality' || t.name === 'Speciality';
+                        });
+                        if (foundSpec && foundSpec.uuid) {
+                            specialityAttrTypeUuid = foundSpec.uuid;
+                            callback();
+                            return;
+                        }
+                        // Auto-create Speciality provider attribute type if it doesn't exist
+                        var cxhr = new XMLHttpRequest();
+                        cxhr.open('POST', '/openmrs/ws/rest/v1/providerattributetype');
+                        cxhr.withCredentials = true;
+                        cxhr.setRequestHeader('Content-Type', 'application/json');
+                        cxhr.onload = function() {
+                            if (cxhr.status === 200 || cxhr.status === 201) {
+                                try {
+                                    var created = JSON.parse(cxhr.responseText);
+                                    if (created && created.uuid) specialityAttrTypeUuid = created.uuid;
+                                } catch(e) {}
+                            }
+                            callback();
+                        };
+                        cxhr.onerror = function() { callback(); };
+                        cxhr.send(JSON.stringify({
+                            name: 'Speciality',
+                            description: 'Specialities assigned to provider for appointments and clinical linkage',
+                            minOccurs: 0,
+                            datatypeClassname: 'org.openmrs.customdatatype.datatype.FreeTextDatatype'
+                        }));
+                        return;
                     } catch(e) {}
                 }
                 callback();
             };
             xhr.onerror = function() { callback(); };
+            xhr.send();
+        }
+
+        // 1b. Load Specialities from Appointments Configuration
+        function loadSpecialities(callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/openmrs/ws/rest/v1/speciality/all');
+            xhr.withCredentials = true;
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        allSpecialities = (Array.isArray(data) ? data : (data.results || [])).map(function(s) {
+                            return s.name;
+                        }).filter(Boolean).sort();
+                        var filterEl = document.getElementById('specialityFilter');
+                        if (filterEl) {
+                            filterEl.innerHTML = '<option value="">All Specialities</option>';
+                            allSpecialities.forEach(function(name) {
+                                var opt = document.createElement('option');
+                                opt.value = name;
+                                opt.textContent = name;
+                                filterEl.appendChild(opt);
+                            });
+                        }
+                    } catch(e) {}
+                }
+                if (callback) callback();
+            };
+            xhr.onerror = function() { if (callback) callback(); };
             xhr.send();
         }
 
@@ -340,6 +455,14 @@
             });
         }
 
+        function getProviderSpecialityAttrs(p) {
+            var attrs = p.attributes || [];
+            return attrs.filter(function(a) {
+                var isSpecMatch = (a.attributeType && ((specialityAttrTypeUuid && a.attributeType.uuid === specialityAttrTypeUuid) || a.attributeType.display === 'Speciality'));
+                return isSpecMatch && !a.voided && a.value;
+            });
+        }
+
         function updateCounts() {
             var total = allProviders.length;
             var availCount = allProviders.filter(isProviderAvailable).length;
@@ -365,10 +488,16 @@
 
         function renderTable() {
             var q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+            var specFilter = (document.getElementById('specialityFilter') && document.getElementById('specialityFilter').value) || '';
             var filtered = allProviders.filter(function(p) {
                 var avail = isProviderAvailable(p);
                 if (activeTab === 'available' && !avail) return false;
                 if (activeTab === 'unavailable' && avail) return false;
+
+                if (specFilter) {
+                    var pSpecs = getProviderSpecialityAttrs(p).map(function(a) { return String(a.value); });
+                    if (pSpecs.indexOf(specFilter) === -1) return false;
+                }
 
                 if (q) {
                     var personDisplay = (p.person && p.person.display) || '';
@@ -396,6 +525,8 @@
                 var avail = isProviderAvailable(p);
                 var displayName = (p.person && p.person.display) || p.display || 'Provider';
                 var idText = p.identifier ? 'ID: ' + p.identifier : '';
+                var specAttrs = getProviderSpecialityAttrs(p);
+                var assignedNames = specAttrs.map(function(a) { return String(a.value); });
 
                 var tr = document.createElement('tr');
                 tr.id = 'row-' + p.uuid;
@@ -415,6 +546,54 @@
                     cellDiv.appendChild(idSpan);
                 }
                 tdName.appendChild(cellDiv);
+
+                // Specialities cell (multi-speciality assignment)
+                var tdSpec = document.createElement('td');
+                var specCell = document.createElement('div');
+                specCell.className = 'spec-cell';
+
+                var pillsDiv = document.createElement('div');
+                pillsDiv.className = 'spec-pills';
+                specAttrs.forEach(function(attr) {
+                    var pill = document.createElement('span');
+                    pill.className = 'spec-pill';
+                    pill.textContent = attr.value + ' ';
+                    var rmBtn = document.createElement('button');
+                    rmBtn.type = 'button';
+                    rmBtn.className = 'spec-pill-remove';
+                    rmBtn.title = 'Remove ' + attr.value;
+                    rmBtn.innerHTML = '&times;';
+                    rmBtn.onclick = function() { removeSpeciality(p, attr); };
+                    pill.appendChild(rmBtn);
+                    pillsDiv.appendChild(pill);
+                });
+                specCell.appendChild(pillsDiv);
+
+                var availableSpecs = allSpecialities.filter(function(s) {
+                    return assignedNames.indexOf(s) === -1;
+                });
+                if (allSpecialities.length > 0) {
+                    var sel = document.createElement('select');
+                    sel.className = 'spec-assign-select';
+                    var defOpt = document.createElement('option');
+                    defOpt.value = '';
+                    defOpt.textContent = availableSpecs.length > 0 ? '+ Assign Speciality...' : 'All specialities assigned';
+                    sel.appendChild(defOpt);
+                    sel.disabled = availableSpecs.length === 0;
+                    availableSpecs.forEach(function(s) {
+                        var opt = document.createElement('option');
+                        opt.value = s;
+                        opt.textContent = s;
+                        sel.appendChild(opt);
+                    });
+                    sel.onchange = function() {
+                        if (this.value) {
+                            assignSpeciality(p, this.value, this);
+                        }
+                    };
+                    specCell.appendChild(sel);
+                }
+                tdSpec.appendChild(specCell);
 
                 // Toggle cell
                 var tdToggle = document.createElement('td');
@@ -448,9 +627,72 @@
                 tdToggle.appendChild(toggleWrap);
 
                 tr.appendChild(tdName);
+                tr.appendChild(tdSpec);
                 tr.appendChild(tdToggle);
                 tbody.appendChild(tr);
             });
+        }
+
+        function assignSpeciality(provider, specName, selectEl) {
+            if (!specialityAttrTypeUuid) {
+                showToast('Speciality attribute type not ready.', 'error');
+                if (selectEl) selectEl.value = '';
+                return;
+            }
+            var displayName = (provider.person && provider.person.display) || provider.display || 'Provider';
+            if (selectEl) selectEl.disabled = true;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/openmrs/ws/rest/v1/provider/' + provider.uuid + '/attribute');
+            xhr.withCredentials = true;
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onload = function() {
+                if (xhr.status === 200 || xhr.status === 201) {
+                    try {
+                        var created = JSON.parse(xhr.responseText);
+                        if (!provider.attributes) provider.attributes = [];
+                        provider.attributes.push({
+                            uuid: created.uuid,
+                            attributeType: { uuid: specialityAttrTypeUuid, display: 'Speciality' },
+                            value: specName,
+                            voided: false
+                        });
+                    } catch(e) {}
+                    renderTable();
+                    showToast('Assigned "' + specName + '" to ' + displayName + '.', 'success');
+                } else {
+                    if (selectEl) { selectEl.disabled = false; selectEl.value = ''; }
+                    showToast('Failed to assign speciality: HTTP ' + xhr.status, 'error');
+                }
+            };
+            xhr.onerror = function() {
+                if (selectEl) { selectEl.disabled = false; selectEl.value = ''; }
+                showToast('Network error while assigning speciality.', 'error');
+            };
+            xhr.send(JSON.stringify({
+                attributeType: specialityAttrTypeUuid,
+                value: specName
+            }));
+        }
+
+        function removeSpeciality(provider, attr) {
+            var displayName = (provider.person && provider.person.display) || provider.display || 'Provider';
+            var xhr = new XMLHttpRequest();
+            xhr.open('DELETE', '/openmrs/ws/rest/v1/provider/' + provider.uuid + '/attribute/' + attr.uuid);
+            xhr.withCredentials = true;
+            xhr.onload = function() {
+                if (xhr.status === 200 || xhr.status === 204) {
+                    attr.voided = true;
+                    renderTable();
+                    showToast('Removed "' + attr.value + '" from ' + displayName + '.', 'info');
+                } else {
+                    showToast('Failed to remove speciality: HTTP ' + xhr.status, 'error');
+                }
+            };
+            xhr.onerror = function() {
+                showToast('Network error while removing speciality.', 'error');
+            };
+            xhr.send();
         }
 
         // 3. Handle Toggle ON/OFF
@@ -572,7 +814,9 @@
 
         // Start initialization
         initAttributeType(function() {
-            loadProviders();
+            loadSpecialities(function() {
+                loadProviders();
+            });
         });
     </script>
 </body>

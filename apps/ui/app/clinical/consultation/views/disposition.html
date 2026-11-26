@@ -366,8 +366,7 @@
                     'Suggested Speciality'|translate }}: </label>
                 <div ng-if="dispositionCode==='LINK'" style="margin-left: 5%;">
                     <select id="specialities" ng-model="specialty.value" ng-change="selectedProvider(specialty.value)"
-                        ng-options="speciality for speciality in specialities | orderBy:'name'"
-                        ng-disabled="!specialist && !resident">
+                        ng-options="speciality for speciality in specialities | orderBy:'toString()'">
                         <option value="">Select Specialty</option>
                     </select>
                 </div>
@@ -377,8 +376,7 @@
                     {{ 'Suggested Provider'|translate }}: </label>
                 <div style="margin-left: 30%;" ng-if="dispositionCode==='LINK'">
                     <div><select id="providers" ng-model="suggestedProvider.value"
-                            ng-options="provider.FullName for provider in currentDoctors | orderBy:'FullName'"
-                            ng-disabled="!specialist && !resident">
+                            ng-options="provider.FullName for provider in currentDoctors | orderBy:'FullName'">
                             <option value="">Select Provider</option>
                         </select></div>
                 </div>

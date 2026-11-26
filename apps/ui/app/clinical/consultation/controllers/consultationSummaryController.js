@@ -142,18 +142,62 @@ angular.module('bahmni.clinical')
             }
 
         }
+        $scope.specialities = [];
+        $scope.allDoctors = [];
+        $scope.filteredDoctors = [];
+        $scope.selectedLinkSpecialty = '';
+
+        $scope.filterDoctorsBySpeciality = function (specName) {
+            if (!specName) {
+                $scope.filteredDoctors = $scope.allDoctors;
+            } else {
+                $scope.filteredDoctors = ($scope.allDoctors || []).filter(function (doc) {
+                    return doc.specialities && doc.specialities.indexOf(specName) !== -1;
+                });
+            }
+        };
+
         $scope.provider = function () {
-            var params = { v: "custom:(display,person,uuid,retired,attributes:(attributeType:(display),value,voided))" };
-            providerService.searchAllDoctors(params).then(function (response) {
-                $scope.allDoctors = response.data;
+            $http.get('/openmrs/ws/rest/v1/speciality/all', { withCredentials: true }).then(function (resp) {
+                var list = Array.isArray(resp.data) ? resp.data : (resp.data && resp.data.results) || [];
+                $scope.specialities = list.map(function (s) { return s.name; }).filter(Boolean);
+            }).catch(function () {});
+
+            var params = { limit: 1000, v: "custom:(display,person:(uuid,display),uuid,retired,attributes:(attributeType:(display),value,voided))" };
+            return $http.get('/openmrs/ws/rest/v1/provider', { params: params, withCredentials: true }).then(function (response) {
+                var results = (response.data && response.data.results) || [];
+                $scope.allDoctors = results.filter(function (p) {
+                    if (p.retired) return false;
+                    var attrs = p.attributes || [];
+                    var isAvail = attrs.some(function (a) {
+                        return !a.voided && a.attributeType && a.attributeType.display === 'Available for appointments' && (a.value === true || a.value === 'true');
+                    });
+                    var hasSpec = attrs.some(function (a) {
+                        return !a.voided && a.attributeType && a.attributeType.display === 'Speciality' && a.value;
+                    });
+                    return isAvail || hasSpec;
+                }).map(function (p) {
+                    var attrs = p.attributes || [];
+                    var specs = attrs.filter(function (a) {
+                        return !a.voided && a.attributeType && a.attributeType.display === 'Speciality' && a.value;
+                    }).map(function (a) { return String(a.value); });
+                    return {
+                        uuid: p.uuid,
+                        user_id: p.uuid,
+                        FullName: (p.person && p.person.display) || p.display || 'Provider',
+                        specialities: specs
+                    };
+                });
+                $scope.filterDoctorsBySpeciality($scope.selectedLinkSpecialty);
             });
         };
+        $scope.provider();
 
         $scope.saveSuggestedProvider = function(provider) {
             var hostURL = Bahmni.Common.Constants.hostURL + Bahmni.Common.Constants.RESTWS_V1;
             const obsUrl = hostURL + '/obs';
         
-            if (provider) {
+            if (provider && provider.value) {
                 var nowUtc = new Date();
                 var formattedDate = nowUtc.getUTCFullYear() +
                     '-' + String(nowUtc.getUTCMonth() + 1).padStart(2, '0') +
@@ -168,14 +212,10 @@ angular.module('bahmni.clinical')
                     "concept": "27bf6f90-afad-4395-9589-9750e800a043",
                     "obsDatetime": formattedDate,
                     "voided": false,
-                    "value": provider.value.user_id
+                    "value": provider.value.user_id || provider.value.uuid
                 };
         
-                const url = new URL(window.location.href);
-                const hostname = url.hostname;
-                const endPoint = 'https://' + hostname + obsUrl;
-        
-                $http.post(endPoint, obsData)
+                $http.post(obsUrl, obsData, { withCredentials: true })
                     .then(function(response) {
                         messagingService.showMessage('info', 'patient is linkage completed successfully.'); 
                     })

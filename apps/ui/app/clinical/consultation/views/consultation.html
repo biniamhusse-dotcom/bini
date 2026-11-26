@@ -301,13 +301,23 @@
             </div>
     
         <!-- Provider Dropdown -->
-        <div ng-if="specifiedProvider" style="margin-top: 20px;">
-            <label for="providers" class="label" style="font-size: 16px; color: #333;">Suggested Provider:</label>
-            <select id="providers" ng-model="suggestedProvider.value"
-                ng-options="provider.FullName for provider in allDoctors | orderBy:'FullName'"
-                 class="form-control" style="width: 50%; padding: 10px; font-size: 14px;">
-                <option value="">Select Provider</option>
-            </select>
+        <div ng-if="specifiedProvider" style="margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div>
+                <label for="linkSpeciality" class="label" style="font-size: 16px; color: #333;">Suggested Speciality:</label>
+                <select id="linkSpeciality" ng-model="selectedLinkSpecialty" ng-change="filterDoctorsBySpeciality(selectedLinkSpecialty)"
+                    ng-options="spec for spec in specialities | orderBy:'toString()'"
+                    class="form-control" style="width: 50%; padding: 10px; font-size: 14px;">
+                    <option value="">All Specialities</option>
+                </select>
+            </div>
+            <div>
+                <label for="providers" class="label" style="font-size: 16px; color: #333;">Suggested Provider:</label>
+                <select id="providers" ng-model="suggestedProvider.value"
+                    ng-options="provider.FullName for provider in filteredDoctors | orderBy:'FullName'"
+                     class="form-control" style="width: 50%; padding: 10px; font-size: 14px;">
+                    <option value="">Select Provider</option>
+                </select>
+            </div>
         </div>
     
         <!-- Submit Button -->

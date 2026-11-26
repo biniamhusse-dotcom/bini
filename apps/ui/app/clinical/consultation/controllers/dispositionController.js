@@ -94,280 +94,84 @@ angular.module('bahmni.clinical')
         });
 
 
+        $scope.specialities = [];
+        $scope.allDoctors = [];
+        $scope.specialistProviders = [];
+        $scope.residentProviders = [];
+        $scope.currentDoctors = [];
+
         $scope.provider = function () {
-            var params = { v: "custom:(display,person,uuid,retired,attributes:(attributeType:(display),value,voided))" };
-            return providerService.searchAllDoctors(params).then(function (response) {
-                $scope.allDoctors = response.data;
+            var specPromise = $http.get('/openmrs/ws/rest/v1/speciality/all', { withCredentials: true }).then(function (resp) {
+                var list = Array.isArray(resp.data) ? resp.data : (resp.data && resp.data.results) || [];
+                var names = list.map(function (s) { return s.name; }).filter(Boolean);
+                if (names.length > 0) {
+                    $scope.specialities = names;
+                }
+            }).catch(function () {});
+
+            var params = { limit: 1000, v: "custom:(display,person:(uuid,display),uuid,retired,attributes:(attributeType:(display),value,voided))" };
+            var provPromise = $http.get('/openmrs/ws/rest/v1/provider', { params: params, withCredentials: true }).then(function (response) {
+                var results = (response.data && response.data.results) || [];
+                var configured = results.filter(function (p) {
+                    if (p.retired) return false;
+                    var attrs = p.attributes || [];
+                    var isAvail = attrs.some(function (a) {
+                        return !a.voided && a.attributeType && a.attributeType.display === 'Available for appointments' && (a.value === true || a.value === 'true');
+                    });
+                    var hasSpec = attrs.some(function (a) {
+                        return !a.voided && a.attributeType && a.attributeType.display === 'Speciality' && a.value;
+                    });
+                    return isAvail || hasSpec;
+                }).map(function (p) {
+                    var attrs = p.attributes || [];
+                    var specs = attrs.filter(function (a) {
+                        return !a.voided && a.attributeType && a.attributeType.display === 'Speciality' && a.value;
+                    }).map(function (a) { return String(a.value); });
+                    var pTypeAttr = attrs.find(function (a) {
+                        return !a.voided && a.attributeType && a.attributeType.display === 'practitioner_type' && a.value;
+                    });
+                    return {
+                        uuid: p.uuid,
+                        user_id: p.uuid,
+                        FullName: (p.person && p.person.display) || p.display || 'Provider',
+                        specialities: specs,
+                        practitionerType: pTypeAttr ? String(pTypeAttr.value) : ''
+                    };
+                });
+
+                $scope.allDoctors = configured;
+                $scope.specialistProviders = configured.filter(function (d) {
+                    return !d.practitionerType || d.practitionerType.toLowerCase().indexOf('specialist') !== -1;
+                });
+                $scope.residentProviders = configured.filter(function (d) {
+                    return !d.practitionerType || d.practitionerType.toLowerCase().indexOf('resident') !== -1;
+                });
                 $scope.currentDoctors = $scope.allDoctors;
                 if (typeof buildSeniorPhysiciansList === 'function') {
                     buildSeniorPhysiciansList();
                 }
-            }),
-                providerService.searchSpecialists(params).then(function (response) {
-                    $scope.specialistProviders = response.data;
-                }),
-                providerService.searchResidents(params).then(function (response) {
-                    $scope.residentProviders = response.data;
-                });
+            }).catch(function () {});
+
+            return Promise.all([specPromise, provPromise]);
         };
         await $scope.provider();
+
         $scope.selectedProvider = function (selectedSpecialty) {
             $scope.selectedSpecialty = selectedSpecialty;
-            $scope.doctors = [];
-            if (!$scope.selectedSpecialty && $scope.specialist == true) {
-                $scope.currentDoctors = $scope.specialistProviders;
+            var pool = $scope.allDoctors || [];
+            if ($scope.specialist === true) {
+                pool = $scope.specialistProviders;
+            } else if ($scope.resident === true) {
+                pool = $scope.residentProviders;
             }
-            else if (!$scope.selectedSpecialty && $scope.resident == true) {
-                $scope.currentDoctors = $scope.residentProviders;
+            if (selectedSpecialty) {
+                $scope.currentDoctors = pool.filter(function (doc) {
+                    return doc.specialities && doc.specialities.indexOf(selectedSpecialty) !== -1;
+                });
+            } else {
+                $scope.currentDoctors = pool;
             }
-            else if ($scope.selectedSpecialty && $scope.specialist == true) {
-                for (var i = 0; i < $scope.allDoctors.length; i++) {
-                    for (var j = 0; j < $scope.specialistProviders.length; j++) {
-                        if ($scope.allDoctors[i].role == "Radiology" && $scope.selectedSpecialty == "Radiology") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Dentistry" && $scope.selectedSpecialty == "Dentistry") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Anesthesiology" && $scope.selectedSpecialty == "Anesthesiology") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Dermatovenerology" && $scope.selectedSpecialty == "Dermatovenerology") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "EMCC" && $scope.selectedSpecialty == "EMCC") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "ENT" && $scope.selectedSpecialty == "ENT") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Internal Medicine" && $scope.selectedSpecialty == "Internal Medicine") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Neurology" && $scope.selectedSpecialty == "Neurology") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "OBGYN" && $scope.selectedSpecialty == "OBGYN") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Occupational Therapy" && $scope.selectedSpecialty == "Occupational Therapy") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "OMF Surgery" && $scope.selectedSpecialty == "OMF Surgery") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Ophthalmology" && $scope.selectedSpecialty == "Ophthalmology") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Optometry" && $scope.selectedSpecialty == "Optometry") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Orthopedic & Trauma" && $scope.selectedSpecialty == "Orthopedic & Trauma") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Pathology" && $scope.selectedSpecialty == "Pathology") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Pediatric" && $scope.selectedSpecialty == "Pediatric") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Physiotherapy" && $scope.selectedSpecialty == "Physiotherapy") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Psychiatric" && $scope.selectedSpecialty == "Psychiatric") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Surgery" && $scope.selectedSpecialty == "Surgery") {
-                            if ($scope.allDoctors[i].user_id == $scope.specialistProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                    }
-                }
-            }
-            else if ($scope.selectedSpecialty && $scope.resident == true) {
-                for (var i = 0; i < $scope.allDoctors.length; i++) {
-                    for (var j = 0; j < $scope.residentProviders.length; j++) {
-                        if ($scope.allDoctors[i].role == "Radiology" && $scope.selectedSpecialty == "Radiology") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Dentistry" && $scope.selectedSpecialty == "Dentistry") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Anesthesiology" && $scope.selectedSpecialty == "Anesthesiology") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Dermatovenerology" && $scope.selectedSpecialty == "Dermatovenerology") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "EMCC" && $scope.selectedSpecialty == "EMCC") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "ENT" && $scope.selectedSpecialty == "ENT") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Internal Medicine" && $scope.selectedSpecialty == "Internal Medicine") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Neurology" && $scope.selectedSpecialty == "Neurology") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "OBGYN" && $scope.selectedSpecialty == "OBGYN") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Occupational Therapy" && $scope.selectedSpecialty == "Occupational Therapy") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "OMF Surgery" && $scope.selectedSpecialty == "OMF Surgery") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Ophthalmology" && $scope.selectedSpecialty == "Ophthalmology") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Optometry" && $scope.selectedSpecialty == "Optometry") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Orthopedic & Trauma" && $scope.selectedSpecialty == "Orthopedic & Trauma") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Pathology" && $scope.selectedSpecialty == "Pathology") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Pediatric" && $scope.selectedSpecialty == "Pediatric") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Physiotherapy" && $scope.selectedSpecialty == "Physiotherapy") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Psychiatric" && $scope.selectedSpecialty == "Psychiatric") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                        else if ($scope.allDoctors[i].role == "Surgery" && $scope.selectedSpecialty == "Surgery") {
-                            if ($scope.allDoctors[i].user_id == $scope.residentProviders[j].user_id) {
-                                $scope.doctors.push($scope.allDoctors[i]);
-                                $scope.currentDoctors = $scope.doctors;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        var defaultSpecialities = [
-            "Anesthesiology", "Dentistry", "Dermatovenerology", "EMCC", "ENT",
-            "Internal Medicine", "Neurology", "OBGYN", "Occupational Therapy",
-            "OMF Surgery", "Ophthalmology", "Optometry", "Orthopedic & Trauma",
-            "Pathology", "Pediatric", "Physiotherapy", "Psychiatric", "Radiology", "Surgery"
-        ];
-        $scope.specialities = defaultSpecialities;
+        };
 
         var getReferalHospitalAndDurationUniteConcepts = function () {
             return dispositionService.getDurationUniteConcept().then(function (response) {
@@ -1545,7 +1349,7 @@ angular.module('bahmni.clinical')
                     }
                     if ($scope.suggestedProvider.value) {
                         disposition.suggestedProviderObs = [_.clone($scope.suggestedProvider)];
-                        disposition.suggestedProviderObs[0].value = disposition.suggestedProviderObs[0].value.user_id.toString();
+                        disposition.suggestedProviderObs[0].value = ($scope.suggestedProvider.value.user_id || $scope.suggestedProvider.value.uuid || '').toString();
                     }
                     if ($scope.signature.value || $scope.signature.uuid) {
                         disposition.signatureObs = [_.clone($scope.signature)];
