@@ -4875,6 +4875,10 @@ def start_odoo_sync_watchdog():
         try:
             check_and_heal_odoo_encounter_marker()
             heal_odoo_missing_patient_events(None)
+            # Auto-replay any recoverable failed_events (missing patient, null visitType, or deleted encounter)
+            failed_cnt = int(_run_odoo_psql("SELECT count(*) FROM failed_events;").strip() or "0")
+            if failed_cnt > 0:
+                retry_odoo_failed_events({"id": "all"})
         except Exception as e:
             log(f"[OdooWatchdog] Check warning: {e}")
         time.sleep(120)
@@ -5147,6 +5151,13 @@ def _replay_failed_encounter_to_odoo(eid, event_id, content, base_url, opener):
     enc_uuid = m.group(1)
     enc = _fetch_openmrs_encounter(enc_uuid)
     if not enc:
+        # Check if encounter was deleted or voided in OpenMRS (or has no active orders)
+        exists_active = _run_openmrs_mysql(
+            f"SELECT COUNT(*) FROM encounter e JOIN orders o ON e.encounter_id = o.encounter_id "
+            f"WHERE e.uuid = '{enc_uuid}' AND e.voided = 0 AND o.voided = 0;"
+        ).strip()
+        if exists_active == "0":
+            return True, f"Encounter {enc_uuid} has no active orders or was deleted/voided in OpenMRS; cleared."
         return False, f"Could not fetch encounter {enc_uuid} from OpenMRS"
 
     pt_uuid = enc.get("patientUuid")
@@ -5218,21 +5229,29 @@ def _replay_failed_encounter_to_odoo(eid, event_id, content, base_url, opener):
         # No billable orders in encounter -> safe to clear from failed_events
         return True, "No active orders in encounter"
 
-    # Resolve customer_id preserving leading zeros (e.g. "098035")
-    cust_id = str(pt_id) if pt_id is not None else pt_uuid
+    # Resolve customer_id (numeric ref or uuid)
+    cust_id = pt_id
+    try:
+        if pt_id and str(pt_id).isdigit():
+            cust_id = int(pt_id)
+    except Exception:
+        pass
 
     payload = {
-        "last_read_entry_id": event_id or f"tag:atomfeed.ict4h.org:{enc_uuid}",
-        "feed_uri_for_last_read_entry": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent",
-        "locationName": loc_name,
-        "orders": {
-            "id": enc_uuid,
-            "openERPOrders": all_orders
-        },
-        "category": "create.sale.order",
-        "customer_id": cust_id,
-        "encounter_id": enc_uuid,
-        "feed_uri": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent"
+        "jsonrpc": "2.0",
+        "params": {
+            "last_read_entry_id": event_id or f"tag:atomfeed.ict4h.org:{enc_uuid}",
+            "feed_uri_for_last_read_entry": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent",
+            "locationName": loc_name,
+            "orders": {
+                "id": enc_uuid,
+                "openERPOrders": all_orders
+            },
+            "category": "create.sale.order",
+            "customer_id": cust_id,
+            "encounter_id": enc_uuid,
+            "feed_uri": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent"
+        }
     }
 
     req = urllib.request.Request(
