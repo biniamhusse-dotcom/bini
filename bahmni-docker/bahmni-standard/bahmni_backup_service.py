@@ -5229,29 +5229,21 @@ def _replay_failed_encounter_to_odoo(eid, event_id, content, base_url, opener):
         # No billable orders in encounter -> safe to clear from failed_events
         return True, "No active orders in encounter"
 
-    # Resolve customer_id (numeric ref or uuid)
-    cust_id = pt_id
-    try:
-        if pt_id and str(pt_id).isdigit():
-            cust_id = int(pt_id)
-    except Exception:
-        pass
+    # Resolve customer_id preserving leading zeros (e.g. "098035")
+    cust_id = str(pt_id) if pt_id is not None else pt_uuid
 
     payload = {
-        "jsonrpc": "2.0",
-        "params": {
-            "last_read_entry_id": event_id or f"tag:atomfeed.ict4h.org:{enc_uuid}",
-            "feed_uri_for_last_read_entry": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent",
-            "locationName": loc_name,
-            "orders": {
-                "id": enc_uuid,
-                "openERPOrders": all_orders
-            },
-            "category": "create.sale.order",
-            "customer_id": cust_id,
-            "encounter_id": enc_uuid,
-            "feed_uri": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent"
-        }
+        "last_read_entry_id": event_id or f"tag:atomfeed.ict4h.org:{enc_uuid}",
+        "feed_uri_for_last_read_entry": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent",
+        "locationName": loc_name,
+        "orders": {
+            "id": enc_uuid,
+            "openERPOrders": all_orders
+        },
+        "category": "create.sale.order",
+        "customer_id": cust_id,
+        "encounter_id": enc_uuid,
+        "feed_uri": "http://openmrs:8080/openmrs/ws/atomfeed/encounter/recent"
     }
 
     req = urllib.request.Request(
