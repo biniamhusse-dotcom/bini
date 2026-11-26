@@ -189,11 +189,19 @@
 
   <!-- TAB 3: FAILED SYNC QUEUE -->
   <div ng-if="activeTab==='failed'">
-    <div style="background: white; padding: 14px 18px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="background: white; padding: 14px 18px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <div style="font-size: 13px; color: #475569;">Showing latest <strong>{{ failedEvents.length }}</strong> of {{ stats.totalFailedEvents }} failed OpenELIS atomfeed events.</div>
-      <button type="button" class="btn btn-primary" ng-click="retryFailedEvent('all_recent')" ng-disabled="saving" style="background: #2563eb; border-color: #1d4ed8; color: white; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;">
-        <i class="fa fa-repeat"></i> Retry All Last 7 Days
-      </button>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary" ng-click="retryFailedEvent('all_recent')" ng-disabled="saving || failedEvents.length === 0" style="background: #2563eb; border-color: #1d4ed8; color: white; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;">
+          <i class="fa fa-repeat"></i> Retry &amp; Clean Queue
+        </button>
+        <button type="button" class="btn btn-default" ng-click="deleteFailedEvent('all_metadata')" ng-disabled="saving || failedEvents.length === 0" style="color: #b45309; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;">
+          <i class="fa fa-eraser"></i> Clear Obsolete Lab Metadata
+        </button>
+        <button type="button" class="btn btn-default" ng-click="deleteFailedEvent('all')" ng-disabled="saving || failedEvents.length === 0" style="color: #dc2626; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;">
+          <i class="fa fa-trash"></i> Clear All
+        </button>
+      </div>
     </div>
 
     <div style="background: white; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden;">
@@ -205,7 +213,7 @@
             <th style="padding: 12px 14px; width: 160px;">Failed At (UTC)</th>
             <th style="padding: 12px 14px; width: 70px;">Retries</th>
             <th style="padding: 12px 14px;">Error Reason</th>
-            <th style="padding: 12px 14px; width: 100px; text-align: right;">Action</th>
+            <th style="padding: 12px 14px; width: 150px; text-align: right;">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -219,10 +227,16 @@
             <td style="padding: 10px 14px; font-size: 12px; font-weight: 600;">{{ e.retries }}</td>
             <td style="padding: 10px 14px; font-size: 12px; color: #991b1b; word-break: break-word;">{{ e.reason }}</td>
             <td style="padding: 10px 14px; text-align: right;">
-              <button type="button" class="btn btn-sm btn-default" ng-click="retryFailedEvent(e.id)" ng-disabled="saving" style="border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: 600;">
+              <button type="button" class="btn btn-sm btn-default" ng-click="retryFailedEvent(e.id)" ng-disabled="saving" style="border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: 600; margin-right: 4px;">
                 <i class="fa fa-repeat"></i> Retry
               </button>
+              <button type="button" class="btn btn-sm btn-default" ng-click="deleteFailedEvent(e.id)" ng-disabled="saving" style="border-radius: 4px; padding: 4px 8px; font-size: 12px; color: #dc2626;">
+                <i class="fa fa-trash"></i>
+              </button>
             </td>
+          </tr>
+          <tr ng-if="failedEvents.length === 0">
+            <td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No failed events in OpenELIS queue.</td>
           </tr>
         </tbody>
       </table>

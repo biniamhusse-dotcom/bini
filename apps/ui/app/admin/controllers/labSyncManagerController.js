@@ -158,12 +158,27 @@ angular.module('admin')
                 $http.post(API_BASE + '/lab-mapping/retry-failed', { id: idOrAll }).then(function (res) {
                     $scope.saving = false;
                     applyOverview(res.data);
-                    showSaved(idOrAll === 'all_recent'
-                        ? 'Re-queued all recent failed sync events for OpenELIS processing.'
+                    showSaved(idOrAll === 'all' || idOrAll === 'all_recent'
+                        ? 'Cleaned obsolete metadata events and re-queued remaining failed sync events for OpenELIS.'
                         : 'Re-queued failed event #' + idOrAll + ' for OpenELIS processing.');
                 }, function (err) {
                     $scope.saving = false;
                     showError('Retry failed: ' + ((err.data && err.data.error) || err.statusText || 'Server error'));
+                });
+            };
+
+            $scope.deleteFailedEvent = function (idOrAll) {
+                if ((idOrAll === 'all' || idOrAll === 'all_metadata') && !confirm('Remove selected failed events from OpenELIS queue?')) {
+                    return;
+                }
+                $scope.saving = true;
+                $http.post(API_BASE + '/lab-mapping/delete-failed', { id: idOrAll }).then(function (res) {
+                    $scope.saving = false;
+                    applyOverview(res.data);
+                    showSaved('Cleared failed event(s) from OpenELIS queue.');
+                }, function (err) {
+                    $scope.saving = false;
+                    showError('Delete failed: ' + ((err.data && err.data.error) || err.statusText || 'Server error'));
                 });
             };
 

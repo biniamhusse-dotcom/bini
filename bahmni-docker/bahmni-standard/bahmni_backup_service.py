@@ -4762,13 +4762,51 @@ def sync_panel_members_from_openmrs(payload):
 
 def retry_openelis_failed_events(payload):
     event_id = payload.get("id")
-    if event_id == "all_recent":
-        _run_openelis_psql("UPDATE failed_events SET retries = 0 WHERE failed_at > NOW() - INTERVAL '7 days';")
+    # First ensure all active tests have sampletype_test mappings so Encounter retries don't NPE
+    auto_fix_all_lab_mappings()
+
+    # Clear Patient failed events where the patient already exists in OpenELIS clinlims.patient
+    _run_openelis_psql("""
+        DELETE FROM failed_events
+        WHERE title = 'Patient'
+          AND substring(event_content from '/patient/([a-zA-Z0-9-]+)') IN (
+              SELECT external_id FROM patient WHERE external_id IS NOT NULL
+          );
+    """)
+
+    if event_id in ("all", "all_recent"):
+        # Clear obsolete lab metadata sync errors (all-samples, sample, department, panel, test)
+        _run_openelis_psql("""
+            DELETE FROM failed_events
+            WHERE feed_uri LIKE '%/lab/%'
+               OR title IN ('all-samples', 'sample', 'department', 'panel', 'test');
+        """)
+        if event_id == "all_recent":
+            _run_openelis_psql("UPDATE failed_events SET retries = 0 WHERE failed_at > NOW() - INTERVAL '7 days';")
+        else:
+            _run_openelis_psql("UPDATE failed_events SET retries = 0;")
     elif event_id is not None:
         eid = int(event_id)
         _run_openelis_psql(f"UPDATE failed_events SET retries = 0 WHERE id = {eid};")
     else:
-        raise ValueError("Missing event id or 'all_recent'.")
+        raise ValueError("Missing event id, 'all_recent', or 'all'.")
+    return load_lab_mapping_overview()
+
+
+def delete_openelis_failed_events(payload):
+    event_id = payload.get("id")
+    if event_id == "all":
+        _run_openelis_psql("DELETE FROM failed_events;")
+    elif event_id == "all_metadata":
+        _run_openelis_psql("""
+            DELETE FROM failed_events
+            WHERE feed_uri LIKE '%/lab/%'
+               OR title IN ('all-samples', 'sample', 'department', 'panel', 'test');
+        """)
+    elif event_id is not None:
+        _run_openelis_psql(f"DELETE FROM failed_events WHERE id = {int(event_id)};")
+    else:
+        raise ValueError("Missing event id, 'all_metadata', or 'all'.")
     return load_lab_mapping_overview()
 
 
@@ -5895,6 +5933,14 @@ class BackupAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True, "result": result})
             except Exception as e:
                 log(f"Error retrying failed events: {e}")
+                self._send_json(500, {"success": False, "error": str(e)})
+
+        elif path in ("/api/lab-mapping/delete-failed", "/lab-mapping/delete-failed"):
+            try:
+                result = delete_openelis_failed_events(payload)
+                self._send_json(200, {"success": True, "result": result})
+            except Exception as e:
+                log(f"Error deleting OpenELIS failed events: {e}")
                 self._send_json(500, {"success": False, "error": str(e)})
 
         elif path in ("/api/odoo-sync/heal-markers", "/odoo-sync/heal-markers"):
