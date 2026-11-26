@@ -1617,9 +1617,113 @@ angular.module('bahmni.clinical')
             });
         };
 
+        // --- Leaving Against Medical Advice and Service (LEAVING_AGAINST) ---
+        $scope.lamaSaving = false;
+        $scope.lamaSaved = false;
+        $scope.lamaSaveMsg = '';
+        $scope.lamaSaveErr = '';
+        $scope.lamaForm = {
+            reason: '',
+            risksExplained: 'Yes',
+            witnessName: '',
+            signedBy: '',
+            notes: '',
+            images: [],
+            videos: []
+        };
+
+        $scope.onLamaFilesSelected = function (fileList, mediaType) {
+            if (!fileList || !fileList.length) return;
+            Array.prototype.forEach.call(fileList, function (file) {
+                var reader = new FileReader();
+                reader.onload = function (ev) {
+                    $scope.$applyAsync(function () {
+                        var entry = {
+                            name: file.name,
+                            dataUrl: ev.target.result,
+                            previewUrl: URL.createObjectURL(file)
+                        };
+                        if (mediaType === 'video') {
+                            $scope.lamaForm.videos.push(entry);
+                        } else {
+                            $scope.lamaForm.images.push(entry);
+                        }
+                        $scope.lamaSaved = false;
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        $scope.removeLamaMedia = function (mediaType, idx) {
+            if (mediaType === 'video') {
+                $scope.lamaForm.videos.splice(idx, 1);
+            } else {
+                $scope.lamaForm.images.splice(idx, 1);
+            }
+            $scope.lamaSaved = false;
+        };
+
+        var uploadSingleLamaMedia = function (item, mediaType, patientUuid) {
+            var dataUrl = item.dataUrl || '';
+            var searchStr = ';base64,';
+            var b64Idx = dataUrl.indexOf(searchStr);
+            var b64Content = b64Idx >= 0 ? dataUrl.substring(b64Idx + searchStr.length) : dataUrl;
+            var format = (item.name && item.name.indexOf('.') >= 0) ? item.name.split('.').pop() : (mediaType === 'video' ? 'mp4' : 'png');
+            var baseName = (item.name && item.name.lastIndexOf('.') > 0) ? item.name.substring(0, item.name.lastIndexOf('.')) : (mediaType === 'video' ? 'lama_video' : 'lama_image');
+            return $http.post('/openmrs/ws/rest/v1/bahmnicore/visitDocument/uploadDocument', {
+                content: b64Content,
+                format: format,
+                patientUuid: patientUuid,
+                encounterTypeName: 'Consultation',
+                fileType: mediaType,
+                fileName: baseName
+            }, { withCredentials: true });
+        };
+
+        $scope.saveLamaForm = function () {
+            $scope.lamaSaveMsg = '';
+            $scope.lamaSaveErr = '';
+            var ptUuid = $scope.patientUuid || ($scope.patient && $scope.patient.uuid);
+            var allMedia = [];
+            ($scope.lamaForm.images || []).forEach(function (img) { allMedia.push({ item: img, type: 'image' }); });
+            ($scope.lamaForm.videos || []).forEach(function (vid) { allMedia.push({ item: vid, type: 'video' }); });
+
+            $scope.lamaSaving = true;
+            var uploads = allMedia.map(function (m) {
+                return uploadSingleLamaMedia(m.item, m.type, ptUuid).then(function (resp) {
+                    return m.type + ': ' + ((resp.data && resp.data.url) || m.item.name);
+                });
+            });
+
+            return $q.all(uploads).then(function (uploadedUrls) {
+                var summaryParts = [];
+                if ($scope.lamaForm.reason) summaryParts.push('Reason: ' + $scope.lamaForm.reason);
+                if ($scope.lamaForm.risksExplained) summaryParts.push('Risks Explained: ' + $scope.lamaForm.risksExplained);
+                if ($scope.lamaForm.witnessName) summaryParts.push('Witness: ' + $scope.lamaForm.witnessName);
+                if ($scope.lamaForm.signedBy) summaryParts.push('Signed By: ' + $scope.lamaForm.signedBy);
+                if ($scope.lamaForm.notes) summaryParts.push('Details: ' + $scope.lamaForm.notes);
+                if (uploadedUrls.length > 0) summaryParts.push('Uploaded Media: ' + uploadedUrls.join(', '));
+                if (summaryParts.length > 0 && $scope.dispositionNote) {
+                    $scope.dispositionNote.value = summaryParts.join(' | ');
+                }
+                $scope.lamaSaving = false;
+                $scope.lamaSaved = true;
+                $scope.lamaSaveMsg = uploadedUrls.length > 0
+                    ? ('Saved LAMA details and uploaded ' + uploadedUrls.length + ' file(s)!')
+                    : 'LAMA details saved to Disposition Notes!';
+            }).catch(function (err) {
+                $scope.lamaSaving = false;
+                $scope.lamaSaveErr = (err && err.data && err.data.error && err.data.error.message) || 'Failed to upload media. Please check file size/format.';
+            });
+        };
+
         var saveDispositions = function () {
             if ($scope.dispositionCode === 'APPOINTMENT' && !$scope.apptSaved && $scope.apptForm && $scope.apptForm.service) {
                 $scope.saveDispositionAppointment();
+            }
+            if ($scope.dispositionCode === 'LEAVING_AGAINST' && !$scope.lamaSaved) {
+                $scope.saveLamaForm();
             }
             var selectedDisposition = getSelectedDisposition();
             if (selectedDisposition) {

@@ -27,6 +27,153 @@
 .refer-radio-inline { display: flex; gap: 12px; align-items: center; }
 .refer-radio-inline label { font-size: 12px; font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 3px; }
 @media (max-width: 768px) { .refer-form-row { flex-direction: column; } .refer-form-field { min-width: 100%; } .refer-input-sm { max-width: 100%; } }
+/* Responsive Disposition Cards (Give Appointment & LAMA) */
+.disposition-wrapper .disposition-tab .disp-card {
+    clear: both !important;
+    display: block !important;
+    margin: 14px 0 18px 0 !important;
+    border: 1px solid #d5e0df !important;
+    border-radius: 8px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+    overflow: visible !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+.disposition-wrapper .disposition-tab .disp-card-header {
+    background: #00796B !important;
+    color: #fff !important;
+    padding: 11px 16px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    border-radius: 7px 7px 0 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+}
+.disposition-wrapper .disposition-tab .disp-card-body {
+    padding: 16px !important;
+}
+.disposition-wrapper .disposition-tab .disp-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    gap: 14px 16px !important;
+    margin-bottom: 14px !important;
+}
+.disposition-wrapper .disposition-tab .disp-field {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+}
+.disposition-wrapper .disposition-tab .disp-card label {
+    float: none !important;
+    display: block !important;
+    width: auto !important;
+    margin: 0 0 6px 0 !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #2c3e50 !important;
+    font-family: inherit !important;
+    text-align: left !important;
+}
+.disposition-wrapper .disposition-tab .disp-card select,
+.disposition-wrapper .disposition-tab .disp-card input[type="text"],
+.disposition-wrapper .disposition-tab .disp-card input[type="file"] {
+    float: none !important;
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    line-height: 1.4 !important;
+    padding: 6px 10px !important;
+    margin: 0 !important;
+    border: 1px solid #cfd8dc !important;
+    border-radius: 5px !important;
+    font-size: 13px !important;
+    color: #263238 !important;
+    background-color: #fff !important;
+    box-sizing: border-box !important;
+}
+.disposition-wrapper .disposition-tab .disp-card textarea {
+    float: none !important;
+    width: 100% !important;
+    padding: 8px 10px !important;
+    margin: 0 !important;
+    border: 1px solid #cfd8dc !important;
+    border-radius: 5px !important;
+    font-size: 13px !important;
+    box-sizing: border-box !important;
+    min-height: 64px !important;
+}
+.disposition-wrapper .disposition-tab .disp-time-group {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+}
+.disposition-wrapper .disposition-tab .disp-time-group input[type="text"] {
+    flex: 1 1 auto !important;
+    min-width: 75px !important;
+}
+.disposition-wrapper .disposition-tab .disp-time-group select {
+    width: 78px !important;
+    flex: 0 0 78px !important;
+}
+.disposition-wrapper .disposition-tab .disp-radio-row {
+    display: flex !important;
+    gap: 16px !important;
+    align-items: center !important;
+    min-height: 38px !important;
+}
+.disposition-wrapper .disposition-tab .disp-radio-row label {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+}
+.disposition-wrapper .disposition-tab .disp-media-preview {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 8px !important;
+}
+.disposition-wrapper .disposition-tab .disp-media-item {
+    position: relative !important;
+    border: 1px solid #cfd8dc !important;
+    border-radius: 6px !important;
+    padding: 4px !important;
+    background: #fafafa !important;
+    max-width: 180px !important;
+}
+.disposition-wrapper .disposition-tab .disp-media-item img {
+    max-width: 160px !important;
+    max-height: 110px !important;
+    display: block !important;
+    border-radius: 4px !important;
+}
+.disposition-wrapper .disposition-tab .disp-media-item video {
+    max-width: 170px !important;
+    max-height: 120px !important;
+    display: block !important;
+    border-radius: 4px !important;
+}
+.disposition-wrapper .disposition-tab .disp-media-rm {
+    position: absolute !important;
+    top: -6px !important;
+    right: -6px !important;
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    background: #c0392b !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+}
 </style>
 <div class="disposition-wrapper">
     <div class="infoMsgRetrospectiveModeEnabled" ng-if="isRetrospectiveMode()">
@@ -302,10 +449,86 @@
                 </select>
             </div>
 
-            <div style="margin-left: 30%;" ng-if="dispositionCode==='LEAVING_AGAINST'">
-                <a id="clinicalHomeBackLink" ng-href="../clinical/index.html#/default/patient/{{patient.uuid}}/dashboard/fingerprint?currentTab"
-                   title="Go to Fingerprint or Video upload page"><button ng-click="saveAndContinue();">Add Fingerprint or Video</button> 
-                </a>
+            <div ng-if="dispositionCode==='LEAVING_AGAINST'" class="disp-card">
+                <div class="disp-card-header" style="background: #8e2424 !important;">
+                    <span><i class="fa fa-exclamation-triangle"></i> LEAVING AGAINST MEDICAL ADVICE AND SERVICE</span>
+                    <a id="clinicalHomeBackLink" ng-href="../clinical/index.html#/default/patient/{{patient.uuid}}/dashboard/fingerprint?currentTab"
+                       title="Go to Fingerprint or Video upload page" style="color:#fff; font-size:12px; text-decoration:underline; font-weight:500;">
+                        Open Fingerprint / Video Tab
+                    </a>
+                </div>
+                <div class="disp-card-body">
+                    <div class="disp-grid">
+                        <div class="disp-field">
+                            <label for="lamaReason">Reason for Leaving <span style="color:#c0392b;">*</span></label>
+                            <select id="lamaReason" ng-model="lamaForm.reason">
+                                <option value="">Select Reason</option>
+                                <option value="Refused Treatment">Refused Treatment</option>
+                                <option value="Financial Reasons">Financial Reasons</option>
+                                <option value="Seeking Care Elsewhere">Seeking Care Elsewhere</option>
+                                <option value="Cultural / Personal Reasons">Cultural / Personal Reasons</option>
+                                <option value="Dissatisfied with Care">Dissatisfied with Care</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="disp-field">
+                            <label>Risks Explained to Patient / Family?</label>
+                            <div class="disp-radio-row">
+                                <label><input type="radio" name="lamaRisksExplained" ng-model="lamaForm.risksExplained" value="Yes" /> Yes</label>
+                                <label><input type="radio" name="lamaRisksExplained" ng-model="lamaForm.risksExplained" value="No" /> No</label>
+                            </div>
+                        </div>
+                        <div class="disp-field">
+                            <label for="lamaWitness">Witness Name</label>
+                            <input type="text" id="lamaWitness" ng-model="lamaForm.witnessName" placeholder="Enter witness full name" />
+                        </div>
+                        <div class="disp-field">
+                            <label for="lamaGuardian">Patient / Guardian Acknowledgement</label>
+                            <input type="text" id="lamaGuardian" ng-model="lamaForm.signedBy" placeholder="Name of patient or guardian signing" />
+                        </div>
+                    </div>
+
+                    <div class="disp-grid">
+                        <div class="disp-field">
+                            <label for="lamaImageInput"><i class="fa fa-image"></i> Upload Image (Signed Form / Photo)</label>
+                            <input type="file" id="lamaImageInput" accept="image/*" multiple
+                                   onchange="angular.element(this).scope().onLamaFilesSelected(this.files, 'image'); this.value='';" />
+                            <div class="disp-media-preview" ng-if="lamaForm.images.length > 0">
+                                <div class="disp-media-item" ng-repeat="img in lamaForm.images track by $index">
+                                    <button type="button" class="disp-media-rm" ng-click="removeLamaMedia('image', $index)" title="Remove">&times;</button>
+                                    <img ng-src="{{img.dataUrl}}" alt="{{img.name}}" />
+                                    <div style="font-size:11px; color:#555; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{img.name}}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="disp-field">
+                            <label for="lamaVideoInput"><i class="fa fa-video-camera"></i> Upload Video (Consent / Statement)</label>
+                            <input type="file" id="lamaVideoInput" accept="video/*" multiple
+                                   onchange="angular.element(this).scope().onLamaFilesSelected(this.files, 'video'); this.value='';" />
+                            <div class="disp-media-preview" ng-if="lamaForm.videos.length > 0">
+                                <div class="disp-media-item" ng-repeat="vid in lamaForm.videos track by $index">
+                                    <button type="button" class="disp-media-rm" ng-click="removeLamaMedia('video', $index)" title="Remove">&times;</button>
+                                    <video controls ng-src="{{vid.previewUrl}}"></video>
+                                    <div style="font-size:11px; color:#555; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{vid.name}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="disp-field" style="margin-bottom: 12px;">
+                        <label for="lamaNotes">Additional LAMA Details</label>
+                        <textarea id="lamaNotes" ng-model="lamaForm.notes" rows="2" placeholder="Enter any additional details regarding leaving against medical advice..."></textarea>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <button type="button" id="lamaSaveBtn" ng-click="saveLamaForm()" ng-disabled="lamaSaving"
+                            style="background:#8e2424; color:#fff; border:none; padding:9px 18px; border-radius:5px; font-weight:600; cursor:pointer;">
+                            {{ lamaSaving ? 'Uploading & Saving...' : 'Upload Media & Save LAMA' }}
+                        </button>
+                        <span ng-if="lamaSaveMsg" style="color:#27ae60; font-weight:600; font-size:13px;">{{lamaSaveMsg}}</span>
+                        <span ng-if="lamaSaveErr" style="color:#c0392b; font-weight:600; font-size:13px;">{{lamaSaveErr}}</span>
+                    </div>
+                </div>
             </div>
             <label ng-show="dispositionCode==='LINK'" style="margin-left: 6%;" class="label">{{ 'To'|translate }}:
             </label>
@@ -382,78 +605,74 @@
                 </div>
             </div>
 
-            <div ng-if="dispositionCode==='APPOINTMENT'" class="refer-form-container" style="margin-top: 15px;">
-                <div class="refer-form-header" style="background: #00796B;">
-                    <i class="fa fa-calendar-plus-o"></i> NEW APPOINTMENT
+            <div ng-if="dispositionCode==='APPOINTMENT'" class="disp-card">
+                <div class="disp-card-header">
+                    <span><i class="fa fa-calendar-plus-o"></i> NEW APPOINTMENT</span>
                 </div>
-                <div class="refer-form-section">
-                    <div class="refer-form-row">
-                        <div class="refer-form-field">
-                            <label class="refer-label">Speciality</label>
+                <div class="disp-card-body">
+                    <div class="disp-grid">
+                        <div class="disp-field">
+                            <label for="dispApptSpeciality">Speciality</label>
                             <select id="dispApptSpeciality" ng-model="apptForm.speciality" ng-change="onApptSpecialityChange()"
-                                ng-options="s for s in specialities | orderBy:'toString()'" class="refer-input">
+                                ng-options="s for s in specialities | orderBy:'toString()'">
                                 <option value="">All Specialities</option>
                             </select>
                         </div>
-                        <div class="refer-form-field">
-                            <label class="refer-label">Service <span style="color:#c0392b;">*</span></label>
+                        <div class="disp-field">
+                            <label for="dispApptService">Service <span style="color:#c0392b;">*</span></label>
                             <select id="dispApptService" ng-model="apptForm.service" ng-change="onApptServiceChange()"
-                                ng-options="svc as svc.name for svc in apptFilteredServices | orderBy:'name'" class="refer-input">
+                                ng-options="svc as svc.name for svc in apptFilteredServices | orderBy:'name'">
                                 <option value="">Select Service</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="refer-form-row" style="margin-top: 8px;">
-                        <div class="refer-form-field">
-                            <label class="refer-label">Provider</label>
+                        <div class="disp-field">
+                            <label for="dispApptProvider">Provider</label>
                             <select id="dispApptProvider" ng-model="apptForm.provider"
-                                ng-options="doc as doc.FullName for doc in apptFilteredProviders | orderBy:'FullName'" class="refer-input">
+                                ng-options="doc as doc.FullName for doc in apptFilteredProviders | orderBy:'FullName'">
                                 <option value="">Select Provider</option>
                             </select>
                         </div>
-                        <div class="refer-form-field">
-                            <label class="refer-label">Location</label>
+                        <div class="disp-field">
+                            <label for="dispApptLocation">Location</label>
                             <select id="dispApptLocation" ng-model="apptForm.location"
-                                ng-options="loc as loc.display for loc in apptLocations | orderBy:'display'" class="refer-input">
+                                ng-options="loc as loc.display for loc in apptLocations | orderBy:'display'">
                                 <option value="">Select Location</option>
                             </select>
                         </div>
                     </div>
-                    <div class="refer-form-row" style="margin-top: 8px;">
-                        <div class="refer-form-field">
-                            <label class="refer-label">Appointment Date (Ethiopian) <span style="color:#c0392b;">*</span></label>
-                            <input type="text" id="dispApptDate" ng-model="apptForm.ethDateStr" class="refer-input" placeholder="DD/MM/YYYY" autocomplete="off" readonly style="cursor:pointer; background:#fff;" />
+                    <div class="disp-grid">
+                        <div class="disp-field">
+                            <label for="dispApptDate">Appointment Date (Ethiopian) <span style="color:#c0392b;">*</span></label>
+                            <input type="text" id="dispApptDate" ng-model="apptForm.ethDateStr" placeholder="DD/MM/YYYY" autocomplete="off" readonly style="cursor:pointer;" />
                         </div>
-                        <div class="refer-form-field">
-                            <label class="refer-label">Start Time <span style="color:#c0392b;">*</span></label>
-                            <div style="display:flex; gap:6px;">
-                                <input type="text" id="dispApptStartTime" ng-model="apptForm.startTime" ng-change="onApptStartTimeChange()" class="refer-input" placeholder="hh:mm" maxlength="5" style="flex:1;" />
-                                <select id="dispApptStartAmPm" ng-model="apptForm.startAmPm" ng-change="onApptStartTimeChange()" class="refer-input" style="width:72px;">
+                        <div class="disp-field">
+                            <label for="dispApptStartTime">Start Time <span style="color:#c0392b;">*</span></label>
+                            <div class="disp-time-group">
+                                <input type="text" id="dispApptStartTime" ng-model="apptForm.startTime" ng-change="onApptStartTimeChange()" placeholder="hh:mm" maxlength="5" />
+                                <select id="dispApptStartAmPm" ng-model="apptForm.startAmPm" ng-change="onApptStartTimeChange()">
                                     <option value="AM">AM</option>
                                     <option value="PM">PM</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="refer-form-field">
-                            <label class="refer-label">End Time <span style="color:#c0392b;">*</span></label>
-                            <div style="display:flex; gap:6px;">
-                                <input type="text" id="dispApptEndTime" ng-model="apptForm.endTime" class="refer-input" placeholder="hh:mm" maxlength="5" style="flex:1;" />
-                                <select id="dispApptEndAmPm" ng-model="apptForm.endAmPm" class="refer-input" style="width:72px;">
+                        <div class="disp-field">
+                            <label for="dispApptEndTime">End Time <span style="color:#c0392b;">*</span></label>
+                            <div class="disp-time-group">
+                                <input type="text" id="dispApptEndTime" ng-model="apptForm.endTime" placeholder="hh:mm" maxlength="5" />
+                                <select id="dispApptEndAmPm" ng-model="apptForm.endAmPm">
                                     <option value="AM">AM</option>
                                     <option value="PM">PM</option>
                                 </select>
                             </div>
                         </div>
                     </div>
-                    <div class="refer-form-row" style="margin-top: 8px;">
-                        <div class="refer-form-field">
-                            <label class="refer-label">Appointment Notes</label>
-                            <textarea id="dispApptNotes" ng-model="apptForm.comments" class="refer-textarea" rows="2" placeholder="Optional notes for appointment..."></textarea>
-                        </div>
+                    <div class="disp-field" style="margin-bottom: 12px;">
+                        <label for="dispApptNotes">Appointment Notes</label>
+                        <textarea id="dispApptNotes" ng-model="apptForm.comments" rows="2" placeholder="Optional notes for appointment..."></textarea>
                     </div>
-                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                         <button type="button" id="dispApptSaveBtn" ng-click="saveDispositionAppointment()" ng-disabled="apptSaving"
-                            style="background:#00796B; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:600; cursor:pointer;">
+                            style="background:#00796B; color:#fff; border:none; padding:9px 18px; border-radius:5px; font-weight:600; cursor:pointer;">
                             {{ apptSaving ? 'Saving...' : 'Save Appointment' }}
                         </button>
                         <span ng-if="apptSaveMsg" style="color:#27ae60; font-weight:600; font-size:13px;">{{apptSaveMsg}}</span>
