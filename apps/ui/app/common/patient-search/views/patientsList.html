@@ -58,6 +58,7 @@ p{
         <scrollable-tabs>
         <ul>
             <li class="tab-item" ng-repeat="searchType in search.searchTypes"
+                ng-hide="isAllTabHidden(searchType)"
                 ng-class="{'tab-selected': search.isSelectedSearch(searchType)}">
                 <a href="" ng-click="search.switchSearchType(searchType)">
                     <span>{{::searchType | titleTranslate}} </span>
@@ -75,6 +76,7 @@ p{
         </a> -->
         <ul class="header-tabs consultation-tabs" ng-show="showDashboardMenu">
             <li class="tab-item" ng-repeat="searchType in search.searchTypes"
+                ng-hide="isAllTabHidden(searchType)"
                 ng-class="{'tab-selected': search.isSelectedSearch(searchType)}">
                 <a href="" ng-click="switchSearchType(searchType)">
                     <span>{{::searchType | titleTranslate}} </span>

@@ -2,8 +2,8 @@
 
 angular.module('bahmni.common.patientSearch')
 .controller('PatientsListController', ['$scope', '$window', 'patientService', '$rootScope', 'appService', 'spinner',
-    '$stateParams', '$bahmniCookieStore', 'printer', 'configurationService', '$timeout', 'observationsService', '$injector',
-    function ($scope, $window, patientService, $rootScope, appService, spinner, $stateParams, $bahmniCookieStore, printer, configurationService, $timeout, observationsService, $injector) {
+    '$stateParams', '$bahmniCookieStore', 'printer', 'configurationService', '$timeout', 'observationsService', '$injector', '$http',
+    function ($scope, $window, patientService, $rootScope, appService, spinner, $stateParams, $bahmniCookieStore, printer, configurationService, $timeout, observationsService, $injector, $http) {
         var dispositionService = $injector.has('dispositionService') ? $injector.get('dispositionService') : null;
         $scope.preferExtraIdInSearchResults = appService.getAppDescriptor().getConfigValue("preferExtraIdInSearchResults");
         $scope.activeHeaders = [];
@@ -11,7 +11,37 @@ angular.module('bahmni.common.patientSearch')
         var patientSearchConfig = appService.getAppDescriptor().getConfigValue("patientSearch");
         var patientListSpinner;
         $scope.triageStatus = "#88af28";
+        $scope.hasLiaisonScheduleTag = false;
+        var isAdtAllTab = function (searchType) {
+            if (!searchType) return false;
+            var appId = appService.getAppDescriptor().getId();
+            if (appId !== 'bahmni.adt') return false;
+            return searchType.id === 'bahmni.adt.patients.search.allPatients' ||
+                (!searchType.handler && (searchType.name === 'All' || searchType.translationKey === 'MODULE_LABEL_ALL_KEY'));
+        };
+        $scope.isAllTabHidden = function (searchType) {
+            return !$scope.hasLiaisonScheduleTag && isAdtAllTab(searchType);
+        };
         var initialize = function () {
+            var locCookie = $bahmniCookieStore.get(Bahmni.Common.Constants.locationCookieName);
+            if (locCookie && locCookie.uuid) {
+                $http.get(Bahmni.Common.Constants.locationUrl + '/' + locCookie.uuid, {
+                    params: { v: 'custom:(uuid,tags:(name,display))' }
+                }).then(function (resp) {
+                    var tags = (resp.data && resp.data.tags) || [];
+                    $scope.hasLiaisonScheduleTag = _.some(tags, function (t) {
+                        return (t.name || t.display) === 'Liaison Schedule Location';
+                    });
+                    if (!$scope.hasLiaisonScheduleTag && $scope.search && isAdtAllTab($scope.search.searchType)) {
+                        var firstVisible = _.find($scope.search.searchTypes, function (st) {
+                            return st && !isAdtAllTab(st);
+                        });
+                        if (firstVisible) {
+                            $scope.search.switchSearchType(firstVisible);
+                        }
+                    }
+                });
+            }
             var searchTypes = appService.getAppDescriptor().getExtensions("org.bahmni.patient.search", "config").map(mapExtensionToSearchType);
             $scope.ignoredTabularViewHeadingsConfig = appService.getAppDescriptor().getConfigValue("ignoredTabularViewHeadings") || [];
             $scope.identifierHeadingsConfig = appService.getAppDescriptor().getConfigValue("identifierHeadings") || [];
