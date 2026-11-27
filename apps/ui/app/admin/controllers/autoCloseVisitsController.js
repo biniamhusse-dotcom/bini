@@ -25,6 +25,7 @@ angular.module('bahmni.admin')
             $scope.config = {
                 enabled: false,
                 excludeAdmitted: true,
+                excludeEmergencyKeep: true,
                 checkIntervalSeconds: 300,
                 centralTriage: {
                     enabled: true,

@@ -150,6 +150,7 @@
                 {{ v.triageGroup }}
               </span>
               <div ng-if="v.isAdmitted" style="font-size: 11px; color: #b45309; margin-top: 3px;"><i class="fa fa-bed"></i> IPD/Ward</div>
+              <div ng-if="v.isEmergencyKeep" style="font-size: 11px; color: #0369a1; margin-top: 3px;"><i class="fa fa-shield"></i> Emergency Keep</div>
             </td>
             <td style="padding: 10px 12px; font-size: 12px; color: #334155;">{{ v.triageTime }}</td>
             <td style="padding: 10px 12px; font-size: 12px; color: #64748b;">{{ v.visitStart }}</td>
@@ -190,6 +191,9 @@
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
           <label style="font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
             <input type="checkbox" ng-model="config.excludeAdmitted"> Exclude Admitted (IPD / Ward / ICU)
+          </label>
+          <label style="font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
+            <input type="checkbox" ng-model="config.excludeEmergencyKeep"> Exclude Emergency Keep Disposition
           </label>
           <div style="display: flex; align-items: center; gap: 6px;">
             <span style="font-size: 12px; font-weight: 600; color: #475569;">Check every (sec):</span>

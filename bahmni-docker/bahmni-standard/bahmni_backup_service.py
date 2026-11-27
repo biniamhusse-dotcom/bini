@@ -4887,6 +4887,7 @@ def _default_auto_close_visits_config():
     return {
         "enabled": False,
         "excludeAdmitted": True,
+        "excludeEmergencyKeep": True,
         "checkIntervalSeconds": 300,
         "centralTriage": {
             "enabled": True,
@@ -4918,7 +4919,7 @@ def load_auto_close_visits_config():
             with open(AUTO_CLOSE_VISITS_CONFIG_FILE, "r", encoding="utf-8") as f:
                 saved = json.load(f)
             if isinstance(saved, dict):
-                for k in ("enabled", "excludeAdmitted", "checkIntervalSeconds", "lastRunAt", "lastClosedCount"):
+                for k in ("enabled", "excludeAdmitted", "excludeEmergencyKeep", "checkIntervalSeconds", "lastRunAt", "lastClosedCount"):
                     if k in saved:
                         cfg[k] = saved[k]
                 for grp in ("centralTriage", "emTriage"):
@@ -4940,6 +4941,8 @@ def save_auto_close_visits_config(payload):
             cfg["enabled"] = bool(payload["enabled"])
         if "excludeAdmitted" in payload:
             cfg["excludeAdmitted"] = bool(payload["excludeAdmitted"])
+        if "excludeEmergencyKeep" in payload:
+            cfg["excludeEmergencyKeep"] = bool(payload["excludeEmergencyKeep"])
         if "checkIntervalSeconds" in payload:
             cfg["checkIntervalSeconds"] = max(60, int(payload["checkIntervalSeconds"] or 300))
         for grp in ("centralTriage", "emTriage"):
@@ -4979,9 +4982,11 @@ def _parse_dt_flexible(dt_str):
         return None
 
 
-def _evaluate_visit_eligibility(row, rule, db_now, exclude_admitted, is_scheduler=False):
+def _evaluate_visit_eligibility(row, rule, db_now, exclude_admitted, exclude_emergency_keep=True, is_scheduler=False):
     if not rule.get("enabled"):
         return False, "Rule disabled"
+    if exclude_emergency_keep and row.get("isEmergencyKeep"):
+        return False, "Excluded (Emergency keep disposition)"
     if exclude_admitted and row.get("isAdmitted"):
         return False, "Excluded (IPD/Ward admission)"
     mode = rule.get("mode", "hours")
@@ -5038,7 +5043,8 @@ def _query_active_triaged_visits():
         DATE_FORMAT(MAX(CASE WHEN cn.name IN ('Emergency Department Triage Form', 'ED Triage Form - GYN', 'Pediatrics Triage Form', 'Triage Color Result', 'Triage Score Result', 'Triage Record Vital Sign', 'Triage color', 'Triage category', 'Time seen by triage officer') THEN o.obs_datetime END), '%Y-%m-%d %H:%i:%s') AS em_triage_time,
         MAX(CASE WHEN cn.name IN ('Central Triage Form', 'Main triage Form') OR LOWER(COALESCE(vt.name,'')) LIKE '%central triage%' OR LOWER(COALESCE(l.name,'')) LIKE '%central triage%' THEN 1 ELSE 0 END) AS is_central,
         MAX(CASE WHEN cn.name IN ('Emergency Department Triage Form', 'ED Triage Form - GYN', 'Pediatrics Triage Form', 'Triage Color Result', 'Triage Score Result', 'Triage Record Vital Sign', 'Triage color', 'Triage category', 'Time seen by triage officer') OR LOWER(COALESCE(vt.name,'')) LIKE '%emergency triage%' OR LOWER(COALESCE(l.name,'')) LIKE '%emergency triage%' THEN 1 ELSE 0 END) AS is_em,
-        DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') AS db_now
+        DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') AS db_now,
+        MAX(CASE WHEN (cn.name = 'Disposition' AND LOWER(COALESCE(ans_cn.name,'')) IN ('emergency keep', 'emergency kept')) OR LOWER(COALESCE(vt.name,'')) LIKE '%emergency keep%' OR LOWER(COALESCE(l.name,'')) LIKE '%emergency keep%' THEN 1 ELSE 0 END) AS is_emergency_keep
     FROM visit v
     JOIN patient p ON v.patient_id = p.patient_id AND p.voided = 0
     LEFT JOIN patient_identifier pi ON p.patient_id = pi.patient_id AND pi.voided = 0 AND pi.preferred = 1
@@ -5048,6 +5054,7 @@ def _query_active_triaged_visits():
     LEFT JOIN encounter e ON v.visit_id = e.visit_id AND e.voided = 0
     LEFT JOIN obs o ON e.encounter_id = o.encounter_id AND o.voided = 0
     LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.voided = 0 AND cn.locale = 'en' AND cn.concept_name_type = 'FULLY_SPECIFIED'
+    LEFT JOIN concept_name ans_cn ON o.value_coded = ans_cn.concept_id AND ans_cn.voided = 0 AND ans_cn.locale = 'en'
     WHERE v.date_stopped IS NULL AND v.voided = 0
     GROUP BY v.visit_id, v.patient_id, pi.identifier, pn.given_name, pn.middle_name, pn.family_name, vt.name, l.name, v.date_started
     HAVING is_central = 1 OR is_em = 1
@@ -5059,10 +5066,11 @@ def _query_active_triaged_visits():
     admitted_kw = ("ward", "ipd", "icu", "nicu", "labor", "delivery", "or room")
     for line in out.strip().splitlines():
         parts = line.split("\t")
-        if len(parts) < 12:
+        if len(parts) < 13:
             continue
         is_central = parts[9] == "1"
         is_em = parts[10] == "1"
+        is_emergency_keep = parts[12] == "1"
         parsed_now = _parse_dt_flexible(parts[11])
         if parsed_now:
             db_now = parsed_now
@@ -5087,6 +5095,7 @@ def _query_active_triaged_visits():
             "isCentral": is_central,
             "isEm": is_em,
             "isAdmitted": is_admitted,
+            "isEmergencyKeep": is_emergency_keep,
             "ageHours": age_hours
         })
     return rows, db_now
@@ -5096,6 +5105,7 @@ def load_auto_close_visits_overview():
     cfg = load_auto_close_visits_config()
     rows, db_now = _query_active_triaged_visits()
     exclude_admitted = bool(cfg.get("excludeAdmitted", True))
+    exclude_emergency_keep = bool(cfg.get("excludeEmergencyKeep", True))
     central_cnt = 0
     em_cnt = 0
     eligible_cnt = 0
@@ -5107,9 +5117,9 @@ def load_auto_close_visits_overview():
         elig_c, reason_c = (False, "")
         elig_e, reason_e = (False, "")
         if r["isCentral"]:
-            elig_c, reason_c = _evaluate_visit_eligibility(r, cfg["centralTriage"], db_now, exclude_admitted)
+            elig_c, reason_c = _evaluate_visit_eligibility(r, cfg["centralTriage"], db_now, exclude_admitted, exclude_emergency_keep)
         if r["isEm"]:
-            elig_e, reason_e = _evaluate_visit_eligibility(r, cfg["emTriage"], db_now, exclude_admitted)
+            elig_e, reason_e = _evaluate_visit_eligibility(r, cfg["emTriage"], db_now, exclude_admitted, exclude_emergency_keep)
         r["eligibleNow"] = bool(elig_c or elig_e)
         r["eligibleReason"] = reason_e if elig_e else (reason_c if elig_c else (reason_e or reason_c))
         if r["eligibleNow"]:
@@ -5136,6 +5146,7 @@ def run_auto_close_visits(payload, is_scheduler=False):
     visit_ids = payload.get("visitIds")
     override_mode = payload.get("overrideMode")
     exclude_admitted = bool(payload.get("excludeAdmitted", cfg.get("excludeAdmitted", True)))
+    exclude_emergency_keep = bool(payload.get("excludeEmergencyKeep", cfg.get("excludeEmergencyKeep", True)))
 
     to_close = []
     if isinstance(visit_ids, list) and len(visit_ids) > 0:
@@ -5162,8 +5173,8 @@ def run_auto_close_visits(payload, is_scheduler=False):
         for r in rows:
             match_c = target in ("both", "central") and r["isCentral"]
             match_e = target in ("both", "em") and r["isEm"]
-            ok_c = _evaluate_visit_eligibility(r, c_rule, db_now, exclude_admitted, is_scheduler=is_scheduler)[0] if match_c else False
-            ok_e = _evaluate_visit_eligibility(r, e_rule, db_now, exclude_admitted, is_scheduler=is_scheduler)[0] if match_e else False
+            ok_c = _evaluate_visit_eligibility(r, c_rule, db_now, exclude_admitted, exclude_emergency_keep, is_scheduler=is_scheduler)[0] if match_c else False
+            ok_e = _evaluate_visit_eligibility(r, e_rule, db_now, exclude_admitted, exclude_emergency_keep, is_scheduler=is_scheduler)[0] if match_e else False
             if ok_c or ok_e:
                 to_close.append(r)
 
