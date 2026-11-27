@@ -12,10 +12,16 @@ angular.module('bahmni.common.patientSearch')
         var patientListSpinner;
         $scope.triageStatus = "#88af28";
         $scope.hasLiaisonScheduleTag = false;
+        var getAppId = function () {
+            var appDescriptor = appService.getAppDescriptor();
+            return appDescriptor ? (appDescriptor.id || appDescriptor.contextPath || '') : '';
+        };
+        var isAdtApp = function () {
+            var appId = getAppId();
+            return appId === 'bahmni.adt' || appId === 'adt';
+        };
         var isAdtAllTab = function (searchType) {
-            if (!searchType) return false;
-            var appId = appService.getAppDescriptor().getId();
-            if (appId !== 'bahmni.adt') return false;
+            if (!searchType || !isAdtApp()) return false;
             return searchType.id === 'bahmni.adt.patients.search.allPatients' ||
                 (!searchType.handler && (searchType.name === 'All' || searchType.translationKey === 'MODULE_LABEL_ALL_KEY'));
         };
@@ -24,15 +30,21 @@ angular.module('bahmni.common.patientSearch')
         };
         var initialize = function () {
             var locCookie = $bahmniCookieStore.get(Bahmni.Common.Constants.locationCookieName);
-            if (locCookie && locCookie.uuid) {
-                $http.get(Bahmni.Common.Constants.locationUrl + '/' + locCookie.uuid, {
+            if (isAdtApp() && locCookie && locCookie.uuid) {
+                var locationRestUrl = '/openmrs/ws/rest/v1/location/' + locCookie.uuid;
+                $http.get(locationRestUrl, {
                     params: { v: 'custom:(uuid,tags:(name,display))' }
                 }).then(function (resp) {
                     var tags = (resp.data && resp.data.tags) || [];
-                    $scope.hasLiaisonScheduleTag = _.some(tags, function (t) {
+                    var hasTag = _.some(tags, function (t) {
                         return (t.name || t.display) === 'Liaison Schedule Location';
                     });
-                    if (!$scope.hasLiaisonScheduleTag && $scope.search && isAdtAllTab($scope.search.searchType)) {
+                    if (!$scope.$$phase) {
+                        $scope.$apply(function () { $scope.hasLiaisonScheduleTag = hasTag; });
+                    } else {
+                        $scope.hasLiaisonScheduleTag = hasTag;
+                    }
+                    if (!hasTag && $scope.search && isAdtAllTab($scope.search.searchType)) {
                         var firstVisible = _.find($scope.search.searchTypes, function (st) {
                             return st && !isAdtAllTab(st);
                         });
@@ -40,6 +52,9 @@ angular.module('bahmni.common.patientSearch')
                             $scope.search.switchSearchType(firstVisible);
                         }
                     }
+                }, function () {
+                    // silently ignore fetch errors — All tab remains visible
+                    $scope.hasLiaisonScheduleTag = true;
                 });
             }
             var searchTypes = appService.getAppDescriptor().getExtensions("org.bahmni.patient.search", "config").map(mapExtensionToSearchType);
